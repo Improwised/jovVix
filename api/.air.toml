@@ -1,0 +1,8 @@
+[build]
+cmd = "go build -o /tmp/build/quiz-app ."
+bin = "/tmp/build/quiz-app api"
+include_ext = ["go", "tpl", "tmpl", "html", "env"]
+
+[screen]
+clear_on_rebuild = true
+keep_scroll = true
