@@ -1,6 +1,6 @@
 version: "3.8"
 services:
-  postgresdb:
+  db:
     image: postgres:15.2-alpine
     container_name: golang-api-postgresdb
     environment:
@@ -22,7 +22,7 @@ services:
     environment:
     - ADMINER_DEFAULT_SERVER=postgresdb
     depends_on:
-    - postgresdb
+    - db
 
   # kratos_migrate:
   #   image: oryd/kratos:v1.0.0

@@ -2,7 +2,6 @@ package routes
 
 import (
 	"fmt"
-	"strings"
 	"sync"
 
 	"go.uber.org/zap"
@@ -16,7 +15,6 @@ import (
 	"github.com/Improwised/quizz-app/api/pkg/watermill"
 	goqu "github.com/doug-martin/goqu/v9"
 	fiber "github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/cors"
 )
 
 var mu sync.Mutex
@@ -28,25 +26,6 @@ func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config confi
 	app.Use(middlewares.LogHandler(logger, pMetrics))
 
 	// Todo: just for development, remove in production
-	// app.Use(cors.New())
-
-	app.Use(cors.New(cors.Config{
-		Next:             nil,
-		AllowOriginsFunc: nil,
-		AllowOrigins:     "*",
-		AllowMethods: strings.Join([]string{
-			fiber.MethodGet,
-			fiber.MethodPost,
-			fiber.MethodHead,
-			fiber.MethodPut,
-			fiber.MethodDelete,
-			fiber.MethodPatch,
-		}, ","),
-		AllowHeaders:     "*",
-		AllowCredentials: false,
-		ExposeHeaders:    "",
-		MaxAge:           0,
-	}))
 
 	app.Static("/assets/", "./assets")
 

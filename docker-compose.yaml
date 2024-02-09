@@ -13,15 +13,16 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
 
-  adminer:
-    image: adminer
-    restart: always
-    ports:
-    - 8080:8080
-    environment:
-    - ADMINER_DEFAULT_SERVER=postgresdb
+  migration:
+    build:
+      context: ./api/
+      dockerfile: Dockerfile
+    restart: on-failure
     depends_on:
-    - postgresdb
+      - postgresdb
+    env_file:
+      - ./api/.env.example
+    command: migrate up
 
   api:
     build:
@@ -34,23 +35,17 @@ services:
       - ./api/.env.example
     depends_on:
       - postgresdb
-      - adminer
+      - migration
 
   web:
     build:
       context: ./app/
       dockerfile: Dockerfile
-      args:
-        MODE: example
     ports:
       - "3000:3000"
     restart: on-failure
     env_file:
       - ./app/.env.example
-    environment:
-      - PORT=3000
-      - HOST=0.0.0.0
-      - MODE=example
     volumes:
       - ./app/:/usr/src/app/
     depends_on:

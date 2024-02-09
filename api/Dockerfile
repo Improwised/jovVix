@@ -21,6 +21,8 @@ RUN --mount=type=cache,mode=0777,target=${GOCACHE} \
 
 COPY . ./
 
+RUN cp .env.example .env
+
 RUN --mount=type=cache,mode=0777,target=${GOCACHE} \
     --mount=type=cache,mode=0777,target=${GOMODCACHE} \
     go build -o /tmp/app
@@ -40,7 +42,8 @@ RUN set -ex; \
 
 COPY assets database .env.example ./
 COPY --from=build /tmp/app ./
+COPY --from=build /go/src/app/database ./database
 
-ENTRYPOINT [ "dockerize", "-template", ".env.example:.env", "./app", "api"]
+ENTRYPOINT [ "dockerize", "-template", ".env.example:.env", "./app"]
 
-CMD ["./app", "api"]
+CMD ["api"]
