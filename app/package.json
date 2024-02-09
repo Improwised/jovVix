@@ -23,8 +23,8 @@
     "eslint-plugin-nuxt": "^4.0.0",
     "eslint-plugin-prettier": "^4.2.1",
     "eslint-plugin-vue": "^9.8.0",
-    "husky": "^8.0.0",
-    "lint-staged": "^13.1.0",
+    "husky": "^8.0.3",
+    "lint-staged": "^13.3.0",
     "nuxt": "3.0.0",
     "prettier": "^2.8.2"
   },
@@ -40,7 +40,12 @@
   },
   "lint-staged": {
     "**/*.{js,ts,vue,html,css}": [
-      "npm lint-fix"
+      "npm run lint-fix"
     ]
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
   }
 }
