@@ -40,7 +40,10 @@
   },
   "lint-staged": {
     "**/*.{js,ts,vue,html,css}": [
-      "npm run lint-fix"
+      "npm run lint-fix",
+      "eslint",
+      "prettier --write",
+      "git add"
     ]
   },
   "husky": {
