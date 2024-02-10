@@ -23,21 +23,24 @@ repos:
   - id: go-vet
     name: "go-vet"
     entry: ./api/hooks/go-vet.sh
-    files: '.go$'
+    types: [go]
+    pass_filenames: false
     language: 'script'
-    description: "Runs ``"
+    description: "Runs `go vet ./api/...`"
   - id: go-lint
     name: "go-lint"
     entry: ./api/hooks/go-lint.sh
-    files: 'go.work$'
+    types: [go]
+    pass_filenames: false
     language: 'script'
     description: "Runs `golangci-lint run -v ./api/...`"
   - id: go-test
     name: "go-test"
     entry: ./api/hooks/go-test.sh
-    files: 'go.work$'
+    types: [go]
+    pass_filenames: false
     language: 'script'
-    description: "Runs `go-test`, requires https://github.com/gotestyourself/gotestsum"
+    description: "Runs `gotestsum --format pkgname -- -coverprofile=cover.out ./api/...`, requires https://github.com/gotestyourself/gotestsum"
   - id: node-lint
     name: "node-lint"
     entry: ./.husky/pre-commit
