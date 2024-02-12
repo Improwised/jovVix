@@ -17,6 +17,6 @@
 # [2]: https://help.github.com/articles/about-codeowners/
 # [3]: pkg/internal/codeowners
 
-/.github/                    @improwised/infrastructure
+/.github/                    @improwised/devops-technocrats
 /.github/CODEOWNERS          @deltasquare4
 /.github/settings.yml        @deltasquare4
