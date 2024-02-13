@@ -27,6 +27,17 @@ func GenerateRandomString(length int) string {
 	return string(randomBytes)
 }
 
-func GenerateRandomInt(maxVal int) int  {
+func GenerateRandomInt(maxVal int) int {
 	return mathRand.Intn(10000)
+}
+
+func GenerateNewStringHavingSuffixName(mainString string, randomStringLen int, maxLength int) string {
+	random_str := "_" + GenerateRandomString(randomStringLen-1)
+
+	truncate_at := len(mainString)
+	if truncate_at+len(random_str) > maxLength {
+		truncate_at = maxLength - len(random_str)
+	}
+	
+	return mainString[:truncate_at] + random_str
 }

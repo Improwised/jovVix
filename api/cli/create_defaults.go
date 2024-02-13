@@ -100,9 +100,9 @@ func GetOrCreateDefaults(cfg config.AppConfig, logger *zap.Logger) cobra.Command
 						return fmt.Errorf("Unique key violation on %v", pqErr.Constraint)
 					}
 
-					// force flag is set then it tries agin with manipulated username tring to make new admin-username
+					// force flag is set then it tries agin with manipulated username trying to make new admin-username
 
-					user.Username = GenerateNewUserName(user.Username, 5, 12)
+					user.Username = utils.GenerateNewStringHavingSuffixName(user.Username, 5, 12)
 
 					_, err = userSvc.RegisterUser(user, events.NewEventBus(logger))
 
@@ -125,16 +125,6 @@ func GetOrCreateDefaults(cfg config.AppConfig, logger *zap.Logger) cobra.Command
 	// Migration commands up, down
 
 	return defaultCmd
-}
-
-func GenerateNewUserName(currentUserName string, randomStringLen int, maxLength int) string {
-	random_str := "_" + utils.GenerateRandomString(randomStringLen-1)
-
-	truncate_at := len(currentUserName)
-	if truncate_at+len(random_str) > maxLength {
-		truncate_at = maxLength - len(random_str)
-	}
-	return currentUserName[:truncate_at] + random_str
 }
 
 func IsUniqueEmail(db *goqu.Database, email string) (bool, error) {
