@@ -10,7 +10,7 @@
   ],
   "swagger": "2.0",
   "info": {
-    "title": "Golang API.",
+    "title": "Quiz-app",
     "version": "0.0.1-alpha"
   },
   "host": "localhost:3300",

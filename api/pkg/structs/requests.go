@@ -6,6 +6,7 @@ package structs
 type ReqRegisterUser struct {
 	FirstName string `json:"first_name" validate:"required"`
 	LastName  string `json:"last_name" validate:"required"`
+	UserName  string `json:"username" validate:"required"`
 	Email     string `json:"email" validate:"required,email"`
 	Password  string `json:"password" validate:"required"`
 	Roles     string `json:"roles" validate:"required"`

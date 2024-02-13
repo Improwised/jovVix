@@ -78,7 +78,7 @@ func (sm *SessionManager) GetCode() (int, string) {
 	code := generateRandomString(8)
 
 	for {
-		if _, is_avalable := sm.sessions[code]; !is_avalable {
+		if _, is_available := sm.sessions[code]; !is_available {
 			break
 		}
 		code = generateRandomString(8)
@@ -141,5 +141,3 @@ func (sm *SessionManager) RemoveSession(code string) error {
 	delete(sm.sessions, code)
 	return nil
 }
-
-

@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"time"
@@ -25,7 +26,7 @@ func CreateQuickUser(db *goqu.Database, logger *zap.Logger, userObj models.User,
 
 	if emailValidation {
 		isUnique, err := userModel.IsUniqueEmail(userObj.Email)
-	
+
 		if err != nil {
 			fmt.Println(err)
 			return userObj, fmt.Errorf("SomeError occurred during register user")
@@ -157,7 +158,7 @@ func (*quizConfigs) Ping(c *websocket.Conn) {
 		}
 	}(pingObj, defaultChannel)
 
-	tick := time.Tick(5 * time.Second)
+	tick := time.NewTicker(5 * time.Second)
 
 	for {
 		select {
@@ -169,7 +170,7 @@ func (*quizConfigs) Ping(c *websocket.Conn) {
 			}
 			initial_time = time.Now()
 
-		case <-tick:
+		case <-tick.C:
 			if initial_time.Add(15 * time.Second).After(time.Now()) {
 				pingObj.payloadType = websocket.TextMessage
 				pingObj.payload = []byte("Knock knock")
@@ -188,13 +189,30 @@ func (qc *quizConfigs) Join(c *websocket.Conn) {
 
 	time.Sleep(1 * time.Second)
 
-	c.WriteMessage(websocket.TextMessage, []byte(c.Query("code")))
+	err := c.WriteMessage(websocket.TextMessage, []byte(c.Query("code")))
+
+	if err != nil {
+		fmt.Println("Error: ", err)
+	}
 
 	time.Sleep(1 * time.Second)
 
-	c.WriteMessage(websocket.TextMessage, []byte(c.Locals(constants.ContextUid).(string)))
+	err = c.WriteMessage(websocket.TextMessage, []byte(c.Locals(constants.ContextUid).(string)))
+	if err != nil {
+		fmt.Println("Error: ", err)
+	}
 
 	time.Sleep(1 * time.Second)
+
+	userJson, err := json.Marshal(c.Locals(constants.ContextUser))
+	if err != nil {
+		c.Close()
+	}
+	err = c.WriteMessage(websocket.TextMessage, userJson)
+
+	if err != nil {
+		fmt.Println("Error: ", err)
+	}
 
 	c.Locals(constants.ContextUid)
 

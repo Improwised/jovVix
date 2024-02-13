@@ -3,7 +3,6 @@ package middlewares
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -96,7 +95,7 @@ func AuthHavingNotTokenHandler(m *Middleware, c *fiber.Ctx) error {
 	if userName == "" {
 		return utils.JSONFail(c, http.StatusBadRequest, constants.UsernameRequired)
 	}
-	
+
 	userObj := models.User{
 		Username: userName,
 		Roles:    "user",
@@ -106,7 +105,6 @@ func AuthHavingNotTokenHandler(m *Middleware, c *fiber.Ctx) error {
 	if err != nil {
 		return utils.JSONFail(c, http.StatusInternalServerError, err)
 	}
-
 
 	c.Cookie(CreateStrictCookie(constants.CookieUser, userObj.Username))
 	c.Locals(constants.ContextUid, userObj.ID)
