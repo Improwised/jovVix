@@ -14,7 +14,7 @@ import (
 	"github.com/Improwised/quizz-app/api/routes"
 	fiber "github.com/gofiber/fiber/v2"
 	"github.com/spf13/cobra"
-
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	pMetrics "github.com/Improwised/quizz-app/api/pkg/prometheus"
 )
 
@@ -28,6 +28,13 @@ func GetAPICommandDef(cfg config.AppConfig, logger *zap.Logger) cobra.Command {
 
 			// Create fiber app
 			app := fiber.New(fiber.Config{})
+
+			app.Use(cors.New(cors.Config{
+				AllowHeaders:     "Origin,Content-Type,Accept,Content-Length,Accept-Language,Accept-Encoding,Connection,Access-Control-Allow-Origin",
+				AllowOrigins:     "*",
+				AllowCredentials: true,
+				AllowMethods:     "GET,POST,HEAD,PUT,DELETE,PATCH,OPTIONS",
+			}))
 
 			promMetrics := pMetrics.InitPrometheusMetrics()
 

@@ -6,14 +6,19 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/Improwised/quizz-app/api/components"
 	"github.com/Improwised/quizz-app/api/config"
 	"github.com/Improwised/quizz-app/api/constants"
 	controller "github.com/Improwised/quizz-app/api/controllers/api/v1"
 	"github.com/Improwised/quizz-app/api/middlewares"
+	"github.com/Improwised/quizz-app/api/models"
 	"github.com/Improwised/quizz-app/api/pkg/events"
 	pMetrics "github.com/Improwised/quizz-app/api/pkg/prometheus"
 	"github.com/Improwised/quizz-app/api/pkg/watermill"
+	"github.com/Improwised/quizz-app/api/services"
 	goqu "github.com/doug-martin/goqu/v9"
+	"github.com/gofiber/contrib/swagger"
+	"github.com/gofiber/contrib/websocket"
 	fiber "github.com/gofiber/fiber/v2"
 )
 
@@ -25,20 +30,39 @@ func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config confi
 
 	app.Use(middlewares.LogHandler(logger, pMetrics))
 
+	cfg := swagger.Config{
+		FilePath: "./assets/swagger.json",
+		Title:    "Swagger API Docs",
+	}
+
+	app.Use(swagger.New(cfg))
+
 	// Todo: just for development, remove in production
 
 	app.Static("/assets/", "./assets")
 
-	app.Get("/docs", func(c *fiber.Ctx) error {
-		return c.Render("./assets/index.html", fiber.Map{})
-	})
-
 	router := app.Group("/api")
 	v1 := router.Group("/v1")
 
-	middlewares := middlewares.NewMiddleware(config, logger)
+	v1.Use("/socket", func(c *fiber.Ctx) error {
+		// IsWebSocketUpgrade returns true if the client
+		// requested upgrade to the WebSocket protocol.
+		if websocket.IsWebSocketUpgrade(c) {
+			c.Locals("allowed", true)
+			return c.Next()
+		}
+		return fiber.ErrUpgradeRequired
+	})
 
-	err := setupAuthController(v1, goqu, logger, middlewares, config)
+	userModel, err := models.InitUserModel(goqu)
+	if err != nil {
+		return err
+	}
+	userService := services.NewUserService(&userModel)
+
+	middlewares := middlewares.NewMiddleware(config, logger, goqu, userService)
+
+	err = setupAuthController(v1, goqu, logger, middlewares, config)
 	if err != nil {
 		return err
 	}
@@ -54,6 +78,13 @@ func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config confi
 	}
 
 	err = metricsController(app, goqu, logger, pMetrics)
+	if err != nil {
+		return err
+	}
+
+	manager := components.InitQuizGameManager()
+
+	err = quizControllerV1(v1, goqu, logger, middlewares, manager)
 	if err != nil {
 		return err
 	}
@@ -107,5 +138,18 @@ func metricsController(app *fiber.App, db *goqu.Database, logger *zap.Logger, pM
 	}
 
 	app.Get("/metrics", metricsController.Metrics)
+	return nil
+}
+
+func quizControllerV1(v1 fiber.Router, db *goqu.Database, logger *zap.Logger, middleware middlewares.Middleware, quizGameManager *components.QuizGameManager) error {
+	quizConfigs, err := controller.InitQuizController(db, logger, quizGameManager)
+	if err != nil {
+		return nil
+	}
+
+	v1.Get("/socket/ping", websocket.New(quizConfigs.Ping))
+
+	v1.Get("/socket/join", middleware.AuthenticationAndRoleAssignment, websocket.New(quizConfigs.Join))
+
 	return nil
 }
