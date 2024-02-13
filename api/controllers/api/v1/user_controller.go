@@ -3,7 +3,6 @@ package v1
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/Improwised/quizz-app/api/cli/workers"
@@ -99,10 +98,6 @@ func (ctrl *UserController) CreateUser(c *fiber.Ctx) error {
 	err = validate.Struct(userReq)
 	if err != nil {
 		return utils.JSONFail(c, http.StatusBadRequest, utils.ValidatorErrorString(err))
-	}
-
-	if userReq.Roles == "admin" {
-		return utils.JSONFail(c, http.StatusUnauthorized, utils.ValidatorErrorString(fmt.Errorf("can't create admin role")))
 	}
 
 	user, err := ctrl.userService.RegisterUser(models.User{FirstName: userReq.FirstName, LastName: userReq.LastName, Email: userReq.Email, Password: userReq.Password, Roles: userReq.Roles}, ctrl.event)

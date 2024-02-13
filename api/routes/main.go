@@ -84,7 +84,7 @@ func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config confi
 
 	manager := components.InitQuizGameManager()
 
-	err = quizControllerV1(v1, goqu, logger, middlewares, manager)
+	err = quizControllerV1(v1, goqu, logger, middlewares, manager, events, pub, config)
 	if err != nil {
 		return err
 	}
@@ -141,8 +141,12 @@ func metricsController(app *fiber.App, db *goqu.Database, logger *zap.Logger, pM
 	return nil
 }
 
-func quizControllerV1(v1 fiber.Router, db *goqu.Database, logger *zap.Logger, middleware middlewares.Middleware, quizGameManager *components.QuizGameManager) error {
-	quizConfigs, err := controller.InitQuizController(db, logger, quizGameManager)
+func quizControllerV1(v1 fiber.Router, db *goqu.Database, logger *zap.Logger, middleware middlewares.Middleware, quizGameManager *components.QuizGameManager, events *events.Events, pub *watermill.WatermillPublisher, config config.AppConfig) error {
+	userController, err := controller.NewUserController(db, logger, events, pub)
+	if err != nil {
+		return err
+	}
+	quizConfigs, err := controller.InitQuizController(db, quizGameManager, userController, &config)
 	if err != nil {
 		return nil
 	}

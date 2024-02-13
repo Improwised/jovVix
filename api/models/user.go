@@ -57,6 +57,7 @@ func (model *UserModel) GetById(id string) (User, error) {
 		"first_name",
 		"last_name",
 		"email",
+		"username",
 	).ScanStruct(&user)
 
 	if err != nil {
@@ -169,10 +170,10 @@ func (model *UserModel) IsUniqueEmail(email string) (bool, error) {
 }
 
 func (model *UserModel) GetUserRole(userID string) (string, error) {
-	var role string = "not found" 
-	
+	var role string = "not found"
+
 	found, err := model.db.From(UserTable).Where(goqu.Ex{
-		"id": userID,   
+		"id": userID,
 	}).Select(
 		"roles",
 	).ScanStruct(&role)

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Improwised/quizz-app/api/config"
 	"github.com/Improwised/quizz-app/api/constants"
 	quizController "github.com/Improwised/quizz-app/api/controllers/api/v1"
 	"github.com/Improwised/quizz-app/api/models"
@@ -114,12 +115,25 @@ func AuthHavingNotTokenHandler(m *Middleware, c *fiber.Ctx) error {
 }
 
 func CreateStrictCookie(key, value string) *fiber.Cookie {
-	cookieUserName := new(fiber.Cookie)
-	cookieUserName.Name = key
-	cookieUserName.Value = value
-	cookieUserName.HTTPOnly = true
-	cookieUserName.SessionOnly = true
-	cookieUserName.SameSite = "Strict"
-	cookieUserName.Expires = time.Now().Add(2 * time.Hour)
-	return cookieUserName
+	cookie := new(fiber.Cookie)
+	cookie.Name = key
+	cookie.Value = value
+	cookie.HTTPOnly = true
+	cookie.SessionOnly = true
+	cookie.Secure = true
+	cookie.SameSite = "Strict"
+	cookie.Expires = time.Now().Add(2 * time.Hour)
+	return cookie
+}
+
+func CreateNewUserToken(c *fiber.Ctx, cfg config.AppConfig, user models.User, logger *zap.Logger) error {
+	token, err := jwt.CreateToken(cfg, user.ID, time.Now().Add(time.Hour*2))
+	if err != nil {
+		logger.Error("error while creating token", zap.Error(err), zap.Any("id", user.ID))
+		return utils.JSONFail(c, http.StatusInternalServerError, constants.ErrLoginUser)
+	}
+	c.Cookie(CreateStrictCookie(constants.CookieUser, token))
+	c.Locals(constants.ContextUid, user.ID)
+	c.Locals(constants.ContextUser, user)
+	return nil
 }

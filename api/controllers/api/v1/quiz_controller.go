@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/Improwised/quizz-app/api/components"
+	"github.com/Improwised/quizz-app/api/config"
 	"github.com/Improwised/quizz-app/api/constants"
 	"github.com/Improwised/quizz-app/api/models"
 	"github.com/Improwised/quizz-app/api/pkg/events"
@@ -65,6 +66,17 @@ func CreateQuickUser(db *goqu.Database, logger *zap.Logger, userObj models.User,
 	return userObj, err
 }
 
+type quizConfigs struct {
+	manager   *components.QuizGameManager
+	db        *models.Quiz
+	userCtrl  *UserController
+	appConfig *config.AppConfig
+}
+
+func InitQuizController(db *goqu.Database, manager *components.QuizGameManager, userCtrl *UserController, appConfig *config.AppConfig) (*quizConfigs, error) {
+	return &quizConfigs{manager, models.NewQuiz(db), userCtrl, appConfig}, nil
+}
+
 type adminManager interface {
 	Join()
 	START()
@@ -73,16 +85,6 @@ type adminManager interface {
 }
 
 type userManager interface {
-}
-
-type quizConfigs struct {
-	manager *components.QuizGameManager
-	db      *models.Quiz
-	logger  *zap.Logger
-}
-
-func InitQuizController(db *goqu.Database, logger *zap.Logger, manager *components.QuizGameManager) (*quizConfigs, error) {
-	return &quizConfigs{manager, models.NewQuiz(db), logger}, nil
 }
 
 type ping struct {
@@ -214,6 +216,9 @@ func (qc *quizConfigs) Join(c *websocket.Conn) {
 		fmt.Println("Error: ", err)
 	}
 
+	if err != nil {
+		fmt.Print(err)
+	}
 	c.Locals(constants.ContextUid)
 
 }
