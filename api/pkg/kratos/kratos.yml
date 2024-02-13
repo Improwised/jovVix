@@ -1,6 +1,6 @@
 version: v1.0.0
 
-dsn: postgres://golang-api:golang-api@postgresdb:5432/kratos-db?sslmode=disable
+dsn: postgres://quiz-app:quiz-app@postgresdb:5432/kratos-db?sslmode=disable
 
 serve:
   public:

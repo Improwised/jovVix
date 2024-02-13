@@ -2,11 +2,11 @@ version: "3.8"
 services:
   db:
     image: postgres:15.2-alpine
-    container_name: golang-api-postgresdb
+    container_name: quiz-app-postgresdb
     environment:
-      POSTGRES_USER: golang-api
-      POSTGRES_PASSWORD: golang-api
-      POSTGRES_DB: golang-api
+      POSTGRES_USER: quiz-app
+      POSTGRES_PASSWORD: quiz-app
+      POSTGRES_DB: quiz-app
       POSTGRES_MULTIPLE_DATABASES: '"kratos-db"'
     ports:
     - 5432:5432
@@ -28,7 +28,7 @@ services:
   #   image: oryd/kratos:v1.0.0
   #   profiles: [kratos]
   #   environment:
-  #     - DSN=postgres://golang-api:golang-api@postgresdb:5432/kratos-db?sslmode=disable
+  #     - DSN=postgres://quiz-app:quiz-app@postgresdb:5432/kratos-db?sslmode=disable
   #     - LOG_LEVEL=trace
   #   command: migrate sql -e --yes
   #   restart: on-failure

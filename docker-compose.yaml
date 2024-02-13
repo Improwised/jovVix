@@ -2,11 +2,11 @@ version: "3.8"
 services:
   postgresdb:
     image: postgres:15.2-alpine
-    container_name: golang-api-postgresdb
+    container_name: quiz-app-postgresdb
     environment:
-      POSTGRES_USER: golang-api
-      POSTGRES_PASSWORD: golang-api
-      POSTGRES_DB: golang-api
+      POSTGRES_USER: quiz-app
+      POSTGRES_PASSWORD: quiz-app
+      POSTGRES_DB: quiz-app
       POSTGRES_MULTIPLE_DATABASES: '"kratos-db"'
     ports:
     - 5432:5432

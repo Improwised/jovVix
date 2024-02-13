@@ -16,7 +16,7 @@ func Init(cfg config.AppConfig, logger *zap.Logger) error {
 	workerCmd.PersistentFlags().String("topic", "", "topic name(queue name)")
 
 	deadQueueCmd := GetDeadQueueCommandDef(cfg, logger)
-	rootCmd := &cobra.Command{Use: "golang-api"}
+	rootCmd := &cobra.Command{Use: "quiz-app"}
 	rootCmd.AddCommand(&migrationCmd, &apiCmd, &workerCmd, &deadQueueCmd)
 	return rootCmd.Execute()
 }

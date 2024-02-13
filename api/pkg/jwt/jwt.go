@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	issuer = "golang-api.improwised.com"
+	issuer = "quiz.improwised.com"
 )
 
 /**
@@ -19,7 +19,7 @@ JWT token creation guideline
 alg: HS256
 payload: {
 	subject: uid
-	issuer: golang-api.improwised.com
+	issuer: quiz.improwised.com
 }
 We are also using jti for implementation signout all device
 We are using symmetric key methodology for sign token
