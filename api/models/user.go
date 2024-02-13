@@ -19,6 +19,7 @@ type User struct {
 	FirstName string `json:"first_name" db:"first_name" validate:"required"`
 	LastName  string `json:"last_name" db:"last_name" validate:"required"`
 	Email     string `json:"email" db:"email" validate:"required"`
+	Username  string `json:"username" db:"username" validate:"required"`
 	Password  string `json:"-" db:"password"`
 	Roles     string `json:"roles,omitempty" db:"roles" validate:"required"`
 	CreatedAt string `json:"created_at,omitempty" db:"created_at,omitempty"`
@@ -81,6 +82,7 @@ func (model *UserModel) InsertUser(user User) (User, error) {
 			"email":      user.Email,
 			"password":   user.Password,
 			"roles":      user.Roles,
+			"username":   user.Username,
 		},
 	).Executor().Exec()
 	if err != nil {

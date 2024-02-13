@@ -26,3 +26,7 @@ func ValidatorErrorString(err error) string {
 	}
 	return ""
 }
+
+func ValidateGlobalEmail(email string) (bool, error) {
+	return regexp.MatchString(`^[\w.-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`, email)
+}

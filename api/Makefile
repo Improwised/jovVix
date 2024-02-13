@@ -24,11 +24,14 @@ ifeq ($(SWAGGER_BIN),)
 endif
 	swagger generate spec -o ./assets/swagger.json
 
-start-api:
+api:
 	go run app.go api
 
-migrate-up:
+up:
 	go run app.go migrate up
+
+down:
+	go run app.go migrate down
 
 start-api-dev:
 	@nodemon --exec go run app.go api --signal SIGTERM
