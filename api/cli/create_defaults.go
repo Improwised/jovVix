@@ -10,6 +10,7 @@ import (
 	"github.com/Improwised/quizz-app/api/pkg/events"
 	"github.com/Improwised/quizz-app/api/services"
 	"github.com/Improwised/quizz-app/api/utils"
+	"github.com/doug-martin/goqu/v9"
 	"github.com/lib/pq"
 	"github.com/sethvargo/go-password/password"
 	"github.com/spf13/cobra"
@@ -29,10 +30,10 @@ func GetOrCreateDefaults(cfg config.AppConfig, logger *zap.Logger) cobra.Command
 
 	admin := cobra.Command{
 		Use:   "admin <username> <email>",
-		Short: "`create admin <username> <email>` create a new admin, you need to pass two argument username and email in excet order",
+		Short: "`create admin <username> <email>` create a new admin, you need to pass two argument username and email in exact order",
 		Long: `This command will create admin with given username and email, 
 	- If username or email exists then it will generate an error
-	- But you can override username coolition by passing -f flag.`,
+	- But you can override username collision by passing -f flag.`,
 		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			adminInfo := struct {
@@ -41,7 +42,7 @@ func GetOrCreateDefaults(cfg config.AppConfig, logger *zap.Logger) cobra.Command
 			}{args[0], args[1]}
 
 			if len(adminInfo.userName) > 12 || len(adminInfo.userName) < 6 {
-				return fmt.Errorf("The length of the username must in betweeen 6 to 12 chars.")
+				return fmt.Errorf("The length of the username must in between 6 to 12 chars.")
 			}
 
 			db, err := database.Connect(cfg.DB)
@@ -77,6 +78,15 @@ func GetOrCreateDefaults(cfg config.AppConfig, logger *zap.Logger) cobra.Command
 				Username:  adminInfo.userName,
 				Password:  passwordStr,
 				Roles:     "admin",
+			}
+
+			isUnique, err := IsUniqueEmail(db, user.Email)
+
+			if err != nil {
+				fmt.Println(err)
+				return fmt.Errorf("SomeError occurred during register user")
+			} else if isUnique {
+				return fmt.Errorf("Unique key violation on Email")
 			}
 
 			_, err = userSvc.RegisterUser(user, events.NewEventBus(logger))
@@ -125,4 +135,18 @@ func GenerateNewUserName(currentUserName string, randomStringLen int, maxLength 
 		truncate_at = maxLength - len(random_str)
 	}
 	return currentUserName[:truncate_at] + random_str
+}
+
+func IsUniqueEmail(db *goqu.Database, email string) (bool, error) {
+	query := db.From("users").Select(goqu.I("id")).Where(goqu.Ex{"email": email}).Limit(1)
+
+	// Execute the query
+	rows, err := query.Executor().Query()
+	if err != nil {
+		return false, err
+	}
+	defer rows.Close()
+
+	// Check if any rows were returned
+	return rows.Next(), nil
 }
