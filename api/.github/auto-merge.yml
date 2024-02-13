@@ -1,0 +1,28 @@
+# Configuration for probot-auto-merge - https://github.com/bobvanderlinden/probot-auto-merge
+
+updateBranch: true
+deleteBranchAfterMerge: true
+reportStatus: true
+
+minApprovals:
+  COLLABORATOR: 0
+maxRequestedChanges:
+  NONE: 0
+blockingLabels:
+- blocked
+- do-not-merge
+
+# Will merge whenever the above conditions are met, but also
+# the owner has approved or merge label was added.
+rules:
+- minApprovals:
+    OWNER: 1
+- requiredLabels:
+  - merge
+
+mergeMethod: rebase
+# Not applicable when mergeMethod is rebase
+# mergeCommitMessage: "{title} (#{number})"
+
+requiredLabels:
+- merge

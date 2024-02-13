@@ -1,0 +1,55 @@
+version: "3.8"
+services:
+  postgresdb:
+    image: postgres:15.2-alpine
+    container_name: quiz-app-postgresdb
+    environment:
+      POSTGRES_USER: quiz-app
+      POSTGRES_PASSWORD: quiz-app
+      POSTGRES_DB: quiz-app
+      POSTGRES_MULTIPLE_DATABASES: '"kratos-db"'
+    ports:
+    - 5432:5432
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  migration:
+    build:
+      context: ./api/
+      dockerfile: Dockerfile
+    restart: on-failure
+    depends_on:
+      - postgresdb
+    env_file:
+      - ./api/.env.example
+    command: migrate up
+
+  api:
+    build:
+      context: ./api/
+      dockerfile: Dockerfile
+    ports:
+      - "3300:3300"
+    restart: on-failure
+    env_file:
+      - ./api/.env.example
+    depends_on:
+      - postgresdb
+      - migration
+
+  web:
+    build:
+      context: ./app/
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    restart: on-failure
+    env_file:
+      - ./app/.env.example
+    volumes:
+      - ./app/:/usr/src/app/
+    depends_on:
+      - api
+
+volumes:
+  pgdata:
