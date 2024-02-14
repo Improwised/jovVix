@@ -190,8 +190,8 @@ func (qc *quizConfigs) Join(c *websocket.Conn) {
 	defer c.Close()
 
 	// check for middleware error
-	if c.Locals(constants.MiddlewareFail) != nil {
-		utils.WsJSONError(c, "authentication failed", c.Locals(constants.MiddlewareFail).(string))
+	if !c.Locals(constants.MiddlewarePass).(bool) {
+		fmt.Print(utils.WsJSONError(c, "authentication failed", c.Locals(constants.MiddlewareError).(string)))
 		time.Sleep(1 * time.Second)
 		return
 	}

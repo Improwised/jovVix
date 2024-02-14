@@ -56,9 +56,9 @@ const (
 
 // Custom
 const (
-	UserName             = "username"
-	UserUkey             = "users_username_ukey"
-	MiddlewareFail       = "is_middleware_fail"
-	MiddlewareFailReason = "middleware_error"
-	UnknownError         = "unknown error"
+	MiddlewarePass  = "allowed"
+	UserName        = "username"
+	UserUkey        = "users_username_ukey"
+	MiddlewareError = "middleware_error"
+	UnknownError    = "unknown error"
 )

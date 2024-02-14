@@ -33,8 +33,6 @@ import (
 //	B. not exists :- trying to get userName from query and create new_user get userID and role and set in context and cookie
 func (m *Middleware) AuthenticationAndRoleAssignment(c *fiber.Ctx) error {
 
-	c.Locals(constants.MiddlewareFail, nil)
-
 	token := c.Cookies(constants.CookieUser, "cookie not available")
 
 	if token != "cookie not available" {
@@ -42,6 +40,8 @@ func (m *Middleware) AuthenticationAndRoleAssignment(c *fiber.Ctx) error {
 	} else {
 		AuthHavingNoTokenHandler(m, c)
 	}
+
+	c.Locals("allowed", c.Locals(constants.MiddlewareError) == nil)
 
 	return c.Next()
 }
@@ -53,13 +53,13 @@ func AuthHavingTokenHandler(m *Middleware, c *fiber.Ctx, token string) {
 	if err != nil {
 		if errors.Is(err, j.ErrInvalidJWT()) || errors.Is(err, j.ErrTokenExpired()) {
 			c.Cookie(RemoveUserToken(constants.CookieUser))
-			c.Locals(constants.MiddlewareFail, constants.Unauthenticated)
+			c.Locals(constants.MiddlewareError, constants.Unauthenticated)
 			m.logger.Error("JWT error during authentication in join", zap.Error(err))
 			return
 		}
 
 		m.logger.Error("Error while checking user identity in join", zap.Error(err))
-		c.Locals(constants.MiddlewareFail, constants.ErrUnauthenticated)
+		c.Locals(constants.MiddlewareError, constants.ErrUnauthenticated)
 		return
 	}
 
@@ -69,12 +69,12 @@ func AuthHavingTokenHandler(m *Middleware, c *fiber.Ctx, token string) {
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			c.Locals(constants.MiddlewareFail, constants.InvalidCredentials)
+			c.Locals(constants.MiddlewareError, constants.InvalidCredentials)
 			m.logger.Error(fmt.Sprintf("User not found, userID %s", claims.Subject()), zap.Error(err))
 			return
 		}
 
-		c.Locals(constants.MiddlewareFail, constants.UnknownError)
+		c.Locals(constants.MiddlewareError, constants.UnknownError)
 		m.logger.Error(fmt.Sprintf("Unknown DB error, userID %s", claims.Subject()), zap.Error(err))
 		return
 	}
@@ -91,7 +91,7 @@ func AuthHavingNoTokenHandler(m *Middleware, c *fiber.Ctx) {
 	userName := c.Query(constants.UserName, "")
 
 	if userName == "" {
-		c.Locals(constants.MiddlewareFail, constants.UsernameRequired)
+		c.Locals(constants.MiddlewareError, constants.UsernameRequired)
 		m.logger.Error("Username not provided", zap.Error(fmt.Errorf(constants.UsernameRequired)))
 		return
 	}
@@ -104,7 +104,7 @@ func AuthHavingNoTokenHandler(m *Middleware, c *fiber.Ctx) {
 	userObj, err := quizController.CreateQuickUser(m.db, m.logger, userObj, true, false)
 
 	if err != nil {
-		c.Locals(constants.MiddlewareFail, err)
+		c.Locals(constants.MiddlewareError, err)
 		m.logger.Error(fmt.Sprintf("Error in register user %v", userObj), zap.Error(err))
 
 		return
@@ -112,7 +112,7 @@ func AuthHavingNoTokenHandler(m *Middleware, c *fiber.Ctx) {
 
 	err = CreateNewUserToken(c, m.config, userObj, m.logger)
 	if err != nil {
-		c.Locals(constants.MiddlewareFail, err)
+		c.Locals(constants.MiddlewareError, err)
 		m.logger.Error(fmt.Sprintf("Error in register user %v", userObj), zap.Error(err))
 		return
 	}
@@ -150,7 +150,7 @@ func CreateNewUserToken(c *fiber.Ctx, cfg config.AppConfig, user models.User, lo
 	return nil
 }
 
-// func MiddlewareFail(c *websocket.Conn, refStr string, response string, other any) error {
+// func MiddlewareError(c *websocket.Conn, refStr string, response string, other any) error {
 // 	utils.WsJSONFail(c, "Authentication", refStr, response, other)
 // 	time.Sleep(100)
 // 	return authError

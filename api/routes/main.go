@@ -46,7 +46,8 @@ func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config confi
 		// IsWebSocketUpgrade returns true if the client
 		// requested upgrade to the WebSocket protocol.
 		if websocket.IsWebSocketUpgrade(c) {
-			c.Locals("allowed", true)
+			c.Locals(constants.MiddlewarePass, true)
+			c.Locals(constants.MiddlewareError, nil)
 			return c.Next()
 		}
 		return fiber.ErrUpgradeRequired
