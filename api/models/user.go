@@ -153,3 +153,17 @@ func (model *UserModel) GetUserByEmailAndPassword(email string, password string)
 func (model *UserModel) CountUsers() (int64, error) {
 	return model.db.From(UserTable).Count()
 }
+
+func (model *UserModel) IsUniqueEmail(email string) (bool, error) {
+	query := model.db.From("users").Select(goqu.I("id")).Where(goqu.Ex{"email": email}).Limit(1)
+
+	// Execute the query
+	rows, err := query.Executor().Query()
+	if err != nil {
+		return false, err
+	}
+	defer rows.Close()
+
+	// Check if any rows were returned
+	return rows.Next(), nil
+}
