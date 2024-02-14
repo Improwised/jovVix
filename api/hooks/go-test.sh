@@ -17,7 +17,7 @@ if [ -f "go.work" ]; then
         if ls "$dir"/*.go &> /dev/null; then
             echo "Testing module in folder: $(pwd)/$dir"
             # Run lint on that folder
-            gotestsum --format pkgname -- -coverprofile=cover.out ./$dir/... "$@"
+            source ./$dir/.env.testing && gotestsum --format pkgname -- -coverprofile=cover.out ./$dir/... "$@"
         fi
     done
 else

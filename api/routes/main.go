@@ -37,8 +37,6 @@ func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config confi
 
 	app.Use(swagger.New(cfg))
 
-	// Todo: just for development, remove in production
-
 	app.Static("/assets/", "./assets")
 
 	router := app.Group("/api")

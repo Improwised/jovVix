@@ -22,6 +22,7 @@ require (
 	github.com/gofiber/adaptor/v2 v2.2.1
 	github.com/gofiber/contrib/swagger v1.1.1
 	github.com/gofiber/fiber/v2 v2.51.0
+	github.com/gorilla/websocket v1.5.1
 	github.com/joho/godotenv v1.5.1
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/lestrrat-go/jwx/v2 v2.0.11
@@ -67,8 +68,6 @@ require (
 	golang.org/x/oauth2 v0.16.0 // indirect
 	golang.org/x/sync v0.6.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
-	golang.org/x/tools v0.6.0 // indirect
-	golang.org/x/tools/cmd/cover v0.1.0-deprecated // indirect
 	google.golang.org/api v0.157.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/genproto v0.0.0-20240116215550-a9fa1716bcac // indirect

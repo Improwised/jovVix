@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"time"
@@ -29,7 +28,6 @@ func CreateQuickUser(db *goqu.Database, logger *zap.Logger, userObj models.User,
 		isUnique, err := userModel.IsUniqueEmail(userObj.Email)
 
 		if err != nil {
-			fmt.Println(err)
 			return userObj, fmt.Errorf("SomeError occurred during register user")
 		} else if isUnique {
 			return userObj, fmt.Errorf("Email already exists")
@@ -54,7 +52,7 @@ func CreateQuickUser(db *goqu.Database, logger *zap.Logger, userObj models.User,
 
 			userObj.Username = utils.GenerateNewStringHavingSuffixName(userObj.Username, 5, 12)
 
-			_, err = userSvc.RegisterUser(userObj, events.NewEventBus(logger))
+			userObj, err = userSvc.RegisterUser(userObj, events.NewEventBus(logger))
 
 			if err != nil {
 				return userObj, fmt.Errorf("SomeError during register admin with new username %s", userObj.Username)
@@ -189,9 +187,18 @@ func (*quizConfigs) Ping(c *websocket.Conn) {
 
 func (qc *quizConfigs) Join(c *websocket.Conn) {
 
+	defer c.Close()
+
+	// check for middleware error
+	if c.Locals(constants.MiddlewareFail) != nil {
+		utils.WsJSONError(c, "authentication failed", c.Locals(constants.MiddlewareFail).(string))
+		time.Sleep(1 * time.Second)
+		return
+	}
+
 	time.Sleep(1 * time.Second)
 
-	err := c.WriteMessage(websocket.TextMessage, []byte(c.Query("code")))
+	err := utils.WsJSONSuccess(c, "get current code", c.Query("code"))
 
 	if err != nil {
 		fmt.Println("Error: ", err)
@@ -199,26 +206,19 @@ func (qc *quizConfigs) Join(c *websocket.Conn) {
 
 	time.Sleep(1 * time.Second)
 
-	err = c.WriteMessage(websocket.TextMessage, []byte(c.Locals(constants.ContextUid).(string)))
+	err = utils.WsJSONSuccess(c, "get user id", map[string]string{constants.ContextUid: c.Locals(constants.ContextUid).(string)})
 	if err != nil {
 		fmt.Println("Error: ", err)
 	}
 
 	time.Sleep(1 * time.Second)
 
-	userJson, err := json.Marshal(c.Locals(constants.ContextUser))
-	if err != nil {
-		c.Close()
-	}
-	err = c.WriteMessage(websocket.TextMessage, userJson)
+	err = utils.WsJSONSuccess(c, "get user context", map[string]any{constants.ContextUser: c.Locals(constants.ContextUser)})
 
 	if err != nil {
 		fmt.Println("Error: ", err)
 	}
 
-	if err != nil {
-		fmt.Print(err)
-	}
 	c.Locals(constants.ContextUid)
 
 }

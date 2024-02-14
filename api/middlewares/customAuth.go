@@ -3,6 +3,7 @@ package middlewares
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -32,86 +33,89 @@ import (
 //	B. not exists :- trying to get userName from query and create new_user get userID and role and set in context and cookie
 func (m *Middleware) AuthenticationAndRoleAssignment(c *fiber.Ctx) error {
 
-	if m.config.Kratos.IsEnabled {
-		sessionID := c.Cookies("ory_kratos_session")
-		if sessionID == "" {
-			return utils.JSONFail(c, http.StatusUnauthorized, constants.Unauthenticated)
-		}
-		c.Locals(constants.KratosID, sessionID)
-		return c.Next()
-	}
+	c.Locals(constants.MiddlewareFail, nil)
 
-	token := c.Cookies(constants.CookieUser, "")
-	var err error
+	token := c.Cookies(constants.CookieUser, "cookie not available")
 
-	if token != "" {
-		err = AuthHavingTokenHandler(m, c, token)
+	if token != "cookie not available" {
+		AuthHavingTokenHandler(m, c, token)
 	} else {
-		err = AuthHavingNotTokenHandler(m, c)
-	}
-
-	if err != nil {
-		return err
+		AuthHavingNoTokenHandler(m, c)
 	}
 
 	return c.Next()
 }
 
-func AuthHavingTokenHandler(m *Middleware, c *fiber.Ctx, token string) error {
+func AuthHavingTokenHandler(m *Middleware, c *fiber.Ctx, token string) {
 	// JWK verification
 	claims, err := jwt.ParseToken(m.config, token)
 
 	if err != nil {
 		if errors.Is(err, j.ErrInvalidJWT()) || errors.Is(err, j.ErrTokenExpired()) {
-			return utils.JSONFail(c, http.StatusUnauthorized, constants.Unauthenticated)
+			c.Cookie(RemoveUserToken(constants.CookieUser))
+			c.Locals(constants.MiddlewareFail, constants.Unauthenticated)
+			m.logger.Error("JWT error during authentication in join", zap.Error(err))
+			return
 		}
 
-		m.logger.Error("error while checking user identity", zap.Error(err))
-		return utils.JSONError(c, http.StatusInternalServerError, constants.ErrUnauthenticated)
+		m.logger.Error("Error while checking user identity in join", zap.Error(err))
+		c.Locals(constants.MiddlewareFail, constants.ErrUnauthenticated)
+		return
 	}
+
 	c.Locals(constants.ContextUid, claims.Subject())
 
-	userObj, err := m.userService.GetUser(c.Locals(constants.ContextUid).(string))
+	userObj, err := m.userService.GetUser(claims.Subject())
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return utils.JSONFail(c, http.StatusUnauthorized, constants.InvalidCredentials)
+			c.Locals(constants.MiddlewareFail, constants.InvalidCredentials)
+			m.logger.Error(fmt.Sprintf("User not found, userID %s", claims.Subject()), zap.Error(err))
+			return
 		}
-		return utils.JSONFail(c, http.StatusInternalServerError, err)
+
+		c.Locals(constants.MiddlewareFail, constants.UnknownError)
+		m.logger.Error(fmt.Sprintf("Unknown DB error, userID %s", claims.Subject()), zap.Error(err))
+		return
 	}
 
 	// Set user config as current session
 
-	c.Cookie(CreateStrictCookie(constants.CookieUser, userObj.Username))
+	c.Cookie(CreateStrictCookie(constants.CookieUser, token))
 	c.Locals(constants.ContextUid, userObj.ID)
 	c.Locals(constants.ContextUser, userObj)
-
-	return nil
 }
 
-func AuthHavingNotTokenHandler(m *Middleware, c *fiber.Ctx) error {
+func AuthHavingNoTokenHandler(m *Middleware, c *fiber.Ctx) {
 	// get userName from query
 	userName := c.Query(constants.UserName, "")
 
 	if userName == "" {
-		return utils.JSONFail(c, http.StatusBadRequest, constants.UsernameRequired)
+		c.Locals(constants.MiddlewareFail, constants.UsernameRequired)
+		m.logger.Error("Username not provided", zap.Error(fmt.Errorf(constants.UsernameRequired)))
+		return
 	}
 
 	userObj := models.User{
 		Username: userName,
 		Roles:    "user",
 	}
+
 	userObj, err := quizController.CreateQuickUser(m.db, m.logger, userObj, true, false)
 
 	if err != nil {
-		return utils.JSONFail(c, http.StatusInternalServerError, err)
+		c.Locals(constants.MiddlewareFail, err)
+		m.logger.Error(fmt.Sprintf("Error in register user %v", userObj), zap.Error(err))
+
+		return
 	}
 
-	c.Cookie(CreateStrictCookie(constants.CookieUser, userObj.Username))
-	c.Locals(constants.ContextUid, userObj.ID)
-	c.Locals(constants.ContextUser, userObj)
-
-	return nil
+	err = CreateNewUserToken(c, m.config, userObj, m.logger)
+	if err != nil {
+		c.Locals(constants.MiddlewareFail, err)
+		m.logger.Error(fmt.Sprintf("Error in register user %v", userObj), zap.Error(err))
+		return
+	}
 }
 
 func CreateStrictCookie(key, value string) *fiber.Cookie {
@@ -126,6 +130,14 @@ func CreateStrictCookie(key, value string) *fiber.Cookie {
 	return cookie
 }
 
+func RemoveUserToken(key string) *fiber.Cookie {
+	cookie := new(fiber.Cookie)
+	cookie.Name = key
+	cookie.Value = "" // Or set a generic value like "deleted"
+	cookie.Expires = time.Now().Add(-1 * time.Second)
+	return cookie
+}
+
 func CreateNewUserToken(c *fiber.Ctx, cfg config.AppConfig, user models.User, logger *zap.Logger) error {
 	token, err := jwt.CreateToken(cfg, user.ID, time.Now().Add(time.Hour*2))
 	if err != nil {
@@ -137,3 +149,9 @@ func CreateNewUserToken(c *fiber.Ctx, cfg config.AppConfig, user models.User, lo
 	c.Locals(constants.ContextUser, user)
 	return nil
 }
+
+// func MiddlewareFail(c *websocket.Conn, refStr string, response string, other any) error {
+// 	utils.WsJSONFail(c, "Authentication", refStr, response, other)
+// 	time.Sleep(100)
+// 	return authError
+// }
