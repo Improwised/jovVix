@@ -33,7 +33,7 @@ func (userSvc *UserService) GetUser(userId string) (models.User, error) {
 }
 
 // Authenticate verify identity using email, and password.
-// On successful validtion it'll return the user
+// On successful validation it'll return the user
 func (userSvc *UserService) Authenticate(email, password string) (models.User, error) {
 	return userSvc.userModel.GetUserByEmailAndPassword(email, password)
 }
