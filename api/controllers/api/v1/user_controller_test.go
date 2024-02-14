@@ -29,7 +29,7 @@ func TestCreateUser(t *testing.T) {
 			FirstName: "someone",
 			LastName:  "someone",
 			Password:  "someone@1234",
-			Roles:     "admin",
+			Roles:     "player",
 		}
 		res, err := client.
 			R().

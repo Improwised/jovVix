@@ -51,3 +51,8 @@ const (
 const (
 	EventUserRegistered = "event:userRegistered"
 )
+
+// Custom
+const (
+	UserUkey = "users_username_ukey"
+)

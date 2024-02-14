@@ -2,7 +2,7 @@ version: "3.8"
 services:
   db:
     image: postgres:15.2-alpine
-    container_name: quiz-app-postgresdb
+    container_name: quiz-app-postgresdb-saperate
     environment:
       POSTGRES_USER: quiz-app
       POSTGRES_PASSWORD: quiz-app
@@ -12,7 +12,7 @@ services:
     - 5432:5432
     volumes:
       - ./pkg/kratos/kratos-pg-init-script:/docker-entrypoint-initdb.d
-      - pgdata:/var/lib/postgresql/data
+      - pgdata1:/var/lib/postgresql/data
 
   adminer:
     image: adminer
@@ -56,4 +56,4 @@ services:
   #     - "./pkg/kratos:/etc/config/kratos"
 
 volumes:
-  pgdata:
+  pgdata1:
