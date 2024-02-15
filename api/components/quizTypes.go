@@ -1,12 +1,11 @@
 package components
 
 import (
-	"crypto/rand"
 	"errors"
-	"math/big"
 	"sync"
 	"time"
 
+	"github.com/Improwised/quizz-app/api/utils"
 	"github.com/gofiber/contrib/websocket"
 )
 
@@ -75,13 +74,13 @@ func (sm *SessionManager) GetCode() (int, string) {
 	sm.mutex.Lock()
 	defer sm.mutex.Unlock()
 
-	code := generateRandomString(8)
+	code := utils.GenerateRandomString(8)
 
 	for {
 		if _, is_available := sm.sessions[code]; !is_available {
 			break
 		}
-		code = generateRandomString(8)
+		code = utils.GenerateRandomString(8)
 	}
 
 	sm.series += 1
@@ -92,22 +91,6 @@ func (sm *SessionManager) GetCode() (int, string) {
 func generateID() int64 {
 	// Replace with your actual ID generation logic (e.g., using a unique ID generator library)
 	return int64(time.Now().UnixNano())
-}
-
-func generateRandomString(length int) string {
-	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-	charsetLen := big.NewInt(int64(len(charset)))
-	result := make([]byte, length)
-
-	for i := 0; i < length; i++ {
-		randomIndex, err := rand.Int(rand.Reader, charsetLen)
-		if err != nil {
-			panic(err) // Handle error
-		}
-		result[i] = charset[randomIndex.Int64()]
-	}
-
-	return string(result)
 }
 
 func (sm *SessionManager) AddSession(quizID int64, name string, admin []UserConfig, start time.Time, maxDuration time.Duration) error {

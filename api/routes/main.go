@@ -152,7 +152,7 @@ func quizControllerV1(v1 fiber.Router, db *goqu.Database, logger *zap.Logger, mi
 
 	v1.Get("/socket/ping", websocket.New(quizConfigs.Ping))
 
-	v1.Get("/socket/join", middleware.AuthenticationAndRoleAssignment, websocket.New(quizConfigs.Join))
+	v1.Get("/socket/join", middleware.CustomAuthenticated, websocket.New(quizConfigs.Join))
 
 	return nil
 }

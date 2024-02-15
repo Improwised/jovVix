@@ -31,7 +31,7 @@ import (
 // path 2. If user not set in cookie
 //
 //	B. not exists :- trying to get userName from query and create new_user get userID and role and set in context and cookie
-func (m *Middleware) AuthenticationAndRoleAssignment(c *fiber.Ctx) error {
+func (m *Middleware) CustomAuthenticated(c *fiber.Ctx) error {
 
 	token := c.Cookies(constants.CookieUser, "cookie not available")
 
@@ -78,8 +78,6 @@ func AuthHavingTokenHandler(m *Middleware, c *fiber.Ctx, token string) {
 		m.logger.Error(fmt.Sprintf("Unknown DB error, userID %s", claims.Subject()), zap.Error(err))
 		return
 	}
-
-	// Set user config as current session
 
 	c.Cookie(CreateStrictCookie(constants.CookieUser, token))
 	c.Locals(constants.ContextUid, userObj.ID)
