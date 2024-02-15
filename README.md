@@ -30,6 +30,10 @@ To run this project, execute the following command from the root of the project:
 
 ## Commands
 
+- Commands are quick way to do some occasional or manual task.
+- You can get more details from [/api/README.md](https://github.com/Improwised/quizz-app/blob/develop/api/README.md) file 
+- Use `make up` command to run database migration before running this command (no need to do this time)
+
 ### Create
 
 - This command is used for the creation of a sub-command.
