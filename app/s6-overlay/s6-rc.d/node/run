@@ -1,0 +1,3 @@
+#!/command/with-contenv sh
+cd /app/
+exec node .output/server/index.mjs;

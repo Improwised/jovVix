@@ -7,30 +7,21 @@ COPY ./package*.json ./
 
 # Install dependencies; remove existing node_modules, install dependencies at a time
 RUN npm install
-
-# Add extra tools below 3 lines for production deployment no need for locally
+ARG S6_OVERLAY_VERSION="3.1.6.2"
+ARG S6_OVERLAY_ARCH="x86_64"
+ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-noarch.tar.xz /tmp
+ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-${S6_OVERLAY_ARCH}.tar.xz /tmp
+RUN tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz && \
+  tar -C / -Jxpf /tmp/s6-overlay-${S6_OVERLAY_ARCH}.tar.xz && \
+  apk add --no-cache nginx curl && \
+  rm -rf /tmp/*
 RUN apk add --no-cache nginx supervisor wget curl
-
-# Nginx puts pid files
 RUN mkdir -p /run/nginx
-
-# Copy nginx config file
 COPY ./docker/nginx.conf /etc/nginx/nginx.conf
-
-# Copy everything
+COPY ./s6-overlay /etc/s6-overlay
+COPY .env.example .env
 COPY . ./
-
-# Rename env file based on Mode
-RUN cp .env.example .env
-
-# Build project
 RUN npm run build
-
-# Run on port 3000
-EXPOSE 3000
-
-# Start nuxt app use if ngingx and supervisor no required
-# CMD ["/bin/sh","-c","npm run start"]
-
-# Start supervisior a
-CMD /usr/bin/supervisord -c ./docker/supervisiord.conf
+EXPOSE 5000
+ENTRYPOINT ["/bin/sh", "-c"]
+CMD ["export $(xargs < .env) && /init"]
