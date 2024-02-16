@@ -57,6 +57,7 @@ func (model *UserModel) GetById(id string) (User, error) {
 		"first_name",
 		"last_name",
 		"email",
+		"username",
 	).ScanStruct(&user)
 
 	if err != nil {
@@ -165,5 +166,5 @@ func (model *UserModel) IsUniqueEmail(email string) (bool, error) {
 	defer rows.Close()
 
 	// Check if any rows were returned
-	return rows.Next(), nil
+	return !rows.Next(), err
 }

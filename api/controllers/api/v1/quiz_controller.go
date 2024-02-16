@@ -15,6 +15,7 @@ import (
 
 func CreateUser(db *goqu.Database, logger *zap.Logger, userObj models.User, retrying bool) (models.User, error) {
 	userModel, err := models.InitUserModel(db)
+
 	if err != nil {
 		return userObj, err
 	}
@@ -22,37 +23,42 @@ func CreateUser(db *goqu.Database, logger *zap.Logger, userObj models.User, retr
 	isUnique, err := userModel.IsUniqueEmail(userObj.Email)
 
 	if err != nil {
-		fmt.Println(err)
-		return userObj, fmt.Errorf("SomeError occurred during register user")
-	} else if isUnique {
-		return userObj, fmt.Errorf("Unique key violation on Email")
+		return userObj, fmt.Errorf("someError occurred during register user %v", err)
+	}
+
+	if !isUnique {
+		return userObj, fmt.Errorf("email is already registered")
 	}
 
 	userSvc := services.NewUserService(&userModel)
 
-	userObj, err = userSvc.RegisterUser(userObj, events.NewEventBus(logger))
-
+	copyUserObj, err := userSvc.RegisterUser(userObj, events.NewEventBus(logger))
+	
 	if err != nil {
-
+		
 		// Check is there unique-key error
 		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" {
-
+			
 			if !(retrying && pqErr.Constraint == constants.UserUkey) {
-				return userObj, fmt.Errorf("Unique key violation on %v", pqErr.Constraint)
+				return userObj, fmt.Errorf("username (%s) already registered", userObj.Username)
 			}
+			
+			copyUserObj.Password = userObj.Password
 
-			// force flag is set then it tries agin with manipulated username trying to make new admin-username
+			copyUserObj.Username = utils.GenerateNewStringHavingSuffixName(userObj.Username, 5, 12)
 
-			userObj.Username = utils.GenerateNewStringHavingSuffixName(userObj.Username, 5, 12)
-
-			_, err = userSvc.RegisterUser(userObj, events.NewEventBus(logger))
+			copyUserObj, err = userSvc.RegisterUser(copyUserObj, events.NewEventBus(logger))
 
 			if err != nil {
 				return userObj, fmt.Errorf("SomeError during register admin with new username %s", userObj.Username)
 			}
+
 		}
 
 	}
+
+	userObj.ID = copyUserObj.ID
+	userObj.Username = copyUserObj.Username
 
 	return userObj, err
 }
