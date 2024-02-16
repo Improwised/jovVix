@@ -4,13 +4,19 @@ on:
     branches:
       - main
       - develop
+    paths:
+      - "api/**"
+      - ".github/workflows/build-push-api.yaml"
+      - "!**.md"
+
 jobs:
   build:
     name: Build and Push Image
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        timeout-minutes: 5
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -32,7 +38,7 @@ jobs:
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v5
         with:
-          context: ./app
+          context: ./api
           push: true
-          tags: ${{ secrets.AWS_ECR_REGISTRY }}/${{ vars.AWS_ECR_REPOSITORY }}:${{ steps.tag.outputs.tag }}
+          tags: ${{ secrets.AWS_ECR_REGISTRY }}/${{ vars.AWS_ECR_REPOSITORY_API }}:${{ steps.tag.outputs.tag }}
         timeout-minutes: 5
