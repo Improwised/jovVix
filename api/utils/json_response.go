@@ -2,6 +2,8 @@ package utils
 
 import (
 	"clevergo.tech/jsend"
+	"github.com/Improwised/quizz-app/api/pkg/structs"
+	"github.com/gofiber/contrib/websocket"
 	fiber "github.com/gofiber/fiber/v2"
 )
 
@@ -20,4 +22,21 @@ func JSONFail(c *fiber.Ctx, statusCode int, data interface{}) error {
 // JSONError can used for 5xx status code response
 func JSONError(c *fiber.Ctx, statusCode int, err string) error {
 	return c.Status(statusCode).JSON(jsend.NewError(err, statusCode, nil))
+}
+
+// WsJSONSuccess is a generic success output writer
+func WsJSONSuccess(c *websocket.Conn, eventName string, data interface{}) error {
+	return c.WriteJSON(jsend.New(structs.SocketResponseFormat{EventName: eventName, Data: data}))
+}
+
+// WsJSONFail is a generic fail output writer
+// WsJSONFail can used for 4xx status code response
+func WsJSONFail(c *websocket.Conn, eventName string, data interface{}) error {
+	return c.WriteJSON(jsend.NewFail(structs.SocketResponseFormat{EventName: eventName, Data: data}))
+}
+
+// WsJSONError is a generic error output writer
+// WsJSONError can used for 5xx status code response
+func WsJSONError(c *websocket.Conn, eventName string, data interface{}) error {
+	return c.WriteJSON(jsend.NewError("Error", -1, structs.SocketResponseFormat{EventName: eventName, Data: data}))
 }

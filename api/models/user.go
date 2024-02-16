@@ -168,3 +168,23 @@ func (model *UserModel) IsUniqueEmail(email string) (bool, error) {
 	// Check if any rows were returned
 	return !rows.Next(), err
 }
+
+func (model *UserModel) GetUserRole(userID string) (string, error) {
+	var role string = "not found"
+
+	found, err := model.db.From(UserTable).Where(goqu.Ex{
+		"id": userID,
+	}).Select(
+		"roles",
+	).ScanStruct(&role)
+
+	if err != nil {
+		return role, err
+	}
+
+	if !found {
+		return role, sql.ErrNoRows
+	}
+
+	return role, err
+}

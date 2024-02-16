@@ -74,7 +74,7 @@ func AdminCmd(cfg config.AppConfig, logger *zap.Logger) *cobra.Command {
 				return err
 			}
 
-			adminObj, err = quizController.CreateUser(db, logger, adminObj, force)
+			adminObj, err = quizController.CreateQuickUser(db, logger, adminObj, force, true)
 
 			if err != nil {
 				return err

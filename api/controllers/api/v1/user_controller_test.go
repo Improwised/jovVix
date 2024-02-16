@@ -30,6 +30,7 @@ func TestCreateUser(t *testing.T) {
 			LastName:  "someone",
 			Password:  "someone@1234",
 			Roles:     "player",
+			UserName:  "someoneLikeMe",
 		}
 		res, err := client.
 			R().
@@ -38,7 +39,7 @@ func TestCreateUser(t *testing.T) {
 			Post("/api/v1/users")
 
 		assert.Nil(t, err)
-		assert.Equal(t, http.StatusCreated, res.StatusCode(), res, err)
+		assert.Equal(t, http.StatusCreated, res.StatusCode())
 	})
 
 	t.Run("login user with invalid credentials", func(t *testing.T) {

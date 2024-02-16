@@ -45,6 +45,7 @@ func TestUserService(t *testing.T) {
 			Email:     email,
 			Password:  "sdhd^72AAAyuZM",
 			Roles:     "admin",
+			Username:  "different",
 		}
 
 		resp, err := userSvc.RegisterUser(data, events)
