@@ -5,7 +5,6 @@ import (
 	"log"
 	"time"
 
-	"github.com/Improwised/quizz-app/api/components"
 	"github.com/Improwised/quizz-app/api/config"
 	"github.com/Improwised/quizz-app/api/constants"
 	"github.com/Improwised/quizz-app/api/models"
@@ -20,6 +19,7 @@ import (
 
 func CreateQuickUser(db *goqu.Database, logger *zap.Logger, userObj models.User, retrying bool, emailValidation bool) (models.User, error) {
 	userModel, err := models.InitUserModel(db)
+
 	if err != nil {
 		return userObj, err
 	}
@@ -28,72 +28,60 @@ func CreateQuickUser(db *goqu.Database, logger *zap.Logger, userObj models.User,
 		isUnique, err := userModel.IsUniqueEmail(userObj.Email)
 
 		if err != nil {
-			return userObj, fmt.Errorf("SomeError occurred during register user")
-		} else if isUnique {
-			return userObj, fmt.Errorf("Email already exists")
+			return userObj, fmt.Errorf("someError occurred during register user %v", err)
 		}
 
+		if !isUnique {
+			return userObj, fmt.Errorf("email is already registered")
+		}
 	}
 
 	userSvc := services.NewUserService(&userModel)
 
-	userObj, err = userSvc.RegisterUser(userObj, events.NewEventBus(logger))
+	copyUserObj, err := userSvc.RegisterUser(userObj, events.NewEventBus(logger))
 
 	if err != nil {
 
-		// Check is there unique-key error
 		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" {
 
 			if !(retrying && pqErr.Constraint == constants.UserUkey) {
-				return userObj, fmt.Errorf("Username already exists")
+				return userObj, fmt.Errorf("username (%s) already registered", userObj.Username)
 			}
 
-			// force flag is set then it tries agin with manipulated username trying to make new admin-username
+			copyUserObj.Password = userObj.Password
 
-			userObj.Username = utils.GenerateNewStringHavingSuffixName(userObj.Username, 5, 12)
+			copyUserObj.Username = utils.GenerateNewStringHavingSuffixName(userObj.Username, 5, 12)
 
-			userObj, err = userSvc.RegisterUser(userObj, events.NewEventBus(logger))
+			copyUserObj, err = userSvc.RegisterUser(copyUserObj, events.NewEventBus(logger))
 
 			if err != nil {
 				return userObj, fmt.Errorf("SomeError during register admin with new username %s", userObj.Username)
 			}
+
 		}
 
 	}
+
+	userObj.ID = copyUserObj.ID
+	userObj.Username = copyUserObj.Username
 
 	return userObj, err
 }
 
 type quizConfigs struct {
-	manager   *components.QuizGameManager
 	db        *models.Quiz
 	userCtrl  *UserController
 	appConfig *config.AppConfig
 }
 
-func InitQuizController(db *goqu.Database, manager *components.QuizGameManager, userCtrl *UserController, appConfig *config.AppConfig) (*quizConfigs, error) {
-	return &quizConfigs{manager, models.NewQuiz(db), userCtrl, appConfig}, nil
-}
-
-type adminManager interface {
-	Join()
-	START()
-	SKIP()
-	Next()
-}
-
-type userManager interface {
+func InitQuizController(db *goqu.Database, userCtrl *UserController, appConfig *config.AppConfig) (*quizConfigs, error) {
+	return &quizConfigs{models.NewQuiz(db), userCtrl, appConfig}, nil
 }
 
 type ping struct {
 	payloadType int
 	payload     []byte
 	is_close    bool
-}
-
-type mainData struct {
-	TypeInfo int    `json:"type_info"`
-	Data     string `json:"data"`
 }
 
 func pingResponse(pingRequest ping, c *websocket.Conn) {

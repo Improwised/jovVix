@@ -6,7 +6,6 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/Improwised/quizz-app/api/components"
 	"github.com/Improwised/quizz-app/api/config"
 	"github.com/Improwised/quizz-app/api/constants"
 	controller "github.com/Improwised/quizz-app/api/controllers/api/v1"
@@ -81,9 +80,7 @@ func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config confi
 		return err
 	}
 
-	manager := components.InitQuizGameManager()
-
-	err = quizControllerV1(v1, goqu, logger, middlewares, manager, events, pub, config)
+	err = quizControllerV1(v1, goqu, logger, middlewares, events, pub, config)
 	if err != nil {
 		return err
 	}
@@ -140,12 +137,12 @@ func metricsController(app *fiber.App, db *goqu.Database, logger *zap.Logger, pM
 	return nil
 }
 
-func quizControllerV1(v1 fiber.Router, db *goqu.Database, logger *zap.Logger, middleware middlewares.Middleware, quizGameManager *components.QuizGameManager, events *events.Events, pub *watermill.WatermillPublisher, config config.AppConfig) error {
+func quizControllerV1(v1 fiber.Router, db *goqu.Database, logger *zap.Logger, middleware middlewares.Middleware, events *events.Events, pub *watermill.WatermillPublisher, config config.AppConfig) error {
 	userController, err := controller.NewUserController(db, logger, events, pub)
 	if err != nil {
 		return err
 	}
-	quizConfigs, err := controller.InitQuizController(db, quizGameManager, userController, &config)
+	quizConfigs, err := controller.InitQuizController(db, userController, &config)
 	if err != nil {
 		return nil
 	}

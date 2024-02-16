@@ -166,7 +166,7 @@ func (model *UserModel) IsUniqueEmail(email string) (bool, error) {
 	defer rows.Close()
 
 	// Check if any rows were returned
-	return rows.Next(), nil
+	return !rows.Next(), err
 }
 
 func (model *UserModel) GetUserRole(userID string) (string, error) {
