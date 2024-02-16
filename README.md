@@ -42,7 +42,7 @@ cd ./api && go get
 cd ./app && npm install 
 ~~~
 
-4. change .env.local to .env and change necessary configuration. .env file is already in .gitignore so it you need to add some new key-val, you need to update .env.example as well.
+4. Change .env.local to .env and update necessary configurations. '.env' file is already in .gitignore. If you need to add some new key-value pairs, you need to update .env.example as well.
 
 5. For hot-reload functionality in Golang, we will use the [air](https://github.com/cosmtrek/air) package.
    - Install it as mentioned in the repository and add the air library to your system's PATH for global access. Add the path of the bin ($GOPATH/bin or $HOME/go/bin) folder if it doesn't exist.
@@ -52,21 +52,21 @@ cd ./app && npm install
 cd api && air
 ~~~
 
-6. We use Nuxt3 in our project, it's development server is provide hot reload by default.
-    - so run the following command to start nuxt3 server
+6. We use Nuxt3 in our project, its development server provides hot reload by default.
+    - Run the following command to start nuxt3 server
 
 ~~~
 cd app && npm run dev
 ~~~
 
-6. [Hooks](https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks) are triggers that run based on some event. We will use these hooks in our project for various checks like spell-checking, linting, and testing.
+6. [Hooks](https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks) are triggers that are executed based on specific events. We will use these hooks in our project for various checks like spell-checking, linting, and testing.
    - We will use the [Python virtual environment](https://docs.python.org/3/library/venv.html) to create a virtual environment.
 
 ~~~
 python -m venv venv
 source ./venv/bin/activate
 ~~~
-   > Note: You can ignore this step if you want to install it directly on your system. If you create a venv, make sure to put it into your .gitignore.
+   > Note: You can ignore this step if you want to install it directly on your system. If you create a virtual environment, ensure to add it to your .gitignore file..
 
    - We will use the Python library [pre-commit](https://pre-commit.com/) to handle these hooks. Hooks are associated with Git, and the pre-commit hook is activated when you have already staged your changes with `git add ...` and are about to commit. You can run it manually by typing `pre-commit` into the terminal.
 
@@ -78,7 +78,7 @@ git add README.md
 pre-commit
 ~~~
 
-   - Our Node project is configured with Node.js and [husky](https://typicode.github.io/husky/get-started.html). In that case, all configurations are written in package.json itself.
+   - Our Node project is configured with Node.js and [husky](https://typicode.github.io/husky/get-started.html). In that case, all configurations are written within the package.json file itself..
 
 
 ## Commands
