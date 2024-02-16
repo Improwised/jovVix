@@ -34,5 +34,5 @@ jobs:
         with:
           context: ./app
           push: true
-          tags: ${{ secrets.AWS_ECR_REGISTRY }}/${{ vars.AWS_ECR_REPOSITORY }}:${{ steps.tag.outputs.tag }}
+          tags: ${{ secrets.AWS_ECR_REGISTRY }}/${{ vars.AWS_ECR_REPOSITORY_APP }}:${{ steps.tag.outputs.tag }}
         timeout-minutes: 5
