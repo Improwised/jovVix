@@ -4,6 +4,10 @@ on:
     branches:
       - main
       - develop
+    paths:
+      - "app/**"
+      - ".github/workflows/build-push-app.yaml"
+      - "!**.md"
 jobs:
   build:
     name: Build and Push Image
