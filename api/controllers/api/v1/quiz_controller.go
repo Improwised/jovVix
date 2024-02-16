@@ -69,13 +69,13 @@ func CreateQuickUser(db *goqu.Database, logger *zap.Logger, userObj models.User,
 }
 
 type quizConfigs struct {
-	db        *models.Quiz
+	db        *models.QuizModel
 	userCtrl  *UserController
 	appConfig *config.AppConfig
 }
 
 func InitQuizController(db *goqu.Database, userCtrl *UserController, appConfig *config.AppConfig) (*quizConfigs, error) {
-	return &quizConfigs{models.NewQuiz(db), userCtrl, appConfig}, nil
+	return &quizConfigs{models.InitQuizModel(db), userCtrl, appConfig}, nil
 }
 
 type ping struct {
