@@ -5,6 +5,9 @@ export default defineNuxtConfig({
       base_url: process.env.BASE_URL,
     },
   },
+  devServer: {
+    port: 3000,
+  },
   app: {
     head: {
       title: "Nuxt3",
