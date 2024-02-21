@@ -3,6 +3,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       base_url: process.env.BASE_URL,
+      api_url: process.env.API_URL,
     },
   },
   app: {
@@ -16,11 +17,11 @@ export default defineNuxtConfig({
         //This is just for example how to add js
         //you can  include js  by this method direact include or via import individual method as per below link
         //https://github.com/Debonex/samples/blob/master/nuxt3-bootstrap5/app.vue
-        { src: "https://awesome-lib.js" },
+        { src: "" },
       ],
       link: [
         //This for just example how to add css
-        { rel: "stylesheet", href: "https://awesome-lib.css" },
+        { rel: "stylesheet", href: "" },
       ],
     },
   },
@@ -39,5 +40,9 @@ export default defineNuxtConfig({
     define: {
       "process.env.DEBUG": false,
     },
+  },
+
+  build: {
+    transpile: ["vue-toastification"],
   },
 });

@@ -4,6 +4,10 @@ Description of the quizz app.
 
 ## Table of Contents
 
+- [System Information](#system-information)
+    - [Roles](#roles)
+- [Features](#features)
+    - [Login](#login)
 - [Quick installation and run](#installation)
     - [Prerequisite](#prerequisite)
     - [Run the Project](#run-the-project)
@@ -11,6 +15,29 @@ Description of the quizz app.
 - [Commands](#commands)
     1. [Create](#create)
         - [Admin](#admin)
+
+## System Information
+
+This section provides an understanding of the architecture of the application.
+
+### Roles
+
+- Currently, our system has two roles:
+    1. Admin
+    2. User
+- Currently, our system only provides a way to create an admin user via the command [Admin](#admin).
+- Currently, we cannot create a user.
+
+## Features
+
+### Login
+
+| Subject | Details |
+| ------------- |:-------------:|
+| Description | The login page accepts an email and password. |
+| Route | /account/login |
+| Roles | Admin, User |
+
 
 ## Quick installation and run
 
@@ -38,8 +65,8 @@ To run this project, execute the following command from the root of the project:
 3. Run the following commands to install necessary packages. (Assuming you are in the root of the project)
 
 ~~~
-cd ./api && go get 
-cd ./app && npm install 
+cd ./api && go get
+cd ./app && npm install
 ~~~
 
 4. Change .env.local to .env and update necessary configurations. '.env' file is already in .gitignore. If you need to add some new key-value pairs, you need to update .env.example as well.
@@ -84,7 +111,7 @@ pre-commit
 ## Commands
 
 - Commands are quick way to do some occasional or manual task.
-- You can get more details from [/api/README.md](https://github.com/Improwised/quizz-app/blob/develop/api/README.md) file 
+- You can get more details from [/api/README.md](https://github.com/Improwised/quizz-app/blob/develop/api/README.md) file
 - commands are made with [cobra library](https://pkg.go.dev/github.com/spf13/cobra) which written in go.
 - change .env.example to .env if you haven't already.
 - to run command, first go to **/api** folder (which have go.mod file, so you can run `go run file.go`).
@@ -111,7 +138,7 @@ Here is the list of sub-commands which supported by **create** command
 - Create admin user
 
 **command**: `go run . create admin <username> <email> <first-name> <last-name> <-f>`
-explain: 
+explain:
 ```
 # examples
 go run . create admin adminxyz123 adminxyz@gmail.com admin xyz -f
@@ -124,5 +151,5 @@ go run . create admin adminxyz123 adminxyz@gmail.com admin xyz -f
 
 # flags
 - force: bool, default-true
-    - It will make your given username unique by modifying last some characters. 
+    - It will make your given username unique by modifying last some characters.
 ```
