@@ -29,7 +29,7 @@ func InitMetricsController(db *goqu.Database, logger *zap.Logger, pMetrics *pMet
 }
 
 // Prometheus metrics endpoint
-// swagger:route GET /metrics Metrics ReqMetrics
+// swagger:route GET /api/v1/metrics Metrics ReqMetrics
 //
 //	Prometheus metrics endpoint
 //

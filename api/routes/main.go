@@ -80,12 +80,12 @@ func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config confi
 		return err
 	}
 
-	err = healthCheckController(router, goqu, logger)
+	err = healthCheckController(v1, goqu, logger)
 	if err != nil {
 		return err
 	}
 
-	err = metricsController(router, goqu, logger, pMetrics)
+	err = metricsController(v1, goqu, logger, pMetrics)
 	if err != nil {
 		return err
 	}

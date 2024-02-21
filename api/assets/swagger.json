@@ -6,17 +6,17 @@
     "application/json"
   ],
   "schemes": [
-    "http"
+    "https"
   ],
   "swagger": "2.0",
   "info": {
-    "title": "Quiz-app",
+    "title": "Golang API.",
     "version": "0.0.1-alpha"
   },
-  "host": "localhost:3300",
+  "host": "localhost",
   "basePath": "/api/v1",
   "paths": {
-    "/healthz": {
+    "/api/v1/healthz": {
       "get": {
         "description": "Overall health check",
         "produces": [
@@ -37,7 +37,7 @@
         }
       }
     },
-    "/healthz/db": {
+    "/api/v1/healthz/db": {
       "get": {
         "description": "Database health check",
         "produces": [
@@ -56,6 +56,19 @@
             "$ref": "#/responses/GenericResError"
           }
         }
+      }
+    },
+    "/api/v1/metrics": {
+      "get": {
+        "description": "Prometheus metrics endpoint",
+        "produces": [
+          "text/plain"
+        ],
+        "tags": [
+          "Metrics"
+        ],
+        "summary": "Prometheus metrics endpoint",
+        "operationId": "ReqMetrics"
       }
     },
     "/kratos/auth": {
@@ -130,19 +143,6 @@
             "$ref": "#/responses/GenericResError"
           }
         }
-      }
-    },
-    "/metrics": {
-      "get": {
-        "description": "Prometheus metrics endpoint",
-        "produces": [
-          "text/plain"
-        ],
-        "tags": [
-          "Metrics"
-        ],
-        "summary": "Prometheus metrics endpoint",
-        "operationId": "ReqMetrics"
       }
     },
     "/users": {
