@@ -157,7 +157,7 @@
         "tags": [
           "Users"
         ],
-        "summary": "Register s user.",
+        "summary": "Register a user.",
         "operationId": "RequestCreateUser",
         "parameters": [
           {
@@ -186,6 +186,10 @@
                 "roles": {
                   "type": "string",
                   "x-go-name": "Roles"
+                },
+                "username": {
+                  "type": "string",
+                  "x-go-name": "UserName"
                 }
               }
             }
@@ -414,6 +418,10 @@
               "updated_at": {
                 "type": "string",
                 "x-go-name": "UpdatedAt"
+              },
+              "username": {
+                "type": "string",
+                "x-go-name": "Username"
               }
             },
             "x-go-name": "Data"
@@ -467,6 +475,10 @@
               "updated_at": {
                 "type": "string",
                 "x-go-name": "UpdatedAt"
+              },
+              "username": {
+                "type": "string",
+                "x-go-name": "Username"
               }
             },
             "x-go-name": "Data"
@@ -520,6 +532,10 @@
               "updated_at": {
                 "type": "string",
                 "x-go-name": "UpdatedAt"
+              },
+              "username": {
+                "type": "string",
+                "x-go-name": "Username"
               }
             },
             "x-go-name": "Data"

@@ -24,7 +24,7 @@ func NewHealthController(db *goqu.Database, logger *zap.Logger) (*HealthControll
 }
 
 // Overall check overall health of application as well as dependencies health check
-// swagger:route GET /healthz Healthcheck overallHealthCheck
+// swagger:route GET /api/healthz Healthcheck overallHealthCheck
 //
 //	Overall health check
 //

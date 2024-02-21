@@ -1,7 +1,9 @@
 package routes
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
 	"sync"
 
 	"go.uber.org/zap"
@@ -29,9 +31,18 @@ func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config confi
 
 	app.Use(middlewares.LogHandler(logger, pMetrics))
 
+	swagger_file_path := "./assets/swagger.json"
+	swagger_new_file_path := "./assets/new_swagger.json"
+
+	err := newSwagger(swagger_file_path, swagger_new_file_path, config.Port)
+	if err != nil {
+		return err
+	}
+
 	cfg := swagger.Config{
-		FilePath: "./assets/swagger.json",
+		FilePath: swagger_new_file_path,
 		Title:    "Swagger API Docs",
+		Path:     "/api/docs",
 	}
 
 	app.Use(swagger.New(cfg))
@@ -42,8 +53,7 @@ func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config confi
 	v1 := router.Group("/v1")
 
 	v1.Use("/socket", func(c *fiber.Ctx) error {
-		// IsWebSocketUpgrade returns true if the client
-		// requested upgrade to the WebSocket protocol.
+
 		if websocket.IsWebSocketUpgrade(c) {
 			c.Locals(constants.MiddlewarePass, true)
 			c.Locals(constants.MiddlewareError, nil)
@@ -70,12 +80,12 @@ func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config confi
 		return err
 	}
 
-	err = healthCheckController(app, goqu, logger)
+	err = healthCheckController(router, goqu, logger)
 	if err != nil {
 		return err
 	}
 
-	err = metricsController(app, goqu, logger, pMetrics)
+	err = metricsController(router, goqu, logger, pMetrics)
 	if err != nil {
 		return err
 	}
@@ -87,6 +97,42 @@ func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config confi
 
 	mu.Unlock()
 	return nil
+}
+
+func newSwagger(file_name, new_file, port string) error {
+	// Verify Swagger file exists
+	if _, err := os.Stat(file_name); os.IsNotExist(err) {
+		return fmt.Errorf("%s file does not exist", file_name)
+	}
+
+	// Read Swagger Spec into memory
+	rawSpec, err := os.ReadFile(file_name)
+	if err != nil {
+		return fmt.Errorf("failed to read provided Swagger file (%s): %v", file_name, err.Error())
+	}
+
+	// Validate we have valid JSON or YAML
+	var jsonData map[string]interface{}
+	errJSON := json.Unmarshal(rawSpec, &jsonData)
+	if errJSON != nil {
+		return fmt.Errorf("swagger-json is not in valid format")
+	}
+	jsonData["host"] = port
+
+	newData, err := json.MarshalIndent(jsonData, "", "   ")
+	if err != nil {
+		return fmt.Errorf("error during host change in swagger")
+	}
+
+	file, err := os.Create(new_file)
+	if err != nil {
+		return fmt.Errorf("error creating file: %v", err)
+	}
+	defer file.Close()
+
+	_, err = file.Write(newData)
+
+	return err
 }
 
 func setupAuthController(v1 fiber.Router, goqu *goqu.Database, logger *zap.Logger, middlewares middlewares.Middleware, config config.AppConfig) error {
@@ -115,25 +161,25 @@ func setupUserController(v1 fiber.Router, goqu *goqu.Database, logger *zap.Logge
 	return nil
 }
 
-func healthCheckController(app *fiber.App, goqu *goqu.Database, logger *zap.Logger) error {
+func healthCheckController(api fiber.Router, goqu *goqu.Database, logger *zap.Logger) error {
 	healthController, err := controller.NewHealthController(goqu, logger)
 	if err != nil {
 		return err
 	}
 
-	healthz := app.Group("/healthz")
+	healthz := api.Group("/healthz")
 	healthz.Get("/", healthController.Overall)
 	healthz.Get("/db", healthController.Db)
 	return nil
 }
 
-func metricsController(app *fiber.App, db *goqu.Database, logger *zap.Logger, pMetrics *pMetrics.PrometheusMetrics) error {
+func metricsController(api fiber.Router, db *goqu.Database, logger *zap.Logger, pMetrics *pMetrics.PrometheusMetrics) error {
 	metricsController, err := controller.InitMetricsController(db, logger, pMetrics)
 	if err != nil {
 		return nil
 	}
 
-	app.Get("/metrics", metricsController.Metrics)
+	api.Get("/metrics", metricsController.Metrics)
 	return nil
 }
 
