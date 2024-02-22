@@ -1,8 +1,8 @@
-// Golang API.
+// Quizz-app
 //
 //	Schemes: https
 //	Host: localhost
-//	BasePath: /api/v1
+//	BasePath: /api
 //	Version: 0.0.1-alpha
 //
 //	Consumes:

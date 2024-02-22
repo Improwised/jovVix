@@ -50,6 +50,25 @@ func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config confi
 	app.Static("/assets/", "./assets")
 
 	router := app.Group("/api")
+
+	err = healthCheckController(router, goqu, logger)
+	if err != nil {
+		return err
+	}
+
+	err = metricsController(router, goqu, logger, pMetrics)
+	if err != nil {
+		return err
+	}
+
+	userModel, err := models.InitUserModel(goqu)
+	if err != nil {
+		return err
+	}
+	userService := services.NewUserService(&userModel)
+
+	middlewares := middlewares.NewMiddleware(config, logger, goqu, userService)
+
 	v1 := router.Group("/v1")
 
 	v1.Use("/socket", func(c *fiber.Ctx) error {
@@ -62,30 +81,12 @@ func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config confi
 		return fiber.ErrUpgradeRequired
 	})
 
-	userModel, err := models.InitUserModel(goqu)
-	if err != nil {
-		return err
-	}
-	userService := services.NewUserService(&userModel)
-
-	middlewares := middlewares.NewMiddleware(config, logger, goqu, userService)
-
 	err = setupAuthController(v1, goqu, logger, middlewares, config)
 	if err != nil {
 		return err
 	}
 
 	err = setupUserController(v1, goqu, logger, middlewares, events, pub)
-	if err != nil {
-		return err
-	}
-
-	err = healthCheckController(v1, goqu, logger)
-	if err != nil {
-		return err
-	}
-
-	err = metricsController(v1, goqu, logger, pMetrics)
 	if err != nil {
 		return err
 	}

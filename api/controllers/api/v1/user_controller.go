@@ -45,7 +45,7 @@ func NewUserController(goqu *goqu.Database, logger *zap.Logger, event *events.Ev
 }
 
 // UserGet get the user by id
-// swagger:route GET /users/{userId} Users RequestGetUser
+// swagger:route GET /v1/users/{userId} Users RequestGetUser
 //
 // Get a user.
 //
@@ -72,7 +72,7 @@ func (ctrl *UserController) GetUser(c *fiber.Ctx) error {
 }
 
 // CreateUser registers a user
-// swagger:route POST /users Users RequestCreateUser
+// swagger:route POST /v1/users Users RequestCreateUser
 //
 // Register a user.
 //

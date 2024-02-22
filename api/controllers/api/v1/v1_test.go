@@ -61,7 +61,7 @@ func TestMain(m *testing.M) {
 	serverRunning := false
 	for count := 0; count < 100; count += 1 {
 		client = client.SetTimeout(time.Second * 2)
-		res, err := client.R().EnableTrace().Get("/api/healthz/v1")
+		res, err := client.R().EnableTrace().Get("/api/healthz")
 		if err == nil {
 			log.Println("received status code", res.StatusCode())
 		}

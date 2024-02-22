@@ -45,7 +45,7 @@ func NewAuthController(goqu *goqu.Database, logger *zap.Logger, config config.Ap
 }
 
 // DoAuth authenticate user with email and password
-// swagger:route POST /login Auth RequestAuthnUser
+// swagger:route POST /v1/login Auth RequestAuthnUser
 //
 // Authenticate user with email and password.
 //
@@ -100,7 +100,7 @@ func (ctrl *AuthController) DoAuth(c *fiber.Ctx) error {
 }
 
 // DoKratosAuth authenticate user with kratos session id
-// swagger:route GET /kratos/auth Auth none
+// swagger:route GET /v1/kratos/auth Auth none
 //
 // Authenticate user with kratos session id.
 //

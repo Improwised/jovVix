@@ -24,7 +24,7 @@ func NewHealthController(db *goqu.Database, logger *zap.Logger) (*HealthControll
 }
 
 // Overall check overall health of application as well as dependencies health check
-// swagger:route GET /api/v1/healthz Healthcheck overallHealthCheck
+// swagger:route GET /healthz Healthcheck overallHealthCheck
 //
 //	Overall health check
 //
@@ -52,7 +52,7 @@ func (hc *HealthController) Self(ctx *fiber.Ctx) error {
 }
 
 // Database health check
-// swagger:route GET /api/v1/healthz/db Healthcheck dbHealthCheck
+// swagger:route GET /healthz/db Healthcheck dbHealthCheck
 //
 //	Database health check
 //
