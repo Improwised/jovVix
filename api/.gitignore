@@ -46,3 +46,4 @@ swagger
 
 # coverage file
 coverage.out
+/assets/new_swagger.json
