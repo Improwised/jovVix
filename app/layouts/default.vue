@@ -4,13 +4,13 @@
       <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container-fluid p-2">
           <!-- Title on the left -->
-          <a class="navbar-brand" href="#">Quiz App</a>
+          <a class="navbar-brand" href="/">Quiz App</a>
 
           <!-- Profile/Login on the right -->
           <div class="navbar-collapse justify-content-end">
             <ul class="navbar-nav">
               <li class="nav-item">
-                <a class="nav-link" href="#">Profile/Login</a>
+                <a class="nav-link" href="/account/login">Profile/Login</a>
               </li>
             </ul>
           </div>

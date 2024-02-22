@@ -15,16 +15,11 @@ async function login_user(e) {
   const { error: error } = await useFetch(config.api_url + "/login", {
     method: "POST",
     credentials: "include",
-    headers: {
-      "Access-Control-Allow-Origin": config.base_url,
-      "Access-Control-Allow-Credentials": "true",
-      Accept: "*/*",
-    },
     body: {
       email: email.value,
       password: password.value,
     },
-    mode: "no-cors",
+    mode: 'cors'
   });
 
   if (error.value) {
@@ -34,6 +29,7 @@ async function login_user(e) {
   }
 
   toast.success("Login successfully!!!");
+  setTimeout(() => navigateTo('/') , 3000)
 }
 </script>
 
