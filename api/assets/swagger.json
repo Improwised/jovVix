@@ -10,13 +10,13 @@
   ],
   "swagger": "2.0",
   "info": {
-    "title": "Golang API.",
+    "description": "Quizz-app",
     "version": "0.0.1-alpha"
   },
   "host": "localhost",
-  "basePath": "/api/v1",
+  "basePath": "/api",
   "paths": {
-    "/api/v1/healthz": {
+    "/healthz": {
       "get": {
         "description": "Overall health check",
         "produces": [
@@ -37,7 +37,7 @@
         }
       }
     },
-    "/api/v1/healthz/db": {
+    "/healthz/db": {
       "get": {
         "description": "Database health check",
         "produces": [
@@ -58,7 +58,7 @@
         }
       }
     },
-    "/api/v1/metrics": {
+    "/metrics": {
       "get": {
         "description": "Prometheus metrics endpoint",
         "produces": [
@@ -71,7 +71,7 @@
         "operationId": "ReqMetrics"
       }
     },
-    "/kratos/auth": {
+    "/v1/kratos/auth": {
       "get": {
         "consumes": [
           "application/json"
@@ -95,7 +95,7 @@
         }
       }
     },
-    "/login": {
+    "/v1/login": {
       "post": {
         "consumes": [
           "application/json"
@@ -145,7 +145,7 @@
         }
       }
     },
-    "/users": {
+    "/v1/users": {
       "post": {
         "consumes": [
           "application/json"
@@ -208,7 +208,7 @@
         }
       }
     },
-    "/users/{userId}": {
+    "/v1/users/{userId}": {
       "get": {
         "consumes": [
           "application/json"
