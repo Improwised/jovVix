@@ -19,17 +19,17 @@ async function login_user(e) {
       email: email.value,
       password: password.value,
     },
-    mode: 'cors'
+    mode: "cors",
   });
 
   if (error.value) {
-    console.log(!error.value);
+    console.error(!error.value);
     toast.error("Error or password incorrect, try again");
     return;
   }
 
   toast.success("Login successfully!!!");
-  setTimeout(() => navigateTo('/') , 3000)
+  setTimeout(() => navigateTo("/"), 3000);
 }
 </script>
 
