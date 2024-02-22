@@ -1,4 +1,7 @@
 <script setup>
+import { useRouter } from "nuxt/app";
+import { useToast } from "vue-toastification";
+
 // Define props using defineProps
 const props = defineProps({
   pageTitle: {
@@ -12,6 +15,25 @@ const props = defineProps({
     default: "message",
   },
 });
+
+const router = useRouter();
+const toast = useToast();
+
+const errorQueryParam = router.currentRoute.value.query.error;
+
+if (errorQueryParam) {
+  toast.error(errorQueryParam);
+
+  onMounted(() => {
+    if (process.client) {
+      setTimeout(() => {
+        const updatedQuery = { ...router.currentRoute.value.query };
+        delete updatedQuery.error;
+        router.replace({ query: updatedQuery });
+      }, 3000);
+    }
+  });
+}
 </script>
 
 <template>
