@@ -1,5 +1,5 @@
 <template>
-  <Body>
+  <div>
     <header class="container-fluid ps-0 pe-0">
       <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container-fluid p-2">
@@ -29,5 +29,5 @@
       </div>
     </footer>
     <footer class="bg-body-tertiary text-center text-lg-start"></footer>
-  </Body>
+  </div>
 </template>

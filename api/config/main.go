@@ -19,7 +19,7 @@ type AppConfig struct {
 	Env           string `envconfig:"APP_ENV"`
 	Port          string `envconfig:"APP_PORT"`
 	Secret        string `envconfig:"JWT_SECRET"`
-	FrontUrl      string `envconfig:"FRONT_URL"`
+	WebUrl        string `envconfig:"WEB_URL"`
 	DB            DBConfig
 	Kratos        KratosConfig
 	MQ            MQConfig

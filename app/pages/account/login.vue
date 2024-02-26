@@ -1,15 +1,20 @@
 <script setup>
 import { useToast } from "vue-toastification";
 
-const toast = useToast();
 const config = useSystemEnv();
+const nuxtApp = useNuxtApp();
+const route = useRoute();
+const toast = useToast();
 const email = ref();
 const password = ref();
+let status = null;
 
 async function login_user(e) {
   e.preventDefault();
-  if (email.value.trim() == "") {
-    alert("email and password are required");
+
+  if (email.value.trim() == "" || password.value.trim() == "") {
+    toast.error(nuxtApp.$IncorrectCredentials);
+    return;
   }
 
   const { error: error } = await useFetch(config.value.api_url + "/login", {
@@ -20,20 +25,30 @@ async function login_user(e) {
       password: password.value,
     },
     mode: "cors",
+    onResponseError: function ({ response }) {
+      status = response.status;
+    },
   });
 
   if (error.value) {
-    toast.error("Error or password incorrect, try again");
+    if (status >= 500) {
+      toast.error(error.value);
+    } else {
+      toast.error(nuxtApp.$IncorrectCredentials);
+    }
     return;
   }
 
-  toast.success("Login successfully!!!");
-  setTimeout(() => navigateTo("/"), 3000);
+  if (route.query.url) {
+    navigateTo(route.query.url);
+  } else {
+    navigateTo("/");
+  }
 }
 </script>
 
 <template>
-  <AuthLayout
+  <Frame
     page-title="Login page"
     page-welcome-message="Welcome to the quizz world..."
   >
@@ -69,5 +84,5 @@ async function login_user(e) {
       <button type="submit" class="btn btn-primary">Submit</button>
       <button type="clear" class="btn btn-primary ms-2">Clear</button>
     </form>
-  </AuthLayout>
+  </Frame>
 </template>

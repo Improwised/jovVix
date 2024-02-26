@@ -31,7 +31,7 @@ func GetAPICommandDef(cfg config.AppConfig, logger *zap.Logger) cobra.Command {
 
 			app.Use(cors.New(cors.Config{
 				AllowHeaders:     "Origin,Content-Type,Accept,Content-Length,Accept-Language,Accept-Encoding,Connection,Access-Control-Allow-Origin,Authorization,Options",
-				AllowOrigins:     cfg.FrontUrl,
+				AllowOrigins:     cfg.WebUrl,
 				AllowCredentials: true,
 				AllowMethods:     "GET,POST,HEAD,PUT,DELETE,PATCH,OPTIONS",
 			}))
