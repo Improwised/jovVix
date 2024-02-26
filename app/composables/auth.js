@@ -1,12 +1,14 @@
+import { useSystemEnv } from "./envs";
+
 export async function useIsAdmin() {
-  const cfg = useRuntimeConfig();
+  const cfg = useSystemEnv();
   const headers = useRequestHeaders(["cookie"]);
   const isLogin = useState("login", () => {
     return { ok: false, err: "" };
   });
 
   const { error: err, data: data } = await useFetch(
-    cfg.public.api_url + "/users/adminAccess",
+    cfg.api_url + "/users/adminAccess",
     {
       method: "GET",
       credentials: "include",

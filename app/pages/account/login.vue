@@ -2,7 +2,7 @@
 import { useToast } from "vue-toastification";
 
 const toast = useToast();
-const config = useRuntimeConfig();
+const config = useSystemEnv();
 const email = ref();
 const password = ref();
 
@@ -12,7 +12,7 @@ async function login_user(e) {
     alert("email and password are required");
   }
 
-  const { error: error } = await useFetch(config.api_url + "/login", {
+  const { error: error } = await useFetch(config.value.api_url + "/login", {
     method: "POST",
     credentials: "include",
     body: {
@@ -23,7 +23,6 @@ async function login_user(e) {
   });
 
   if (error.value) {
-    console.error(!error.value);
     toast.error("Error or password incorrect, try again");
     return;
   }
