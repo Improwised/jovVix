@@ -1,0 +1,64 @@
+<script setup>
+import { useToast } from "vue-toastification";
+
+const { session } = await useSession();
+const toast = useToast();
+
+console.log(session.value.user?.username);
+
+const code = ref(0);
+const username = ref(session.value.user?.username);
+function join_quiz(e) {
+  e.preventDefault();
+
+  if (!code.value) {
+    toast.info("please enter quiz code");
+  } else if (!username.value) {
+    toast.info("please add username");
+  }
+
+  navigateTo(`/join/play/${code.value}?username=${username.value}`);
+}
+</script>
+
+<template>
+  <LayoutsBase>
+    <FrameLayout
+      page-title="Join page"
+      page-welcome-message="Let's play together"
+      max-width
+    >
+      <form method="POST" @submit="join_quiz">
+        <div class="mb-3 pe-3">
+          <label for="code" class="form-label">Code</label>
+          <v-otp-input
+            v-model="code"
+            max-width="500"
+            min-height="20"
+            type="number"
+          ></v-otp-input>
+        </div>
+        <div class="mb-3">
+          <label for="username" class="form-label">User name</label>
+          <input
+            id="username"
+            v-model="username"
+            type="username"
+            name="username"
+            class="form-control"
+            :readonly="username"
+          />
+        </div>
+        <div class="p-2">
+          <div v-if="!username" class="text-center">
+            Want to save your progress?
+            <a href="/account/register"><b>Login</b></a> now.
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-lg bg-primary">
+          Join
+        </button>
+      </form>
+    </FrameLayout>
+  </LayoutsBase>
+</template>

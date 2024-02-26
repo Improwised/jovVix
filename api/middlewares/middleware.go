@@ -11,7 +11,7 @@ type Middleware struct {
 	config      config.AppConfig
 	logger      *zap.Logger
 	db          *goqu.Database
-	userService *services.UserService
+	UserService *services.UserService
 }
 
 func NewMiddleware(cfg config.AppConfig, logger *zap.Logger, db *goqu.Database, userService *services.UserService) Middleware {
@@ -19,6 +19,6 @@ func NewMiddleware(cfg config.AppConfig, logger *zap.Logger, db *goqu.Database, 
 		config:      cfg,
 		logger:      logger,
 		db:          db,
-		userService: userService,
+		UserService: userService,
 	}
 }

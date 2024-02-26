@@ -33,16 +33,56 @@ import (
 //	B. not exists :- trying to get userName from query and create new_user get userID and role and set in context and cookie
 func (m *Middleware) CustomAuthenticated(c *fiber.Ctx) error {
 
+	if !c.Locals(constants.MiddlewarePass).(bool) {
+		return c.Next()
+	}
+
+	token := c.Cookies(constants.CookieUser, "cookie not available")
+
+	if token == "cookie not available" {
+		AuthHavingNoTokenHandler(m, c)
+	} else {
+		AuthHavingTokenHandler(m, c, token)
+	}
+
+	c.Locals(constants.MiddlewarePass, c.Locals(constants.MiddlewareError) == nil)
+
+	return c.Next()
+}
+
+func (m *Middleware) CustomAdminAuthenticated(c *fiber.Ctx) error {
+
+	if !c.Locals(constants.MiddlewarePass).(bool) {
+		return c.Next()
+	}
+
 	token := c.Cookies(constants.CookieUser, "cookie not available")
 
 	if token != "cookie not available" {
 		AuthHavingTokenHandler(m, c, token)
 	} else {
-		AuthHavingNoTokenHandler(m, c)
+		c.Locals(constants.MiddlewareError, constants.Unauthenticated)
 	}
 
-	c.Locals("allowed", c.Locals(constants.MiddlewareError) == nil)
+	c.Locals(constants.MiddlewarePass, c.Locals(constants.MiddlewareError) == nil)
 
+	return c.Next()
+}
+
+func (m *Middleware) CheckSessionId(c *fiber.Ctx) error {
+
+	if !c.Locals(constants.MiddlewarePass).(bool) {
+		return c.Next()
+	}
+
+	// get session id from query
+	sessionId := c.Params(constants.SessionIDPram)
+
+	// if sessionId == "" {
+	// 	c.Locals(constants.MiddlewareError, constants.ErrQuizSessionIdRequired)
+	// }
+	c.Locals(constants.SessionIDPram, sessionId)
+	c.Locals(constants.MiddlewarePass, c.Locals(constants.MiddlewareError) == nil)
 	return c.Next()
 }
 
@@ -65,7 +105,7 @@ func AuthHavingTokenHandler(m *Middleware, c *fiber.Ctx, token string) {
 
 	c.Locals(constants.ContextUid, claims.Subject())
 
-	userObj, err := m.userService.GetUser(claims.Subject())
+	userObj, err := m.UserService.GetUser(claims.Subject())
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -79,7 +119,7 @@ func AuthHavingTokenHandler(m *Middleware, c *fiber.Ctx, token string) {
 		return
 	}
 
-	c.Cookie(CreateStrictCookie(constants.CookieUser, token))
+	// c.Cookie(CreateStrictCookie(constants.CookieUser, token))
 	c.Locals(constants.ContextUid, userObj.ID)
 	c.Locals(constants.ContextUser, userObj)
 }
@@ -104,7 +144,6 @@ func AuthHavingNoTokenHandler(m *Middleware, c *fiber.Ctx) {
 	if err != nil {
 		c.Locals(constants.MiddlewareError, err)
 		m.logger.Error(fmt.Sprintf("Error in register user %v", userObj), zap.Error(err))
-
 		return
 	}
 
@@ -147,9 +186,3 @@ func CreateNewUserToken(c *fiber.Ctx, cfg config.AppConfig, user models.User, lo
 	c.Locals(constants.ContextUser, user)
 	return nil
 }
-
-// func MiddlewareError(c *websocket.Conn, refStr string, response string, other any) error {
-// 	utils.WsJSONFail(c, "Authentication", refStr, response, other)
-// 	time.Sleep(100)
-// 	return authError
-// }

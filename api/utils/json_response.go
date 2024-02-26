@@ -25,18 +25,18 @@ func JSONError(c *fiber.Ctx, statusCode int, err string) error {
 }
 
 // WsJSONSuccess is a generic success output writer
-func WsJSONSuccess(c *websocket.Conn, eventName string, data interface{}) error {
+func JSONSuccessWs(c *websocket.Conn, eventName string, data interface{}) error {
 	return c.WriteJSON(jsend.New(structs.SocketResponseFormat{EventName: eventName, Data: data}))
 }
 
 // WsJSONFail is a generic fail output writer
 // WsJSONFail can used for 4xx status code response
-func WsJSONFail(c *websocket.Conn, eventName string, data interface{}) error {
+func JSONFailWs(c *websocket.Conn, eventName string, data interface{}) error {
 	return c.WriteJSON(jsend.NewFail(structs.SocketResponseFormat{EventName: eventName, Data: data}))
 }
 
-// WsJSONError is a generic error output writer
-// WsJSONError can used for 5xx status code response
-func WsJSONError(c *websocket.Conn, eventName string, data interface{}) error {
+// JsonErrorWs is a generic error output writer
+// JsonErrorWs can used for 5xx status code response
+func JSONErrorWs(c *websocket.Conn, eventName string, data interface{}) error {
 	return c.WriteJSON(jsend.NewError("Error", -1, structs.SocketResponseFormat{EventName: eventName, Data: data}))
 }

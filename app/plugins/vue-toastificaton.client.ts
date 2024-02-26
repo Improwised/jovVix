@@ -15,5 +15,6 @@ export default defineNuxtPlugin((nuxtApp) => {
     closeButton: "button",
     icon: true,
     rtl: false,
+    maxToasts: 3,
   });
 });

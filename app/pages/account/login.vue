@@ -82,7 +82,7 @@ async function login_user(e) {
         </div>
       </div>
       <button type="submit" class="btn btn-primary">Submit</button>
-      <button type="clear" class="btn btn-primary ms-2">Clear</button>
+      <button type="reset" class="btn btn-primary ms-2">Clear</button>
     </form>
   </Frame>
 </template>

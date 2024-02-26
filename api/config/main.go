@@ -12,6 +12,13 @@ import (
 // AllConfig variable of type AppConfig
 var AllConfig AppConfig
 
+type RedisClientConfig struct {
+	RedisAddr string `envconfig:"REDIS_HOST"`
+	RedisPort string `envconfig:"REDIS_PORT"`
+	RedisPass string `envconfig:"REDIS_PASSWORD"`
+	RedisDb   int    `envconfig:"REDIS_DATABASES"`
+}
+
 // AppConfig type AppConfig
 type AppConfig struct {
 	IsDevelopment bool   `envconfig:"IS_DEVELOPMENT"`
@@ -20,6 +27,7 @@ type AppConfig struct {
 	Port          string `envconfig:"APP_PORT"`
 	Secret        string `envconfig:"JWT_SECRET"`
 	WebUrl        string `envconfig:"WEB_URL"`
+	RedisClient   RedisClientConfig
 	DB            DBConfig
 	Kratos        KratosConfig
 	MQ            MQConfig

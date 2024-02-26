@@ -11,12 +11,11 @@ import (
 	"github.com/Improwised/quizz-app/api/config"
 	"github.com/Improwised/quizz-app/api/constants"
 	controller "github.com/Improwised/quizz-app/api/controllers/api/v1"
+	quiz_helper "github.com/Improwised/quizz-app/api/helpers/quiz"
 	"github.com/Improwised/quizz-app/api/middlewares"
-	"github.com/Improwised/quizz-app/api/models"
 	"github.com/Improwised/quizz-app/api/pkg/events"
 	pMetrics "github.com/Improwised/quizz-app/api/pkg/prometheus"
 	"github.com/Improwised/quizz-app/api/pkg/watermill"
-	"github.com/Improwised/quizz-app/api/services"
 	goqu "github.com/doug-martin/goqu/v9"
 	"github.com/gofiber/contrib/swagger"
 	"github.com/gofiber/contrib/websocket"
@@ -28,7 +27,9 @@ var mu sync.Mutex
 // Setup func
 func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config config.AppConfig, events *events.Events, pMetrics *pMetrics.PrometheusMetrics, pub *watermill.WatermillPublisher) error {
 	mu.Lock()
+	defer mu.Unlock()
 
+	// plugins
 	app.Use(middlewares.LogHandler(logger, pMetrics))
 
 	swagger_file_path := "./assets/swagger.json"
@@ -61,13 +62,14 @@ func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config confi
 		return err
 	}
 
-	userModel, err := models.InitUserModel(goqu)
+	helperStructs, err := quiz_helper.InitHelper(goqu, config.RedisClient)
+
 	if err != nil {
 		return err
 	}
-	userService := services.NewUserService(&userModel)
 
-	middlewares := middlewares.NewMiddleware(config, logger, goqu, userService)
+	// middleware initialization
+	middlewares := middlewares.NewMiddleware(config, logger, goqu, helperStructs.UserService)
 
 	v1 := router.Group("/v1")
 
@@ -91,12 +93,14 @@ func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config confi
 		return err
 	}
 
-	err = quizControllerV1(v1, goqu, logger, middlewares, events, pub, config)
+	// roleModel, *userService, *quizModel, *questionModel, *sessionModel,
+	err = quizController(v1, goqu, logger, middlewares, events, pub, config, helperStructs)
 	if err != nil {
 		return err
 	}
 
-	mu.Unlock()
+	// Close the subscription when we are done.
+
 	return nil
 }
 
@@ -157,8 +161,10 @@ func setupUserController(v1 fiber.Router, goqu *goqu.Database, logger *zap.Logge
 	}
 
 	userRouter := v1.Group("/users")
-	userRouter.Post("/", userController.CreateUser)
+	userRouter.Get("/adminAccess", middlewares.Authenticated, userController.IsAdmin)
+	userRouter.Get("/meta", middlewares.Authenticated, userController.GetUserMeta)
 	userRouter.Get(fmt.Sprintf("/:%s", constants.ParamUid), middlewares.Authenticated, userController.GetUser)
+	userRouter.Post("/", userController.CreateUser)
 	return nil
 }
 
@@ -184,19 +190,34 @@ func metricsController(api fiber.Router, db *goqu.Database, logger *zap.Logger, 
 	return nil
 }
 
-func quizControllerV1(v1 fiber.Router, db *goqu.Database, logger *zap.Logger, middleware middlewares.Middleware, events *events.Events, pub *watermill.WatermillPublisher, config config.AppConfig) error {
-	userController, err := controller.NewUserController(db, logger, events, pub)
+func quizController(
+	v1 fiber.Router,
+	db *goqu.Database,
+	logger *zap.Logger,
+	middleware middlewares.Middleware,
+	events *events.Events,
+	pub *watermill.WatermillPublisher,
+	config config.AppConfig,
+	helper *quiz_helper.HelperStructs) error {
+
+	quizSocketController := controller.InitQuizConfig(db, &config, helper)
+	quizController := controller.InitQuizController(logger, events, pub, helper)
+
+	// general for all
+	v1.Get("/socket/ping", websocket.New(quizSocketController.Ping))
+
+	v1.Get("/socket/join", middleware.CustomAuthenticated, websocket.New(quizSocketController.Join))
+
+	// admin endpoints
+	allowRoles, err := helper.RoleModel.NewAllowedRoles("admin")
 	if err != nil {
 		return err
 	}
-	quizConfigs, err := controller.InitQuizController(db, userController, &config)
-	if err != nil {
-		return nil
-	}
+	rbObj := middlewares.NewRolePermissionMiddleware(middleware, allowRoles)
 
-	v1.Get("/socket/ping", websocket.New(quizConfigs.Ping))
+	v1.Get("/admin/quizzes", middleware.Authenticated, rbObj.IsAllowed, quizController.GetMyQuiz)
 
-	v1.Get("/socket/join", middleware.CustomAuthenticated, websocket.New(quizConfigs.Join))
+	v1.Get(fmt.Sprintf("/socket/admin/arrange/:%s", constants.SessionIDPram), middleware.CheckSessionId, middleware.CustomAdminAuthenticated, websocket.New(quizSocketController.Arrange))
 
 	return nil
 }

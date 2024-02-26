@@ -1,8 +1,9 @@
-package utils
+package quizUtilsHelper
 
 import (
 	"crypto/rand"
 	mathRand "math/rand"
+	"time"
 )
 
 func GenerateRandomString(length int) string {
@@ -27,8 +28,8 @@ func GenerateRandomString(length int) string {
 	return string(randomBytes)
 }
 
-func GenerateRandomInt(maxVal int) int {
-	return mathRand.Intn(10000)
+func GenerateRandomInt(min, max int) int {
+	return mathRand.Intn(max-min+1) + min
 }
 
 func GenerateNewStringHavingSuffixName(mainString string, randomStringLen int, maxLength int) string {
@@ -38,6 +39,10 @@ func GenerateNewStringHavingSuffixName(mainString string, randomStringLen int, m
 	if truncate_at+len(random_str) > maxLength {
 		truncate_at = maxLength - len(random_str)
 	}
-	
+
 	return mainString[:truncate_at] + random_str
+}
+
+func GenerateID() int64 {
+	return int64(time.Now().UnixNano())
 }

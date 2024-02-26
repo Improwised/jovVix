@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/Improwised/quizz-app/api/cli/workers"
 	"github.com/Improwised/quizz-app/api/constants"
@@ -15,6 +16,7 @@ import (
 	"github.com/Improwised/quizz-app/api/utils"
 	goqu "github.com/doug-martin/goqu/v9"
 	fiber "github.com/gofiber/fiber/v2"
+	"github.com/lib/pq"
 	"go.uber.org/zap"
 	validator "gopkg.in/go-playground/validator.v9"
 )
@@ -100,18 +102,77 @@ func (ctrl *UserController) CreateUser(c *fiber.Ctx) error {
 		return utils.JSONFail(c, http.StatusBadRequest, utils.ValidatorErrorString(err))
 	}
 
-	user, err := ctrl.userService.RegisterUser(models.User{FirstName: userReq.FirstName, LastName: userReq.LastName, Email: userReq.Email, Password: userReq.Password, Roles: userReq.Roles}, ctrl.event)
+	if len(userReq.UserName) > 12 || len(userReq.UserName) < 6 {
+		return utils.JSONFail(c, http.StatusBadRequest, "username should be in between 6 to 12 character length")
+	}
+
+	role := "user"
+
+	user, err := ctrl.userService.RegisterUser(models.User{FirstName: userReq.FirstName, LastName: userReq.LastName, Email: userReq.Email, Password: userReq.Password, Roles: role, Username: userReq.UserName}, ctrl.event)
 	if err != nil {
+
+		if err.(*pq.Error).Constraint == constants.UserUkey {
+			return utils.JSONError(c, http.StatusBadRequest, constants.ErrUsernameExists)
+		}
+
 		ctrl.logger.Error("error while insert user", zap.Error(err))
 		return utils.JSONError(c, http.StatusInternalServerError, constants.ErrInsertUser)
 	}
 
 	// publish message to queue
-	welcomeMail := workers.WelcomeMail{FirstName: userReq.FirstName, LastName: userReq.LastName, Email: userReq.Email, Roles: userReq.Roles}
+	welcomeMail := workers.WelcomeMail{FirstName: userReq.FirstName, LastName: userReq.LastName, Email: userReq.Email, Roles: role}
 	err = ctrl.pub.Publish("user", welcomeMail)
 	if err != nil {
 		ctrl.logger.Error("error while publish message", zap.Error(err))
 	}
 
 	return utils.JSONSuccess(c, http.StatusCreated, user)
+}
+
+func (ctrl *UserController) IsAdmin(c *fiber.Ctx) error {
+	user := c.Locals(constants.ContextUid).(string)
+
+	userObj, err := ctrl.userService.GetUser(user)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			RemoveUserToken(constants.ContextUid)
+			return utils.JSONFail(c, http.StatusBadRequest, constants.UserNotExist)
+		}
+		return utils.JSONError(c, http.StatusBadRequest, constants.UnknownError)
+	}
+
+	if userObj.Roles == "admin" {
+		return utils.JSONSuccess(c, http.StatusOK, true)
+	}
+
+	return utils.JSONFail(c, http.StatusBadGateway, constants.Unauthenticated)
+}
+
+func (ctrl *UserController) GetUserMeta(c *fiber.Ctx) error {
+	user := c.Locals(constants.ContextUid).(string)
+
+	userObj, err := ctrl.userService.GetUser(user)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			RemoveUserToken(constants.ContextUid)
+			return utils.JSONFail(c, http.StatusBadGateway, constants.Unauthenticated)
+		}
+		return utils.JSONError(c, http.StatusBadRequest, constants.UnknownError)
+	}
+
+	return utils.JSONSuccess(c, http.StatusOK, map[string]string{
+		"username": userObj.Username,
+		"email":    userObj.Email,
+	})
+
+}
+
+func RemoveUserToken(key string) *fiber.Cookie {
+	cookie := new(fiber.Cookie)
+	cookie.Name = key
+	cookie.Value = "" // Or set a generic value like "deleted"
+	cookie.Expires = time.Now().Add(-1 * time.Second)
+	return cookie
 }
