@@ -17,7 +17,7 @@ useSystemEnv();
 const myRef = ref(false);
 const data = ref({});
 const currentComponent = ref("Loading");
-const userSession = ref()
+const userSession = ref();
 
 // event handlers
 const handleCustomChange = (isFullScreenEvent) => {
@@ -40,10 +40,12 @@ onMounted(() => {
 });
 
 const handleQuizEvents = (message) => {
-  console.log(message);
   if (message.status == constants.Error) {
     navigateTo("/error?status=" + message.status + "&error=" + message.data);
   } else {
+    if(message.status == constants.Fail && message.data ==constants.CodeNotFound ){
+      navigateTo("/error?status=" + message.status + "&error=" + message.data);
+    }
     if (message?.component) {
       const component = message.component;
       data.value = message;

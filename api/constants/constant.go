@@ -98,7 +98,7 @@ const (
 	EventJoinQuiz          = "code validation"
 	ActionJoinQuiz         = "quiz code validation"
 	ErrCodeInWrongFormat   = "code is not in proper format"
-	ErrCodeNotFound        = "code not found"
+	ErrCodeNotFound        = "code not found" // use by web
 	ErrCodeNotActive       = "code is not active"
 	ErrSessionWasCompleted = "session was completed"
 
