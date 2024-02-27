@@ -70,6 +70,7 @@ export default class QuizHandler {
   destructureMessage(e) {
     try {
       const obj = JSON.parse(e.data);
+      console.log(obj);
       obj["event"] = obj.data.event;
       delete obj.data["event"];
       obj["action"] = obj.data.data.action;

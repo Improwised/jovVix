@@ -6,9 +6,7 @@ console.log(systemEnv.value.base_url)
 </script>
 
 <template>
-  <LayoutsBase>
-    <div class="text-center homepage">Welcome to nuxt3</div>
-  </LayoutsBase>
+  <div class="text-center homepage">Welcome to nuxt3</div>
 </template>
 <style scoped>
 .homepage {

@@ -4,7 +4,7 @@
 ALTER TABLE quiz_sessions
 ADD COLUMN current_question uuid;
 ALTER TABLE quiz_sessions
-ADD COLUMN is_question_active bool default false;
+ADD COLUMN is_question_active bool;
 
 -- add foreign key
 ALTER TABLE quiz_sessions

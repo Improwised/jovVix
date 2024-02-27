@@ -134,7 +134,6 @@ func (model *QuizSessionModel) GetActiveSession(sessionId string) (QuizSession, 
 	}()
 
 	found, err := model.db.Select("*").From("quiz_sessions").Where(goqu.I("id").Eq(sessionId)).Limit(1).ScanStruct(&quizSession)
-	fmt.Println(isOk, sessionId, err, "--------------------")
 
 	if err != nil {
 		return quizSession, err
@@ -190,4 +189,20 @@ func (model *QuizSessionModel) GetActiveSession(sessionId string) (QuizSession, 
 			}
 		}
 	}
+}
+
+func (model *QuizSessionModel) GetSessionByCode(code int) (QuizSession, error) {
+	var quizSession QuizSession = QuizSession{}
+
+	found, err := model.db.Select("*").From("quiz_sessions").Where(goqu.I("code").Eq(code), goqu.I("is_active").Eq(true)).Limit(1).ScanStruct(&quizSession)
+
+	if err != nil {
+		return quizSession, err
+	}
+
+	if !found {
+		return quizSession, fmt.Errorf(constants.ErrSessionNotFound)
+	}
+
+	return quizSession, nil
 }

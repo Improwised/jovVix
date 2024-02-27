@@ -17,7 +17,9 @@ const props = defineProps({
 const emits = defineEmits(["startQuiz"]);
 
 // custom refs
-const code = ref(123455);
+const code = ref("000000");
+
+console.log(code.value, props.data);
 
 // watchers
 watch(
@@ -25,7 +27,7 @@ watch(
   (new_val) => {
     handleEvent(new_val);
   },
-  { deep: true }
+  { deep: true, immediate: true }
 );
 
 // event handlers
@@ -43,10 +45,10 @@ function handleEvent(message) {
 </script>
 
 <template>
-  <FrameLayout
+  <Frame
     v-if="isAdmin"
     :page-title="'Ready-shady-go'"
-    :page-welcome-message="'you can start quiz by pressing start button'"
+    :page-message="'you can start quiz by pressing start button'"
   >
     <form @submit="start_quiz">
       <div class="mb-3 pe-3">
@@ -63,13 +65,19 @@ function handleEvent(message) {
         Start
       </button>
     </form>
-  </FrameLayout>
-  <FrameLayout
+  </Frame>
+  <Frame
     v-else
     :page-title="'Ready-shady-go'"
-    :page-welcome-message="'quiz is about to start'"
+    :page-message="'quiz is about to start'"
   >
-    <h2>Rules</h2>
-    <div></div>
-  </FrameLayout>
+    <div class="text-center homepage">Quiz is about to start</div>
+  </Frame>
 </template>
+<style scoped>
+.homepage {
+  margin-top: 100px;
+  margin-bottom: 100px;
+  font-size: 30px;
+}
+</style>

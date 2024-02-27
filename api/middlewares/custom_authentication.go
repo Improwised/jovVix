@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/Improwised/quizz-app/api/config"
@@ -75,13 +76,33 @@ func (m *Middleware) CheckSessionId(c *fiber.Ctx) error {
 		return c.Next()
 	}
 
-	// get session id from query
+	// get session id from param
 	sessionId := c.Params(constants.SessionIDPram)
 
 	// if sessionId == "" {
 	// 	c.Locals(constants.MiddlewareError, constants.ErrQuizSessionIdRequired)
 	// }
 	c.Locals(constants.SessionIDPram, sessionId)
+	c.Locals(constants.MiddlewarePass, c.Locals(constants.MiddlewareError) == nil)
+	return c.Next()
+}
+
+func (m *Middleware) CheckSessionCode(c *fiber.Ctx) error {
+
+	if !c.Locals(constants.MiddlewarePass).(bool) {
+		return c.Next()
+	}
+
+	// get session code from param
+	code := c.Params(constants.QuizSessionCode)
+
+	if !IsValidCode(code) {
+		fmt.Println(code)
+		c.Locals(constants.MiddlewareError, constants.ErrCodeInWrongFormat)
+		return c.Next()
+	}
+
+	c.Locals(constants.QuizSessionCode, codeInt)
 	c.Locals(constants.MiddlewarePass, c.Locals(constants.MiddlewareError) == nil)
 	return c.Next()
 }
@@ -126,7 +147,7 @@ func AuthHavingTokenHandler(m *Middleware, c *fiber.Ctx, token string) {
 
 func AuthHavingNoTokenHandler(m *Middleware, c *fiber.Ctx) {
 	// get userName from query
-	userName := c.Query(constants.UserName, "")
+	userName := c.Params(constants.UserName, "")
 
 	if userName == "" {
 		c.Locals(constants.MiddlewareError, constants.UsernameRequired)

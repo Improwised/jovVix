@@ -4,12 +4,15 @@ export async function useIsAdmin() {
   const cfg = useSystemEnv();
   const headers = useRequestHeaders(["cookie"]);
 
-  const { error: err, data } = await useFetch(cfg.value.api_url + "/users/adminAccess", {
-    method: "GET",
-    credentials: "include",
-    headers: headers,
-    mode: "cors",
-  });
+  const { error: err, data: data } = await useFetch(
+    cfg.value.api_url + "/users/adminAccess",
+    {
+      method: "GET",
+      credentials: "include",
+      headers: headers,
+      mode: "cors",
+    }
+  );
 
   if (err?.value) {
     return { ok: false, err: err.value.data?.data || "unknown error" };
@@ -33,14 +36,14 @@ export async function updateSession(force = false) {
 }
 
 export async function useGetUser() {
-  const cfg = useRuntimeConfig();
+  const cfg = useSystemEnv();
   const headers = useRequestHeaders(["cookie"]);
   const isLogin = useState("user", () => {
     return { ok: false, data: "" };
   });
 
   const { error: err, data: data } = await useFetch(
-    cfg.public.api_url + "/users/meta",
+    cfg.value.api_url + "/users/meta",
     {
       method: "GET",
       credentials: "include",

@@ -3,7 +3,6 @@
 import { useToast } from "vue-toastification";
 
 // custom component
-import LayoutsPlayground from "../../../components/layouts/playground.vue";
 import AdminOperation from "../../../composables/admin_operation.js";
 
 // define nuxt configs
@@ -13,7 +12,7 @@ const { session } = await useSession();
 const cfg = useSystemEnv()
 
 // define props and emits
-const url = cfg.value.api_url
+const url = cfg.value.socket_url
 const myRef = ref(false);
 const data = ref({});
 const adminOperationHandler = ref();
@@ -28,6 +27,7 @@ const handleCustomChange = (isFullScreenEvent) => {
 };
 
 const startQuiz = () => {
+  myRef.value = true;
   adminOperationHandler.value.quizStartRequest();
 };
 
@@ -39,6 +39,7 @@ const handleBackEvent = (message) => {
     if (message?.component) {
       const component = message.component;
       data.value = message;
+      console.log(data.value, component);
       currentComponent.value = component;
     } else {
       console.log(message);
@@ -58,13 +59,14 @@ onMounted(() => {
     );
   }
 });
+
+definePageMeta({
+  layout: "empty",
+});
 </script>
 
 <template>
-  <LayoutsPlayground
-    :full-screen-enabled="myRef"
-    @is-full-screen="handleCustomChange"
-  >
+  <Playground :full-screen-enabled="myRef" @is-full-screen="handleCustomChange">
     <LoadingSpace v-if="currentComponent == 'Loading'"></LoadingSpace>
     <WaitingSpace
       v-else-if="currentComponent == 'Waiting'"
@@ -82,6 +84,5 @@ onMounted(() => {
       :data="data"
       :is-admin="true"
     ></ScoreSpace>
-    <!-- <button @click="() => (myRef = !myRef)">Change to full screen</button> -->
-  </LayoutsPlayground>
+  </Playground>
 </template>

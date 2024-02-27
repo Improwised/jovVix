@@ -20,6 +20,18 @@ import (
 	"go.uber.org/zap"
 )
 
+type QuizSendResponse struct {
+	Component string `json:"component"` // simulates a page
+	Action    string `json:"action"`    // action is a description of an event
+	Data      any    `json:"data"`      // optional data
+}
+
+type QuizReceiveResponse struct {
+	Component string `json:"component"` // simulates a page
+	Event     string `json:"event"`     // event
+	Data      any    `json:"data"`      // optional data
+}
+
 func CreateQuickUser(db *goqu.Database, logger *zap.Logger, userObj models.User, retrying bool, emailValidation bool) (models.User, error) {
 	userModel, err := models.InitUserModel(db)
 
@@ -180,28 +192,56 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 
 	defer c.Close()
 
+	response := QuizSendResponse{
+		Component: constants.Waiting,
+		Action:    constants.ActionAuthentication,
+		Data:      "",
+	}
+
 	// check for middleware error
 	if !c.Locals(constants.MiddlewarePass).(bool) {
-		fmt.Print(utils.JSONSuccessWs(c, "authentication failed", c.Locals(constants.MiddlewareError).(string)))
-		time.Sleep(1 * time.Second)
+		response.Data = c.Locals(constants.MiddlewareError).(string)
+		err := utils.JSONFailWs(c, constants.EventAuthentication, response)
+		if err != nil {
+			fmt.Println(err)
+		}
 		return
 	}
 
-	err := utils.JSONSuccessWs(c, constants.EventActivateSession, "session get successfully")
+	code := c.Locals(constants.QuizSessionCode).(int)
 
-	fmt.Println(err)
-}
+	fmt.Println(code)
 
-type QuizSendResponse struct {
-	Component string `json:"component"` // simulates a page
-	Action    string `json:"action"`    // action is a description of an event
-	Data      any    `json:"data"`      // optional data
-}
+	session, err := qc.helpers.QuizSessionModel.GetSessionByCode(code)
 
-type QuizReceiveResponse struct {
-	Component string `json:"component"` // simulates a page
-	Event     string `json:"event"`     // event
-	Data      any    `json:"data"`      // optional data
+	if err != nil {
+		response.Action = constants.ActionJoinQuiz
+		response.Data = constants.ErrCodeNotFound
+		err = utils.JSONFailWs(c, constants.EventJoinQuiz, response)
+
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+
+	if !session.IsActive || session.ActivatedTo.Valid {
+		response.Data = "session not active"
+		err = utils.JSONFailWs(c, constants.EventJoinQuiz, response)
+
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+
+	if session.Current_question
+
+	response.Data = "Quiz is about to start"
+	err = utils.JSONSuccessWs(c, constants.EventJoinQuiz, response)
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
 }
 
 func (qc *quizSocketController) Arrange(c *websocket.Conn) {
@@ -289,10 +329,13 @@ func (qc *quizSocketController) Arrange(c *websocket.Conn) {
 		// handle Waiting page
 		for {
 
+			fmt.Println(response, isCodeSent)
 			if !isCodeSent {
 				// send code to client
 				response.Action = constants.ActionSessionActivation
 				response.Data = map[string]int{"code": session.Code}
+
+				fmt.Println(response)
 				err = utils.JSONSuccessWs(c, constants.EventSendCode, response)
 
 				if err != nil {

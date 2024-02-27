@@ -174,3 +174,7 @@ func (model *QuizModel) GetSharedQuestions(code int) ([]SessionQuestion, error) 
 
 	return questions, nil
 }
+
+func IsValidCode(model *QuizModel){
+	
+}

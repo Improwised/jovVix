@@ -206,7 +206,7 @@ func quizController(
 	// general for all
 	v1.Get("/socket/ping", websocket.New(quizSocketController.Ping))
 
-	v1.Get("/socket/join", middleware.CustomAuthenticated, websocket.New(quizSocketController.Join))
+	v1.Get(fmt.Sprintf("/socket/join/:%s", constants.QuizSessionCode), middleware.CheckSessionCode, middleware.CustomAuthenticated, websocket.New(quizSocketController.Join))
 
 	// admin endpoints
 	allowRoles, err := helper.RoleModel.NewAllowedRoles("admin")

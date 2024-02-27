@@ -1,5 +1,5 @@
 <template>
-  <FrameLayout :page-title="'Loading'">
+  <Frame :page-title="'Loading'">
     <v-skeleton-loader type="article"></v-skeleton-loader>
-  </FrameLayout>
+  </Frame>
 </template>

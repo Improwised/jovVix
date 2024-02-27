@@ -71,7 +71,7 @@ const (
 const (
 	// Event 1. Authentication <admin side>
 	EventAuthentication  = "authentication"
-	ActionAuthentication = "authentication check to access the page"
+	ActionAuthentication = "authentication check"
 	Unauthenticated      = "unauthenticated to access resource"
 	InvalidCredentials   = "invalid credentials"
 
@@ -95,12 +95,13 @@ const (
 	SessionObj              = "current session object"
 
 	// Event 5. Join quiz <User>
-	EventJoinQuiz        = "join quiz"
+	EventJoinQuiz        = "code validation"
+	ActionJoinQuiz       = "quiz code validation"
 	UserName             = "username"
 	UserUkey             = "users_username_ukey"
 	Join                 = "join access"
 	ErrCodeNotFound      = "code not found"
-	ErrCodeInWrongFormat = "code should be number"
+	ErrCodeInWrongFormat = "code is not in proper format"
 	ErrUsernameExists    = "username already exists"
 
 	// Event 6. Start quiz <admin>

@@ -9,6 +9,7 @@ const email = ref();
 const password = ref();
 let status = null;
 
+console.log(email.value, password.value, "-------------------------");
 async function login_user(e) {
   e.preventDefault();
 
@@ -17,6 +18,7 @@ async function login_user(e) {
     return;
   }
 
+  console.log(config.value.api_url + "/login");
   const { error: error } = await useFetch(config.value.api_url + "/login", {
     method: "POST",
     credentials: "include",
@@ -30,7 +32,7 @@ async function login_user(e) {
     },
   });
 
-  if (error.value) {
+  if (error?.value) {
     if (status >= 500) {
       toast.error(error.value);
     } else {
@@ -48,10 +50,7 @@ async function login_user(e) {
 </script>
 
 <template>
-  <Frame
-    page-title="Login page"
-    page-welcome-message="Welcome to the quizz world..."
-  >
+  <Frame page-title="Login page" page-message="Welcome to the quizz world...">
     <form method="POST" @submit="login_user">
       <div class="mb-3">
         <label for="email" class="form-label">Email</label>
