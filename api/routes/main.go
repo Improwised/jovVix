@@ -200,7 +200,7 @@ func quizController(
 	config config.AppConfig,
 	helper *quiz_helper.HelperStructs) error {
 
-	quizSocketController := controller.InitQuizConfig(db, &config, helper)
+	quizSocketController := controller.InitQuizConfig(db, &config, logger, helper)
 	quizController := controller.InitQuizController(logger, events, pub, helper)
 
 	// general for all

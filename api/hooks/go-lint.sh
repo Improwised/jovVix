@@ -21,5 +21,6 @@ if [ -f "go.work" ]; then
         fi
     done
 else
+    golangci-lint run
     echo "No go.work file found in the current directory"
 fi

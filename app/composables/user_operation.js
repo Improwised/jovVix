@@ -1,10 +1,10 @@
 import QuizHandler from "./quiz_operation";
 
 export default class UserOperation extends QuizHandler {
-  constructor(url, code, username, handler) {
+  constructor(code, username, handler) {
+    const url = useState("urls");
     const cookie = useCookie("user");
-    console.log(url, username, code, handler, cookie);
-    super(url, username, code, handler, cookie);
+    super(url.value.socket_url, username, code, handler, cookie);
   }
 
   getAddress(currentObj) {

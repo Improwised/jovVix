@@ -1,4 +1,10 @@
 <script setup>
+// core dependencies
+import { useNuxtApp } from "nuxt/app";
+
+// define nuxt configs
+const app = useNuxtApp();
+
 // define props and emits
 const props = defineProps({
   data: {
@@ -19,13 +25,14 @@ const emits = defineEmits(["startQuiz"]);
 // custom refs
 const code = ref("000000");
 
-console.log(code.value, props.data);
-
 // watchers
 watch(
   () => props.data,
-  (new_val) => {
-    handleEvent(new_val);
+  (message) => {
+    if (message.status == app.$Fail) {
+      console.log("fail", message);
+    }
+    handleEvent(message);
   },
   { deep: true, immediate: true }
 );

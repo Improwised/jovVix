@@ -21,5 +21,6 @@ if [ -f "go.work" ]; then
         fi
     done
 else
+    source .env.testing && gotestsum --format pkgname -- -coverprofile=cover.out ./... "$@"
     echo "No go.work file found in the current directory"
 fi

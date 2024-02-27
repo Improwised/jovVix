@@ -39,27 +39,26 @@ export default class QuizHandler {
       throw Error(
         `Handler for component "${message.component}" is not registered`
       );
-    } else if (typeof this.componentHandler != "function") {
     }
     this.componentHandler(message);
   }
 
-  onOpen(currentObj, event) {
-    this.log.push({ state: "Init", message: "open" });
-    console.log(event);
+  onOpen(currentObj = this, event) {
+    currentObj.log.push({ state: "Init", message: event });
+    // console.log(event);
   }
 
-  onError(currentObj, event) {
-    this.log.push({ state: "err", message: event });
-    console.log(event);
+  onError(currentObj = this, event) {
+    currentObj.log.push({ state: "err", message: event });
+    // console.log(event);
   }
 
-  onClose(currentObj, event) {
-    this.log.push({ state: "Init", message: "close" });
-    console.log(event);
+  onClose(currentObj = this, event) {
+    currentObj.log.push({ state: "Init", message: event });
+    // console.log(event);
   }
 
-  onMessage(currentObj, event) {
+  onMessage(currentObj = this, event) {
     const message = currentObj.destructureMessage(event);
     this.currentComponent = message.component;
     this.currentEvent = message.event;
@@ -70,7 +69,6 @@ export default class QuizHandler {
   destructureMessage(e) {
     try {
       const obj = JSON.parse(e.data);
-      console.log(obj);
       obj["event"] = obj.data.event;
       delete obj.data["event"];
       obj["action"] = obj.data.data.action;
@@ -107,9 +105,9 @@ export default class QuizHandler {
       } else if (message.state == "Receive") {
         console.table(message);
       } else if (message.state == "Init") {
-        console.warn(message);
+        console.table(message);
       } else {
-        console.error(message);
+        console.table(message);
       }
     });
   }

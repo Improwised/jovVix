@@ -4,5 +4,5 @@ export const useSystemEnv = () => {
     api_url: process.env.API_URL,
     socket_url: process.env.API_SOCKET_URL,
   };
-  return useState(() => data);
+  return useState("urls", () => data);
 };

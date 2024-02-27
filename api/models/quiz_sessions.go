@@ -14,7 +14,7 @@ import (
 // QuizSession model
 type QuizSession struct {
 	ID               uuid.UUID      `json:"id" db:"id"`
-	Code             int            `json:"code" db:"code"`
+	Code             sql.NullInt32  `json:"code" db:"code"`
 	Title            string         `json:"title,omitempty" db:"title"`
 	QuizID           uuid.UUID      `json:"quiz_id" db:"quiz_id"`
 	AdminID          string         `json:"admin_id,omitempty" db:"admin_id"`
@@ -22,7 +22,7 @@ type QuizSession struct {
 	ActivatedFrom    sql.NullTime   `json:"activated_from,omitempty" db:"activated_from"`
 	IsActive         bool           `json:"is_active" db:"is_active"`
 	QuizAnalysis     sql.NullString `json:"quiz_analysis,omitempty" db:"quiz_analysis"`
-	Current_question uuid.UUID      `json:"current_question" db:"current_question"`
+	CurrentQuestion  sql.NullString `json:"current_question" db:"current_question"`
 	IsQuestionActive sql.NullBool   `json:"is_question_active" db:"is_question_active"`
 	CreatedAt        time.Time      `json:"created_at,omitempty" db:"created_at,omitempty"`
 	UpdatedAt        time.Time      `json:"updated_at,omitempty" db:"updated_at,omitempty"`
@@ -88,110 +88,13 @@ func (model *QuizSessionModel) CreateQuizSession(code int, title string, quizID 
 	return id, nil
 }
 
-func (model *QuizSessionModel) IsUserHost(userId string, sessionId string) (bool, error) {
-	query := model.db.From("quiz_sessions").
-		Select(goqu.C("admin_id").Eq(userId).As("is_host")).
-		Where(goqu.I("id").Eq(sessionId))
-
-	// Execute the query
-	var isHost bool
-	found, err := query.ScanVal(&isHost)
-	if err != nil {
-		return false, err
-	}
-
-	if !found {
-		return false, sql.ErrNoRows
-	}
-
-	return isHost, nil
-}
-
 type QuizSessionActive struct {
 	IsActive      bool      `db:"is_active"`
 	Code          int       `db:"code"`
 	ActivatedFrom time.Time `db:"activated_from"`
 }
 
-func (model *QuizSessionModel) GetActiveSession(sessionId string) (QuizSession, error) {
-	var quizSession QuizSession = QuizSession{}
-	var isOk bool = false
-
-	transactionObj, err := model.db.Begin()
-
-	if err != nil {
-		return quizSession, err
-	}
-
-	defer func() {
-		if isOk {
-			err = transactionObj.Commit()
-			fmt.Println(err)
-		} else {
-			err = transactionObj.Rollback()
-			fmt.Println(err)
-		}
-	}()
-
-	found, err := model.db.Select("*").From("quiz_sessions").Where(goqu.I("id").Eq(sessionId)).Limit(1).ScanStruct(&quizSession)
-
-	if err != nil {
-		return quizSession, err
-	}
-
-	if !found {
-		return quizSession, fmt.Errorf(constants.ErrSessionNotFound)
-	}
-
-	if quizSession.IsActive {
-		return quizSession, nil
-	}
-
-	if quizSession.ActivatedTo.Valid {
-		return quizSession, fmt.Errorf("session was completed")
-	}
-
-	for {
-		code := quizUtilsHelper.GenerateRandomInt(100000, 999999)
-
-		if err != nil {
-			return quizSession, err
-		}
-
-		count, err := model.db.From("quiz_sessions").Where(goqu.Ex{
-			"code": code,
-		}).Count()
-
-		if err != nil {
-			return quizSession, err
-		}
-
-		if count == 0 {
-			rows, err := model.db.Update("quiz_sessions").Set(goqu.Record{
-				"code":         code,
-				"is_active":    true,
-				"activated_to": goqu.Literal("NOW()"),
-				"updated_at":   goqu.Literal("NOW()"),
-			}).Where(goqu.C("id").Eq(sessionId)).Returning("quiz_sessions.*").Executor().Query()
-
-			if err != nil {
-				return quizSession, err
-			}
-			defer rows.Close()
-
-			if rows.Next() {
-				err = rows.Scan(&quizSession.ID, &quizSession.Code, &quizSession.Title, &quizSession.QuizID, &quizSession.AdminID, &quizSession.ActivatedTo, &quizSession.ActivatedFrom, &quizSession.IsActive, &quizSession.QuizAnalysis, &quizSession.CreatedAt, &quizSession.UpdatedAt)
-				if err != nil {
-					return quizSession, err
-				}
-				isOk = true
-				return quizSession, nil
-			}
-		}
-	}
-}
-
-func (model *QuizSessionModel) GetSessionByCode(code int) (QuizSession, error) {
+func (model *QuizSessionModel) GetSessionByCode(code string) (QuizSession, error) {
 	var quizSession QuizSession = QuizSession{}
 
 	found, err := model.db.Select("*").From("quiz_sessions").Where(goqu.I("code").Eq(code), goqu.I("is_active").Eq(true)).Limit(1).ScanStruct(&quizSession)
@@ -205,4 +108,122 @@ func (model *QuizSessionModel) GetSessionByCode(code int) (QuizSession, error) {
 	}
 
 	return quizSession, nil
+}
+
+func (model *QuizSessionModel) GetActiveSession(sessionId string, userId string) (QuizSession, error) {
+	var quizSession QuizSession = QuizSession{}
+	var isOk bool = false
+
+	transactionObj, err := model.db.Begin()
+
+	if err != nil {
+		return quizSession, err
+	}
+
+	defer func() {
+		if isOk {
+			err = transactionObj.Commit()
+			if err != nil {
+				fmt.Println(err)
+			}
+		} else {
+			err = transactionObj.Rollback()
+			if err != nil {
+				fmt.Println(err)
+			}
+		}
+	}()
+
+	quizSession, err = model.GetSessionById(transactionObj, sessionId)
+
+	if err != nil {
+		return quizSession, err
+	}
+
+	if quizSession.AdminID != userId {
+		return quizSession, fmt.Errorf(constants.Unauthenticated)
+	}
+
+	if quizSession.IsActive {
+		return quizSession, nil
+	}
+
+	if quizSession.ActivatedTo.Valid {
+		return quizSession, fmt.Errorf("session was completed")
+	}
+
+	statement, err := transactionObj.Prepare(`
+	update quiz_sessions
+		SET
+			code=$3,
+			is_active=true,
+			activated_from=now(),
+			updated_at = now()
+		WHERE
+			id=$1 and
+			admin_id=$2 and
+			is_active = false and
+			not exists (
+				select 1 from quiz_sessions where code = $3 limit 1
+			)
+		returning
+			code
+	`)
+
+	if err != nil {
+		return quizSession, err
+	}
+
+	maxTry := 10
+	// handle code generation
+	_, err = activateSession(maxTry, statement, quizSession.ID, userId)
+
+	if err != nil {
+		return quizSession, err
+	}
+
+	quizSession, err = model.GetSessionById(transactionObj, sessionId)
+	if err != nil {
+		return quizSession, err
+	}
+	return quizSession, nil
+
+}
+
+func (model *QuizSessionModel) GetSessionById(db *goqu.TxDatabase, sessionId string) (QuizSession, error) {
+	var quizSession QuizSession = QuizSession{}
+	found, err := db.Select("*").From("quiz_sessions").Where(goqu.I("id").Eq(sessionId)).Limit(1).ScanStruct(&quizSession)
+
+	if err != nil {
+		return quizSession, err
+	}
+
+	if !found {
+		return quizSession, fmt.Errorf(constants.ErrSessionNotFound)
+	}
+
+	return quizSession, nil
+}
+
+func activateSession(maxTry int, statement *sql.Stmt, sessionId uuid.UUID, userId string) (int, error) {
+	var err error
+	var code int
+	for {
+		code = quizUtilsHelper.GenerateRandomInt(100000, 999999)
+
+		err = statement.QueryRow(sessionId, userId, code).Scan(&code)
+
+		if err != nil {
+			if err == sql.ErrNoRows {
+				maxTry -= 1
+				if maxTry == 0 {
+					return -1, fmt.Errorf(constants.UnknownError)
+				}
+				continue
+			}
+			return -1, err
+		}
+
+		return code, nil
+	}
 }

@@ -9,7 +9,6 @@ const email = ref();
 const password = ref();
 let status = null;
 
-console.log(email.value, password.value, "-------------------------");
 async function login_user(e) {
   e.preventDefault();
 
@@ -18,7 +17,6 @@ async function login_user(e) {
     return;
   }
 
-  console.log(config.value.api_url + "/login");
   const { error: error } = await useFetch(config.value.api_url + "/login", {
     method: "POST",
     credentials: "include",

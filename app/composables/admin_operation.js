@@ -1,12 +1,17 @@
 import QuizHandler from "./quiz_operation";
 
 export default class AdminOperations extends QuizHandler {
-  constructor(url, session_id, username, handler) {
+  constructor(session_id, username, handler) {
     // get nuxt hooks
     const cookie = useCookie("user");
+    const url = useState("urls");
+    const app = useNuxtApp();
 
     // Initialize object
-    super(url, username, session_id, handler, cookie);
+    super(url.value.socket_url, username, session_id, handler, cookie);
+
+    // Initialize custom attribute
+    this.app = app;
   }
 
   getAddress(currentObj = this) {
@@ -14,6 +19,6 @@ export default class AdminOperations extends QuizHandler {
   }
 
   quizStartRequest() {
-    this.sendMessage();
+    this.sendMessage(this.currentComponent, this.app.$StartQuiz);
   }
 }

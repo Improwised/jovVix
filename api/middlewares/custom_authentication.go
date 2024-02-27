@@ -10,7 +10,7 @@ import (
 	"github.com/Improwised/quizz-app/api/config"
 	"github.com/Improwised/quizz-app/api/constants"
 	quizController "github.com/Improwised/quizz-app/api/controllers/api/v1"
-	"github.com/Improwised/quizz-app/api/helpers/utils"
+	quizUtilsHelper "github.com/Improwised/quizz-app/api/helpers/utils"
 	"github.com/Improwised/quizz-app/api/models"
 	"github.com/Improwised/quizz-app/api/pkg/jwt"
 	"github.com/Improwised/quizz-app/api/utils"
@@ -25,7 +25,7 @@ import (
 //			A. exists:- verify jwk
 //				a. jwk ok:- get user
 //								1. found:- set role in context and session storage
-//	                         2. not found :- TODO: send error
+//	                         2. not found :- send error
 //				b. jwk not ok:- fail message return/ login again or join as user
 //	  	B. not exists :- trying to get userName from query and create new_user get userID and role and set in context and cookie
 //
@@ -97,7 +97,6 @@ func (m *Middleware) CheckSessionCode(c *fiber.Ctx) error {
 	code := c.Params(constants.QuizSessionCode)
 
 	if !quizUtilsHelper.IsValidCode(code) {
-		fmt.Println(code)
 		c.Locals(constants.MiddlewareError, constants.ErrCodeInWrongFormat)
 		return c.Next()
 	}

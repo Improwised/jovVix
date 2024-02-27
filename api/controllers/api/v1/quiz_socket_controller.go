@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
 	"time"
@@ -86,11 +85,12 @@ func CreateQuickUser(db *goqu.Database, logger *zap.Logger, userObj models.User,
 type quizSocketController struct {
 	db        *models.QuizModel
 	appConfig *config.AppConfig
+	logger    *zap.Logger
 	helpers   *quizHelper.HelperStructs
 }
 
-func InitQuizConfig(db *goqu.Database, appConfig *config.AppConfig, helpers *quizHelper.HelperStructs) *quizSocketController {
-	return &quizSocketController{models.InitQuizModel(db), appConfig, helpers}
+func InitQuizConfig(db *goqu.Database, appConfig *config.AppConfig, logger *zap.Logger, helpers *quizHelper.HelperStructs) *quizSocketController {
+	return &quizSocketController{models.InitQuizModel(db), appConfig, logger, helpers}
 }
 
 type ping struct {
@@ -203,14 +203,12 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 		response.Data = c.Locals(constants.MiddlewareError).(string)
 		err := utils.JSONFailWs(c, constants.EventAuthentication, response)
 		if err != nil {
-			fmt.Println(err)
+			qc.logger.Error(fmt.Sprintf("socket error in middleware: %s event, %s action", constants.EventAuthentication, response.Action), zap.Error(err))
 		}
 		return
 	}
 
-	code := c.Locals(constants.QuizSessionCode).(int)
-
-	fmt.Println(code)
+	code := c.Locals(constants.QuizSessionCode).(string)
 
 	session, err := qc.helpers.QuizSessionModel.GetSessionByCode(code)
 
@@ -220,30 +218,37 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 		err = utils.JSONFailWs(c, constants.EventJoinQuiz, response)
 
 		if err != nil {
-			fmt.Println(err)
+			qc.logger.Error(fmt.Sprintf("socket error in session get in code: %s event, %s action, %s code", constants.EventJoinQuiz, response.Action, code), zap.Error(err))
 		}
+		return
 	}
 
-	if !session.IsActive || session.ActivatedTo.Valid {
-		response.Data = "session not active"
+	if !session.IsActive {
+		response.Data = constants.ErrCodeNotActive
 		err = utils.JSONFailWs(c, constants.EventJoinQuiz, response)
 
 		if err != nil {
-			fmt.Println(err)
+			qc.logger.Error(fmt.Sprintf("socket error check session active: %s event, %s action, %s code", constants.EventJoinQuiz, response.Action, code), zap.Error(err))
 		}
+		return
 	}
 
-	response.Data = string("Quiz is about to start")
+	response.Data = constants.QuizStartsSoon
 	err = utils.JSONSuccessWs(c, constants.EventJoinQuiz, response)
 
 	if err != nil {
-		fmt.Println(err)
+		qc.logger.Error(fmt.Sprintf("socket error send waiting message: %s event, %s action", constants.EventJoinQuiz, response.Action), zap.Error(err))
 	}
 
 }
 
 func (qc *quizSocketController) Arrange(c *websocket.Conn) {
+
+	isConnected := true
 	defer func() {
+		isConnected = false
+		time.Sleep(1 * time.Second)
+		fmt.Println("disconnected...")
 		c.Close()
 	}()
 
@@ -255,121 +260,137 @@ func (qc *quizSocketController) Arrange(c *websocket.Conn) {
 
 	// checks for any middleware errors
 	if !c.Locals(constants.MiddlewarePass).(bool) {
-		fmt.Println(c.Locals(constants.MiddlewarePass))
 		response.Data = c.Locals(constants.MiddlewareError).(string)
-		fmt.Print(utils.JSONErrorWs(c, constants.EventAuthentication, response))
+		err := utils.JSONErrorWs(c, constants.EventAuthentication, response)
+		if err != nil {
+			qc.logger.Error(fmt.Sprintf("socket error middleware: %s event, %s action", constants.EventAuthentication, response.Action), zap.Error(err))
+		}
 		time.Sleep(1 * time.Second)
 		return
 	}
 
 	sessionId := c.Locals(constants.SessionIDPram).(string)
-	fmt.Println(sessionId)
 
-	// check if user is host or not
 	user := c.Locals(constants.ContextUser).(models.User)
 
-	isHost, err := qc.helpers.QuizSessionModel.IsUserHost(user.ID, sessionId)
-
-	if err != nil {
-
-		if err == sql.ErrNoRows {
-			response.Action = constants.ActionSessionValidation
-			response.Data = constants.ErrSessionNotFound
-			err = utils.JSONErrorWs(c, constants.EventSessionValidation, response)
-			if err != nil {
-				fmt.Println(err)
-			}
-		}
-
-		response.Action = constants.ActionSessionActivation
-		response.Data = constants.UnknownError
-		err = utils.JSONErrorWs(c, constants.EventSessionValidation, response)
-		if err != nil {
-			fmt.Println(err)
-		}
-		return
-	}
-
-	if !isHost {
-		response.Action = constants.ActionAuthorization
-		response.Data = constants.Unauthenticated
-		err = utils.JSONFailWs(c, constants.EventAuthorization, response)
-		if err != nil {
-			fmt.Println(err)
-		}
-		return
-	}
-
 	// activate session
-	session, err := qc.helpers.QuizSessionModel.GetActiveSession(sessionId)
+	session, err := ActivateAndGetSession(c, qc.helpers, qc.logger, sessionId, user.ID)
 
 	if err != nil {
-		response.Action = constants.ActionSessionActivation
-		err = utils.JSONErrorWs(c, constants.EventActivateSession, constants.UnknownError)
-		if err != nil {
-			fmt.Println(err)
-		}
 		return
 	}
 
-	c.Locals(constants.SessionObj, session)
+	// is isQuestionActive true -> quiz started
+	isCodeSent := session.IsQuestionActive.Valid
 
-	err = utils.JSONSuccessWs(c, constants.EventActivateSession, "session get successfully")
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	isCodeSent := false
-
-	fmt.Println("--", session.Current_question.String(), session.IsQuestionActive.Valid, "--")
-
-	if !session.IsQuestionActive.Valid {
+	if !isCodeSent {
 		// handle Waiting page
 		for {
 
-			fmt.Println(response, isCodeSent)
+			if !isConnected {
+				break
+			}
+
+			// if code not sent then sent it
 			if !isCodeSent {
 				// send code to client
-				response.Action = constants.ActionSessionActivation
-				response.Data = map[string]int{"code": session.Code}
-
-				fmt.Println(response)
-				err = utils.JSONSuccessWs(c, constants.EventSendCode, response)
-
-				if err != nil {
-					fmt.Println(err)
-				}
-
+				handleCodeSend(c, response, qc.logger, session.Code.Int32)
 				isCodeSent = true
 			}
 
+			// once code sent receive start signal
 			if isCodeSent {
-				message := QuizReceiveResponse{}
-				err := c.ReadJSON(&message)
-
-				if err != nil {
-					fmt.Println(err, "<-err")
-				}
-
-				if message.Event == constants.EventSendCode && message.Component == response.Component {
-					fmt.Println(message)
+				isBreak := handleStartQuiz(c, qc.logger, &isConnected, response.Action)
+				if isBreak {
 					break
 				}
 			}
 		}
 	}
 
-	response.Component = "Question"
-	questions, err := qc.helpers.QuizModel.GetSharedQuestions(session.Code)
+	response.Component = constants.Question
+	questions, err := qc.helpers.QuizModel.GetSharedQuestions(int(session.Code.Int32))
 
 	if err != nil {
-		fmt.Println(err)
+		qc.logger.Error(fmt.Sprintf("socket error get remaining questions: %s event, %s action %v code", constants.EventStartQuiz, response.Action, session.Code), zap.Error(err))
 	}
 
 	response.Data = questions
 	// handle question page iteration
-	fmt.Println(response.Data)
 	err = utils.JSONSuccessWs(c, constants.EventStartQuiz, response)
 
-	fmt.Println(err)
+	if err != nil {
+		qc.logger.Error(fmt.Sprintf("socket error success: %s event, %s action %v code", constants.EventStartQuiz, response.Action, session.Code), zap.Error(err))
+	}
+}
+
+// Activate session
+
+func ActivateAndGetSession(c *websocket.Conn, helpers *quizHelper.HelperStructs, logger *zap.Logger, sessionId string, userId string) (models.QuizSession, error) {
+
+	response := QuizSendResponse{
+		Component: constants.Waiting,
+		Action:    constants.ActionAuthentication,
+		Data:      "",
+	}
+
+	session, err := helpers.QuizSessionModel.GetActiveSession(sessionId, userId)
+
+	if err != nil {
+		if err.Error() == constants.Unauthenticated {
+			response.Action = constants.ActionSessionValidation
+			response.Data = constants.Unauthorized
+			err = utils.JSONFailWs(c, constants.EventAuthorization, response)
+			if err != nil {
+				logger.Error(fmt.Sprintf("socket error authentication host: %s event, %s action", constants.EventAuthorization, response.Action), zap.Error(err))
+			}
+			return session, err
+		}
+
+		response.Action = constants.ActionSessionActivation
+		response.Data = constants.UnknownError
+		err = utils.JSONErrorWs(c, constants.EventActivateSession, response)
+		if err != nil {
+			logger.Error(fmt.Sprintf("socket error get or activate session: %s event, %s action", constants.EventActivateSession, response.Action), zap.Error(err))
+		}
+		return session, err
+	}
+
+	c.Locals(constants.SessionObj, session)
+
+	return session, nil
+}
+
+// handle waiting page
+
+func handleCodeSend(c *websocket.Conn, response QuizSendResponse, logger *zap.Logger, code int32) bool {
+
+	// send code to client
+	response.Action = constants.ActionSessionActivation
+	response.Data = map[string]int{"code": int(code)}
+
+	err := utils.JSONSuccessWs(c, constants.EventSendCode, response)
+
+	if err != nil {
+		logger.Error(fmt.Sprintf("socket error sent code: %s event, %s action", constants.EventSendCode, response.Action), zap.Error(err))
+	}
+
+	return true
+}
+
+func handleStartQuiz(c *websocket.Conn, logger *zap.Logger, isConnected *bool, action string) bool {
+	message := QuizReceiveResponse{}
+	err := c.ReadJSON(&message)
+
+	if err != nil {
+		logger.Error(fmt.Sprintf("socket error start event handling: %s event, %s action", constants.EventStartQuiz, action), zap.Error(err))
+		*isConnected = false
+		return true
+	}
+
+	if message.Event == constants.EventStartQuiz {
+		return true
+	}
+
+	return false
 }

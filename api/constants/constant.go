@@ -95,17 +95,21 @@ const (
 	SessionObj              = "current session object"
 
 	// Event 5. Join quiz <User>
-	EventJoinQuiz        = "code validation"
-	ActionJoinQuiz       = "quiz code validation"
-	UserName             = "username"
-	UserUkey             = "users_username_ukey"
-	Join                 = "join access"
-	ErrCodeNotFound      = "code not found"
-	ErrCodeInWrongFormat = "code is not in proper format"
-	ErrUsernameExists    = "username already exists"
+	EventJoinQuiz          = "code validation"
+	ActionJoinQuiz         = "quiz code validation"
+	ErrCodeInWrongFormat   = "code is not in proper format"
+	ErrCodeNotFound        = "code not found"
+	ErrCodeNotActive       = "code is not active"
+	ErrSessionWasCompleted = "session was completed"
+
+	UserName          = "username"
+	UserUkey          = "users_username_ukey"
+	Join              = "join access"
+	QuizStartsSoon    = "quiz will start soon"
+	ErrUsernameExists = "username already exists"
 
 	// Event 6. Start quiz <admin>
-	EventStartQuiz = "start quiz"
+	EventStartQuiz = "start quiz" // use by web
 
 	// Event 7. Get Questions
 	GetQuestions = "get quiz questions"

@@ -4,18 +4,20 @@ import { useToast } from "vue-toastification";
 
 // custom component
 import UserOperation from "../../../composables/user_operation.js";
+import { useSystemEnv } from "~~/composables/envs";
+import constants from "~~/config/constants";
 
 // define nuxt configs
 const route = useRoute();
 const toast = useToast();
 const { session } = await useSession();
-const cfg = useSystemEnv();
+useSystemEnv();
 
 // define props and emits
 const myRef = ref(false);
-const socket_url = ref(cfg.value.socket_url);
 const data = ref({});
 const currentComponent = ref("Loading");
+const userSession = ref()
 
 // event handlers
 const handleCustomChange = (isFullScreenEvent) => {
@@ -25,33 +27,26 @@ const handleCustomChange = (isFullScreenEvent) => {
   }
 };
 
-console.log(socket_url.value, cfg.value.socket_url);
 // main functions
 onMounted(() => {
   // core logic
-  if (process.server) {
-  }
   if (process.client) {
-    console.log(route.params.code);
-    const userSession = new UserOperation(
-      socket_url.value,
+    userSession.value = new UserOperation(
       route.params.code,
       session.value.user?.username || route.query?.username,
-      handleBackEvent
+      handleQuizEvents
     );
-    console.log(userSession);
   }
 });
 
-const handleBackEvent = (message) => {
-  if (message.status == "fail") {
-    console.log(message);
+const handleQuizEvents = (message) => {
+  console.log(message);
+  if (message.status == constants.Error) {
     navigateTo("/error?status=" + message.status + "&error=" + message.data);
-  } else if (message.status == "success") {
+  } else {
     if (message?.component) {
       const component = message.component;
       data.value = message;
-      console.log(data.value, component);
       currentComponent.value = component;
     } else {
       console.log(message);

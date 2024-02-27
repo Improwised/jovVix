@@ -15,5 +15,6 @@ if [ -f "go.work" ]; then
         fi
     done
 else
+    go vet ./... "$@"
     echo "No go.work file found in the current directory"
 fi

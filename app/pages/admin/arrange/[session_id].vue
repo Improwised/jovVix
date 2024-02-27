@@ -8,11 +8,11 @@ import AdminOperation from "../../../composables/admin_operation.js";
 // define nuxt configs
 const route = useRoute();
 const toast = useToast();
+const app = useNuxtApp();
 const { session } = await useSession();
-const cfg = useSystemEnv();
+useSystemEnv();
 
 // define props and emits
-const url = cfg.value.socket_url;
 const myRef = ref(false);
 const data = ref({});
 const adminOperationHandler = ref();
@@ -27,23 +27,24 @@ const handleCustomChange = (isFullScreenEvent) => {
 };
 
 const startQuiz = () => {
-  myRef.value = true;
+  // myRef.value = true;
   adminOperationHandler.value.quizStartRequest();
 };
 
-const handleBackEvent = (message) => {
-  if (message.status == "fail") {
-    console.log(message);
+const handleQuizEvents = (message) => {
+  // error ? -> redirect to error page
+  if (message.status == app.$Error) {
+    adminOperationHandler.value.printLog();
     navigateTo("/error?status=" + message.status + "&error=" + message.data);
-  } else if (message.status == "success") {
-    if (message?.component) {
-      const component = message.component;
-      data.value = message;
-      console.log(data.value, component);
-      currentComponent.value = component;
-    } else {
-      console.log(message);
+  } else {
+    // unauthorized ? -> redirect to login page
+    if (message.status == app.$Fail && message.data == app.$Unauthorized) {
+      navigateTo(
+        "/account/login?error=" + message.data + "&url=" + route.fullPath
+      );
     }
+    data.value = message;
+    currentComponent.value = message.component;
   }
 };
 
@@ -52,10 +53,9 @@ onMounted(() => {
   // core logic
   if (process.client) {
     adminOperationHandler.value = new AdminOperation(
-      url,
       route.params.session_id,
       session.value.user?.username,
-      handleBackEvent
+      handleQuizEvents
     );
   }
 });
