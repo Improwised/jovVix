@@ -8,7 +8,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
       const nuxtInstance = useNuxtApp();
       return callWithNuxt(nuxtInstance, () =>
         navigateTo(
-          "/account/login?url=" + to.fullPath + "&error=" + is_admin.err
+          "/account/login?error=" + is_admin.err + "&url=" + to.fullPath
         )
       );
     }

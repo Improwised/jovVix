@@ -24,7 +24,7 @@
       class="container-fluid position-fixed bottom-0 bg-dark text-capitalize fs-5 p-2"
     >
       <div class="text-center p-3 text-light">
-        © 2024 Copyright:
+        © {{ new Date().getFullYear() }} Copyright:
         <a class="text-light" href="/">Quizz_app</a>
       </div>
     </footer>
