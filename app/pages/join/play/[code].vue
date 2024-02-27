@@ -43,7 +43,10 @@ const handleQuizEvents = (message) => {
   if (message.status == constants.Error) {
     navigateTo("/error?status=" + message.status + "&error=" + message.data);
   } else {
-    if(message.status == constants.Fail && message.data ==constants.CodeNotFound ){
+    if (
+      message.status == constants.Fail &&
+      message.data == constants.CodeNotFound
+    ) {
       navigateTo("/error?status=" + message.status + "&error=" + message.data);
     }
     if (message?.component) {

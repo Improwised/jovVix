@@ -13,5 +13,5 @@ export default {
 
   // Errors
   Unauthorized: "unauthorized to access resource",
-  CodeNotFound: "code not found"
+  CodeNotFound: "code not found",
 };
