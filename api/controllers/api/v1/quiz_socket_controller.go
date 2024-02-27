@@ -233,9 +233,7 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 		}
 	}
 
-	if session.Current_question
-
-	response.Data = "Quiz is about to start"
+	response.Data = string("Quiz is about to start")
 	err = utils.JSONSuccessWs(c, constants.EventJoinQuiz, response)
 
 	if err != nil {

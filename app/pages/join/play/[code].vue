@@ -9,7 +9,7 @@ import UserOperation from "../../../composables/user_operation.js";
 const route = useRoute();
 const toast = useToast();
 const { session } = await useSession();
-const cfg = useSystemEnv()
+const cfg = useSystemEnv();
 
 // define props and emits
 const myRef = ref(false);
@@ -25,11 +25,11 @@ const handleCustomChange = (isFullScreenEvent) => {
   }
 };
 
-console.log(socket_url.value, cfg.value.socket_url)
+console.log(socket_url.value, cfg.value.socket_url);
 // main functions
 onMounted(() => {
   // core logic
-  if(process.server){
+  if (process.server) {
   }
   if (process.client) {
     console.log(route.params.code);

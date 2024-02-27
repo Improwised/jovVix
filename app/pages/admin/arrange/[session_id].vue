@@ -9,10 +9,10 @@ import AdminOperation from "../../../composables/admin_operation.js";
 const route = useRoute();
 const toast = useToast();
 const { session } = await useSession();
-const cfg = useSystemEnv()
+const cfg = useSystemEnv();
 
 // define props and emits
-const url = cfg.value.socket_url
+const url = cfg.value.socket_url;
 const myRef = ref(false);
 const data = ref({});
 const adminOperationHandler = ref();

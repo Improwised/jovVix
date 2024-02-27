@@ -5,12 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/Improwised/quizz-app/api/config"
 	"github.com/Improwised/quizz-app/api/constants"
 	quizController "github.com/Improwised/quizz-app/api/controllers/api/v1"
+	"github.com/Improwised/quizz-app/api/helpers/utils"
 	"github.com/Improwised/quizz-app/api/models"
 	"github.com/Improwised/quizz-app/api/pkg/jwt"
 	"github.com/Improwised/quizz-app/api/utils"
@@ -96,13 +96,13 @@ func (m *Middleware) CheckSessionCode(c *fiber.Ctx) error {
 	// get session code from param
 	code := c.Params(constants.QuizSessionCode)
 
-	if !IsValidCode(code) {
+	if !quizUtilsHelper.IsValidCode(code) {
 		fmt.Println(code)
 		c.Locals(constants.MiddlewareError, constants.ErrCodeInWrongFormat)
 		return c.Next()
 	}
 
-	c.Locals(constants.QuizSessionCode, codeInt)
+	c.Locals(constants.QuizSessionCode, code)
 	c.Locals(constants.MiddlewarePass, c.Locals(constants.MiddlewareError) == nil)
 	return c.Next()
 }
