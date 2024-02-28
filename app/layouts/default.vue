@@ -4,13 +4,15 @@
       <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container-fluid p-2">
           <!-- Title on the left -->
-          <NuxtLink class="navbar-brand" href="/">Quiz App</NuxtLink>
+          <NuxtLink class="navbar-brand" to="/">Quiz App</NuxtLink>
 
           <!-- Profile/Login on the right -->
           <div class="navbar-collapse justify-content-end">
             <ul class="navbar-nav">
               <li class="nav-item">
-                <NuxtLink class="nav-link" href="/account/login">Profile/Login</NuxtLink>
+                <NuxtLink class="nav-link" to="/account/login"
+                  >Profile/Login</NuxtLink
+                >
               </li>
             </ul>
           </div>
@@ -25,7 +27,7 @@
     >
       <div class="text-center p-3 text-light">
         © {{ new Date().getFullYear() }} Copyright:
-        <NuxtLink class="text-light" href="/">Quizz_app</NuxtLink>
+        <NuxtLink class="text-light" to="/">Quizz_app</NuxtLink>
       </div>
     </footer>
     <footer class="bg-body-tertiary text-center text-lg-start"></footer>
