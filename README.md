@@ -65,8 +65,8 @@ To run this project, execute the following command from the root of the project:
 3. Run the following commands to install necessary packages. (Assuming you are in the root of the project)
 
 ~~~
-cd ./api && go get
-cd ./app && npm install
+cd api && go mod tidy
+cd app && npm install
 ~~~
 
 4. Change .env.local to .env and update necessary configurations. '.env' file is already in .gitignore. If you need to add some new key-value pairs, you need to update .env.example as well.
