@@ -72,7 +72,6 @@ func (model *QuizModel) GetAllQuizzesActivity(user_id string) ([]QuizActivity, e
 		return nil, err
 	}
 
-	fmt.Println(quizzes)
 	return quizzes, nil
 }
 

@@ -146,7 +146,7 @@ func AuthHavingTokenHandler(m *Middleware, c *fiber.Ctx, token string) {
 
 func AuthHavingNoTokenHandler(m *Middleware, c *fiber.Ctx) {
 	// get userName from query
-	userName := c.Params(constants.UserName, "")
+	userName := c.Query(constants.UserName, "")
 
 	if userName == "" {
 		c.Locals(constants.MiddlewareError, constants.UsernameRequired)

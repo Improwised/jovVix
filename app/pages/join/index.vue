@@ -1,13 +1,16 @@
 <script setup>
+// core dependencies
 import { useToast } from "vue-toastification";
 
+// define nuxt configs
 const { session } = await useSession();
 const toast = useToast();
+useSystemEnv();
 
-console.log(session.value.user?.username);
-
+// define props and emits
 const code = ref(0);
 const username = ref(session.value.user?.username);
+
 function join_quiz(e) {
   e.preventDefault();
 
@@ -17,6 +20,8 @@ function join_quiz(e) {
   } else if (!username.value) {
     toast.error("please add username");
     return;
+  } else if (username.value.length > 12 || username.value.length < 6) {
+    toast.error("username must be 6 to 12 char long");
   }
 
   navigateTo(`/join/play/${code.value}?username=${username.value}`);
@@ -49,7 +54,7 @@ function join_quiz(e) {
       <div class="p-2">
         <div v-if="!username" class="text-center">
           Want to save your progress?
-          <a href="/account/register"><b>Login</b></a> now.
+          <NuxtLink to="/account/login"><b>Login</b></NuxtLink> now.
         </div>
       </div>
       <button type="submit" class="btn btn-primary btn-lg bg-primary">

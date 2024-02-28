@@ -5,12 +5,12 @@ import { useToast } from "vue-toastification";
 // custom component
 import UserOperation from "../../../composables/user_operation.js";
 import { useSystemEnv } from "~~/composables/envs";
-import constants from "~~/config/constants";
 
 // define nuxt configs
 const route = useRoute();
 const toast = useToast();
 const { session } = await useSession();
+const app = useNuxtApp();
 useSystemEnv();
 
 // define props and emits
@@ -40,15 +40,9 @@ onMounted(() => {
 });
 
 const handleQuizEvents = (message) => {
-  if (message.status == constants.Error) {
+  if (message.status == app.$Error || message.status == app.$Fail) {
     navigateTo("/error?status=" + message.status + "&error=" + message.data);
   } else {
-    if (
-      message.status == constants.Fail &&
-      message.data == constants.CodeNotFound
-    ) {
-      navigateTo("/error?status=" + message.status + "&error=" + message.data);
-    }
     if (message?.component) {
       const component = message.component;
       data.value = message;

@@ -10,6 +10,7 @@ export default {
 
   // Events
   StartQuiz: "start quiz",
+  Authentication: "authentication",
 
   // Errors
   Unauthorized: "unauthorized to access resource",

@@ -74,8 +74,9 @@ async function login_user(e) {
       </div>
       <div class="p-2">
         <div class="text-end">
-          don't have an <a href="/account/register"><b>account</b></a
-          >?
+          don't have an
+          <NuxtLink to="/account/register"><b>account</b></NuxtLink>
+          ?
         </div>
       </div>
       <button type="submit" class="btn btn-primary">Submit</button>

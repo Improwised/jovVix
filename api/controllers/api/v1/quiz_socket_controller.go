@@ -200,7 +200,7 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 
 	// check for middleware error
 	if !c.Locals(constants.MiddlewarePass).(bool) {
-		response.Data = c.Locals(constants.MiddlewareError).(string)
+		response.Data = c.Locals(constants.MiddlewareError).(error).Error()
 		err := utils.JSONFailWs(c, constants.EventAuthentication, response)
 		if err != nil {
 			qc.logger.Error(fmt.Sprintf("socket error in middleware: %s event, %s action", constants.EventAuthentication, response.Action), zap.Error(err))
@@ -223,8 +223,8 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 		return
 	}
 
-	if !session.IsActive {
-		response.Data = constants.ErrCodeNotActive
+	if !session.IsActive || session.ActivatedTo.Valid {
+		response.Data = constants.ErrCodeNotFound
 		err = utils.JSONFailWs(c, constants.EventJoinQuiz, response)
 
 		if err != nil {
@@ -248,7 +248,6 @@ func (qc *quizSocketController) Arrange(c *websocket.Conn) {
 	defer func() {
 		isConnected = false
 		time.Sleep(1 * time.Second)
-		fmt.Println("disconnected...")
 		c.Close()
 	}()
 
