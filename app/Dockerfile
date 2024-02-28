@@ -24,4 +24,4 @@ COPY . ./
 RUN npm run build
 EXPOSE 5000
 ENTRYPOINT ["/bin/sh", "-c"]
-CMD ["export $(xargs < .env) && /init"]
+CMD ["/init"]
