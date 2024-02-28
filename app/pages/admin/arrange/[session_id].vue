@@ -67,22 +67,22 @@ definePageMeta({
 
 <template>
   <Playground :full-screen-enabled="myRef" @is-full-screen="handleCustomChange">
-    <LoadingSpace v-if="currentComponent == 'Loading'"></LoadingSpace>
-    <WaitingSpace
+    <QuizLoadingSpace v-if="currentComponent == 'Loading'"></QuizLoadingSpace>
+    <QuizWaitingSpace
       v-else-if="currentComponent == 'Waiting'"
       :data="data"
       :is-admin="true"
       @start-quiz="startQuiz"
-    ></WaitingSpace>
-    <QuestionSpace
+    ></QuizWaitingSpace>
+    <QuizQuestionSpace
       v-else-if="currentComponent == 'Question'"
       :data="data"
       :is-admin="true"
-    ></QuestionSpace>
-    <ScoreSpace
+    ></QuizQuestionSpace>
+    <QuizScoreSpace
       v-else-if="currentComponent == 'Score'"
       :data="data"
       :is-admin="true"
-    ></ScoreSpace>
+    ></QuizScoreSpace>
   </Playground>
 </template>

@@ -233,9 +233,15 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 		return
 	}
 
-	response.Data = constants.QuizStartsSoon
-	err = utils.JSONSuccessWs(c, constants.EventJoinQuiz, response)
+	response.Action = constants.QuizQuestionStatus
+	if session.CurrentQuestion.Valid {
+		response.Data = constants.NextQuestionWillServeSoon
+	} else {
+		response.Data = constants.QuizStartsSoon
+	}
 
+	fmt.Println(response)
+	err = utils.JSONSuccessWs(c, constants.EventJoinQuiz, response)
 	if err != nil {
 		qc.logger.Error(fmt.Sprintf("socket error send waiting message: %s event, %s action", constants.EventJoinQuiz, response.Action), zap.Error(err))
 	}

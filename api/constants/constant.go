@@ -112,7 +112,9 @@ const (
 	EventStartQuiz = "start quiz" // use by web
 
 	// Event 7. Get Questions
-	GetQuestions = "get quiz questions"
+	QuizQuestionStatus        = "quiz question status"
+	GetQuestions              = "get quiz questions"
+	NextQuestionWillServeSoon = "Next question will coming soon"
 
 	// Event . unhandled event
 	UnknownError = "unknown_error"

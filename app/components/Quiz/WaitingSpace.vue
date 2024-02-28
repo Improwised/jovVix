@@ -76,9 +76,9 @@ function handleEvent(message) {
   <Frame
     v-else
     :page-title="'Ready-shady-go'"
-    :page-message="'quiz is about to start'"
+    :page-message="data.data"
   >
-    <div class="text-center homepage">Quiz is about to start</div>
+    <div class="text-center homepage">{{ data.data }}</div>
   </Frame>
 </template>
 <style scoped>
