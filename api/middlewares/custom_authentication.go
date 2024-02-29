@@ -34,7 +34,8 @@ import (
 //	B. not exists :- trying to get userName from query and create new_user get userID and role and set in context and cookie
 func (m *Middleware) CustomAuthenticated(c *fiber.Ctx) error {
 
-	if !c.Locals(constants.MiddlewarePass).(bool) {
+	quizUtilsHelper.GetBool(c.Locals(constants.MiddlewarePass))
+	if !quizUtilsHelper.GetBool(c.Locals(constants.MiddlewarePass)) {
 		return c.Next()
 	}
 
@@ -53,7 +54,7 @@ func (m *Middleware) CustomAuthenticated(c *fiber.Ctx) error {
 
 func (m *Middleware) CustomAdminAuthenticated(c *fiber.Ctx) error {
 
-	if !c.Locals(constants.MiddlewarePass).(bool) {
+	if !quizUtilsHelper.GetBool(c.Locals(constants.MiddlewarePass)) {
 		return c.Next()
 	}
 
@@ -72,16 +73,13 @@ func (m *Middleware) CustomAdminAuthenticated(c *fiber.Ctx) error {
 
 func (m *Middleware) CheckSessionId(c *fiber.Ctx) error {
 
-	if !c.Locals(constants.MiddlewarePass).(bool) {
+	if !quizUtilsHelper.GetBool(c.Locals(constants.MiddlewarePass)) {
 		return c.Next()
 	}
 
 	// get session id from param
 	sessionId := c.Params(constants.SessionIDParam)
 
-	// if sessionId == "" {
-	// 	c.Locals(constants.MiddlewareError, constants.ErrQuizSessionIdRequired)
-	// }
 	c.Locals(constants.SessionIDParam, sessionId)
 	c.Locals(constants.MiddlewarePass, c.Locals(constants.MiddlewareError) == nil)
 	return c.Next()
@@ -89,7 +87,7 @@ func (m *Middleware) CheckSessionId(c *fiber.Ctx) error {
 
 func (m *Middleware) CheckSessionCode(c *fiber.Ctx) error {
 
-	if !c.Locals(constants.MiddlewarePass).(bool) {
+	if !quizUtilsHelper.GetBool(c.Locals(constants.MiddlewarePass)) {
 		return c.Next()
 	}
 
@@ -108,17 +106,17 @@ func (m *Middleware) CheckSessionCode(c *fiber.Ctx) error {
 
 func AuthHavingTokenHandler(m *Middleware, c *fiber.Ctx, token string) {
 	// JWK verification
-	claims, err := jwt.ParseToken(m.config, token)
+	claims, err := jwt.ParseToken(m.Config, token)
 
 	if err != nil {
 		if errors.Is(err, j.ErrInvalidJWT()) || errors.Is(err, j.ErrTokenExpired()) {
 			c.Cookie(RemoveUserToken(constants.CookieUser))
 			c.Locals(constants.MiddlewareError, constants.Unauthenticated)
-			m.logger.Error("JWT error during authentication in join", zap.Error(err))
+			m.Logger.Error("JWT error during authentication in join", zap.Error(err))
 			return
 		}
 
-		m.logger.Error("Error while checking user identity in join", zap.Error(err))
+		m.Logger.Error("Error while checking user identity in join", zap.Error(err))
 		c.Locals(constants.MiddlewareError, constants.ErrUnauthenticated)
 		return
 	}
@@ -130,12 +128,12 @@ func AuthHavingTokenHandler(m *Middleware, c *fiber.Ctx, token string) {
 	if err != nil {
 		if err == sql.ErrNoRows {
 			c.Locals(constants.MiddlewareError, constants.InvalidCredentials)
-			m.logger.Error(fmt.Sprintf("User not found, userID %s", claims.Subject()), zap.Error(err))
+			m.Logger.Error(fmt.Sprintf("User not found, userID %s", claims.Subject()), zap.Error(err))
 			return
 		}
 
 		c.Locals(constants.MiddlewareError, constants.UnknownError)
-		m.logger.Error(fmt.Sprintf("Unknown DB error, userID %s", claims.Subject()), zap.Error(err))
+		m.Logger.Error(fmt.Sprintf("Unknown DB error, userID %s", claims.Subject()), zap.Error(err))
 		return
 	}
 
@@ -150,7 +148,7 @@ func AuthHavingNoTokenHandler(m *Middleware, c *fiber.Ctx) {
 
 	if userName == "" {
 		c.Locals(constants.MiddlewareError, constants.UsernameRequired)
-		m.logger.Error("Username not provided", zap.Error(fmt.Errorf(constants.UsernameRequired)))
+		m.Logger.Error("Username not provided", zap.Error(fmt.Errorf(constants.UsernameRequired)))
 		return
 	}
 
@@ -159,18 +157,18 @@ func AuthHavingNoTokenHandler(m *Middleware, c *fiber.Ctx) {
 		Roles:    "user",
 	}
 
-	userObj, err := quizController.CreateQuickUser(m.db, m.logger, userObj, true, false)
+	userObj, err := quizController.CreateQuickUser(m.Db, m.Logger, userObj, true, false)
 
 	if err != nil {
 		c.Locals(constants.MiddlewareError, err)
-		m.logger.Error(fmt.Sprintf("Error in register user %v", userObj), zap.Error(err))
+		m.Logger.Error(fmt.Sprintf("Error in register user %v", userObj), zap.Error(err))
 		return
 	}
 
-	err = CreateNewUserToken(c, m.config, userObj, m.logger)
+	err = CreateNewUserToken(c, m.Config, userObj, m.Logger)
 	if err != nil {
 		c.Locals(constants.MiddlewareError, err)
-		m.logger.Error(fmt.Sprintf("Error in register user %v", userObj), zap.Error(err))
+		m.Logger.Error(fmt.Sprintf("Error in register user %v", userObj), zap.Error(err))
 		return
 	}
 }

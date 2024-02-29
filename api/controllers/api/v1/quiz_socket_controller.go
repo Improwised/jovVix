@@ -56,7 +56,13 @@ func CreateQuickUser(db *goqu.Database, logger *zap.Logger, userObj models.User,
 
 	if err != nil {
 
-		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" {
+		pqErr, ok := quizUtilsHelper.ConvertType[*pq.Error](err)
+
+		if !ok {
+			return userObj, fmt.Errorf("SomeError during register admin with new username %s", userObj.Username)
+		}
+
+		if pqErr.Code == "23505" {
 
 			if !(retrying && pqErr.Constraint == constants.UserUkey) {
 				return userObj, fmt.Errorf("username (%s) already registered", userObj.Username)
@@ -68,10 +74,10 @@ func CreateQuickUser(db *goqu.Database, logger *zap.Logger, userObj models.User,
 
 			copyUserObj, err = userSvc.RegisterUser(copyUserObj, events.NewEventBus(logger))
 
-			if err != nil {
-				return userObj, fmt.Errorf("SomeError during register admin with new username %s", userObj.Username)
-			}
+		}
 
+		if err != nil {
+			return userObj, fmt.Errorf("SomeError during register admin with new username %s", userObj.Username)
 		}
 
 	}
@@ -199,8 +205,13 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 	}
 
 	// check for middleware error
-	if !c.Locals(constants.MiddlewarePass).(bool) {
-		response.Data = c.Locals(constants.MiddlewareError).(error).Error()
+	if !quizUtilsHelper.GetBool(c.Locals(constants.MiddlewarePass)) {
+		errorInfo, ok := quizUtilsHelper.ConvertType[error](c.Locals(constants.MiddlewareError))
+		if !ok {
+			qc.logger.Error(fmt.Sprintf("socket error in middleware: %s event, %s action, error %v", constants.EventAuthentication, response.Action, c.Locals(constants.MiddlewareError)))
+		}
+
+		response.Data = errorInfo.Error()
 		err := utils.JSONFailWs(c, constants.EventAuthentication, response)
 		if err != nil {
 			qc.logger.Error(fmt.Sprintf("socket error in middleware: %s event, %s action", constants.EventAuthentication, response.Action), zap.Error(err))
@@ -208,7 +219,7 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 		return
 	}
 
-	code := c.Locals(constants.QuizSessionCode).(string)
+	code := quizUtilsHelper.GetString(c.Locals(constants.QuizSessionCode))
 
 	session, err := qc.helpers.QuizSessionModel.GetSessionByCode(code)
 
@@ -240,7 +251,6 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 		response.Data = constants.QuizStartsSoon
 	}
 
-	fmt.Println(response)
 	err = utils.JSONSuccessWs(c, constants.EventJoinQuiz, response)
 	if err != nil {
 		qc.logger.Error(fmt.Sprintf("socket error send waiting message: %s event, %s action", constants.EventJoinQuiz, response.Action), zap.Error(err))
@@ -263,9 +273,11 @@ func (qc *quizSocketController) Arrange(c *websocket.Conn) {
 		Data:      "",
 	}
 
+	is_pass := quizUtilsHelper.GetBool(c.Locals(constants.MiddlewarePass))
+
 	// checks for any middleware errors
-	if !c.Locals(constants.MiddlewarePass).(bool) {
-		response.Data = c.Locals(constants.MiddlewareError).(string)
+	if !is_pass {
+		response.Data = quizUtilsHelper.GetString(c.Locals(constants.MiddlewareError))
 		err := utils.JSONErrorWs(c, constants.EventAuthentication, response)
 		if err != nil {
 			qc.logger.Error(fmt.Sprintf("socket error middleware: %s event, %s action", constants.EventAuthentication, response.Action), zap.Error(err))
@@ -274,9 +286,13 @@ func (qc *quizSocketController) Arrange(c *websocket.Conn) {
 		return
 	}
 
-	sessionId := c.Locals(constants.SessionIDParam).(string)
+	sessionId := quizUtilsHelper.GetString(c.Locals(constants.SessionIDParam))
 
-	user := c.Locals(constants.ContextUser).(models.User)
+	user, ok := quizUtilsHelper.ConvertType[models.User](c.Locals(constants.ContextUser))
+
+	if !ok {
+		fmt.Println("ERROR")
+	}
 
 	// activate session
 	session, err := ActivateAndGetSession(c, qc.helpers, qc.logger, sessionId, user.ID)

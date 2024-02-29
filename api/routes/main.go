@@ -203,6 +203,8 @@ func quizController(
 	quizSocketController := controller.InitQuizConfig(db, &config, logger, helper)
 	quizController := controller.InitQuizController(logger, events, pub, helper)
 
+	// middleware format := param-check/pass... , authentication... , authorization..., controller(API/SOCKET)...
+
 	// general for all
 	v1.Get("/socket/ping", websocket.New(quizSocketController.Ping))
 
