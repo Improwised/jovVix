@@ -3,8 +3,8 @@
 import { useToast } from "vue-toastification";
 
 // custom component
-import UserOperation from "../../../composables/user_operation.js";
-import { useSystemEnv } from "~~/composables/envs";
+import UserOperation from "~/composables/user_operation.js";
+import { useSystemEnv } from "~/composables/envs.js";
 
 // define nuxt configs
 const route = useRoute();
