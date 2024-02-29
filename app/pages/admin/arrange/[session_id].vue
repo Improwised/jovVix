@@ -3,7 +3,7 @@
 import { useToast } from "vue-toastification";
 
 // custom component
-import AdminOperation from "../../../composables/admin_operation.js";
+import AdminOperation from "~/composables/admin_operation.js";
 
 // define nuxt configs
 const route = useRoute();
