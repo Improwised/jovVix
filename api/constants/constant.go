@@ -67,6 +67,12 @@ const (
 	Score    = "Score"
 )
 
+// constants
+const (
+	MinCode = 100000
+	MaxCode = 999999
+)
+
 // Quiz Events
 const (
 	// Event 1. Authentication <admin side>

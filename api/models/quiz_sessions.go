@@ -209,7 +209,7 @@ func activateSession(maxTry int, statement *sql.Stmt, sessionId uuid.UUID, userI
 	var err error
 	var code int
 	for {
-		code = quizUtilsHelper.GenerateRandomInt(100000, 999999)
+		code = quizUtilsHelper.GenerateRandomInt(constants.MinCode, constants.MaxCode)
 
 		err = statement.QueryRow(sessionId, userId, code).Scan(&code)
 
