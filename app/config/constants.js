@@ -5,6 +5,7 @@ export default {
 
   // Defaults
   InvitationCode: "000000",
+  UserIdentifier: "user",
 
   // Status
   Fail: "fail",

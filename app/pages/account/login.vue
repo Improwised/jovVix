@@ -1,23 +1,24 @@
 <script setup>
 import { useToast } from "vue-toastification";
 
-const config = useSystemEnv();
 const nuxtApp = useNuxtApp();
 const route = useRoute();
 const toast = useToast();
 const email = ref();
 const password = ref();
 let status = null;
+useSystemEnv();
 
 async function login_user(e) {
   e.preventDefault();
+  const login_url = useSystemEnv("urls").value?.api_url + "/login";
 
   if (email.value.trim() == "" || password.value.trim() == "") {
     toast.error(nuxtApp.$IncorrectCredentials);
     return;
   }
 
-  const { error: error } = await useFetch(config.value.api_url + "/login", {
+  const { error: error } = await useFetch(login_url, {
     method: "POST",
     credentials: "include",
     body: {
