@@ -274,7 +274,7 @@ func (qc *quizSocketController) Arrange(c *websocket.Conn) {
 		return
 	}
 
-	sessionId := c.Locals(constants.SessionIDPram).(string)
+	sessionId := c.Locals(constants.SessionIDParam).(string)
 
 	user := c.Locals(constants.ContextUser).(models.User)
 

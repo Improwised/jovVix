@@ -97,7 +97,7 @@ const (
 	ActionSessionActivation = "activate demanded session and sent code"
 	EventSendCode           = "send code to admin"
 	QuizSessionCode         = "code"
-	SessionIDPram           = "session_id"
+	SessionIDParam          = "session_id"
 	SessionObj              = "current session object"
 
 	// Event 5. Join quiz <User>

@@ -77,12 +77,12 @@ func (m *Middleware) CheckSessionId(c *fiber.Ctx) error {
 	}
 
 	// get session id from param
-	sessionId := c.Params(constants.SessionIDPram)
+	sessionId := c.Params(constants.SessionIDParam)
 
 	// if sessionId == "" {
 	// 	c.Locals(constants.MiddlewareError, constants.ErrQuizSessionIdRequired)
 	// }
-	c.Locals(constants.SessionIDPram, sessionId)
+	c.Locals(constants.SessionIDParam, sessionId)
 	c.Locals(constants.MiddlewarePass, c.Locals(constants.MiddlewareError) == nil)
 	return c.Next()
 }
