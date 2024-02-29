@@ -73,11 +73,7 @@ function handleEvent(message) {
       </button>
     </form>
   </Frame>
-  <Frame
-    v-else
-    :page-title="'Ready-shady-go'"
-    :page-message="data.data"
-  >
+  <Frame v-else :page-title="'Ready-shady-go'" :page-message="data.data">
     <div class="text-center homepage">{{ data.data }}</div>
   </Frame>
 </template>

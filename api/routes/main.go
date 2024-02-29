@@ -215,7 +215,7 @@ func quizController(
 	}
 	rbObj := middlewares.NewRolePermissionMiddleware(middleware, allowRoles)
 
-	v1.Get("/admin/quizzes", middleware.Authenticated, rbObj.IsAllowed, quizController.GetMyQuiz)
+	v1.Get("/admin/quizzes", middleware.Authenticated, rbObj.IsAllowed, quizController.GetQuizByUser)
 
 	v1.Get(fmt.Sprintf("/socket/admin/arrange/:%s", constants.SessionIDPram), middleware.CheckSessionId, middleware.CustomAdminAuthenticated, websocket.New(quizSocketController.Arrange))
 

@@ -31,7 +31,7 @@ func InitQuizController(
 	}
 }
 
-func (ctrl *QuizController) GetMyQuiz(c *fiber.Ctx) error {
+func (ctrl *QuizController) GetQuizByUser(c *fiber.Ctx) error {
 	userID := c.Locals(constants.ContextUid).(string)
 
 	quizzes, err := ctrl.helper.QuizModel.GetAllQuizzesActivity(userID)
