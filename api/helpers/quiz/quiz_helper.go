@@ -8,12 +8,12 @@ import (
 )
 
 type HelperGroup struct {
-	UserService      *services.UserService
-	RoleModel        *models.RoleModel
-	QuizModel        *models.QuizModel
-	QuizSessionModel *models.QuizSessionModel
-	QuestionModel    *models.QuestionAnswerModel
-	PubSubModel      *models.PubSubModel
+	UserService     *services.UserService
+	RoleModel       *models.RoleModel
+	QuizModel       *models.QuizModel
+	ActiveQuizModel *models.ActiveQuizModel
+	QuestionModel   *models.QuestionAnswerModel
+	PubSubModel     *models.PubSubModel
 }
 
 func InitHelper(db *goqu.Database, pubSubCfg config.RedisClientConfig) (*HelperGroup, error) {
@@ -41,11 +41,11 @@ func InitHelper(db *goqu.Database, pubSubCfg config.RedisClientConfig) (*HelperG
 	}
 
 	return &HelperGroup{
-		UserService:      userService,
-		RoleModel:        roleModel,
-		QuizModel:        quizModel,
-		QuizSessionModel: sessionModel,
-		QuestionModel:    questionModel,
-		PubSubModel:      pubSubClientModel,
+		UserService:     userService,
+		RoleModel:       roleModel,
+		QuizModel:       quizModel,
+		ActiveQuizModel: sessionModel,
+		QuestionModel:   questionModel,
+		PubSubModel:     pubSubClientModel,
 	}, nil
 }

@@ -12,7 +12,7 @@ import (
 )
 
 // QuizSession model
-type QuizSession struct {
+type ActiveQuiz struct {
 	ID               uuid.UUID      `json:"id" db:"id"`
 	InvitationCode   sql.NullInt32  `json:"code" db:"code"`
 	Title            string         `json:"title,omitempty" db:"title"`
@@ -29,21 +29,21 @@ type QuizSession struct {
 }
 
 // QuizSessionModel implements quiz session related database operations
-type QuizSessionModel struct {
+type ActiveQuizModel struct {
 	db          *goqu.Database
 	defaultUUID uuid.UUID
 }
 
 // InitQuizSessionModel initializes the QuizSessionModel
-func InitQuizSessionModel(goqu *goqu.Database) (*QuizSessionModel, error) {
+func InitQuizSessionModel(goqu *goqu.Database) (*ActiveQuizModel, error) {
 	var uuid, err = uuid.NewUUID()
 	if err != nil {
 		return nil, err
 	}
-	return &QuizSessionModel{db: goqu, defaultUUID: uuid}, nil
+	return &ActiveQuizModel{db: goqu, defaultUUID: uuid}, nil
 }
 
-func (model *QuizSessionModel) CreateQuizSession(invitationCode int, title string, quizID uuid.UUID, adminID string, maxAttempt int, activatedTo sql.NullTime, activatedFrom sql.NullTime) (uuid.UUID, error) {
+func (model *ActiveQuizModel) CreateQuizSession(invitationCode int, title string, quizID uuid.UUID, adminID string, maxAttempt int, activatedTo sql.NullTime, activatedFrom sql.NullTime) (uuid.UUID, error) {
 
 	if activatedFrom.Valid && activatedFrom.Time.Before(time.Now()) {
 		return model.defaultUUID, fmt.Errorf("session can not start with %s", activatedTo.Time)
@@ -94,8 +94,8 @@ type QuizSessionActive struct {
 	ActivatedFrom time.Time `db:"activated_from"`
 }
 
-func (model *QuizSessionModel) GetSessionByCode(code string) (QuizSession, error) {
-	var quizSession QuizSession = QuizSession{}
+func (model *ActiveQuizModel) GetSessionByCode(code string) (ActiveQuiz, error) {
+	var quizSession ActiveQuiz = ActiveQuiz{}
 
 	found, err := model.db.Select("*").From("quiz_sessions").Where(goqu.I("code").Eq(code), goqu.I("is_active").Eq(true)).Limit(1).ScanStruct(&quizSession)
 
@@ -110,8 +110,8 @@ func (model *QuizSessionModel) GetSessionByCode(code string) (QuizSession, error
 	return quizSession, nil
 }
 
-func (model *QuizSessionModel) GetActiveSession(sessionId string, userId string) (QuizSession, error) {
-	var quizSession QuizSession = QuizSession{}
+func (model *ActiveQuizModel) GetActiveSession(sessionId string, userId string) (ActiveQuiz, error) {
+	var quizSession ActiveQuiz = ActiveQuiz{}
 	var isOk bool = false
 
 	transactionObj, err := model.db.Begin()
@@ -190,8 +190,8 @@ func (model *QuizSessionModel) GetActiveSession(sessionId string, userId string)
 
 }
 
-func (model *QuizSessionModel) GetSessionById(db *goqu.TxDatabase, sessionId string) (QuizSession, error) {
-	var quizSession QuizSession = QuizSession{}
+func (model *ActiveQuizModel) GetSessionById(db *goqu.TxDatabase, sessionId string) (ActiveQuiz, error) {
+	var quizSession ActiveQuiz = ActiveQuiz{}
 	found, err := db.Select("*").From("quiz_sessions").Where(goqu.I("id").Eq(sessionId)).Limit(1).ScanStruct(&quizSession)
 
 	if err != nil {

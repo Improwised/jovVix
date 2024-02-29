@@ -221,7 +221,7 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 
 	InvitationCode := quizUtilsHelper.GetString(c.Locals(constants.QuizSessionInvitationCode))
 
-	session, err := qc.helpers.QuizSessionModel.GetSessionByCode(InvitationCode)
+	session, err := qc.helpers.ActiveQuizModel.GetSessionByCode(InvitationCode)
 
 	if err != nil {
 		response.Action = constants.ActionJoinQuiz
@@ -347,7 +347,7 @@ func (qc *quizSocketController) Arrange(c *websocket.Conn) {
 
 // Activate session
 
-func ActivateAndGetSession(c *websocket.Conn, helpers *quizHelper.HelperGroup, logger *zap.Logger, sessionId string, userId string) (models.QuizSession, error) {
+func ActivateAndGetSession(c *websocket.Conn, helpers *quizHelper.HelperGroup, logger *zap.Logger, sessionId string, userId string) (models.ActiveQuiz, error) {
 
 	response := QuizSendResponse{
 		Component: constants.Waiting,
@@ -355,7 +355,7 @@ func ActivateAndGetSession(c *websocket.Conn, helpers *quizHelper.HelperGroup, l
 		Data:      "",
 	}
 
-	session, err := helpers.QuizSessionModel.GetActiveSession(sessionId, userId)
+	session, err := helpers.ActiveQuizModel.GetActiveSession(sessionId, userId)
 
 	if err != nil {
 		if err.Error() == constants.Unauthenticated {
