@@ -14,7 +14,6 @@ onMounted(() => {
     bodyRef.value = document.documentElement;
 
     addEventListener("fullscreenchange", () => {
-      console.log(document.fullscreenElement);
       emits("isFullScreen", document.fullscreenElement != null ? true : false);
     });
   }

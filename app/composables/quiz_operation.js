@@ -93,7 +93,6 @@ export default class QuizHandler {
       event: event,
       data: data,
     };
-    console.log(message);
     this.log.push({ state: "Sent", message });
     this.socket.send(JSON.stringify(message));
   }
