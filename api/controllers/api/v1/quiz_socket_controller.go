@@ -92,10 +92,10 @@ type quizSocketController struct {
 	db        *models.QuizModel
 	appConfig *config.AppConfig
 	logger    *zap.Logger
-	helpers   *quizHelper.HelperStructs
+	helpers   *quizHelper.HelperGroup
 }
 
-func InitQuizConfig(db *goqu.Database, appConfig *config.AppConfig, logger *zap.Logger, helpers *quizHelper.HelperStructs) *quizSocketController {
+func InitQuizConfig(db *goqu.Database, appConfig *config.AppConfig, logger *zap.Logger, helpers *quizHelper.HelperGroup) *quizSocketController {
 	return &quizSocketController{models.InitQuizModel(db), appConfig, logger, helpers}
 }
 
@@ -347,7 +347,7 @@ func (qc *quizSocketController) Arrange(c *websocket.Conn) {
 
 // Activate session
 
-func ActivateAndGetSession(c *websocket.Conn, helpers *quizHelper.HelperStructs, logger *zap.Logger, sessionId string, userId string) (models.QuizSession, error) {
+func ActivateAndGetSession(c *websocket.Conn, helpers *quizHelper.HelperGroup, logger *zap.Logger, sessionId string, userId string) (models.QuizSession, error) {
 
 	response := QuizSendResponse{
 		Component: constants.Waiting,

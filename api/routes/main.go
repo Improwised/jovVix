@@ -198,7 +198,7 @@ func quizController(
 	events *events.Events,
 	pub *watermill.WatermillPublisher,
 	config config.AppConfig,
-	helper *quiz_helper.HelperStructs) error {
+	helper *quiz_helper.HelperGroup) error {
 
 	quizSocketController := controller.InitQuizConfig(db, &config, logger, helper)
 	quizController := controller.InitQuizController(logger, events, pub, helper)
