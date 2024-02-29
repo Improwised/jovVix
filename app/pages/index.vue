@@ -1,5 +1,9 @@
 <script setup>
-useSystemEnv();
+useSystemEnv1();
+const envs = useState('envs')
+console.log(envs.value.api_url)
+console.log(envs.value.base_url)
+  
 const systemEnv = useSystemEnv();
 console.log(systemEnv.value.api_url)
 console.log(systemEnv.value.base_url)
