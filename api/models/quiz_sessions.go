@@ -145,11 +145,12 @@ func (model *ActiveQuizModel) GetActiveSession(sessionId string, userId string) 
 	}
 
 	if quizSession.IsActive {
+		isOk = true
 		return quizSession, nil
 	}
 
 	if quizSession.ActivatedTo.Valid {
-		return quizSession, fmt.Errorf("session was completed")
+		return quizSession, fmt.Errorf(constants.ErrSessionWasCompleted)
 	}
 
 	statement, err := transactionObj.Prepare(`
@@ -173,14 +174,16 @@ func (model *ActiveQuizModel) GetActiveSession(sessionId string, userId string) 
 	if err != nil {
 		return quizSession, err
 	}
+	defer statement.Close()
 
 	maxTry := 10
 	// handle code generation
-	_, err = activateSession(maxTry, statement, quizSession.ID, userId)
+	code, err := activateSession(maxTry, statement, quizSession.ID, userId)
 
 	if err != nil {
 		return quizSession, err
 	}
+	isOk = (code != -1)
 
 	quizSession, err = model.GetSessionById(transactionObj, sessionId)
 	if err != nil {
@@ -217,7 +220,7 @@ func activateSession(maxTry int, statement *sql.Stmt, sessionId uuid.UUID, userI
 			if err == sql.ErrNoRows {
 				maxTry -= 1
 				if maxTry == 0 {
-					return -1, fmt.Errorf(constants.UnknownError)
+					return -1, fmt.Errorf(constants.ErrMaxTryToGenerateCode)
 				}
 				continue
 			}

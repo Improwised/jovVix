@@ -107,6 +107,7 @@ const (
 	ErrInvitationCodeNotFound      = "invitation code not found" // use by web
 	ErrInvitationCodeNotActive     = "invitation code is not active"
 	ErrSessionWasCompleted         = "session was completed"
+	ErrMaxTryToGenerateCode        = "maximum times excide to generate code"
 
 	UserName          = "username"
 	UserUkey          = "users_username_ukey"

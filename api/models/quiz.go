@@ -99,34 +99,6 @@ func (model *QuizModel) GetQuizzesByAdmin(creator_id string) ([]Quiz, error) {
 	return quizzes, nil
 }
 
-// func (model *QuizModel) GetQuestions(code int, isActive bool) ([]Question, error) {
-// 	query := model.db.
-// 		From(
-// 			goqu.T("quiz_sessions").As("qs")).
-// 		Join(
-// 			goqu.T("quiz_questions").As("qq"),
-// 			goqu.On(goqu.And(
-// 				goqu.I("qs.code").Eq(code),
-// 				goqu.I("qs.is_active").Eq(isActive),
-// 				goqu.I("qs.quiz_id").Eq(goqu.I("qq.quiz_id")),
-// 			)),
-// 		).
-// 		Join(
-// 			goqu.T("questions").As("q"),
-// 			goqu.On(goqu.I("qq.question_id").Eq(goqu.I("q.id"))),
-// 		).Select(goqu.I("q.*"))
-
-// 	// Execute the query
-// 	var questions []Question
-
-// 	if err := query.ScanStructs(&questions); err != nil {
-// 		return questions, err
-// 	}
-
-// 	return questions, nil
-
-// }
-
 func (model *QuizModel) GetSharedQuestions(code int) ([]SessionQuestion, error) {
 
 	statement, err := model.db.Prepare(`
