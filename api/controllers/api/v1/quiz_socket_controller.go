@@ -219,27 +219,27 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 		return
 	}
 
-	code := quizUtilsHelper.GetString(c.Locals(constants.QuizSessionCode))
+	InvitationCode := quizUtilsHelper.GetString(c.Locals(constants.QuizSessionInvitationCode))
 
-	session, err := qc.helpers.QuizSessionModel.GetSessionByCode(code)
+	session, err := qc.helpers.QuizSessionModel.GetSessionByCode(InvitationCode)
 
 	if err != nil {
 		response.Action = constants.ActionJoinQuiz
-		response.Data = constants.ErrCodeNotFound
+		response.Data = constants.ErrInvitationCodeNotFound
 		err = utils.JSONFailWs(c, constants.EventJoinQuiz, response)
 
 		if err != nil {
-			qc.logger.Error(fmt.Sprintf("socket error in session get in code: %s event, %s action, %s code", constants.EventJoinQuiz, response.Action, code), zap.Error(err))
+			qc.logger.Error(fmt.Sprintf("socket error in session get in code: %s event, %s action, %s code", constants.EventJoinQuiz, response.Action, InvitationCode), zap.Error(err))
 		}
 		return
 	}
 
 	if !session.IsActive || session.ActivatedTo.Valid {
-		response.Data = constants.ErrCodeNotFound
+		response.Data = constants.ErrInvitationCodeNotFound
 		err = utils.JSONFailWs(c, constants.EventJoinQuiz, response)
 
 		if err != nil {
-			qc.logger.Error(fmt.Sprintf("socket error check session active: %s event, %s action, %s code", constants.EventJoinQuiz, response.Action, code), zap.Error(err))
+			qc.logger.Error(fmt.Sprintf("socket error check session active: %s event, %s action, %s code", constants.EventJoinQuiz, response.Action, InvitationCode), zap.Error(err))
 		}
 		return
 	}
@@ -302,9 +302,9 @@ func (qc *quizSocketController) Arrange(c *websocket.Conn) {
 	}
 
 	// is isQuestionActive true -> quiz started
-	isCodeSent := session.IsQuestionActive.Valid
+	isInvitationCodeSent := session.IsQuestionActive.Valid
 
-	if !isCodeSent {
+	if !isInvitationCodeSent {
 		// handle Waiting page
 		for {
 
@@ -313,14 +313,14 @@ func (qc *quizSocketController) Arrange(c *websocket.Conn) {
 			}
 
 			// if code not sent then sent it
-			if !isCodeSent {
+			if !isInvitationCodeSent {
 				// send code to client
-				handleCodeSend(c, response, qc.logger, session.Code.Int32)
-				isCodeSent = true
+				handleInvitationCodeSend(c, response, qc.logger, session.InvitationCode.Int32)
+				isInvitationCodeSent = true
 			}
 
 			// once code sent receive start signal
-			if isCodeSent {
+			if isInvitationCodeSent {
 				isBreak := handleStartQuiz(c, qc.logger, &isConnected, response.Action)
 				if isBreak {
 					break
@@ -330,10 +330,10 @@ func (qc *quizSocketController) Arrange(c *websocket.Conn) {
 	}
 
 	response.Component = constants.Question
-	questions, err := qc.helpers.QuizModel.GetSharedQuestions(int(session.Code.Int32))
+	questions, err := qc.helpers.QuizModel.GetSharedQuestions(int(session.InvitationCode.Int32))
 
 	if err != nil {
-		qc.logger.Error(fmt.Sprintf("socket error get remaining questions: %s event, %s action %v code", constants.EventStartQuiz, response.Action, session.Code), zap.Error(err))
+		qc.logger.Error(fmt.Sprintf("socket error get remaining questions: %s event, %s action %v code", constants.EventStartQuiz, response.Action, session.InvitationCode), zap.Error(err))
 	}
 
 	response.Data = questions
@@ -341,7 +341,7 @@ func (qc *quizSocketController) Arrange(c *websocket.Conn) {
 	err = utils.JSONSuccessWs(c, constants.EventStartQuiz, response)
 
 	if err != nil {
-		qc.logger.Error(fmt.Sprintf("socket error success: %s event, %s action %v code", constants.EventStartQuiz, response.Action, session.Code), zap.Error(err))
+		qc.logger.Error(fmt.Sprintf("socket error success: %s event, %s action %v code", constants.EventStartQuiz, response.Action, session.InvitationCode), zap.Error(err))
 	}
 }
 
@@ -384,16 +384,16 @@ func ActivateAndGetSession(c *websocket.Conn, helpers *quizHelper.HelperStructs,
 
 // handle waiting page
 
-func handleCodeSend(c *websocket.Conn, response QuizSendResponse, logger *zap.Logger, code int32) bool {
+func handleInvitationCodeSend(c *websocket.Conn, response QuizSendResponse, logger *zap.Logger, invitationCode int32) bool {
 
 	// send code to client
 	response.Action = constants.ActionSessionActivation
-	response.Data = map[string]int{"code": int(code)}
+	response.Data = map[string]int{"code": int(invitationCode)}
 
-	err := utils.JSONSuccessWs(c, constants.EventSendCode, response)
+	err := utils.JSONSuccessWs(c, constants.EventSendInvitationCode, response)
 
 	if err != nil {
-		logger.Error(fmt.Sprintf("socket error sent code: %s event, %s action", constants.EventSendCode, response.Action), zap.Error(err))
+		logger.Error(fmt.Sprintf("socket error sent code: %s event, %s action", constants.EventSendInvitationCode, response.Action), zap.Error(err))
 	}
 
 	return true

@@ -14,7 +14,7 @@ import (
 // QuizSession model
 type QuizSession struct {
 	ID               uuid.UUID      `json:"id" db:"id"`
-	Code             sql.NullInt32  `json:"code" db:"code"`
+	InvitationCode   sql.NullInt32  `json:"code" db:"code"`
 	Title            string         `json:"title,omitempty" db:"title"`
 	QuizID           uuid.UUID      `json:"quiz_id" db:"quiz_id"`
 	AdminID          string         `json:"admin_id,omitempty" db:"admin_id"`
@@ -43,7 +43,7 @@ func InitQuizSessionModel(goqu *goqu.Database) (*QuizSessionModel, error) {
 	return &QuizSessionModel{db: goqu, defaultUUID: uuid}, nil
 }
 
-func (model *QuizSessionModel) CreateQuizSession(code int, title string, quizID uuid.UUID, adminID string, maxAttempt int, activatedTo sql.NullTime, activatedFrom sql.NullTime) (uuid.UUID, error) {
+func (model *QuizSessionModel) CreateQuizSession(invitationCode int, title string, quizID uuid.UUID, adminID string, maxAttempt int, activatedTo sql.NullTime, activatedFrom sql.NullTime) (uuid.UUID, error) {
 
 	if activatedFrom.Valid && activatedFrom.Time.Before(time.Now()) {
 		return model.defaultUUID, fmt.Errorf("session can not start with %s", activatedTo.Time)
@@ -61,7 +61,7 @@ func (model *QuizSessionModel) CreateQuizSession(code int, title string, quizID 
 
 	record := goqu.Record{
 		"id":             id,
-		"code":           code,
+		"code":           invitationCode,
 		"title":          title,
 		"quiz_id":        quizID,
 		"admin_id":       adminID,
@@ -209,7 +209,7 @@ func activateSession(maxTry int, statement *sql.Stmt, sessionId uuid.UUID, userI
 	var err error
 	var code int
 	for {
-		code = quizUtilsHelper.GenerateRandomInt(constants.MinCode, constants.MaxCode)
+		code = quizUtilsHelper.GenerateRandomInt(constants.MinInvitationCode, constants.MaxInvitationCode)
 
 		err = statement.QueryRow(sessionId, userId, code).Scan(&code)
 

@@ -13,10 +13,11 @@ export default {
   Error: "error",
 
   // Events
-  StartQuiz: "start quiz",
+  StartQuiz: "start_quiz",
   Authentication: "authentication",
+  SentInvitaionCode: "send_invitation_code",
 
   // Errors
   Unauthorized: "unauthorized to access resource",
-  CodeNotFound: "code not found",
+  CodeNotFound: "invitation code not found",
 };

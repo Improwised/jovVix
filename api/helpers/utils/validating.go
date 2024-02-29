@@ -17,7 +17,7 @@ func IsValidCode(code string) bool {
 		return false
 	}
 
-	if num < constants.MinCode || num > constants.MaxCode {
+	if num < constants.MinInvitationCode || num > constants.MaxInvitationCode {
 		return false
 	}
 

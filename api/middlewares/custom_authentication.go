@@ -92,14 +92,14 @@ func (m *Middleware) CheckSessionCode(c *fiber.Ctx) error {
 	}
 
 	// get session code from param
-	code := c.Params(constants.QuizSessionCode)
+	code := c.Params(constants.QuizSessionInvitationCode)
 
 	if !quizUtilsHelper.IsValidCode(code) {
-		c.Locals(constants.MiddlewareError, constants.ErrCodeInWrongFormat)
+		c.Locals(constants.MiddlewareError, constants.ErrInvitationCodeInWrongFormat)
 		return c.Next()
 	}
 
-	c.Locals(constants.QuizSessionCode, code)
+	c.Locals(constants.QuizSessionInvitationCode, code)
 	c.Locals(constants.MiddlewarePass, c.Locals(constants.MiddlewareError) == nil)
 	return c.Next()
 }
