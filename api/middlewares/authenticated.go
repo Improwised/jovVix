@@ -13,7 +13,7 @@ import (
 )
 
 func (m *Middleware) Authenticated(c *fiber.Ctx) error {
-	if m.config.Kratos.IsEnabled {
+	if m.Config.Kratos.IsEnabled {
 		sessionID := c.Cookies("ory_kratos_session")
 		if sessionID == "" {
 			return utils.JSONFail(c, http.StatusUnauthorized, constants.Unauthenticated)
@@ -27,13 +27,13 @@ func (m *Middleware) Authenticated(c *fiber.Ctx) error {
 		return utils.JSONFail(c, http.StatusUnauthorized, constants.Unauthenticated)
 	}
 
-	claims, err := jwt.ParseToken(m.config, token)
+	claims, err := jwt.ParseToken(m.Config, token)
 	if err != nil {
 		if errors.Is(err, j.ErrInvalidJWT()) || errors.Is(err, j.ErrTokenExpired()) {
 			return utils.JSONFail(c, http.StatusUnauthorized, constants.Unauthenticated)
 		}
 
-		m.logger.Error("error while checking user identity", zap.Error(err))
+		m.Logger.Error("error while checking user identity", zap.Error(err))
 		return utils.JSONError(c, http.StatusInternalServerError, constants.ErrUnauthenticated)
 	}
 

@@ -7,16 +7,16 @@ import (
 	"github.com/doug-martin/goqu/v9"
 )
 
-type HelperStructs struct {
-	UserService      *services.UserService
-	RoleModel        *models.RoleModel
-	QuizModel        *models.QuizModel
-	QuizSessionModel *models.QuizSessionModel
-	QuestionModel    *models.QuestionAnswerModel
-	PubSubModel      *models.PubSubModel
+type HelperGroup struct {
+	UserService     *services.UserService
+	RoleModel       *models.RoleModel
+	QuizModel       *models.QuizModel
+	ActiveQuizModel *models.ActiveQuizModel
+	QuestionModel   *models.QuestionAnswerModel
+	PubSubModel     *models.PubSubModel
 }
 
-func InitHelper(db *goqu.Database, pubSubCfg config.RedisClientConfig) (*HelperStructs, error) {
+func InitHelper(db *goqu.Database, pubSubCfg config.RedisClientConfig) (*HelperGroup, error) {
 	userModel, err := models.InitUserModel(db)
 
 	if err != nil {
@@ -40,12 +40,12 @@ func InitHelper(db *goqu.Database, pubSubCfg config.RedisClientConfig) (*HelperS
 		return nil, err
 	}
 
-	return &HelperStructs{
-		UserService:      userService,
-		RoleModel:        roleModel,
-		QuizModel:        quizModel,
-		QuizSessionModel: sessionModel,
-		QuestionModel:    questionModel,
-		PubSubModel:      pubSubClientModel,
+	return &HelperGroup{
+		UserService:     userService,
+		RoleModel:       roleModel,
+		QuizModel:       quizModel,
+		ActiveQuizModel: sessionModel,
+		QuestionModel:   questionModel,
+		PubSubModel:     pubSubClientModel,
 	}, nil
 }

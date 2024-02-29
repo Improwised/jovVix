@@ -23,7 +23,8 @@ export async function useIsAdmin() {
 
 export async function updateSession(force = false) {
   const { session, update, reset } = await useSession();
-  const cookie = useCookie("user");
+  const app = useNuxtApp();
+  const cookie = useCookie(app.$UserIdentifier);
 
   if (force || !session.value.user || !cookie.value) {
     const user = await useGetUser();

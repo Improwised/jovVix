@@ -1,6 +1,10 @@
 package quizUtilsHelper
 
-import "strconv"
+import (
+	"strconv"
+
+	"github.com/Improwised/quizz-app/api/constants"
+)
 
 func IsValidCode(code string) bool {
 	if len(code) != 6 {
@@ -13,7 +17,7 @@ func IsValidCode(code string) bool {
 		return false
 	}
 
-	if num < 100000 || num > 999999 {
+	if num < constants.MinInvitationCode || num > constants.MaxInvitationCode {
 		return false
 	}
 

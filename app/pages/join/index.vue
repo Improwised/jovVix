@@ -48,7 +48,7 @@ function join_quiz(e) {
           type="username"
           name="username"
           class="form-control"
-          :readonly="username"
+          :readonly="session.user?.username != undefined"
         />
       </div>
       <div class="p-2">

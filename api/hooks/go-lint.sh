@@ -8,19 +8,9 @@ if ! command -v golangci-lint &> /dev/null ; then
     exit 1
 fi
 
-# Check if a go.work file exists in the current directory
-if [ -f "go.work" ]; then
-    # Iterate through every folder in the current directory
-    for dir in */; do
-        dir=${dir%/}
-        # Check if a go.mod file exists in the folder
-        if ls "$dir"/*.go &> /dev/null; then
-            echo "Linting module in folder: $(pwd)/$dir"
-            # Run lint on that folder
-            golangci-lint run ./$dir/... "$@"
-        fi
-    done
+# Check if a api folder exists in the current directory
+if [ -d "api" ]; then
+    cd api && golangci-lint run ./... "$@"
 else
-    golangci-lint run
-    echo "No go.work file found in the current directory"
+    golangci-lint run ./...
 fi

@@ -5,6 +5,7 @@ import (
 
 	"github.com/Improwised/quizz-app/api/constants"
 	quiz_helper "github.com/Improwised/quizz-app/api/helpers/quiz"
+	quizUtilsHelper "github.com/Improwised/quizz-app/api/helpers/utils"
 	"github.com/Improwised/quizz-app/api/pkg/events"
 	"github.com/Improwised/quizz-app/api/pkg/watermill"
 	"github.com/Improwised/quizz-app/api/utils"
@@ -13,7 +14,7 @@ import (
 )
 
 type QuizController struct {
-	helper *quiz_helper.HelperStructs
+	helper *quiz_helper.HelperGroup
 	logger *zap.Logger
 	event  *events.Events
 }
@@ -22,7 +23,7 @@ func InitQuizController(
 	logger *zap.Logger,
 	event *events.Events,
 	pub *watermill.WatermillPublisher,
-	helper *quiz_helper.HelperStructs,
+	helper *quiz_helper.HelperGroup,
 ) *QuizController {
 	return &QuizController{
 		helper: helper,
@@ -31,8 +32,8 @@ func InitQuizController(
 	}
 }
 
-func (ctrl *QuizController) GetMyQuiz(c *fiber.Ctx) error {
-	userID := c.Locals(constants.ContextUid).(string)
+func (ctrl *QuizController) GetQuizByUser(c *fiber.Ctx) error {
+	userID := quizUtilsHelper.GetString(c.Locals(constants.ContextUid))
 
 	quizzes, err := ctrl.helper.QuizModel.GetAllQuizzesActivity(userID)
 
@@ -45,7 +46,7 @@ func (ctrl *QuizController) GetMyQuiz(c *fiber.Ctx) error {
 }
 
 func (ctrl *QuizController) CreateQuizSession(c *fiber.Ctx) error {
-	userID := c.Locals(constants.ContextUid).(string)
+	userID := quizUtilsHelper.GetString(c.Locals(constants.ContextUid))
 
 	quizzes, err := ctrl.helper.QuizModel.GetAllQuizzesActivity(userID)
 

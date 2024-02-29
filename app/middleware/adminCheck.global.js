@@ -2,7 +2,8 @@ import { callWithNuxt } from "nuxt/app";
 
 export default defineNuxtRouteMiddleware(async (to) => {
   const { session, update, reset } = await useSession();
-  const cookie = useCookie("user");
+  const app = useNuxtApp();
+  const cookie = useCookie(app.$UserIdentifier);
 
   if (!session.value.loginCheck || !cookie.value) {
     const user = await useGetUser();

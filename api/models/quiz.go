@@ -30,10 +30,10 @@ func InitQuizModel(goquDB *goqu.Database) *QuizModel {
 }
 
 type QuizActivity struct {
-	ID          uuid.UUID `json:"id" db:"id"`
-	Title       string    `json:"title" db:"title" validate:"required"`
-	Description string    `json:"description,omitempty" db:"description"`
-	Role        string    `json:"activity" db:"role"`
+	ID           uuid.UUID `json:"id" db:"id"`
+	Title        string    `json:"title" db:"title" validate:"required"`
+	Description  string    `json:"description,omitempty" db:"description"`
+	UserActivity string    `json:"user_activity" db:"role"`
 }
 
 func (model *QuizModel) GetAllQuizzesActivity(user_id string) ([]QuizActivity, error) {
@@ -43,7 +43,7 @@ func (model *QuizModel) GetAllQuizzesActivity(user_id string) ([]QuizActivity, e
 	hostQuizzes := model.db.From(goqu.T("quiz_sessions").As("qs")).
 		Select(
 			goqu.C("quiz_id"),
-			goqu.L("'host'").As("role"),
+			goqu.L("'host'").As("user_activity"),
 		).
 		Where(goqu.I("qs.admin_id").Eq(user_id))
 
@@ -52,7 +52,7 @@ func (model *QuizModel) GetAllQuizzesActivity(user_id string) ([]QuizActivity, e
 		model.db.From(goqu.T("quizzes").As("q")).
 			Select(
 				goqu.I("id"),
-				goqu.L("'creator'").As("role"),
+				goqu.L("'creator'").As("user_activity"),
 			).
 			Where(goqu.I("q.creator_id").Eq(user_id)),
 	)
@@ -65,7 +65,7 @@ func (model *QuizModel) GetAllQuizzesActivity(user_id string) ([]QuizActivity, e
 			goqu.I("q.id"),
 			goqu.I("q.title"),
 			goqu.I("q.description"),
-			goqu.I("quiz_activity.role"),
+			goqu.I("quiz_activity.user_activity"),
 		).Executor().ScanStructs(&quizzes)
 
 	if err != nil {
@@ -98,34 +98,6 @@ func (model *QuizModel) GetQuizzesByAdmin(creator_id string) ([]Quiz, error) {
 
 	return quizzes, nil
 }
-
-// func (model *QuizModel) GetQuestions(code int, isActive bool) ([]Question, error) {
-// 	query := model.db.
-// 		From(
-// 			goqu.T("quiz_sessions").As("qs")).
-// 		Join(
-// 			goqu.T("quiz_questions").As("qq"),
-// 			goqu.On(goqu.And(
-// 				goqu.I("qs.code").Eq(code),
-// 				goqu.I("qs.is_active").Eq(isActive),
-// 				goqu.I("qs.quiz_id").Eq(goqu.I("qq.quiz_id")),
-// 			)),
-// 		).
-// 		Join(
-// 			goqu.T("questions").As("q"),
-// 			goqu.On(goqu.I("qq.question_id").Eq(goqu.I("q.id"))),
-// 		).Select(goqu.I("q.*"))
-
-// 	// Execute the query
-// 	var questions []Question
-
-// 	if err := query.ScanStructs(&questions); err != nil {
-// 		return questions, err
-// 	}
-
-// 	return questions, nil
-
-// }
 
 func (model *QuizModel) GetSharedQuestions(code int) ([]SessionQuestion, error) {
 
@@ -174,6 +146,6 @@ func (model *QuizModel) GetSharedQuestions(code int) ([]SessionQuestion, error) 
 	return questions, nil
 }
 
-func IsValidCode(model *QuizModel){
-	
+func IsValidCode(model *QuizModel) {
+
 }

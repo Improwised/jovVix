@@ -67,6 +67,12 @@ const (
 	Score    = "Score"
 )
 
+// constants
+const (
+	MinInvitationCode = 100000
+	MaxInvitationCode = 999999
+)
+
 // Quiz Events
 const (
 	// Event 1. Authentication <admin side>
@@ -82,25 +88,26 @@ const (
 	Unauthorized        = "unauthorized to access resource"
 
 	// Event 3. Session Validation <admin>
-	EventSessionValidation  = "validate session"
+	EventSessionValidation  = "session_validation"
 	ActionSessionValidation = "session validation from server side"
 	ErrSessionNotFound      = "session unavailable"
 
 	// Event 4. Active session <admin>
-	EventActivateSession    = "activate session"
-	ActionSessionActivation = "activate demanded session and sent code"
-	EventSendCode           = "send code to admin"
-	QuizSessionCode         = "code"
-	SessionIDPram           = "session_id"
-	SessionObj              = "current session object"
+	EventActivateSession      = "session_activation"
+	EventSendInvitationCode   = "send_invitation_code" // use by web
+	ActionSessionActivation   = "activate demanded session and sent invitation code"
+	QuizSessionInvitationCode = "invitationCode"
+	SessionIDParam            = "session_id"
+	SessionObj                = "current session object"
 
 	// Event 5. Join quiz <User>
-	EventJoinQuiz          = "code validation"
-	ActionJoinQuiz         = "quiz code validation"
-	ErrCodeInWrongFormat   = "code is not in proper format"
-	ErrCodeNotFound        = "code not found" // use by web
-	ErrCodeNotActive       = "code is not active"
-	ErrSessionWasCompleted = "session was completed"
+	EventJoinQuiz                  = "invitation_code_validation"
+	ActionJoinQuiz                 = "invitation code validation"
+	ErrInvitationCodeInWrongFormat = "invitation code is not in proper format"
+	ErrInvitationCodeNotFound      = "invitation code not found" // use by web
+	ErrInvitationCodeNotActive     = "invitation code is not active"
+	ErrSessionWasCompleted         = "session was completed"
+	ErrMaxTryToGenerateCode        = "maximum times excide to generate code"
 
 	UserName          = "username"
 	UserUkey          = "users_username_ukey"
@@ -109,7 +116,7 @@ const (
 	ErrUsernameExists = "username already exists"
 
 	// Event 6. Start quiz <admin>
-	EventStartQuiz = "start quiz" // use by web
+	EventStartQuiz = "start_quiz" // use by web
 
 	// Event 7. Get Questions
 	QuizQuestionStatus        = "quiz question status"

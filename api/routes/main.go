@@ -198,15 +198,17 @@ func quizController(
 	events *events.Events,
 	pub *watermill.WatermillPublisher,
 	config config.AppConfig,
-	helper *quiz_helper.HelperStructs) error {
+	helper *quiz_helper.HelperGroup) error {
 
 	quizSocketController := controller.InitQuizConfig(db, &config, logger, helper)
 	quizController := controller.InitQuizController(logger, events, pub, helper)
 
+	// middleware format := param-check/pass... , authentication... , authorization..., controller(API/SOCKET)...
+
 	// general for all
 	v1.Get("/socket/ping", websocket.New(quizSocketController.Ping))
 
-	v1.Get(fmt.Sprintf("/socket/join/:%s", constants.QuizSessionCode), middleware.CheckSessionCode, middleware.CustomAuthenticated, websocket.New(quizSocketController.Join))
+	v1.Get(fmt.Sprintf("/socket/join/:%s", constants.QuizSessionInvitationCode), middleware.CheckSessionCode, middleware.CustomAuthenticated, websocket.New(quizSocketController.Join))
 
 	// admin endpoints
 	allowRoles, err := helper.RoleModel.NewAllowedRoles("admin")
@@ -215,9 +217,9 @@ func quizController(
 	}
 	rbObj := middlewares.NewRolePermissionMiddleware(middleware, allowRoles)
 
-	v1.Get("/admin/quizzes", middleware.Authenticated, rbObj.IsAllowed, quizController.GetMyQuiz)
+	v1.Get("/admin/quizzes", middleware.Authenticated, rbObj.IsAllowed, quizController.GetQuizByUser)
 
-	v1.Get(fmt.Sprintf("/socket/admin/arrange/:%s", constants.SessionIDPram), middleware.CheckSessionId, middleware.CustomAdminAuthenticated, websocket.New(quizSocketController.Arrange))
+	v1.Get(fmt.Sprintf("/socket/admin/arrange/:%s", constants.SessionIDParam), middleware.CheckSessionId, middleware.CustomAdminAuthenticated, websocket.New(quizSocketController.Arrange))
 
 	return nil
 }

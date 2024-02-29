@@ -23,7 +23,7 @@ const props = defineProps({
 const emits = defineEmits(["startQuiz"]);
 
 // custom refs
-const code = ref("000000");
+const code = ref(app.$InvitationCode);
 
 // watchers
 watch(
@@ -45,7 +45,7 @@ function start_quiz(e) {
 
 // main function
 function handleEvent(message) {
-  if (message.event == "send code to admin") {
+  if (message.event == app.$SentInvitaionCode) {
     code.value = message.data.code;
   }
 }
@@ -59,7 +59,7 @@ function handleEvent(message) {
   >
     <form @submit="start_quiz">
       <div class="mb-3 pe-3">
-        <label for="code" class="form-label">Code</label>
+        <label for="code" class="form-label">Invitation code</label>
         <v-otp-input
           v-model="code"
           max-width="500"
@@ -73,11 +73,7 @@ function handleEvent(message) {
       </button>
     </form>
   </Frame>
-  <Frame
-    v-else
-    :page-title="'Ready-shady-go'"
-    :page-message="data.data"
-  >
+  <Frame v-else :page-title="'Ready-shady-go'" :page-message="data.data">
     <div class="text-center homepage">{{ data.data }}</div>
   </Frame>
 </template>

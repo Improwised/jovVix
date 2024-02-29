@@ -88,12 +88,10 @@ export default class QuizHandler {
     data = ""
   ) {
     const message = {
-      component,
-      component,
+      component: component,
       event: event,
       data: data,
     };
-    console.log(message);
     this.log.push({ state: "Sent", message });
     this.socket.send(JSON.stringify(message));
   }
@@ -101,13 +99,13 @@ export default class QuizHandler {
   printLog() {
     this.log.forEach((message) => {
       if (message.state == "Sent") {
-        console.table(message);
+        console.warn(message);
       } else if (message.state == "Receive") {
-        console.table(message);
+        console.warn(message);
       } else if (message.state == "Init") {
-        console.table(message);
+        console.log(message);
       } else {
-        console.table(message);
+        console.error(message);
       }
     });
   }
