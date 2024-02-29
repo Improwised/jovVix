@@ -48,7 +48,7 @@ const handleQuizEvents = (message) => {
       data.value = message;
       currentComponent.value = component;
     } else {
-      console.log(message);
+      toast.error(`Error! event:${message.event} action:${message.action}`);
     }
   }
 };
