@@ -23,7 +23,7 @@ const props = defineProps({
 const emits = defineEmits(["startQuiz"]);
 
 // custom refs
-const code = ref("000000");
+const code = ref(app.$InvitationCode);
 
 // watchers
 watch(
