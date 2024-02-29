@@ -11,5 +11,5 @@ export const useSystemEnv1 = () => {
     base_url: process.env.BASE_URL,
     api_url: process.env.API_URL,
   };
-  return useState('envs', () => data);
+  return useState("envs", () => data);
 };
