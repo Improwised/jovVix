@@ -40,7 +40,7 @@ func (model *QuizModel) GetAllQuizzesActivity(user_id string) ([]QuizActivity, e
 	var quizzes []QuizActivity = []QuizActivity{}
 
 	// user as a host
-	hostQuizzes := model.db.From(goqu.T("quiz_sessions").As("qs")).
+	hostQuizzes := model.db.From(goqu.T("active_quizzes").As("qs")).
 		Select(
 			goqu.C("quiz_id"),
 			goqu.L("'host'").As("user_activity"),
@@ -99,29 +99,29 @@ func (model *QuizModel) GetQuizzesByAdmin(creator_id string) ([]Quiz, error) {
 	return quizzes, nil
 }
 
-func (model *QuizModel) GetSharedQuestions(code int) ([]SessionQuestion, error) {
+func (model *QuizModel) GetSharedQuestions(invitationCode int) ([]SessionQuestion, error) {
 
 	statement, err := model.db.Prepare(`
 	with get_ids as (
-		select id, quiz_id from quiz_sessions qs where qs.code = $1 and qs.is_active = $2
+		select id, quiz_id from active_quizzes qs where qs.invitation_code = $1 and qs.is_active = $2
 	)
 	, get_question_order as(
-		select order_no, next_question, qs.is_question_active from session_questions sq2 join get_ids ids on ids.id = sq2.quiz_session_id join quiz_sessions qs on qs.current_question = sq2.question_id
+		select order_no, next_question, qs.is_question_active from session_questions sq2 join get_ids ids on ids.id = sq2.active_quiz_id join active_quizzes qs on qs.current_question = sq2.question_id
 	), get_questions as (
-		select sq.* from session_questions sq join get_ids ids on ids.id = sq.quiz_session_id and order_no >= (
+		select sq.* from session_questions sq join get_ids ids on ids.id = sq.active_quiz_id and order_no >= (
 			select (
 			case when is_question_active then order_no + 1
 			else order_no end
 			) from get_question_order
 		)
-	) select id, question_id, next_question, quiz_session_id, order_no from get_questions;
+	) select id, question_id, next_question, active_quiz_id, order_no from get_questions;
 	`)
 
 	if err != nil {
 		return nil, err
 	}
 
-	rows, err := statement.Query(code, true)
+	rows, err := statement.Query(invitationCode, true)
 	var questions []SessionQuestion = []SessionQuestion{}
 
 	if err != nil {

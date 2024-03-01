@@ -25,7 +25,7 @@ func InitHelper(db *goqu.Database, pubSubCfg config.RedisClientConfig) (*HelperG
 
 	userService := services.NewUserService(&userModel)
 
-	sessionModel, err := models.InitQuizSessionModel(db)
+	sessionModel, err := models.InitActiveQuizModel(db)
 	if err != nil {
 		return nil, err
 	}

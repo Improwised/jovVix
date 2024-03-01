@@ -302,7 +302,7 @@ func (qc *quizSocketController) Arrange(c *websocket.Conn) {
 	}
 
 	// is isQuestionActive true -> quiz started
-	isInvitationCodeSent := session.IsQuestionActive.Valid
+	isInvitationCodeSent := session.CurrentQuestion.Valid
 
 	if !isInvitationCodeSent {
 		// handle Waiting page
