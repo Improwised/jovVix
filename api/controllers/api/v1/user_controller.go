@@ -8,6 +8,7 @@ import (
 
 	"github.com/Improwised/quizz-app/api/cli/workers"
 	"github.com/Improwised/quizz-app/api/constants"
+	quizUtilsHelper "github.com/Improwised/quizz-app/api/helpers/utils"
 	"github.com/Improwised/quizz-app/api/models"
 	"github.com/Improwised/quizz-app/api/pkg/events"
 	"github.com/Improwised/quizz-app/api/pkg/structs"
@@ -130,9 +131,9 @@ func (ctrl *UserController) CreateUser(c *fiber.Ctx) error {
 }
 
 func (ctrl *UserController) IsAdmin(c *fiber.Ctx) error {
-	user := c.Locals(constants.ContextUid).(string)
+	userID := quizUtilsHelper.GetString(c.Locals(constants.ContextUid))
 
-	userObj, err := ctrl.userService.GetUser(user)
+	user, err := ctrl.userService.GetUser(userID)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -142,7 +143,7 @@ func (ctrl *UserController) IsAdmin(c *fiber.Ctx) error {
 		return utils.JSONError(c, http.StatusBadRequest, constants.UnknownError)
 	}
 
-	if userObj.Roles == "admin" {
+	if user.Roles == "admin" {
 		return utils.JSONSuccess(c, http.StatusOK, true)
 	}
 
@@ -150,9 +151,9 @@ func (ctrl *UserController) IsAdmin(c *fiber.Ctx) error {
 }
 
 func (ctrl *UserController) GetUserMeta(c *fiber.Ctx) error {
-	user := c.Locals(constants.ContextUid).(string)
+	userID := quizUtilsHelper.GetString(c.Locals(constants.ContextUid))
 
-	userObj, err := ctrl.userService.GetUser(user)
+	user, err := ctrl.userService.GetUser(userID)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -163,10 +164,9 @@ func (ctrl *UserController) GetUserMeta(c *fiber.Ctx) error {
 	}
 
 	return utils.JSONSuccess(c, http.StatusOK, map[string]string{
-		"username": userObj.Username,
-		"email":    userObj.Email,
+		"username": user.Username,
+		"email":    user.Email,
 	})
-
 }
 
 func RemoveUserToken(key string) *fiber.Cookie {

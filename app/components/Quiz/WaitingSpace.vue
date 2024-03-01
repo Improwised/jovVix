@@ -1,9 +1,11 @@
 <script setup>
 // core dependencies
 import { useNuxtApp } from "nuxt/app";
+import { useToast } from "vue-toastification";
 
 // define nuxt configs
 const app = useNuxtApp();
+const toast = useToast();
 
 // define props and emits
 const props = defineProps({
@@ -30,7 +32,7 @@ watch(
   () => props.data,
   (message) => {
     if (message.status == app.$Fail) {
-      console.log("fail", message);
+      toast.error(message);
     }
     handleEvent(message);
   },
@@ -54,7 +56,7 @@ function handleEvent(message) {
 <template>
   <Frame
     v-if="isAdmin"
-    :page-title="'Ready-shady-go'"
+    page-title="Ready-shady-go"
     :page-message="'you can start quiz by pressing start button'"
   >
     <form @submit="start_quiz">

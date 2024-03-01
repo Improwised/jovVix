@@ -1,5 +1,4 @@
 <script setup>
-import Frame from "../components/Frame.vue";
 const route = useRoute();
 
 const status = ref(route.query.status);
