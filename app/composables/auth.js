@@ -5,7 +5,7 @@ export async function useIsAdmin() {
   const headers = useRequestHeaders(["cookie"]);
 
   const { error: err, data: data } = await useFetch(
-    cfg.value.api_url + "/users/adminAccess",
+    cfg.value.api_url + "/is_admin",
     {
       method: "GET",
       credentials: "include",
@@ -44,7 +44,7 @@ export async function useGetUser() {
   });
 
   const { error: err, data: data } = await useFetch(
-    cfg.value.api_url + "/users/meta",
+    cfg.value.api_url + "/who",
     {
       method: "GET",
       credentials: "include",
