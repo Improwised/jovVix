@@ -1,7 +1,7 @@
 -- +migrate Down
 
 -- rename active_quizzes to quiz_sessions
-ALTER TABLE quiz_sessions
+ALTER TABLE active_quizzes
 RENAME TO quiz_sessions;
 
 -- rename columns
