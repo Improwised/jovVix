@@ -12,7 +12,7 @@ type UserSession struct {
 	ID            uuid.UUID `json:"id" db:"id"`
 	UserID        string    `json:"user_id" db:"user_id"`
 	IsHost        bool      `json:"is_host" db:"is_host"`
-	QuizSessionID uuid.UUID `json:"quiz_session_id" db:"quiz_session_id"`
+	QuizSessionID uuid.UUID `json:"active_quiz_id" db:"active_quiz_id"`
 	LeaveAt       time.Time `json:"leave_at,omitempty" db:"leave_at"`
 	QuizAnalysis  string    `json:"quiz_analysis,omitempty" db:"quiz_analysis"`
 	CreatedAt     time.Time `json:"created_at,omitempty" db:"created_at"`
@@ -48,22 +48,22 @@ func (model *UserQuizSessionModel) CreateUserSessionIfNotExists(userId string, q
 
 	stmt, err := model.db.Prepare(`
 		with user_session_id_is_host as (
-			SELECT id, is_host, user_id, quiz_session_id, created_at, updated_at, quiz_analysis, 'exists' as status
+			SELECT id, is_host, user_id, active_quiz_id, created_at, updated_at, quiz_analysis, 'exists' as status
 			FROM user_sessions us
 			WHERE us.user_id = $1
-			AND us.quiz_session_id = $2
+			AND us.active_quiz_id = $2
 			limit 1
 		), insert_user_into_session as (
 			INSERT INTO user_sessions
-				(id, user_id, quiz_session_id, is_host)
+				(id, user_id, active_quiz_id, is_host)
 			SELECT
 			$3 as id,
 			$1 as user_id,
-			$2 as quiz_session_id,
-			(select qs.admin_id = $1 from quiz_sessions qs where qs.id = $2) as is_host
+			$2 as active_quiz_id,
+			(select qs.admin_id = $1 from active_quizzes qs where qs.id = $2) as is_host
 			WHERE NOT EXISTS (
 				select 1 from user_session_id_is_host
-			) returning id, is_host, user_id, quiz_session_id, created_at, updated_at, quiz_analysis,'new' as status
+			) returning id, is_host, user_id, active_quiz_id, created_at, updated_at, quiz_analysis,'new' as status
 		)
 		select * from user_session_id_is_host
 		union all
