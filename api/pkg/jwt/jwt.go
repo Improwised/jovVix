@@ -9,23 +9,6 @@ import (
 	"github.com/lestrrat-go/jwx/v2/jwt"
 )
 
-var (
-	issuer = "quiz.improwised.com"
-)
-
-/**
-JWT token creation guideline
----------------------------------
-alg: HS256
-payload: {
-	subject: uid
-	issuer: quiz.improwised.com
-}
-We are also using jti for implementation signout all device
-We are using symmetric key methodology for sign token
----------------------------------
-*/
-
 // ParseToken parse, validate the jwt token
 // On valid token it returns the decoded token
 func ParseToken(config config.AppConfig, token string) (jwt.Token, error) {
@@ -34,13 +17,13 @@ func ParseToken(config config.AppConfig, token string) (jwt.Token, error) {
 		return nil, err
 	}
 
-	claims, err := jwt.Parse([]byte(token), jwt.WithKey(jwa.HS256, key), jwt.WithIssuer(issuer))
+	claims, err := jwt.Parse([]byte(token), jwt.WithKey(jwa.HS256, key), jwt.WithIssuer(config.JWTIssuer))
 	return claims, err
 }
 
 func CreateToken(config config.AppConfig, sub string, exp time.Time) (string, error) {
 	stringToken := ""
-	token, err := jwt.NewBuilder().Subject(sub).Expiration(exp).Issuer(issuer).Build()
+	token, err := jwt.NewBuilder().Subject(sub).Expiration(exp).Issuer(config.JWTIssuer).Build()
 	if err != nil {
 		return stringToken, err
 	}

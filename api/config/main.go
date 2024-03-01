@@ -27,6 +27,7 @@ type AppConfig struct {
 	Port          string `envconfig:"APP_PORT"`
 	Secret        string `envconfig:"JWT_SECRET"`
 	WebUrl        string `envconfig:"WEB_URL"`
+	JWTIssuer     string `envconfig:"ISSUER"`
 	RedisClient   RedisClientConfig
 	DB            DBConfig
 	Kratos        KratosConfig

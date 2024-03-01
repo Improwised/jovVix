@@ -93,18 +93,10 @@ func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config confi
 		return err
 	}
 
-	err = setupWhoAmI(v1, goqu, logger, middlewares, events, pub)
-	if err != nil {
-		return err
-	}
-
-	// roleModel, *userService, *quizModel, *questionModel, *sessionModel,
 	err = quizController(v1, goqu, logger, middlewares, events, pub, config, helperStructs)
 	if err != nil {
 		return err
 	}
-
-	// Close the subscription when we are done.
 
 	return nil
 }
@@ -165,9 +157,15 @@ func setupUserController(v1 fiber.Router, goqu *goqu.Database, logger *zap.Logge
 		return err
 	}
 
-	userRouter := v1.Group("/users")
-	userRouter.Get(fmt.Sprintf("/:%s", constants.ParamUid), middlewares.Authenticated, userController.GetUser)
-	userRouter.Post("/", userController.CreateUser)
+	// user route
+	userRouter := v1.Group("/user")
+	userRouter.Get("/is_admin", middlewares.Authenticated, userController.IsAdmin)
+	userRouter.Get("/who", middlewares.Authenticated, userController.GetUserMeta)
+
+	// users route
+	usersRouter := v1.Group("/users")
+	usersRouter.Get(fmt.Sprintf("/:%s", constants.ParamUid), middlewares.Authenticated, userController.GetUser)
+	usersRouter.Post("/", userController.CreateUser)
 	return nil
 }
 
@@ -190,17 +188,6 @@ func metricsController(api fiber.Router, db *goqu.Database, logger *zap.Logger, 
 	}
 
 	api.Get("/metrics", metricsController.Metrics)
-	return nil
-}
-
-func setupWhoAmI(v1 fiber.Router, goqu *goqu.Database, logger *zap.Logger, middlewares middlewares.Middleware, events *events.Events, pub *watermill.WatermillPublisher) error {
-	userController, err := controller.NewUserController(goqu, logger, events, pub)
-	if err != nil {
-		return err
-	}
-
-	v1.Get("/is_admin", middlewares.Authenticated, userController.IsAdmin)
-	v1.Get("/who", middlewares.Authenticated, userController.GetUserMeta)
 	return nil
 }
 
