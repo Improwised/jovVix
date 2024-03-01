@@ -58,6 +58,7 @@ func (model *UserModel) GetById(id string) (User, error) {
 		"last_name",
 		"email",
 		"username",
+		"roles",
 	).ScanStruct(&user)
 
 	if err != nil {

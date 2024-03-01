@@ -29,11 +29,7 @@ const (
 // Fail messages
 // ...
 const (
-	UsernameRequired   = "username is required"
-	Unauthenticated    = "unauthenticated to access resource"
-	Unauthorized       = "unauthorized to access resource"
-	InvalidCredentials = "invalid credentials"
-	UserNotExist       = "user does not exists"
+	UsernameRequired = "username is required"
 )
 
 // Error messages
@@ -49,16 +45,84 @@ const (
 	ErrKratosCookieTime    = "error while parsing the expiration time of the cookie"
 )
 
-// Events
+// default Events
 const (
 	EventUserRegistered = "event:userRegistered"
 )
 
-// Custom
+// Middleware
 const (
+	// socket
 	MiddlewarePass  = "allowed"
-	UserName        = "username"
-	UserUkey        = "users_username_ukey"
 	MiddlewareError = "middleware_error"
-	UnknownError    = "unknown error"
+
+	// http/https
+	ErrNotAllowed = "Not allowed to access Resource"
+)
+
+// components
+const (
+	Waiting  = "Waiting"
+	Question = "Question"
+	Score    = "Score"
+)
+
+// constants
+const (
+	MinInvitationCode = 100000
+	MaxInvitationCode = 999999
+)
+
+// Quiz Events
+const (
+	// Event 1. Authentication <admin side>
+	EventAuthentication  = "authentication"
+	ActionAuthentication = "authentication check"
+	Unauthenticated      = "unauthenticated to access resource"
+	InvalidCredentials   = "invalid credentials"
+
+	// Event 2. Authorization <admin/user side>
+	EventAuthorization  = "authorization"
+	ActionAuthorization = "check for access"
+	UserNotExist        = "user does not exists"
+	Unauthorized        = "unauthorized to access resource"
+
+	// Event 3. Session Validation <admin>
+	EventSessionValidation  = "session_validation"
+	ActionSessionValidation = "session validation from server side"
+	ErrSessionNotFound      = "session unavailable"
+
+	// Event 4. Active session <admin>
+	EventActivateSession      = "session_activation"
+	EventSendInvitationCode   = "send_invitation_code" // use by web
+	ActionSessionActivation   = "activate demanded session and sent invitation code"
+	QuizSessionInvitationCode = "invitationCode"
+	SessionIDParam            = "session_id"
+	SessionObj                = "current session object"
+
+	// Event 5. Join quiz <User>
+	EventJoinQuiz                  = "invitation_code_validation"
+	ActionJoinQuiz                 = "invitation code validation"
+	ErrInvitationCodeInWrongFormat = "invitation code is not in proper format"
+	ErrInvitationCodeNotFound      = "invitation code not found" // use by web
+	ErrInvitationCodeNotActive     = "invitation code is not active"
+	ErrSessionWasCompleted         = "session was completed"
+	ErrMaxTryToGenerateCode        = "maximum times excide to generate code"
+
+	UserName          = "username"
+	UserUkey          = "users_username_ukey"
+	Join              = "join access"
+	QuizStartsSoon    = "quiz will start soon"
+	ErrUsernameExists = "username already exists"
+
+	// Event 6. Start quiz <admin>
+	EventStartQuiz = "start_quiz" // use by web
+
+	// Event 7. Get Questions
+	QuizQuestionStatus        = "quiz question status"
+	GetQuestions              = "get quiz questions"
+	NextQuestionWillServeSoon = "Next question will coming soon"
+
+	// Event . unhandled event
+	UnknownError = "unknown_error"
 )

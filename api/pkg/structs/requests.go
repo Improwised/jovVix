@@ -9,7 +9,6 @@ type ReqRegisterUser struct {
 	UserName  string `json:"username" validate:"required"`
 	Email     string `json:"email" validate:"required,email"`
 	Password  string `json:"password" validate:"required"`
-	Roles     string `json:"roles" validate:"required"`
 }
 
 type ReqLoginUser struct {

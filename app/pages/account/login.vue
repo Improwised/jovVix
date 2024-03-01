@@ -1,23 +1,24 @@
 <script setup>
 import { useToast } from "vue-toastification";
 
-const config = useSystemEnv();
 const nuxtApp = useNuxtApp();
 const route = useRoute();
 const toast = useToast();
 const email = ref();
 const password = ref();
 let status = null;
+useSystemEnv();
 
 async function login_user(e) {
   e.preventDefault();
+  const login_url = useSystemEnv("urls").value?.api_url + "/login";
 
   if (email.value.trim() == "" || password.value.trim() == "") {
     toast.error(nuxtApp.$IncorrectCredentials);
     return;
   }
 
-  const { error: error } = await useFetch(config.value.api_url + "/login", {
+  const { error: error } = await useFetch(login_url, {
     method: "POST",
     credentials: "include",
     body: {
@@ -30,7 +31,7 @@ async function login_user(e) {
     },
   });
 
-  if (error.value) {
+  if (error?.value) {
     if (status >= 500) {
       toast.error(error.value);
     } else {
@@ -48,10 +49,7 @@ async function login_user(e) {
 </script>
 
 <template>
-  <Frame
-    page-title="Login page"
-    page-welcome-message="Welcome to the quizz world..."
-  >
+  <Frame page-title="Login page" page-message="Welcome to the quizz world...">
     <form method="POST" @submit="login_user">
       <div class="mb-3">
         <label for="email" class="form-label">Email</label>
@@ -77,12 +75,13 @@ async function login_user(e) {
       </div>
       <div class="p-2">
         <div class="text-end">
-          don't have an <a href="/account/register"><b>account</b></a
-          >?
+          don't have an
+          <NuxtLink to="/account/register"><b>account</b></NuxtLink>
+          ?
         </div>
       </div>
       <button type="submit" class="btn btn-primary">Submit</button>
-      <button type="clear" class="btn btn-primary ms-2">Clear</button>
+      <button type="reset" class="btn btn-primary ms-2">Clear</button>
     </form>
   </Frame>
 </template>

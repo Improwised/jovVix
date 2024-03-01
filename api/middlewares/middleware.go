@@ -8,17 +8,17 @@ import (
 )
 
 type Middleware struct {
-	config      config.AppConfig
-	logger      *zap.Logger
-	db          *goqu.Database
-	userService *services.UserService
+	Config      config.AppConfig
+	Logger      *zap.Logger
+	Db          *goqu.Database
+	UserService *services.UserService
 }
 
 func NewMiddleware(cfg config.AppConfig, logger *zap.Logger, db *goqu.Database, userService *services.UserService) Middleware {
 	return Middleware{
-		config:      cfg,
-		logger:      logger,
-		db:          db,
-		userService: userService,
+		Config:      cfg,
+		Logger:      logger,
+		Db:          db,
+		UserService: userService,
 	}
 }

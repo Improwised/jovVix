@@ -9,7 +9,7 @@ services:
       POSTGRES_DB: quiz-app
       POSTGRES_MULTIPLE_DATABASES: '"kratos-db"'
     ports:
-    - 5432:5432
+      - 5432:5432
     volumes:
       - pgdata:/var/lib/postgresql/data
 
@@ -23,6 +23,17 @@ services:
     env_file:
       - ./api/.env.example
     command: ./api  migrate up
+
+  redis:
+    image: redis:latest
+    restart: always
+    ports:
+      - "6379:6379"
+    env_file:
+      - ./api/.env.example
+    volumes:
+      - ./redis/data:/root/redis
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
 
   api:
     build:

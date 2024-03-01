@@ -25,12 +25,11 @@ func TestCreateUser(t *testing.T) {
 
 	t.Run("create user with valid input", func(t *testing.T) {
 		req := structs.ReqRegisterUser{
-			Email:     "someone@example.com",
 			FirstName: "someone",
 			LastName:  "someone",
+			UserName:  "someoneLike",
+			Email:     "someone@example.com",
 			Password:  "someone@1234",
-			Roles:     "player",
-			UserName:  "someoneLikeMe",
 		}
 		res, err := client.
 			R().
@@ -39,7 +38,7 @@ func TestCreateUser(t *testing.T) {
 			Post("/api/v1/users")
 
 		assert.Nil(t, err)
-		assert.Equal(t, http.StatusCreated, res.StatusCode())
+		assert.Equal(t, http.StatusCreated, res.StatusCode(), res)
 	})
 
 	t.Run("login user with invalid credentials", func(t *testing.T) {

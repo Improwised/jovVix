@@ -15,6 +15,7 @@
   "devDependencies": {
     "@commitlint/cli": "^17.4.1",
     "@commitlint/config-conventional": "^17.4.0",
+    "@sidebase/nuxt-session": "^0.2.8",
     "@types/bootstrap": "^5.2.7",
     "@typescript-eslint/eslint-plugin": "^5.48.1",
     "@typescript-eslint/parser": "^5.48.1",
@@ -26,16 +27,20 @@
     "husky": "^8.0.3",
     "lint-staged": "^13.3.0",
     "nuxt": "3.0.0",
-    "prettier": "^2.8.2"
+    "prettier": "^2.8.2",
+    "vite-plugin-vuetify": "^2.0.1",
+    "vuetify": "^3.5.6"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^6.4.2",
     "@fortawesome/free-brands-svg-icons": "^6.4.2",
     "@fortawesome/free-solid-svg-icons": "^6.4.2",
     "@fortawesome/vue-fontawesome": "^3.0.3",
-    "@pinia/nuxt": "^0.4.6",
+    "@mdi/font": "^7.4.47",
+    "@pinia/nuxt": "^0.5.1",
     "@vitejs/plugin-vue": "^4.0.0",
     "bootstrap": "^5.2.3",
+    "pinia": "^2.1.7",
     "vitest": "^0.27.0",
     "vue-toastification": "^2.0.0-rc.5",
     "yarn": "^1.22.21"

@@ -1,6 +1,19 @@
 import { callWithNuxt } from "nuxt/app";
 
 export default defineNuxtRouteMiddleware(async (to) => {
+  const { session, update, reset } = await useSession();
+  const app = useNuxtApp();
+  const cookie = useCookie(app.$UserIdentifier);
+
+  if (!session.value.loginCheck || !cookie.value) {
+    const user = await useGetUser();
+    if (user.value.ok) {
+      await update({ loginCheck: true, user: user.value.data });
+    } else {
+      await reset();
+    }
+  }
+
   if (to.fullPath.startsWith("/admin")) {
     const is_admin = await useIsAdmin();
 

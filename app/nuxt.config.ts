@@ -1,9 +1,12 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+import vuetify, { transformAssetUrls } from "vite-plugin-vuetify";
+
 export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       base_url: process.env.BASE_URL,
       api_url: process.env.API_URL,
+      socket_url: process.env.API_SOCKET_URL,
     },
   },
   app: {
@@ -34,15 +37,27 @@ export default defineNuxtConfig({
         autoImports: ["defineStore", "acceptHMRUpdate"],
       },
     ],
+    "@sidebase/nuxt-session",
+    (_options, nuxt) => {
+      nuxt.hooks.hook("vite:extendConfig", (config) => {
+        // @ts-expect-error error 'config.plugins' is possibly 'undefined'
+        config.plugins.push(vuetify({ autoImport: true }));
+      });
+    },
   ],
 
   vite: {
     define: {
       "process.env.DEBUG": false,
     },
+    vue: {
+      template: {
+        transformAssetUrls,
+      },
+    },
   },
 
   build: {
-    transpile: ["vue-toastification"],
+    transpile: ["vue-toastification", "vuetify"],
   },
 });

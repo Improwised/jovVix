@@ -14,15 +14,19 @@ services:
       - ./pkg/kratos/kratos-pg-init-script:/docker-entrypoint-initdb.d
       - pgdata1:/var/lib/postgresql/data
 
-  adminer:
-    image: adminer
+  redis:
+    image: redis:latest
     restart: always
     ports:
-    - 8080:8080
+      - "6379:6379"
+    volumes:
+      - ./redis/data:/root/redis
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
     environment:
-    - ADMINER_DEFAULT_SERVER=postgresdb
-    depends_on:
-    - db
+      - REDIS_HOST=localhost
+      - REDIS_PASSWORD=my-password
+      - REDIS_PORT=6379
+      - REDIS_DATABASES=0
 
   # kratos_migrate:
   #   image: oryd/kratos:v1.0.0

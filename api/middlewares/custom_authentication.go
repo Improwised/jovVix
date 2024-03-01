@@ -10,6 +10,7 @@ import (
 	"github.com/Improwised/quizz-app/api/config"
 	"github.com/Improwised/quizz-app/api/constants"
 	quizController "github.com/Improwised/quizz-app/api/controllers/api/v1"
+	quizUtilsHelper "github.com/Improwised/quizz-app/api/helpers/utils"
 	"github.com/Improwised/quizz-app/api/models"
 	"github.com/Improwised/quizz-app/api/pkg/jwt"
 	"github.com/Improwised/quizz-app/api/utils"
@@ -24,7 +25,7 @@ import (
 //			A. exists:- verify jwk
 //				a. jwk ok:- get user
 //								1. found:- set role in context and session storage
-//	                         2. not found :- TODO: send error
+//	                         2. not found :- send error
 //				b. jwk not ok:- fail message return/ login again or join as user
 //	  	B. not exists :- trying to get userName from query and create new_user get userID and role and set in context and cookie
 //
@@ -33,53 +34,110 @@ import (
 //	B. not exists :- trying to get userName from query and create new_user get userID and role and set in context and cookie
 func (m *Middleware) CustomAuthenticated(c *fiber.Ctx) error {
 
+	quizUtilsHelper.GetBool(c.Locals(constants.MiddlewarePass))
+	if !quizUtilsHelper.GetBool(c.Locals(constants.MiddlewarePass)) {
+		return c.Next()
+	}
+
+	token := c.Cookies(constants.CookieUser, "cookie not available")
+
+	if token == "cookie not available" {
+		AuthHavingNoTokenHandler(m, c)
+	} else {
+		AuthHavingTokenHandler(m, c, token)
+	}
+
+	c.Locals(constants.MiddlewarePass, c.Locals(constants.MiddlewareError) == nil)
+
+	return c.Next()
+}
+
+func (m *Middleware) CustomAdminAuthenticated(c *fiber.Ctx) error {
+
+	if !quizUtilsHelper.GetBool(c.Locals(constants.MiddlewarePass)) {
+		return c.Next()
+	}
+
 	token := c.Cookies(constants.CookieUser, "cookie not available")
 
 	if token != "cookie not available" {
 		AuthHavingTokenHandler(m, c, token)
 	} else {
-		AuthHavingNoTokenHandler(m, c)
+		c.Locals(constants.MiddlewareError, constants.Unauthenticated)
 	}
 
-	c.Locals("allowed", c.Locals(constants.MiddlewareError) == nil)
+	c.Locals(constants.MiddlewarePass, c.Locals(constants.MiddlewareError) == nil)
 
+	return c.Next()
+}
+
+func (m *Middleware) CheckSessionId(c *fiber.Ctx) error {
+
+	if !quizUtilsHelper.GetBool(c.Locals(constants.MiddlewarePass)) {
+		return c.Next()
+	}
+
+	// get session id from param
+	sessionId := c.Params(constants.SessionIDParam)
+
+	c.Locals(constants.SessionIDParam, sessionId)
+	c.Locals(constants.MiddlewarePass, c.Locals(constants.MiddlewareError) == nil)
+	return c.Next()
+}
+
+func (m *Middleware) CheckSessionCode(c *fiber.Ctx) error {
+
+	if !quizUtilsHelper.GetBool(c.Locals(constants.MiddlewarePass)) {
+		return c.Next()
+	}
+
+	// get session code from param
+	code := c.Params(constants.QuizSessionInvitationCode)
+
+	if !quizUtilsHelper.IsValidCode(code) {
+		c.Locals(constants.MiddlewareError, constants.ErrInvitationCodeInWrongFormat)
+		return c.Next()
+	}
+
+	c.Locals(constants.QuizSessionInvitationCode, code)
+	c.Locals(constants.MiddlewarePass, c.Locals(constants.MiddlewareError) == nil)
 	return c.Next()
 }
 
 func AuthHavingTokenHandler(m *Middleware, c *fiber.Ctx, token string) {
 	// JWK verification
-	claims, err := jwt.ParseToken(m.config, token)
+	claims, err := jwt.ParseToken(m.Config, token)
 
 	if err != nil {
 		if errors.Is(err, j.ErrInvalidJWT()) || errors.Is(err, j.ErrTokenExpired()) {
 			c.Cookie(RemoveUserToken(constants.CookieUser))
 			c.Locals(constants.MiddlewareError, constants.Unauthenticated)
-			m.logger.Error("JWT error during authentication in join", zap.Error(err))
+			m.Logger.Error("JWT error during authentication in join", zap.Error(err))
 			return
 		}
 
-		m.logger.Error("Error while checking user identity in join", zap.Error(err))
+		m.Logger.Error("Error while checking user identity in join", zap.Error(err))
 		c.Locals(constants.MiddlewareError, constants.ErrUnauthenticated)
 		return
 	}
 
 	c.Locals(constants.ContextUid, claims.Subject())
 
-	userObj, err := m.userService.GetUser(claims.Subject())
+	userObj, err := m.UserService.GetUser(claims.Subject())
 
 	if err != nil {
 		if err == sql.ErrNoRows {
 			c.Locals(constants.MiddlewareError, constants.InvalidCredentials)
-			m.logger.Error(fmt.Sprintf("User not found, userID %s", claims.Subject()), zap.Error(err))
+			m.Logger.Error(fmt.Sprintf("User not found, userID %s", claims.Subject()), zap.Error(err))
 			return
 		}
 
 		c.Locals(constants.MiddlewareError, constants.UnknownError)
-		m.logger.Error(fmt.Sprintf("Unknown DB error, userID %s", claims.Subject()), zap.Error(err))
+		m.Logger.Error(fmt.Sprintf("Unknown DB error, userID %s", claims.Subject()), zap.Error(err))
 		return
 	}
 
-	c.Cookie(CreateStrictCookie(constants.CookieUser, token))
+	// c.Cookie(CreateStrictCookie(constants.CookieUser, token))
 	c.Locals(constants.ContextUid, userObj.ID)
 	c.Locals(constants.ContextUser, userObj)
 }
@@ -90,7 +148,7 @@ func AuthHavingNoTokenHandler(m *Middleware, c *fiber.Ctx) {
 
 	if userName == "" {
 		c.Locals(constants.MiddlewareError, constants.UsernameRequired)
-		m.logger.Error("Username not provided", zap.Error(fmt.Errorf(constants.UsernameRequired)))
+		m.Logger.Error("Username not provided", zap.Error(fmt.Errorf(constants.UsernameRequired)))
 		return
 	}
 
@@ -99,19 +157,18 @@ func AuthHavingNoTokenHandler(m *Middleware, c *fiber.Ctx) {
 		Roles:    "user",
 	}
 
-	userObj, err := quizController.CreateQuickUser(m.db, m.logger, userObj, true, false)
+	userObj, err := quizController.CreateQuickUser(m.Db, m.Logger, userObj, true, false)
 
 	if err != nil {
 		c.Locals(constants.MiddlewareError, err)
-		m.logger.Error(fmt.Sprintf("Error in register user %v", userObj), zap.Error(err))
-
+		m.Logger.Error(fmt.Sprintf("Error in register user %v", userObj), zap.Error(err))
 		return
 	}
 
-	err = CreateNewUserToken(c, m.config, userObj, m.logger)
+	err = CreateNewUserToken(c, m.Config, userObj, m.Logger)
 	if err != nil {
 		c.Locals(constants.MiddlewareError, err)
-		m.logger.Error(fmt.Sprintf("Error in register user %v", userObj), zap.Error(err))
+		m.Logger.Error(fmt.Sprintf("Error in register user %v", userObj), zap.Error(err))
 		return
 	}
 }
@@ -147,9 +204,3 @@ func CreateNewUserToken(c *fiber.Ctx, cfg config.AppConfig, user models.User, lo
 	c.Locals(constants.ContextUser, user)
 	return nil
 }
-
-// func MiddlewareError(c *websocket.Conn, refStr string, response string, other any) error {
-// 	utils.WsJSONFail(c, "Authentication", refStr, response, other)
-// 	time.Sleep(100)
-// 	return authError
-// }
