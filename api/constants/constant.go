@@ -119,9 +119,17 @@ const (
 	EventStartQuiz = "start_quiz" // use by web
 
 	// Event 7. Get Questions
+	EventSendQuestion         = "send_question"
+	ActionSendQuestion        = "send single question to user"
 	QuizQuestionStatus        = "quiz question status"
 	GetQuestions              = "get quiz questions"
 	NextQuestionWillServeSoon = "Next question will coming soon"
+
+	EventPublishQuestion = "publish_question"
+
+	// Event 8. Terminate quiz
+	EventTerminateQuiz  = "terminate_quiz"
+	ActionTerminateQuiz = "terminate quiz after completing"
 
 	// Event . unhandled event
 	UnknownError = "unknown_error"

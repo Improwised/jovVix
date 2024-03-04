@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -99,30 +100,58 @@ func (model *QuizModel) GetQuizzesByAdmin(creator_id string) ([]Quiz, error) {
 	return quizzes, nil
 }
 
-func (model *QuizModel) GetSharedQuestions(invitationCode int) ([]SessionQuestion, error) {
+func (model *QuizModel) GetSharedQuestions(invitationCode int) ([]Question, error) {
 
 	statement, err := model.db.Prepare(`
-	with get_ids as (
-		select id, quiz_id from active_quizzes qs where qs.invitation_code = $1 and qs.is_active = $2
-	)
-	, get_question_order as(
-		select order_no, next_question, qs.is_question_active from session_questions sq2 join get_ids ids on ids.id = sq2.active_quiz_id join active_quizzes qs on qs.current_question = sq2.question_id
-	), get_questions as (
-		select sq.* from session_questions sq join get_ids ids on ids.id = sq.active_quiz_id and order_no >= (
-			select (
-			case when is_question_active then order_no + 1
-			else order_no end
-			) from get_question_order
+	with core as (
+		select
+			q.*,
+			aq.current_question,
+			aq.is_question_active,
+			sq.order_no
+		from
+			session_questions sq
+		join active_quizzes aq on
+			aq.invitation_code = $1
+			and aq.id = sq.active_quiz_id
+		join questions q on
+			q.id = sq.question_id
+		),
+		max_order as (
+			select order_no from (
+				select order_no from core
+					where id = current_question
+				union
+				select 0
+			) x order by order_no desc limit 1
 		)
-	) select id, question_id, next_question, active_quiz_id, order_no from get_questions;
+		select
+			id,
+			question,
+			options,
+			answers,
+			score,
+			created_at,
+			updated_at
+		from
+			core
+		where
+			order_no > (
+			select
+				order_no
+			from
+				max_order
+			)
+		order by
+			order_no;
 	`)
 
 	if err != nil {
 		return nil, err
 	}
 
-	rows, err := statement.Query(invitationCode, true)
-	var questions []SessionQuestion = []SessionQuestion{}
+	rows, err := statement.Query(invitationCode)
+	var questions []Question = []Question{}
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -133,11 +162,25 @@ func (model *QuizModel) GetSharedQuestions(invitationCode int) ([]SessionQuestio
 	}
 
 	for rows.Next() {
-		question := SessionQuestion{}
-		err := rows.Scan(&question.ID, &question.QuestionID, &question.NextQuestion, &question.QuizSessionID, &question.OrderNo)
+		question := Question{}
+		var options []byte
+		var answers []byte
+		err := rows.Scan(&question.ID, &question.Question, &options, &answers, &question.Score, &question.CreatedAt, &question.UpdatedAt)
 		if err != nil {
 			fmt.Printf("Error scanning row: %v\n", err)
 			return nil, err
+		}
+
+		err = json.Unmarshal(options, &question.Options)
+
+		if err != nil {
+			return questions, err
+		}
+
+		err = json.Unmarshal(answers, &question.Answers)
+
+		if err != nil {
+			return questions, err
 		}
 
 		questions = append(questions, question)
@@ -146,6 +189,25 @@ func (model *QuizModel) GetSharedQuestions(invitationCode int) ([]SessionQuestio
 	return questions, nil
 }
 
-func IsValidCode(model *QuizModel) {
+func (model *QuizModel) UpdateCurrentQuestion(sessionId, questionID uuid.UUID, isActive bool) error {
+	result, err := model.db.Update("active_quizzes").Set(goqu.Record{
+		"current_question":   questionID,
+		"is_question_active": isActive,
+	}).Where(goqu.I("id").Eq(sessionId)).Executor().Exec()
 
+	if err != nil {
+		return err
+	}
+
+	affectedRow, err := result.RowsAffected()
+
+	if err != nil {
+		return err
+	}
+
+	if affectedRow == 0 {
+		return sql.ErrNoRows
+	}
+
+	return nil
 }
