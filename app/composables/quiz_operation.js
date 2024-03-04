@@ -1,7 +1,7 @@
 export default class QuizHandler {
   JOIN_EVENT = "JOIN_REQUEST";
 
-  constructor(api_url, username, identifier, componentHandler, userCookie) {
+  constructor(api_url, identifier, componentHandler, userCookie) {
     if (!(api_url && identifier && userCookie && componentHandler)) {
       throw Error("all demanded parameters are necessary");
     }
@@ -12,7 +12,7 @@ export default class QuizHandler {
 
     // general attributes
     this.api_url = api_url;
-    this.username = username;
+    this.username = undefined;
     this.identifier = identifier;
     this.userCookie = userCookie;
     this.componentHandler = componentHandler;

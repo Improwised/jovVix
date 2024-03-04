@@ -32,7 +32,7 @@ watch(
   () => props.data,
   (message) => {
     if (message.status == app.$Fail) {
-      toast.error(message);
+      toast.error(message.data);
     }
     handleEvent(message);
   },
@@ -56,7 +56,7 @@ function handleEvent(message) {
 <template>
   <Frame
     v-if="isAdmin"
-    page-title="Ready-shady-go"
+    page-title="ready steady go"
     :page-message="'you can start quiz by pressing start button'"
   >
     <form @submit="start_quiz">
@@ -75,7 +75,7 @@ function handleEvent(message) {
       </button>
     </form>
   </Frame>
-  <Frame v-else :page-title="'Ready-shady-go'" :page-message="data.data">
+  <Frame v-else page-title="ready steady go" :page-message="data.data">
     <div class="text-center homepage">{{ data.data }}</div>
   </Frame>
 </template>

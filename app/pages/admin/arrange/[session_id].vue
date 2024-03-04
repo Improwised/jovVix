@@ -9,7 +9,6 @@ import AdminOperation from "~/composables/admin_operation.js";
 const route = useRoute();
 const toast = useToast();
 const app = useNuxtApp();
-const { session } = await useSession();
 useSystemEnv();
 
 // define props and emits
@@ -17,6 +16,7 @@ const myRef = ref(false);
 const data = ref({});
 const adminOperationHandler = ref();
 const currentComponent = ref("Loading");
+const router = useRouter();
 
 // event handlers
 const handleCustomChange = (isFullScreenEvent) => {
@@ -35,13 +35,14 @@ const handleQuizEvents = (message) => {
   // error ? -> redirect to error page
   if (message.status == app.$Error) {
     adminOperationHandler.value.printLog();
-    navigateTo("/error?status=" + message.status + "&error=" + message.data);
+    router.push("/error?status=" + message.status + "&error=" + message.data);
   } else {
     // unauthorized ? -> redirect to login page
     if (message.status == app.$Fail && message.data == app.$Unauthorized) {
-      navigateTo(
+      router.push(
         "/account/login?error=" + message.data + "&url=" + route.fullPath
       );
+      return;
     }
     data.value = message;
     currentComponent.value = message.component;
@@ -54,7 +55,6 @@ onMounted(() => {
   if (process.client) {
     adminOperationHandler.value = new AdminOperation(
       route.params.session_id,
-      session.value.user?.username,
       handleQuizEvents
     );
   }

@@ -15,7 +15,6 @@
   "devDependencies": {
     "@commitlint/cli": "^17.4.1",
     "@commitlint/config-conventional": "^17.4.0",
-    "@sidebase/nuxt-session": "^0.2.8",
     "@types/bootstrap": "^5.2.7",
     "@typescript-eslint/eslint-plugin": "^5.48.1",
     "@typescript-eslint/parser": "^5.48.1",

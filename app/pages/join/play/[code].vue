@@ -9,7 +9,6 @@ import { useSystemEnv } from "~/composables/envs.js";
 // define nuxt configs
 const route = useRoute();
 const toast = useToast();
-const { session } = await useSession();
 const app = useNuxtApp();
 useSystemEnv();
 
@@ -33,7 +32,7 @@ onMounted(() => {
   if (process.client) {
     userSession.value = new UserOperation(
       route.params.code,
-      session.value.user?.username || route.query?.username,
+      route.query?.username,
       handleQuizEvents
     );
   }

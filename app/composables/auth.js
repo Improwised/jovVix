@@ -14,26 +14,11 @@ export async function useIsAdmin() {
     }
   );
 
-  if (err?.value) {
-    return { ok: false, err: err.value.data?.data || "unknown error" };
+  if (err.value) {
+    return { ok: false, err: err.value.data?.data };
   }
 
   return { ok: data?.value.data == true, err: null };
-}
-
-export async function updateSession(force = false) {
-  const { session, update, reset } = await useSession();
-  const app = useNuxtApp();
-  const cookie = useCookie(app.$UserIdentifier);
-
-  if (force || !session.value.user || !cookie.value) {
-    const user = await useGetUser();
-    if (user.value.ok) {
-      await update({ user: user.value.data });
-    } else {
-      await reset();
-    }
-  }
 }
 
 export async function useGetUser() {
