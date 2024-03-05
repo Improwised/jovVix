@@ -255,7 +255,6 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 	if err != nil {
 		qc.logger.Error(fmt.Sprintf("socket error send waiting message: %s event, %s action", constants.EventJoinQuiz, response.Action), zap.Error(err))
 	}
-
 }
 
 func (qc *quizSocketController) Arrange(c *websocket.Conn) {

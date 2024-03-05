@@ -1,14 +1,14 @@
 import QuizHandler from "./quiz_operation";
 
 export default class UserOperation extends QuizHandler {
-  constructor(code, username, handler, cookie) {
+  constructor(code, username, handler) {
     const url = useState("urls");
-    super(url.value.socket_url, code, handler, cookie, { username });
+    super(url.value.socket_url, code, handler, { username });
   }
 
   getAddress(currentObj) {
     return (
-      currentObj.api_url +
+      currentObj.socket_url +
       "/join/" +
       currentObj.identifier +
       "?username=" +

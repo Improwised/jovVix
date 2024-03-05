@@ -1,9 +1,9 @@
 export default class QuizHandler {
   JOIN_EVENT = "JOIN_REQUEST";
 
-  constructor(api_url, identifier, componentHandler, userCookie, others) {
-    if (!(api_url && identifier && userCookie && componentHandler)) {
-      console.log(api_url && identifier && userCookie && componentHandler);
+  constructor(socket_url, identifier, componentHandler, others) {
+    if (!(socket_url && identifier && componentHandler)) {
+      console.log(socket_url, identifier, componentHandler);
       throw Error("all demanded parameters are necessary");
     }
 
@@ -12,10 +12,9 @@ export default class QuizHandler {
     }
 
     // general attributes
-    this.api_url = api_url;
+    this.socket_url = socket_url;
     this.others = others;
     this.identifier = identifier;
-    this.userCookie = userCookie;
     this.componentHandler = componentHandler;
 
     // custom attributes
@@ -32,7 +31,7 @@ export default class QuizHandler {
   }
 
   getAddress(currentObj = this) {
-    return currentObj.api_url;
+    return currentObj.socket_url;
   }
 
   async handler(_, message) {
