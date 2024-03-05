@@ -3,7 +3,6 @@ export default class QuizHandler {
 
   constructor(api_url, identifier, componentHandler, userCookie, others) {
     if (!(api_url && identifier && userCookie && componentHandler)) {
-      console.log(api_url && identifier && userCookie && componentHandler);
       throw Error("all demanded parameters are necessary");
     }
 
