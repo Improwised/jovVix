@@ -53,9 +53,11 @@ const handleQuizEvents = (message) => {
 onMounted(() => {
   // core logic
   if (process.client) {
+    const cookie = useCookie(app.$UserIdentifier);
     adminOperationHandler.value = new AdminOperation(
       route.params.session_id,
-      handleQuizEvents
+      handleQuizEvents,
+      cookie
     );
   }
 });

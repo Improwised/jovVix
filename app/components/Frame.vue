@@ -21,9 +21,13 @@ const toast = useToast();
 
 const errorQueryParam = router.currentRoute.value.query.error;
 
-if (errorQueryParam) {
-  toast.error(errorQueryParam);
-}
+onMounted(() => {
+  if (process.client) {
+    if (errorQueryParam) {
+      toast.error(errorQueryParam);
+    }
+  }
+});
 </script>
 
 <template>
@@ -31,7 +35,6 @@ if (errorQueryParam) {
     <div class="border p-2 m-0 m-sm-5 p-sm-5 max-width rounded">
       <h1>{{ pageTitle }}</h1>
       <h6 v-if="props.pageMessage">{{ pageMessage }}</h6>
-
       <hr class="m-2" />
       <slot></slot>
     </div>
