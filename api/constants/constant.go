@@ -104,7 +104,7 @@ const (
 	EventJoinQuiz                  = "invitation_code_validation"
 	ActionJoinQuiz                 = "invitation code validation"
 	ErrInvitationCodeInWrongFormat = "invitation code is not in proper format"
-	ErrInvitationCodeNotFound      = "invitation code not found" // use by web
+	ErrInvitationCodeNotFound      = "invitation code" // use by web
 	ErrInvitationCodeNotActive     = "invitation code is not active"
 	ErrSessionWasCompleted         = "session was completed"
 	ErrMaxTryToGenerateCode        = "maximum times excide to generate code"

@@ -1,10 +1,8 @@
 import QuizHandler from "./quiz_operation";
 
 export default class UserOperation extends QuizHandler {
-  constructor(code, username, handler) {
-    const app = useNuxtApp();
+  constructor(code, username, handler, cookie) {
     const url = useState("urls");
-    const cookie = useCookie(app.$UserIdentifier);
     super(url.value.socket_url, code, handler, cookie, { username });
   }
 

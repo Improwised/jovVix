@@ -3,16 +3,13 @@
 import { useToast } from "vue-toastification";
 
 // define nuxt configs
-const app = useNuxtApp();
 const toast = useToast();
-const user = useCookie(app.$UserIdentifier);
 const router = useRouter();
 useSystemEnv();
 
 // define props and emits
 const code = ref(0);
 const username = ref();
-console.log("here");
 
 function join_quiz(e) {
   e.preventDefault();
@@ -51,10 +48,11 @@ function join_quiz(e) {
           type="username"
           name="username"
           class="form-control"
+          required
         />
       </div>
       <div class="p-2">
-        <div v-if="!user" class="text-center">
+        <div class="text-center">
           Want to save your progress?
           <NuxtLink to="/account/login"><b>Login</b></NuxtLink> now.
         </div>
