@@ -340,8 +340,17 @@ func (qc *quizSocketController) Arrange(c *websocket.Conn) {
 
 	response.Component = constants.Question
 	for _, question := range questions {
+		response.Action = constants.ActionCounter
+		response.Data = map[string]int{"counter": 5}
+		err = utils.JSONSuccessWs(c, constants.EventStartCount5, response)
+		if err != nil {
+			qc.logger.Error(fmt.Sprintf("socket error question send: %s event, %s action %v code", constants.EventSendQuestion, response.Action, session.InvitationCode), zap.Error(err))
+		}
+		time.Sleep(5 * time.Second)
+
 		response.Action = constants.ActionSendQuestion
 		response.Data = map[string]any{
+			"no":       question.OrderNumber,
 			"question": question.Question,
 			"options":  question.Options,
 		}
@@ -357,19 +366,20 @@ func (qc *quizSocketController) Arrange(c *websocket.Conn) {
 			qc.logger.Error(fmt.Sprintf("socket error publishing question: %s event, %s action %v code", constants.EventPublishQuestion, response.Action, session.InvitationCode), zap.Error(err))
 		}
 
-		err = qc.helpers.QuizModel.UpdateCurrentQuestion(session.ID, question.ID, true)
-		if err != nil {
-			qc.logger.Error(fmt.Sprintf("socket error update current question: %s event, %s action %v code", constants.EventSendQuestion, response.Action, session.InvitationCode), zap.Error(err))
-		}
+		time.Sleep(10 * time.Second)
+		// err = qc.helpers.QuizModel.UpdateCurrentQuestion(session.ID, question.ID, true)
+		// if err != nil {
+		// 	qc.logger.Error(fmt.Sprintf("socket error update current question: %s event, %s action %v code", constants.EventSendQuestion, response.Action, session.InvitationCode), zap.Error(err))
+		// }
 
-		time.Sleep(5 * time.Second)
+		// time.Sleep(5 * time.Second)
 
-		err = qc.helpers.QuizModel.UpdateCurrentQuestion(session.ID, question.ID, false)
-		if err != nil {
-			qc.logger.Error(fmt.Sprintf("socket error update current question: %s event, %s action %v code", constants.EventSendQuestion, response.Action, session.InvitationCode), zap.Error(err))
-		}
+		// err = qc.helpers.QuizModel.UpdateCurrentQuestion(session.ID, question.ID, false)
+		// if err != nil {
+		// 	qc.logger.Error(fmt.Sprintf("socket error update current question: %s event, %s action %v code", constants.EventSendQuestion, response.Action, session.InvitationCode), zap.Error(err))
+		// }
 
-		time.Sleep(15 * time.Second)
+		// time.Sleep(15 * time.Second)
 	}
 
 	response.Component = constants.Score

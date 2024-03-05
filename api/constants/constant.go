@@ -126,6 +126,8 @@ const (
 	NextQuestionWillServeSoon = "Next question will coming soon"
 
 	EventPublishQuestion = "publish_question"
+	EventStartCount5     = "5_sec_counter" // use by web
+	ActionCounter        = "5 second counter"
 
 	// Event 8. Terminate quiz
 	EventTerminateQuiz  = "terminate_quiz"

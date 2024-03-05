@@ -30,6 +30,8 @@ const question = ref({
   options: {},
 });
 const answer = ref([]);
+const counter = ref(null);
+const count = ref(0);
 
 // watchers
 watch(
@@ -48,22 +50,41 @@ watch(
 function handleEvent(message) {
   console.log(message);
   if (message.event == app.$GetQuestion) {
-    question.value.question = message.data.question;
-    question.value.options = message.data.options;
+    question.value = message.data;
     answer.value = null;
+    count.value = null;
+  } else if (message.event == app.$Counter) {
+    handleCounter();
   }
+}
+
+function handleCounter() {
+  let secs = 0;
+  count.value = 0;
+  counter.value = setInterval(() => {
+    count.value += 1;
+    secs += 1000;
+    if (app.$CountTill <= secs) {
+      clearInterval(counter.value);
+      count.value = app.$ReadyMessage;
+      counter.value = null;
+    }
+  }, 1000);
 }
 
 function handleSubmit(e) {
   e.preventDefault();
-  emits('sendAnswer')
+  emits("sendAnswer");
   console.log(answer.value);
 }
 </script>
 
 <template>
-  <Frame page-title="Question" page-message="let's play">
-    <div>{{ question.question }}</div>
+  <Frame v-if="count == null" page-title="Question" page-message="let's play">
+    <div>{{ question.no }}</div>
+    <div>
+      {{ question.question }}
+    </div>
     <div class="d-flex">
       <div
         v-for="(value, key) in question.options"
@@ -72,6 +93,7 @@ function handleSubmit(e) {
       >
         <div class="form-check form-check-inline">
           <input
+            v-if="!isAdmin"
             id="answer"
             v-model="answer"
             class="form-check-input"
@@ -83,8 +105,22 @@ function handleSubmit(e) {
         </div>
       </div>
     </div>
-    <button type="button" class="btn btn-primary mt-3" @click="handleSubmit">
+    <button
+      v-if="!isAdmin"
+      type="button"
+      class="btn btn-primary mt-3"
+      @click="handleSubmit"
+    >
       submit
     </button>
   </Frame>
+  <div
+    v-else
+    class="d-flex align-center justify-content-center align-items-center fs-1"
+    style="height: 100vh"
+  >
+    <div>
+      {{ count }}
+    </div>
+  </div>
 </template>
