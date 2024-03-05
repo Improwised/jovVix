@@ -35,7 +35,8 @@ onMounted(() => {
     userSession.value = new UserOperation(
       route.params.code,
       route.query?.username,
-      handleQuizEvents
+      handleQuizEvents,
+      handleNetworkEvent
     );
   }
 });
@@ -64,6 +65,10 @@ const handleQuizEvents = async (message) => {
     }
   }
 };
+
+function handleNetworkEvent(message) {
+  toast.warning(message + ", please reload the page");
+}
 
 const startQuiz = () => {
   myRef.value = true;

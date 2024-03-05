@@ -211,12 +211,15 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 			qc.logger.Error(fmt.Sprintf("socket error in middleware: %s event, %s action, error %v", constants.EventAuthentication, response.Action, c.Locals(constants.MiddlewareError)))
 		}
 
-		response.Data = errorInfo.Error()
-		err := utils.JSONFailWs(c, constants.EventAuthentication, response)
-		if err != nil {
-			qc.logger.Error(fmt.Sprintf("socket error in middleware: %s event, %s action", constants.EventAuthentication, response.Action), zap.Error(err))
+		if errorInfo != nil {
+			response.Data = errorInfo.Error()
+			err := utils.JSONFailWs(c, constants.EventAuthentication, response)
+			if err != nil {
+				qc.logger.Error(fmt.Sprintf("socket error in middleware: %s event, %s action", constants.EventAuthentication, response.Action), zap.Error(err))
+			}
+			return
 		}
-		return
+
 	}
 
 	InvitationCode := quizUtilsHelper.GetString(c.Locals(constants.QuizSessionInvitationCode))
@@ -255,7 +258,6 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 	if err != nil {
 		qc.logger.Error(fmt.Sprintf("socket error send waiting message: %s event, %s action", constants.EventJoinQuiz, response.Action), zap.Error(err))
 	}
-
 }
 
 func (qc *quizSocketController) Arrange(c *websocket.Conn) {
