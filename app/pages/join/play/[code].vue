@@ -32,20 +32,17 @@ const handleCustomChange = (isFullScreenEvent) => {
 onMounted(() => {
   // core logic
   if (process.client) {
-    try {
-      userSession.value = new UserOperation(
-        route.params.code,
-        route.query?.username,
-        handleQuizEvents,
-        handleNetworkEvent
-      );
-    } catch (err) {
-      toast.error(err + ", Please reload the page");
-    }
+    userSession.value = new UserOperation(
+      route.params.code,
+      route.query?.username,
+      handleQuizEvents,
+      handleNetworkEvent
+    );
   }
 });
 
 const handleQuizEvents = async (message) => {
+  console.log("here123", message);
   if (message.status == app.$Error || message.status == app.$Fail) {
     if (
       message.status == app.$Fail &&

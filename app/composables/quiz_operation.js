@@ -3,7 +3,6 @@ export default class QuizHandler {
 
   constructor(socket_url, identifier, componentHandler, others) {
     if (!(socket_url && identifier && componentHandler)) {
-      console.log(socket_url, identifier, componentHandler);
       throw Error("all demanded parameters are necessary");
     }
 
