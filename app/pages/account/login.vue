@@ -3,6 +3,7 @@ import { useToast } from "vue-toastification";
 
 const nuxtApp = useNuxtApp();
 const route = useRoute();
+const router = useRouter();
 const toast = useToast();
 const email = ref();
 const password = ref();
@@ -11,7 +12,13 @@ useSystemEnv();
 
 async function login_user(e) {
   e.preventDefault();
-  const login_url = useSystemEnv("urls").value?.api_url + "/login";
+  const urls = useSystemEnv("urls");
+
+  if (urls === undefined) {
+    toast.error("some error occurred. please reload the page!!!");
+  }
+
+  const login_url = urls.value?.api_url + "/login";
 
   if (email.value.trim() == "" || password.value.trim() == "") {
     toast.error(nuxtApp.$IncorrectCredentials);
@@ -41,9 +48,9 @@ async function login_user(e) {
   }
 
   if (route.query.url) {
-    navigateTo(route.query.url);
+    router.push(route.query.url);
   } else {
-    navigateTo("/");
+    router.push("/");
   }
 }
 </script>

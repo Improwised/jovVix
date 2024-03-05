@@ -1,14 +1,14 @@
 import QuizHandler from "./quiz_operation";
 
 export default class AdminOperations extends QuizHandler {
-  constructor(session_id, username, handler) {
+  constructor(session_id, handler) {
     // get nuxt hooks
     const app = useNuxtApp();
     const cookie = useCookie(app.$UserIdentifier);
     const url = useState("urls");
 
     // Initialize object
-    super(url.value.socket_url, username, session_id, handler, cookie);
+    super(url.value.socket_url, session_id, handler, cookie);
 
     // Initialize custom attribute
     this.app = app;

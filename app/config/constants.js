@@ -16,6 +16,7 @@ export default {
   StartQuiz: "start_quiz",
   Authentication: "authentication",
   SentInvitaionCode: "send_invitation_code",
+  InvitationCodeValidation: "invitation_code_validation",
 
   // Errors
   Unauthorized: "unauthorized to access resource",
