@@ -12,6 +12,7 @@ useSystemEnv();
 // define props and emits
 const code = ref(0);
 const username = ref();
+console.log("here");
 
 function join_quiz(e) {
   e.preventDefault();

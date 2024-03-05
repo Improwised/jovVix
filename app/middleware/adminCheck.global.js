@@ -1,7 +1,6 @@
 import { callWithNuxt } from "nuxt/app";
 
 export default defineNuxtRouteMiddleware(async (to) => {
-  const app = useNuxtApp();
 
   if (to.fullPath.startsWith("/admin")) {
     const is_admin = await useIsAdmin();

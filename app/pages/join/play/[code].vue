@@ -5,11 +5,13 @@ import { useToast } from "vue-toastification";
 // custom component
 import UserOperation from "~/composables/user_operation.js";
 import { useSystemEnv } from "~/composables/envs.js";
+import { useRouter } from "nuxt/app";
 
 // define nuxt configs
 const route = useRoute();
 const toast = useToast();
 const app = useNuxtApp();
+const router = useRouter();
 useSystemEnv();
 
 // define props and emits
@@ -38,9 +40,20 @@ onMounted(() => {
   }
 });
 
-const handleQuizEvents = (message) => {
+const handleQuizEvents = async (message) => {
+  console.log("here123", message);
   if (message.status == app.$Error || message.status == app.$Fail) {
-    navigateTo("/error?status=" + message.status + "&error=" + message.data);
+    if (
+      message.status == app.$Fail &&
+      message.event == app.$InvitationCodeValidation
+    ) {
+      return await router.push(
+        "/join?status=" + message.status + "&error=" + message.data
+      );
+    }
+    return await router.push(
+      "/error?status=" + message.status + "&error=" + message.data
+    );
   } else {
     if (message?.component) {
       const component = message.component;

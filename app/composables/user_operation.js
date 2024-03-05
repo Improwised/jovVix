@@ -5,8 +5,7 @@ export default class UserOperation extends QuizHandler {
     const app = useNuxtApp();
     const url = useState("urls");
     const cookie = useCookie(app.$UserIdentifier);
-    super(url.value.socket_url, code, handler, cookie);
-    this.username = username;
+    super(url.value.socket_url, code, handler, cookie, { username });
   }
 
   getAddress(currentObj) {
@@ -15,7 +14,7 @@ export default class UserOperation extends QuizHandler {
       "/join/" +
       currentObj.identifier +
       "?username=" +
-      currentObj.username
+      currentObj.others.username
     );
   }
 
