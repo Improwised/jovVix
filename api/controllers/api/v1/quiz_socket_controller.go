@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"time"
@@ -256,6 +257,39 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 		qc.logger.Error(fmt.Sprintf("socket error send waiting message: %s event, %s action", constants.EventJoinQuiz, response.Action), zap.Error(err))
 	}
 
+	pubsub := qc.helpers.PubSubModel.Client.Subscribe(qc.helpers.PubSubModel.Ctx, session.ID.String())
+	defer pubsub.Close()
+
+	ch := pubsub.Channel()
+
+	fmt.Println("here")
+	for msg := range ch {
+
+		message := map[string]any{}
+		err := json.Unmarshal([]byte(msg.Payload), &message)
+
+		if err != nil {
+			qc.logger.Error(fmt.Sprintf("socket error send waiting message: %s event, %s action", constants.EventJoinQuiz, response.Action), zap.Error(err))
+		}
+
+		fmt.Println(message)
+		err = utils.JSONSuccessWs(c, quizUtilsHelper.GetString(message["event"]), message["response"])
+		if err != nil {
+			qc.logger.Error(fmt.Sprintf("socket error send waiting message: %s event, %s action", constants.EventJoinQuiz, response.Action), zap.Error(err))
+		}
+
+		if message["event"] == constants.EventTerminateQuiz {
+			break
+		}
+	}
+
+	response.Component = constants.Score
+	response.Data = constants.ActionTerminateQuiz
+	err = utils.JSONSuccessWs(c, constants.EventTerminateQuiz, response)
+	if err != nil {
+		qc.logger.Error(fmt.Sprintf("socket error terminate quiz: %s event, %s action %v code", constants.EventTerminateQuiz, response.Action, session.InvitationCode), zap.Error(err))
+	}
+
 }
 
 func (qc *quizSocketController) Arrange(c *websocket.Conn) {
@@ -342,10 +376,23 @@ func (qc *quizSocketController) Arrange(c *websocket.Conn) {
 	for _, question := range questions {
 		response.Action = constants.ActionCounter
 		response.Data = map[string]int{"counter": 5}
+
+		payload := map[string]any{"response": response, "event": constants.EventStartCount5}
+		data, err := json.Marshal(payload)
+		if err != nil {
+			qc.logger.Error(fmt.Sprintf("socket error marshal redis payload: %s event, %s action %v code", constants.EventSendQuestion, response.Action, session.InvitationCode), zap.Error(err))
+		}
+		err = qc.helpers.PubSubModel.Client.Publish(qc.helpers.PubSubModel.Ctx, sessionId, data).Err()
+
+		if err != nil {
+			qc.logger.Error(fmt.Sprintf("socket error publishing question: %s event, %s action %v code", constants.EventPublishQuestion, response.Action, session.InvitationCode), zap.Error(err))
+		}
+
 		err = utils.JSONSuccessWs(c, constants.EventStartCount5, response)
 		if err != nil {
 			qc.logger.Error(fmt.Sprintf("socket error question send: %s event, %s action %v code", constants.EventSendQuestion, response.Action, session.InvitationCode), zap.Error(err))
 		}
+
 		time.Sleep(5 * time.Second)
 
 		response.Action = constants.ActionSendQuestion
@@ -355,12 +402,28 @@ func (qc *quizSocketController) Arrange(c *websocket.Conn) {
 			"options":  question.Options,
 		}
 
+		payload = map[string]any{"response": response, "event": constants.EventSendQuestion}
+		data, err = json.Marshal(payload)
+		if err != nil {
+			qc.logger.Error(fmt.Sprintf("socket error marshal redis payload: %s event, %s action %v code", constants.EventSendQuestion, response.Action, session.InvitationCode), zap.Error(err))
+		}
+		err = qc.helpers.PubSubModel.Client.Publish(qc.helpers.PubSubModel.Ctx, sessionId, data).Err()
+
+		if err != nil {
+			qc.logger.Error(fmt.Sprintf("socket error publishing question: %s event, %s action %v code", constants.EventPublishQuestion, response.Action, session.InvitationCode), zap.Error(err))
+		}
+
 		err = utils.JSONSuccessWs(c, constants.EventSendQuestion, response)
 		if err != nil {
 			qc.logger.Error(fmt.Sprintf("socket error question send: %s event, %s action %v code", constants.EventSendQuestion, response.Action, session.InvitationCode), zap.Error(err))
 		}
 
-		err := qc.helpers.PubSubModel.Client.Publish(qc.helpers.PubSubModel.Ctx, sessionId, map[string]any{"response": response, "component": constants.Question}).Err()
+		payload = map[string]any{"response": response, "component": constants.Question}
+		data, err = json.Marshal(payload)
+		if err != nil {
+			qc.logger.Error(fmt.Sprintf("socket error marshal redis payload: %s event, %s action %v code", constants.EventSendQuestion, response.Action, session.InvitationCode), zap.Error(err))
+		}
+		err = qc.helpers.PubSubModel.Client.Publish(qc.helpers.PubSubModel.Ctx, sessionId, data).Err()
 
 		if err != nil {
 			qc.logger.Error(fmt.Sprintf("socket error publishing question: %s event, %s action %v code", constants.EventPublishQuestion, response.Action, session.InvitationCode), zap.Error(err))
@@ -384,6 +447,18 @@ func (qc *quizSocketController) Arrange(c *websocket.Conn) {
 
 	response.Component = constants.Score
 	response.Data = constants.ActionTerminateQuiz
+
+	payload := map[string]any{"response": response, "event": constants.EventTerminateQuiz}
+	data, err := json.Marshal(payload)
+	if err != nil {
+		qc.logger.Error(fmt.Sprintf("socket error marshal redis payload: %s event, %s action %v code", constants.EventSendQuestion, response.Action, session.InvitationCode), zap.Error(err))
+	}
+	err = qc.helpers.PubSubModel.Client.Publish(qc.helpers.PubSubModel.Ctx, sessionId, data).Err()
+
+	if err != nil {
+		qc.logger.Error(fmt.Sprintf("socket error publishing question: %s event, %s action %v code", constants.EventPublishQuestion, response.Action, session.InvitationCode), zap.Error(err))
+	}
+
 	err = utils.JSONSuccessWs(c, constants.EventTerminateQuiz, response)
 	if err != nil {
 		qc.logger.Error(fmt.Sprintf("socket error terminate quiz: %s event, %s action %v code", constants.EventTerminateQuiz, response.Action, session.InvitationCode), zap.Error(err))

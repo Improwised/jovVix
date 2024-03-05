@@ -9,6 +9,7 @@ import AdminOperation from "~/composables/admin_operation.js";
 const route = useRoute();
 const toast = useToast();
 const app = useNuxtApp();
+const router = useRouter();
 useSystemEnv();
 
 // define props and emits
@@ -16,7 +17,6 @@ const myRef = ref(false);
 const data = ref({});
 const adminOperationHandler = ref();
 const currentComponent = ref("Loading");
-const router = useRouter();
 
 // event handlers
 const handleCustomChange = (isFullScreenEvent) => {

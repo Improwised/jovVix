@@ -16,7 +16,7 @@ useSystemEnv();
 const myRef = ref(false);
 const data = ref({});
 const currentComponent = ref("Loading");
-const userSession = ref();
+const userOperationHandler = ref();
 
 // event handlers
 const handleCustomChange = (isFullScreenEvent) => {
@@ -30,7 +30,7 @@ const handleCustomChange = (isFullScreenEvent) => {
 onMounted(() => {
   // core logic
   if (process.client) {
-    userSession.value = new UserOperation(
+    userOperationHandler.value = new UserOperation(
       route.params.code,
       route.query?.username,
       handleQuizEvents
@@ -39,16 +39,20 @@ onMounted(() => {
 });
 
 const handleQuizEvents = (message) => {
-  if (message.status == app.$Error || message.status == app.$Fail) {
-    navigateTo("/error?status=" + message.status + "&error=" + message.data);
+  // error ? -> redirect to error page
+  if (message.status == app.$Error) {
+    userOperationHandler.value.printLog();
+    router.push("/error?status=" + message.status + "&error=" + message.data);
   } else {
-    if (message?.component) {
-      const component = message.component;
-      data.value = message;
-      currentComponent.value = component;
-    } else {
-      toast.error(`Error! event:${message.event} action:${message.action}`);
+    // unauthorized ? -> redirect to login page
+    if (message.status == app.$Fail && message.data == app.$Unauthorized) {
+      router.push(
+        "/account/login?error=" + message.data + "&url=" + route.fullPath
+      );
+      return;
     }
+    data.value = message;
+    currentComponent.value = message.component;
   }
 };
 
