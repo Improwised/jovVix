@@ -1,22 +1,23 @@
 import QuizHandler from "./quiz_operation";
 
 export default class UserOperation extends QuizHandler {
-  constructor(code, username, handler) {
+  constructor(code, username, handler, errorHandler) {
     const url = useState("urls");
     super(url.value.socket_url, code, handler, { username });
+    this.errorHandler = errorHandler;
   }
 
-  getAddress(currentObj) {
+  getAddress(self) {
     return (
-      currentObj.socket_url +
+      self.socket_url +
       "/join/" +
-      currentObj.identifier +
+      self.identifier +
       "?username=" +
-      currentObj.others.username
+      self.others.username
     );
   }
 
-  getDefaultState(currentObj = this) {
-    throw Error("not implement yet", currentObj);
+  handleConnectionProblem(self) {
+    self.errorHandler("problem in connecting with server");
   }
 }

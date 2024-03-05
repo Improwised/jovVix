@@ -32,11 +32,16 @@ const handleCustomChange = (isFullScreenEvent) => {
 onMounted(() => {
   // core logic
   if (process.client) {
-    userSession.value = new UserOperation(
-      route.params.code,
-      route.query?.username,
-      handleQuizEvents
-    );
+    try {
+      userSession.value = new UserOperation(
+        route.params.code,
+        route.query?.username,
+        handleQuizEvents,
+        handleNetworkEvent
+      );
+    } catch (err) {
+      toast.error(err + ", Please reload the page");
+    }
   }
 });
 
@@ -63,6 +68,10 @@ const handleQuizEvents = async (message) => {
     }
   }
 };
+
+function handleNetworkEvent(message) {
+  toast.warning(message + ", please reload the page");
+}
 
 const startQuiz = () => {
   myRef.value = true;

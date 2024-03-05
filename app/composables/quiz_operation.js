@@ -21,17 +21,24 @@ export default class QuizHandler {
     this.currentComponent = null;
     this.currentEvent = null;
     this.log = [];
+    this.isOpen = false;
+    this.retrying = 0;
 
     // custom attributes
-    this.socket = new WebSocket(this.getAddress(this));
-    this.socket.onopen = (event) => this.onOpen(this, event);
-    this.socket.onerror = (event) => this.onError(this, event);
-    this.socket.onclose = (event) => this.onClose(this, event);
-    this.socket.onmessage = (event) => this.onMessage(this, event);
+    this.socket = null;
+    this.connect(this);
   }
 
-  getAddress(currentObj = this) {
-    return currentObj.socket_url;
+  getAddress(self = this) {
+    return self.socket_url;
+  }
+
+  connect(self = this) {
+    self.socket = new WebSocket(self.getAddress(self));
+    self.socket.onopen = (event) => self.onOpen(self, event);
+    self.socket.onerror = (event) => self.onError(self, event);
+    self.socket.onclose = (event) => self.onClose(self, event);
+    self.socket.onmessage = (event) => self.onMessage(self, event);
   }
 
   async handler(_, message) {
@@ -43,28 +50,52 @@ export default class QuizHandler {
     this.componentHandler(message);
   }
 
-  onOpen(currentObj = this, event) {
-    currentObj.log.push({ state: "Init", message: event });
+  onOpen(self = this, event) {
+    self.isOpen = true;
+    self.retrying = 0;
+    self.log.push({ state: "Init", message: event });
     // console.log(event);
   }
 
-  onError(currentObj = this, event) {
-    console.log(currentObj, event);
-    currentObj.log.push({ state: "err", message: event });
+  onError(self = this, event) {
+    // websocket can not connect to the server
+    if (self.socket.readyState == WebSocket.CLOSED && !self.isOpen) {
+      // sent alert
+      self.handleConnectionProblem(self);
+
+      // check if retrying process is undergoing
+      if (self.retrying == 0) {
+        // check for every 2 second
+        const id = setInterval(() => {
+          if (self.retrying < 3) {
+            self.retrying += 1;
+            self.connect(self);
+          } else {
+            clearInterval(id);
+            self.retrying = -1;
+          }
+        }, 2000);
+      }
+    }
+    self.log.push({ state: "err", message: event });
     // console.log(event);
   }
 
-  onClose(currentObj = this, event) {
-    currentObj.log.push({ state: "Init", message: event });
+  handleConnectionProblem(self = this) {
+    console.log("connection problem, retrying", self.retrying);
+  }
+
+  onClose(self = this, event) {
+    self.log.push({ state: "Init", message: event });
     // console.log(event);
   }
 
-  onMessage(currentObj = this, event) {
-    const message = currentObj.destructureMessage(event);
+  onMessage(self = this, event) {
+    const message = self.destructureMessage(event);
     this.currentComponent = message.component;
     this.currentEvent = message.event;
     this.log.push({ state: "Receive", message });
-    currentObj.handler(currentObj, message, event);
+    self.handler(self, message, event);
   }
 
   destructureMessage(e) {

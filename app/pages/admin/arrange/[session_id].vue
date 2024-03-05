@@ -55,10 +55,15 @@ onMounted(() => {
   if (process.client) {
     adminOperationHandler.value = new AdminOperation(
       route.params.session_id,
-      handleQuizEvents
+      handleQuizEvents,
+      handleNetworkEvent
     );
   }
 });
+
+function handleNetworkEvent(message) {
+  toast.warning(message + ", please reload the page");
+}
 
 definePageMeta({
   layout: "empty",
