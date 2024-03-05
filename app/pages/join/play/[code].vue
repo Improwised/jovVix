@@ -32,17 +32,16 @@ const handleCustomChange = (isFullScreenEvent) => {
 onMounted(() => {
   // core logic
   if (process.client) {
-    const cookie = useCookie(app.$UserIdentifier);
     userSession.value = new UserOperation(
       route.params.code,
       route.query?.username,
-      handleQuizEvents,
-      cookie
+      handleQuizEvents
     );
   }
 });
 
 const handleQuizEvents = async (message) => {
+  console.log("here123", message);
   if (message.status == app.$Error || message.status == app.$Fail) {
     if (
       message.status == app.$Fail &&
