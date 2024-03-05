@@ -17,17 +17,17 @@ export default class QuizHandler {
     this.identifier = identifier;
     this.componentHandler = componentHandler;
 
+    // states and log
+    this.currentComponent = null;
+    this.currentEvent = null;
+    this.log = [];
+
     // custom attributes
     this.socket = new WebSocket(this.getAddress(this));
     this.socket.onopen = (event) => this.onOpen(this, event);
     this.socket.onerror = (event) => this.onError(this, event);
     this.socket.onclose = (event) => this.onClose(this, event);
     this.socket.onmessage = (event) => this.onMessage(this, event);
-
-    // states and log
-    this.currentComponent = null;
-    this.currentEvent = null;
-    this.log = [];
   }
 
   getAddress(currentObj = this) {
@@ -49,6 +49,7 @@ export default class QuizHandler {
   }
 
   onError(currentObj = this, event) {
+    console.log(currentObj, event);
     currentObj.log.push({ state: "err", message: event });
     // console.log(event);
   }
