@@ -13,6 +13,7 @@
                 <NuxtLink class="nav-link" to="/account/login"
                   >Profile/Login</NuxtLink
                 >
+                <NuxtLink class="nav-link" to="/join">Join</NuxtLink>
               </li>
             </ul>
           </div>

@@ -55,12 +55,21 @@ const handleQuizEvents = (message) => {
 onMounted(() => {
   // core logic
   if (process.client) {
-    adminOperationHandler.value = new AdminOperation(
-      route.params.session_id,
-      handleQuizEvents
-    );
+    try{
+      adminOperationHandler.value = new AdminOperation(
+        route.params.session_id,
+        handleQuizEvents,
+        handleNetworkEvent
+      );
+    } catch(err){
+      toast.info(app.$ReloadRequired)
+    }
   }
 });
+
+function handleNetworkEvent(message) {
+  toast.warning(message + ", please reload the page");
+}
 
 definePageMeta({
   layout: "empty",

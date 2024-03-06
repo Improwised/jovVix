@@ -5,6 +5,7 @@ import { useToast } from "vue-toastification";
 // custom component
 import UserOperation from "~/composables/user_operation.js";
 import { useSystemEnv } from "~/composables/envs.js";
+import { useRouter } from "nuxt/app";
 
 // define nuxt configs
 const route = useRoute();
@@ -31,22 +32,35 @@ const handleCustomChange = (isFullScreenEvent) => {
 onMounted(() => {
   // core logic
   if (process.client) {
-    userOperationHandler.value = new UserOperation(
-      route.params.code,
-      route.query?.username,
-      handleQuizEvents
-    );
+    try {
+      userOperationHandler.value = new UserOperation(
+        route.params.code,
+        route.query?.username,
+        handleQuizEvents,
+        handleNetworkEvent
+      );
+    } catch (err) {
+      toast.info(app.$ReloadRequired);
+    }
   }
 });
 
-const handleQuizEvents = (message) => {
-  // error ? -> redirect to error page
+const handleQuizEvents = async (message) => {
   if (message.status == app.$Error) {
-    userOperationHandler.value.printLog();
-    router.push("/error?status=" + message.status + "&error=" + message.data);
+    return await router.push(
+      "/error?status=" + message.status + "&error=" + message.data
+    );
   } else if (message.event == app.$TerminateQuiz) {
     router.push("/join/scoreboard");
   } else {
+    if (
+      message.status == app.$Fail &&
+      message.event == app.$InvitationCodeValidation
+    ) {
+      return await router.push(
+        "/join?status=" + message.status + "&error=" + message.data
+      );
+    }
     // unauthorized ? -> redirect to login page
     if (message.status == app.$Fail && message.data == app.$Unauthorized) {
       router.push(
@@ -58,6 +72,10 @@ const handleQuizEvents = (message) => {
     currentComponent.value = message.component;
   }
 };
+
+function handleNetworkEvent(message) {
+  toast.warning(message + ", please reload the page");
+}
 
 const startQuiz = () => {
   myRef.value = true;

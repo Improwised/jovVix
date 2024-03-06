@@ -14,8 +14,8 @@ export async function useIsAdmin() {
     }
   );
 
-  if (err.value) {
-    return { ok: false, err: err.value.data?.data };
+  if (err?.value) {
+    return { ok: false, err: err.value.data?.data || "unknown error" };
   }
 
   return { ok: data?.value.data == true, err: null };

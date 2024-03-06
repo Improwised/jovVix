@@ -21,8 +21,10 @@ export default {
   GetQuestion: "send_question",
   Counter: "5_sec_counter",
   TerminateQuiz: "terminate_quiz",
+  InvitationCodeValidation: "invitation_code_validation",
 
   // Errors
   Unauthorized: "unauthorized to access resource",
   CodeNotFound: "invitation code not found",
+  ReloadRequired: "there was some error, please reload the page!!!"
 };
