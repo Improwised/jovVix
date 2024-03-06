@@ -55,14 +55,14 @@ const handleQuizEvents = (message) => {
 onMounted(() => {
   // core logic
   if (process.client) {
-    try{
+    try {
       adminOperationHandler.value = new AdminOperation(
         route.params.session_id,
         handleQuizEvents,
         handleNetworkEvent
       );
-    } catch(err){
-      toast.info(app.$ReloadRequired)
+    } catch (err) {
+      toast.info(app.$ReloadRequired);
     }
   }
 });

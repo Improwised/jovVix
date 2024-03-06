@@ -26,5 +26,5 @@ export default {
   // Errors
   Unauthorized: "unauthorized to access resource",
   CodeNotFound: "invitation code not found",
-  ReloadRequired: "there was some error, please reload the page!!!"
+  ReloadRequired: "there was some error, please reload the page!!!",
 };

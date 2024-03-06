@@ -388,9 +388,15 @@ func (qc *quizSocketController) Arrange(c *websocket.Conn) {
 func sendQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.WaitGroup, response QuizSendResponse, session models.ActiveQuiz, question models.Question) {
 	// start counter
 	response.Action = constants.ActionCounter
-	response.Data = map[string]int{"counter": 5, "count": 3}
+	response.Data = map[string]int{"counter": constants.Counter, "count": constants.Count}
 	shareEvenWithUser(c, qc, response, constants.EventStartCount5, session.ID.String(), int(session.InvitationCode.Int32))
-	time.Sleep(5 * time.Second)
+	time.Sleep(time.Duration(constants.Count) * time.Second)
+
+	// update question status to activate
+	err := qc.helpers.QuizModel.UpdateCurrentQuestion(session.ID, question.ID, true)
+	if err != nil {
+		qc.logger.Error(fmt.Sprintf("socket error update current question: %s event, %s action %v code", constants.EventSendQuestion, response.Action, session.InvitationCode), zap.Error(err))
+	}
 
 	// question sent
 	response.Action = constants.ActionSendQuestion
@@ -400,21 +406,25 @@ func sendQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.WaitGrou
 		"options":  question.Options,
 	}
 	shareEvenWithUser(c, qc, response, constants.EventSendQuestion, session.ID.String(), int(session.InvitationCode.Int32))
+
+	// ideal time for answer submission
 	time.Sleep(10 * time.Second)
 
-	// err = qc.helpers.QuizModel.UpdateCurrentQuestion(session.ID, question.ID, true)
-	// if err != nil {
-	// 	qc.logger.Error(fmt.Sprintf("socket error update current question: %s event, %s action %v code", constants.EventSendQuestion, response.Action, session.InvitationCode), zap.Error(err))
-	// }
+	// update current status to deactivate
+	err = qc.helpers.QuizModel.UpdateCurrentQuestion(session.ID, question.ID, false)
+	if err != nil {
+		qc.logger.Error(fmt.Sprintf("socket error update current question: %s event, %s action %v code", constants.EventSendQuestion, response.Action, session.InvitationCode), zap.Error(err))
+	}
 
-	// time.Sleep(5 * time.Second)
-
-	// err = qc.helpers.QuizModel.UpdateCurrentQuestion(session.ID, question.ID, false)
-	// if err != nil {
-	// 	qc.logger.Error(fmt.Sprintf("socket error update current question: %s event, %s action %v code", constants.EventSendQuestion, response.Action, session.InvitationCode), zap.Error(err))
-	// }
-
-	// time.Sleep(15 * time.Second)
+	// ideal time for score page showing or admin event
+	// question sent
+	response.Component = constants.Score
+	response.Action = constants.ActionShowScore
+	response.Data = map[string]any{
+		"no": question.OrderNumber,
+	}
+	shareEvenWithUser(c, qc, response, constants.EventShowScore, session.ID.String(), int(session.InvitationCode.Int32))
+	time.Sleep(15 * time.Second)
 	wg.Done()
 }
 
