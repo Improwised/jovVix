@@ -8,8 +8,10 @@ import (
 	"github.com/google/uuid"
 )
 
+const UserQuizResponseTable = "user_quiz_response"
+
 // Question model
-type QuestionAnswer struct {
+type UserQuizResponse struct {
 	ID           uuid.UUID      `json:"id" db:"id"`
 	Question     string         `json:"question" db:"question"`
 	Options      string         `json:"options" db:"options"`
@@ -21,11 +23,11 @@ type QuestionAnswer struct {
 }
 
 // QuestionModel implements question related database operations
-type QuestionAnswerModel struct {
+type UserQuizResponseModel struct {
 	db *goqu.Database
 }
 
 // InitQuestionModel initializes the QuestionModel
-func InitQuestionAnswerModel(goqu *goqu.Database) *QuestionAnswerModel {
-	return &QuestionAnswerModel{db: goqu}
+func InitUserQuizResponseModel(goqu *goqu.Database) *UserQuizResponseModel {
+	return &UserQuizResponseModel{db: goqu}
 }

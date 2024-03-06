@@ -94,6 +94,10 @@ const (
 	ActionSessionValidation = "session validation from server side"
 	ErrSessionNotFound      = "session unavailable"
 
+	// Event 4. UserSession Validation <admin/user>
+	EventUserSessionValidation  = "user_validation"
+	ActionUserSessionValidation = "user session get or create"
+
 	// Event 4. Active session <admin>
 	EventActivateSession      = "session_activation"
 	EventSendInvitationCode   = "send_invitation_code" // use by web

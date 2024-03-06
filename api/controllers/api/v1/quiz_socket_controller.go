@@ -224,9 +224,9 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 
 	}
 
-	InvitationCode := quizUtilsHelper.GetString(c.Locals(constants.QuizSessionInvitationCode))
+	invitationCode := quizUtilsHelper.GetString(c.Locals(constants.QuizSessionInvitationCode))
 
-	session, err := qc.helpers.ActiveQuizModel.GetSessionByCode(InvitationCode)
+	session, err := qc.helpers.ActiveQuizModel.GetSessionByCode(invitationCode)
 
 	if err != nil {
 		response.Action = constants.ActionJoinQuiz
@@ -234,7 +234,7 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 		err = utils.JSONFailWs(c, constants.EventJoinQuiz, response)
 
 		if err != nil {
-			qc.logger.Error(fmt.Sprintf("socket error in session get in code: %s event, %s action, %s code", constants.EventJoinQuiz, response.Action, InvitationCode), zap.Error(err))
+			qc.logger.Error(fmt.Sprintf("socket error in session get in code: %s event, %s action, %s code", constants.EventJoinQuiz, response.Action, invitationCode), zap.Error(err))
 		}
 		return
 	}
@@ -244,7 +244,7 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 		err = utils.JSONFailWs(c, constants.EventJoinQuiz, response)
 
 		if err != nil {
-			qc.logger.Error(fmt.Sprintf("socket error check session active: %s event, %s action, %s code", constants.EventJoinQuiz, response.Action, InvitationCode), zap.Error(err))
+			qc.logger.Error(fmt.Sprintf("socket error check session active: %s event, %s action, %s code", constants.EventJoinQuiz, response.Action, invitationCode), zap.Error(err))
 		}
 		return
 	}

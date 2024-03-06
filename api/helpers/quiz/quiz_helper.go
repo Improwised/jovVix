@@ -8,12 +8,13 @@ import (
 )
 
 type HelperGroup struct {
-	UserService     *services.UserService
-	RoleModel       *models.RoleModel
-	QuizModel       *models.QuizModel
-	ActiveQuizModel *models.ActiveQuizModel
-	QuestionModel   *models.QuestionAnswerModel
-	PubSubModel     *models.PubSubModel
+	UserService           *services.UserService
+	RoleModel             *models.RoleModel
+	QuizModel             *models.QuizModel
+	ActiveQuizModel       *models.ActiveQuizModel
+	UserQuizResponseModel *models.UserQuizResponseModel
+	PubSubModel           *models.PubSubModel
+	UserPlayedQuizModel   *models.UserPlayedQuizModel
 }
 
 func InitHelper(db *goqu.Database, pubSubCfg config.RedisClientConfig) (*HelperGroup, error) {
@@ -32,7 +33,12 @@ func InitHelper(db *goqu.Database, pubSubCfg config.RedisClientConfig) (*HelperG
 
 	roleModel := models.InitRoleModel(db)
 	quizModel := models.InitQuizModel(db)
-	questionModel := models.InitQuestionAnswerModel(db)
+	userQuizResponseModel := models.InitUserQuizResponseModel(db)
+	userPlayedQuizModel, err := models.InitUserPlayedQuizModel(db)
+
+	if err != nil {
+		return nil, err
+	}
 
 	pubSubClientModel, err := models.InitPubSubModel(pubSubCfg.RedisAddr+":"+pubSubCfg.RedisPort, pubSubCfg.RedisPass, pubSubCfg.RedisDb)
 
@@ -41,11 +47,12 @@ func InitHelper(db *goqu.Database, pubSubCfg config.RedisClientConfig) (*HelperG
 	}
 
 	return &HelperGroup{
-		UserService:     userService,
-		RoleModel:       roleModel,
-		QuizModel:       quizModel,
-		ActiveQuizModel: sessionModel,
-		QuestionModel:   questionModel,
-		PubSubModel:     pubSubClientModel,
+		UserService:           userService,
+		RoleModel:             roleModel,
+		QuizModel:             quizModel,
+		ActiveQuizModel:       sessionModel,
+		UserQuizResponseModel: userQuizResponseModel,
+		PubSubModel:           pubSubClientModel,
+		UserPlayedQuizModel:   userPlayedQuizModel,
 	}, nil
 }
