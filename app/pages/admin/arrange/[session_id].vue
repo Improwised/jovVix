@@ -9,6 +9,7 @@ import AdminOperation from "~/composables/admin_operation.js";
 const route = useRoute();
 const toast = useToast();
 const app = useNuxtApp();
+const router = useRouter();
 useSystemEnv();
 
 // define props and emits
@@ -16,7 +17,6 @@ const myRef = ref(false);
 const data = ref({});
 const adminOperationHandler = ref();
 const currentComponent = ref("Loading");
-const router = useRouter();
 
 // event handlers
 const handleCustomChange = (isFullScreenEvent) => {
@@ -36,6 +36,8 @@ const handleQuizEvents = (message) => {
   if (message.status == app.$Error) {
     adminOperationHandler.value.printLog();
     router.push("/error?status=" + message.status + "&error=" + message.data);
+  } else if (message.event == app.$TerminateQuiz) {
+    router.push("/join/scoreboard");
   } else {
     // unauthorized ? -> redirect to login page
     if (message.status == app.$Fail && message.data == app.$Unauthorized) {
@@ -53,11 +55,15 @@ const handleQuizEvents = (message) => {
 onMounted(() => {
   // core logic
   if (process.client) {
-    adminOperationHandler.value = new AdminOperation(
-      route.params.session_id,
-      handleQuizEvents,
-      handleNetworkEvent
-    );
+    try {
+      adminOperationHandler.value = new AdminOperation(
+        route.params.session_id,
+        handleQuizEvents,
+        handleNetworkEvent
+      );
+    } catch (err) {
+      toast.info(app.$ReloadRequired);
+    }
   }
 });
 

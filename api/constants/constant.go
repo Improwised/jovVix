@@ -71,6 +71,8 @@ const (
 const (
 	MinInvitationCode = 100000
 	MaxInvitationCode = 999999
+	Counter           = 5
+	Count             = 3
 )
 
 // Quiz Events
@@ -119,9 +121,23 @@ const (
 	EventStartQuiz = "start_quiz" // use by web
 
 	// Event 7. Get Questions
+	EventSendQuestion         = "send_question"
+	ActionSendQuestion        = "send single question to user"
 	QuizQuestionStatus        = "quiz question status"
 	GetQuestions              = "get quiz questions"
 	NextQuestionWillServeSoon = "Next question will coming soon"
+
+	EventPublishQuestion = "publish_question"
+	EventStartCount5     = "5_sec_counter" // use by web
+	ActionCounter        = "5 second counter"
+
+	// Event 8. Get score page
+	EventShowScore  = "show_score"
+	ActionShowScore = "show score page during quiz"
+
+	// Event 9. Terminate quiz
+	EventTerminateQuiz  = "terminate_quiz"
+	ActionTerminateQuiz = "terminate quiz after completing"
 
 	// Event . unhandled event
 	UnknownError = "unknown_error"

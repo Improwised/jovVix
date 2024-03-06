@@ -15,3 +15,14 @@ type SessionQuestion struct {
 	CreatedAt     time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt     time.Time `json:"updated_at" db:"updated_at"`
 }
+
+type Question struct {
+	ID          uuid.UUID         `json:"id" db:"id"`
+	Question    string            `json:"question" db:"question"`
+	Options     map[string]string `json:"options" db:"options"`
+	Answers     []string          `json:"answers" db:"answers"`
+	Score       int               `json:"score,omitempty" db:"score"`
+	CreatedAt   time.Time         `json:"created_at" db:"created_at"`
+	UpdatedAt   time.Time         `json:"updated_at" db:"updated_at"`
+	OrderNumber int               `json:"order"`
+}

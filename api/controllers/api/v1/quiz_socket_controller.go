@@ -1,8 +1,10 @@
 package v1
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
+	"sync"
 	"time"
 
 	"github.com/Improwised/quizz-app/api/config"
@@ -258,6 +260,36 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 	if err != nil {
 		qc.logger.Error(fmt.Sprintf("socket error send waiting message: %s event, %s action", constants.EventJoinQuiz, response.Action), zap.Error(err))
 	}
+
+	handleQuestion(c, qc, session, response)
+
+}
+
+func handleQuestion(c *websocket.Conn, qc *quizSocketController, session models.ActiveQuiz, response QuizSendResponse) {
+	pubsub := qc.helpers.PubSubModel.Client.Subscribe(qc.helpers.PubSubModel.Ctx, session.ID.String())
+	defer pubsub.Close()
+
+	ch := pubsub.Channel()
+
+	for msg := range ch {
+
+		message := map[string]any{}
+		err := json.Unmarshal([]byte(msg.Payload), &message)
+
+		if err != nil {
+			qc.logger.Error(fmt.Sprintf("socket error send waiting message: %s event, %s action", constants.EventJoinQuiz, response.Action), zap.Error(err))
+		}
+
+		event := quizUtilsHelper.GetString(message["event"])
+		err = utils.JSONSuccessWs(c, event, message["response"])
+		if err != nil {
+			qc.logger.Error(fmt.Sprintf("socket error send waiting message: %s event, %s action", event, response.Action), zap.Error(err))
+		}
+
+		if message["event"] == constants.EventTerminateQuiz {
+			break
+		}
+	}
 }
 
 func (qc *quizSocketController) Arrange(c *websocket.Conn) {
@@ -293,7 +325,7 @@ func (qc *quizSocketController) Arrange(c *websocket.Conn) {
 	user, ok := quizUtilsHelper.ConvertType[models.User](c.Locals(constants.ContextUser))
 
 	if !ok {
-		fmt.Println("ERROR")
+		qc.logger.Error(fmt.Sprintf("socket error middleware: %s event, %s action", constants.EventAuthentication, response.Action), zap.Error(fmt.Errorf("user-type conversion failed")))
 	}
 
 	// activate session
@@ -305,6 +337,8 @@ func (qc *quizSocketController) Arrange(c *websocket.Conn) {
 
 	// is isQuestionActive true -> quiz started
 	isInvitationCodeSent := session.CurrentQuestion.Valid
+
+	// fmt.Println(qc.helpers.PubSubModel.Client.PubSubNumSub(qc.helpers.PubSubModel.Ctx, sessionId).Val()[sessionId])
 
 	if !isInvitationCodeSent {
 		// handle Waiting page
@@ -338,13 +372,60 @@ func (qc *quizSocketController) Arrange(c *websocket.Conn) {
 		qc.logger.Error(fmt.Sprintf("socket error get remaining questions: %s event, %s action %v code", constants.EventStartQuiz, response.Action, session.InvitationCode), zap.Error(err))
 	}
 
-	response.Data = questions
-	// handle question page iteration
-	err = utils.JSONSuccessWs(c, constants.EventStartQuiz, response)
-
-	if err != nil {
-		qc.logger.Error(fmt.Sprintf("socket error success: %s event, %s action %v code", constants.EventStartQuiz, response.Action, session.InvitationCode), zap.Error(err))
+	response.Component = constants.Question
+	var wg sync.WaitGroup
+	for _, question := range questions {
+		wg.Add(1)
+		go sendQuestion(c, qc, &wg, response, session, question)
+		wg.Wait()
 	}
+
+	response.Component = constants.Score
+	response.Data = constants.ActionTerminateQuiz
+	shareEvenWithUser(c, qc, response, constants.EventTerminateQuiz, sessionId, int(session.InvitationCode.Int32))
+}
+
+func sendQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.WaitGroup, response QuizSendResponse, session models.ActiveQuiz, question models.Question) {
+	// start counter
+	response.Action = constants.ActionCounter
+	response.Data = map[string]int{"counter": constants.Counter, "count": constants.Count}
+	shareEvenWithUser(c, qc, response, constants.EventStartCount5, session.ID.String(), int(session.InvitationCode.Int32))
+	time.Sleep(time.Duration(constants.Count) * time.Second)
+
+	// update question status to activate
+	err := qc.helpers.QuizModel.UpdateCurrentQuestion(session.ID, question.ID, true)
+	if err != nil {
+		qc.logger.Error(fmt.Sprintf("socket error update current question: %s event, %s action %v code", constants.EventSendQuestion, response.Action, session.InvitationCode), zap.Error(err))
+	}
+
+	// question sent
+	response.Action = constants.ActionSendQuestion
+	response.Data = map[string]any{
+		"no":       question.OrderNumber,
+		"question": question.Question,
+		"options":  question.Options,
+	}
+	shareEvenWithUser(c, qc, response, constants.EventSendQuestion, session.ID.String(), int(session.InvitationCode.Int32))
+
+	// ideal time for answer submission
+	time.Sleep(10 * time.Second)
+
+	// update current status to deactivate
+	err = qc.helpers.QuizModel.UpdateCurrentQuestion(session.ID, question.ID, false)
+	if err != nil {
+		qc.logger.Error(fmt.Sprintf("socket error update current question: %s event, %s action %v code", constants.EventSendQuestion, response.Action, session.InvitationCode), zap.Error(err))
+	}
+
+	// ideal time for score page showing or admin event
+	// question sent
+	response.Component = constants.Score
+	response.Action = constants.ActionShowScore
+	response.Data = map[string]any{
+		"no": question.OrderNumber,
+	}
+	shareEvenWithUser(c, qc, response, constants.EventShowScore, session.ID.String(), int(session.InvitationCode.Int32))
+	time.Sleep(15 * time.Second)
+	wg.Done()
 }
 
 // Activate session
@@ -416,4 +497,24 @@ func handleStartQuiz(c *websocket.Conn, logger *zap.Logger, isConnected *bool, a
 	}
 
 	return false
+}
+
+func shareEvenWithUser(c *websocket.Conn, qc *quizSocketController, response QuizSendResponse, event string, sessionId string, invitationCode int) {
+	payload := map[string]any{"event": event, "response": response}
+	data, err := json.Marshal(payload)
+	if err != nil {
+		qc.logger.Error(fmt.Sprintf("socket error marshal redis payload: %s event, %s action %v code", constants.EventSendQuestion, response.Action, invitationCode), zap.Error(err))
+	}
+	// send event to user
+	err = qc.helpers.PubSubModel.Client.Publish(qc.helpers.PubSubModel.Ctx, sessionId, data).Err()
+
+	if err != nil {
+		qc.logger.Error(fmt.Sprintf("socket error publishing event: %s event, %s action %v code", constants.EventPublishQuestion, response.Action, invitationCode), zap.Error(err))
+	}
+
+	// send event to admin
+	err = utils.JSONSuccessWs(c, event, response)
+	if err != nil {
+		qc.logger.Error(fmt.Sprintf("socket error sending event: %s event, %s action %v code", constants.EventSendQuestion, response.Action, invitationCode), zap.Error(err))
+	}
 }

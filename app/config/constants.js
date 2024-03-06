@@ -6,6 +6,8 @@ export default {
   // Defaults
   InvitationCode: "000000",
   UserIdentifier: "user",
+  CountTill: 3000,
+  ReadyMessage: "Ready to go...",
 
   // Status
   Fail: "fail",
@@ -16,9 +18,13 @@ export default {
   StartQuiz: "start_quiz",
   Authentication: "authentication",
   SentInvitaionCode: "send_invitation_code",
+  GetQuestion: "send_question",
+  Counter: "5_sec_counter",
+  TerminateQuiz: "terminate_quiz",
   InvitationCodeValidation: "invitation_code_validation",
 
   // Errors
   Unauthorized: "unauthorized to access resource",
   CodeNotFound: "invitation code not found",
+  ReloadRequired: "there was some error, please reload the page!!!",
 };
