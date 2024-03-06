@@ -76,7 +76,6 @@ func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config confi
 	v1.Use("/socket", func(c *fiber.Ctx) error {
 
 		if websocket.IsWebSocketUpgrade(c) {
-			c.Locals(constants.MiddlewarePass, true)
 			c.Locals(constants.MiddlewareError, nil)
 			return c.Next()
 		}

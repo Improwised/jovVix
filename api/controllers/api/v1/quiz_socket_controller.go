@@ -207,7 +207,7 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 	}
 
 	// check for middleware error
-	if !quizUtilsHelper.GetBool(c.Locals(constants.MiddlewarePass)) {
+	if c.Locals(constants.MiddlewareError) != nil {
 		errorInfo, ok := quizUtilsHelper.ConvertType[error](c.Locals(constants.MiddlewareError))
 		if !ok {
 			qc.logger.Error(fmt.Sprintf("socket error in middleware: %s event, %s action, error %v", constants.EventAuthentication, response.Action, c.Locals(constants.MiddlewareError)))
@@ -307,10 +307,8 @@ func (qc *quizSocketController) Arrange(c *websocket.Conn) {
 		Data:      "",
 	}
 
-	is_pass := quizUtilsHelper.GetBool(c.Locals(constants.MiddlewarePass))
-
 	// checks for any middleware errors
-	if !is_pass {
+	if c.Locals(constants.MiddlewareError) != nil {
 		response.Data = quizUtilsHelper.GetString(c.Locals(constants.MiddlewareError))
 		err := utils.JSONErrorWs(c, constants.EventAuthentication, response)
 		if err != nil {
