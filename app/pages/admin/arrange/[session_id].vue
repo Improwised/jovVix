@@ -36,6 +36,8 @@ const handleQuizEvents = (message) => {
   if (message.status == app.$Error) {
     adminOperationHandler.value.printLog();
     router.push("/error?status=" + message.status + "&error=" + message.data);
+  } else if (message.event == app.$TerminateQuiz) {
+    router.push("/join/scoreboard");
   } else {
     // unauthorized ? -> redirect to login page
     if (message.status == app.$Fail && message.data == app.$Unauthorized) {

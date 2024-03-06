@@ -48,7 +48,6 @@ watch(
 
 // main function
 function handleEvent(message) {
-  console.log(message);
   if (message.event == app.$GetQuestion) {
     question.value = message.data;
     answer.value = null;
@@ -60,11 +59,11 @@ function handleEvent(message) {
 
 function handleCounter() {
   let secs = 0;
-  count.value = 0;
+  count.value = 1;
   counter.value = setInterval(() => {
     count.value += 1;
     secs += 1000;
-    if (app.$CountTill <= secs) {
+    if (parseInt(props.data.data.count)*1000 <= secs) {
       clearInterval(counter.value);
       count.value = app.$ReadyMessage;
       counter.value = null;
@@ -75,7 +74,6 @@ function handleCounter() {
 function handleSubmit(e) {
   e.preventDefault();
   emits("sendAnswer");
-  console.log(answer.value);
 }
 </script>
 

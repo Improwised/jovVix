@@ -8,6 +8,7 @@ import { useSystemEnv } from "~/composables/envs.js";
 
 // define nuxt configs
 const route = useRoute();
+const router = useRouter();
 const toast = useToast();
 const app = useNuxtApp();
 useSystemEnv();
@@ -43,6 +44,8 @@ const handleQuizEvents = (message) => {
   if (message.status == app.$Error) {
     userOperationHandler.value.printLog();
     router.push("/error?status=" + message.status + "&error=" + message.data);
+  } else if (message.event == app.$TerminateQuiz) {
+    router.push("/join/scoreboard");
   } else {
     // unauthorized ? -> redirect to login page
     if (message.status == app.$Fail && message.data == app.$Unauthorized) {
