@@ -63,7 +63,7 @@ function handleCounter() {
   counter.value = setInterval(() => {
     count.value += 1;
     secs += 1000;
-    if (parseInt(props.data.data.count)*1000 <= secs) {
+    if (parseInt(props.data.data.count) * 1000 <= secs) {
       clearInterval(counter.value);
       count.value = app.$ReadyMessage;
       counter.value = null;
