@@ -2,13 +2,13 @@ package middlewares
 
 import (
 	"database/sql"
-	"net/http"
+	"fmt"
 
 	"github.com/Improwised/quizz-app/api/constants"
 	quizUtilsHelper "github.com/Improwised/quizz-app/api/helpers/utils"
 	"github.com/Improwised/quizz-app/api/models"
-	"github.com/Improwised/quizz-app/api/utils"
 	fiber "github.com/gofiber/fiber/v2"
+	"go.uber.org/zap"
 )
 
 type RolePermissionMiddleware struct {
@@ -38,7 +38,9 @@ func (rpm *RolePermissionMiddleware) IsAllowed(c *fiber.Ctx) error {
 
 		// if userID not exists then take it as fail
 		if userAny == any(nil) {
-			return utils.JSONFail(c, http.StatusNotFound, constants.ErrUnauthenticated)
+			c.Locals(constants.MiddlewareError, constants.ErrUnauthenticated)
+			rpm.middleware.Logger.Error("Username not provided", zap.Error(fmt.Errorf(constants.ErrUserRequiredToCheckRole)))
+			return c.Next()
 		}
 
 		userID := quizUtilsHelper.GetString(userAny)
@@ -46,10 +48,14 @@ func (rpm *RolePermissionMiddleware) IsAllowed(c *fiber.Ctx) error {
 
 		if err != nil {
 			if err == sql.ErrNoRows {
-				return utils.JSONFail(c, http.StatusNotFound, constants.ErrUnauthenticated)
+				c.Locals(constants.MiddlewareError, constants.ErrUnauthenticated)
+				rpm.middleware.Logger.Error("User not found", zap.Error(fmt.Errorf(constants.UserNotExist)))
+				return c.Next()
 			}
 
-			return utils.JSONError(c, http.StatusInternalServerError, constants.ErrGetUser)
+			c.Locals(constants.MiddlewareError, constants.ErrGetUser)
+			rpm.middleware.Logger.Error("Error in Get user", zap.Error(fmt.Errorf(constants.ErrGetUser)))
+			return c.Next()
 		}
 
 		c.Locals(constants.ContextUser, user)
@@ -57,7 +63,8 @@ func (rpm *RolePermissionMiddleware) IsAllowed(c *fiber.Ctx) error {
 	}
 
 	if !rpm.allowedRoles.IsAllowed(models.Role((userLocal.Roles))) {
-		return utils.JSONFail(c, http.StatusUnauthorized, constants.ErrNotAllowed)
+		c.Locals(constants.MiddlewareError, constants.ErrNotAllowed)
+		rpm.middleware.Logger.Error("User have no demanded role", zap.Error(fmt.Errorf(constants.ErrNotAllowed)))
 	}
 
 	return c.Next()

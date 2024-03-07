@@ -57,7 +57,8 @@ const (
 	MiddlewareError = "middleware_error"
 
 	// http/https
-	ErrNotAllowed = "Not allowed to access Resource"
+	ErrNotAllowed              = "not allowed to access Resource"
+	ErrUserRequiredToCheckRole = "user not logged in"
 )
 
 // components
