@@ -53,8 +53,8 @@ const (
 // Middleware
 const (
 	// socket
-	MiddlewarePass  = "allowed"
-	MiddlewareError = "middleware_error"
+	MiddlewareError     = "middleware_error"
+	ErrorTypeConversion = "type conversion failed"
 
 	// http/https
 	ErrNotAllowed              = "not allowed to access Resource"
@@ -96,9 +96,10 @@ const (
 	ErrSessionNotFound      = "session unavailable"
 
 	// Event 4. UserSession Validation <admin/user>
-	EventUserSessionValidation  = "user_validation"
-	ActionUserSessionValidation = "user session get or create"
-	CurrentUserQuiz             = "user_played_quiz"
+	EventUserSessionValidation   = "user_validation"
+	ActionUserSessionValidation  = "user session get or create"
+	CurrentUserQuiz              = "user_played_quiz"
+	ErrUserQuizSessionValidation = "quiz-session-validation failed"
 
 	EventRedirectToAdmin     = "redirect_to_admin"
 	ActionCurrentUserIsAdmin = "current user is admin"

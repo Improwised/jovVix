@@ -11,7 +11,7 @@ import (
 	"github.com/Improwised/quizz-app/api/config"
 	"github.com/Improwised/quizz-app/api/constants"
 	controller "github.com/Improwised/quizz-app/api/controllers/api/v1"
-	quiz_helper "github.com/Improwised/quizz-app/api/helpers/quiz"
+	quizHelper "github.com/Improwised/quizz-app/api/helpers/quiz"
 	"github.com/Improwised/quizz-app/api/middlewares"
 	"github.com/Improwised/quizz-app/api/pkg/events"
 	pMetrics "github.com/Improwised/quizz-app/api/pkg/prometheus"
@@ -62,14 +62,15 @@ func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config confi
 		return err
 	}
 
-	helperStructs, err := quiz_helper.InitHelper(goqu, config.RedisClient)
+	helperStructs, err := quizHelper.InitHelper(goqu, config.RedisClient)
 
 	if err != nil {
 		return err
 	}
 
 	// middleware initialization
-	middlewares := middlewares.NewMiddleware(config, logger, goqu, helperStructs.UserService)
+	middleware := middlewares.NewMiddleware(config, logger, goqu, helperStructs.UserService)
+	playedQuizValidationMiddleware := middlewares.NewPlayedQuizValidationMiddleware(config, logger, goqu, helperStructs)
 
 	v1 := router.Group("/v1")
 
@@ -82,17 +83,17 @@ func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config confi
 		return fiber.ErrUpgradeRequired
 	})
 
-	err = setupAuthController(v1, goqu, logger, middlewares, config)
+	err = setupAuthController(v1, goqu, logger, middleware, config)
 	if err != nil {
 		return err
 	}
 
-	err = setupUserController(v1, goqu, logger, middlewares, events, pub)
+	err = setupUserController(v1, goqu, logger, middleware, events, pub)
 	if err != nil {
 		return err
 	}
 
-	err = quizController(v1, goqu, logger, middlewares, events, pub, config, helperStructs)
+	err = quizController(v1, goqu, logger, middleware, playedQuizValidationMiddleware, events, pub, config, helperStructs)
 	if err != nil {
 		return err
 	}
@@ -195,10 +196,11 @@ func quizController(
 	db *goqu.Database,
 	logger *zap.Logger,
 	middleware middlewares.Middleware,
+	sessionMiddle middlewares.PlayedQuizValidationMiddleware,
 	events *events.Events,
 	pub *watermill.WatermillPublisher,
 	config config.AppConfig,
-	helper *quiz_helper.HelperGroup) error {
+	helper *quizHelper.HelperGroup) error {
 
 	quizSocketController := controller.InitQuizConfig(db, &config, logger, helper)
 	quizController := controller.InitQuizController(logger, events, pub, helper)
@@ -208,7 +210,7 @@ func quizController(
 	// general for all
 	v1.Get("/socket/ping", websocket.New(quizSocketController.Ping))
 
-	v1.Get(fmt.Sprintf("/socket/join/:%s", constants.QuizSessionInvitationCode), middleware.CheckSessionCode, middleware.CustomAuthenticated, websocket.New(quizSocketController.Join))
+	v1.Get(fmt.Sprintf("/socket/join/:%s", constants.QuizSessionInvitationCode), middleware.CheckSessionCode, middleware.CustomAuthenticated, sessionMiddle.PlayedQuizValidation, websocket.New(quizSocketController.Join))
 
 	// admin endpoints
 	allowRoles, err := helper.RoleModel.NewAllowedRoles("admin")
