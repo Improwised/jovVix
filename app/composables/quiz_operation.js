@@ -66,7 +66,7 @@ export default class QuizHandler {
       if (self.retrying == 0) {
         // check for every 2 second
         const id = setInterval(() => {
-          if (self.retrying < 3) {
+          if (self.retrying < 3 && !self.isOpen) {
             self.retrying += 1;
             self.connect(self);
           } else {

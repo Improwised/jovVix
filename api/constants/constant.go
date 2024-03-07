@@ -98,6 +98,10 @@ const (
 	// Event 4. UserSession Validation <admin/user>
 	EventUserSessionValidation  = "user_validation"
 	ActionUserSessionValidation = "user session get or create"
+	CurrentUserQuiz             = "user_played_quiz"
+
+	EventRedirectToAdmin     = "redirect_to_admin"
+	ActionCurrentUserIsAdmin = "current user is admin"
 
 	// Event 4. Active session <admin>
 	EventActivateSession      = "session_activation"

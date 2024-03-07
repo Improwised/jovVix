@@ -52,6 +52,8 @@ const handleQuizEvents = async (message) => {
     );
   } else if (message.event == app.$TerminateQuiz) {
     router.push("/join/scoreboard");
+  } else if (message.event == app.$RedirectToAdmin) {
+    router.push("/admin/arrange/" + message.data.sessionId);
   } else {
     if (
       message.status == app.$Fail &&

@@ -22,6 +22,7 @@ export default {
   Counter: "5_sec_counter",
   TerminateQuiz: "terminate_quiz",
   InvitationCodeValidation: "invitation_code_validation",
+  RedirectToAdmin: "redirect_to_admin",
 
   // Errors
   Unauthorized: "unauthorized to access resource",

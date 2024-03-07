@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -17,6 +18,7 @@ import (
 	"github.com/Improwised/quizz-app/api/utils"
 	"github.com/doug-martin/goqu/v9"
 	"github.com/gofiber/contrib/websocket"
+	"github.com/google/uuid"
 	"github.com/lib/pq"
 	"go.uber.org/zap"
 )
@@ -248,6 +250,42 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 		}
 		return
 	}
+
+	// get or create user session
+	userId := quizUtilsHelper.GetString(c.Locals(constants.ContextUid))
+	var userPlayedQuizId uuid.UUID
+
+	// is user is a host of current quiz
+	if userId == session.AdminID {
+		response.Action = constants.ActionCurrentUserIsAdmin
+		response.Data = map[string]string{"sessionId": session.ID.String()}
+		err = utils.JSONSuccessWs(c, constants.EventRedirectToAdmin, response)
+
+		if err != nil {
+			qc.logger.Error(fmt.Sprintf("socket redirect current user is admin: %s event, %s action, %s code", constants.EventRedirectToAdmin, response.Action, invitationCode), zap.Error(err))
+		}
+		return
+	}
+
+	if userId == "<nil>" { // anonymous user
+		userPlayedQuizId, err = qc.helpers.UserPlayedQuizModel.CreateUserPlayedQuiz(sql.NullString{}, session.ID, false)
+	} else {
+		userPlayedQuizId, _, err = qc.helpers.UserPlayedQuizModel.CreateUserPlayedQuizIfNotExists(userId, session.ID)
+	}
+
+	fmt.Println(userId, userPlayedQuizId, err)
+	if err != nil {
+		response.Action = constants.ActionUserSessionValidation
+		err = utils.JSONFailWs(c, constants.EventUserSessionValidation, response)
+
+		if err != nil {
+			qc.logger.Error(fmt.Sprintf("socket error get or create session: %s event, %s action, %s code", constants.EventJoinQuiz, response.Action, invitationCode), zap.Error(err))
+		}
+		return
+	}
+
+	// add session id
+	c.Locals(constants.CurrentUserQuiz, userPlayedQuizId)
 
 	response.Action = constants.QuizQuestionStatus
 	if session.CurrentQuestion.Valid {

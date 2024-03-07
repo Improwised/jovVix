@@ -52,7 +52,7 @@ func AdminCmd(cfg config.AppConfig, logger *zap.Logger) *cobra.Command {
 			}
 
 			if len(adminObj.Username) > 12 || len(adminObj.Username) < 6 {
-				return fmt.Errorf("The length of the username must in between 6 to 12 chars.")
+				return fmt.Errorf("the length of the username must in between 6 to 12 chars")
 			}
 
 			db, err := database.Connect(cfg.DB)
