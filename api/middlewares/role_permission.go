@@ -24,6 +24,11 @@ func NewRolePermissionMiddleware(middleware Middleware, allowedRoles models.Allo
 }
 
 func (rpm *RolePermissionMiddleware) IsAllowed(c *fiber.Ctx) error {
+
+	if c.Locals(constants.MiddlewareError) != nil {
+		return c.Next()
+	}
+
 	userAny := c.Locals(constants.ContextUser)
 	userLocal, ok := quizUtilsHelper.ConvertType[models.User](userAny)
 

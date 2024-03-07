@@ -19,14 +19,22 @@ const props = defineProps({
 const router = useRouter();
 const toast = useToast();
 
+const toastError = () => {
+  const errorQueryParam = router.currentRoute.value.query?.error;
+  if (errorQueryParam) {
+    toast.error(errorQueryParam);
+  }
+};
 onMounted(() => {
   if (process.client) {
-    const errorQueryParam = router.currentRoute.value.query?.error;
-    if (errorQueryParam) {
-      toast.error(errorQueryParam);
-    }
+    toastError();
   }
 });
+
+watch(
+  () => router.currentRoute.value.query,
+  () => toastError()
+);
 </script>
 
 <template>

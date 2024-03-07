@@ -3,6 +3,7 @@ package v1
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -138,7 +139,7 @@ func (ctrl *UserController) IsAdmin(c *fiber.Ctx) error {
 	if err != nil {
 		if err == sql.ErrNoRows {
 			RemoveUserToken(constants.ContextUid)
-			return utils.JSONFail(c, http.StatusBadRequest, constants.UserNotExist)
+			return utils.JSONFail(c, http.StatusNotFound, constants.UserNotExist)
 		}
 		return utils.JSONError(c, http.StatusBadRequest, constants.UnknownError)
 	}
@@ -147,7 +148,8 @@ func (ctrl *UserController) IsAdmin(c *fiber.Ctx) error {
 		return utils.JSONSuccess(c, http.StatusOK, true)
 	}
 
-	return utils.JSONFail(c, http.StatusBadGateway, constants.Unauthenticated)
+	fmt.Println(user)
+	return utils.JSONFail(c, http.StatusBadRequest, constants.Unauthenticated)
 }
 
 func (ctrl *UserController) GetUserMeta(c *fiber.Ctx) error {
@@ -158,7 +160,7 @@ func (ctrl *UserController) GetUserMeta(c *fiber.Ctx) error {
 	if err != nil {
 		if err == sql.ErrNoRows {
 			RemoveUserToken(constants.ContextUid)
-			return utils.JSONFail(c, http.StatusBadGateway, constants.Unauthenticated)
+			return utils.JSONFail(c, http.StatusNotFound, constants.Unauthenticated)
 		}
 		return utils.JSONError(c, http.StatusBadRequest, constants.UnknownError)
 	}
