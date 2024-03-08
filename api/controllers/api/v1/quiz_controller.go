@@ -55,5 +55,14 @@ func (ctrl *QuizController) CreateQuizSession(c *fiber.Ctx) error {
 	}
 
 	return utils.JSONSuccess(c, http.StatusOK, quizzes)
+}
 
+func (ctrl *QuizController) SetAnswer(c *fiber.Ctx) error {
+	currentQuiz := c.Cookies(constants.CurrentUserQuiz)
+
+	if currentQuiz == "" {
+		return utils.JSONFail(c, http.StatusBadRequest, constants.ErrQuizNotFound)
+	}
+
+	return utils.JSONSuccess(c, http.StatusAccepted, nil)
 }

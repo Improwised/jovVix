@@ -212,6 +212,7 @@ func quizController(
 
 	v1.Get(fmt.Sprintf("/socket/join/:%s", constants.QuizSessionInvitationCode), middleware.CheckSessionCode, middleware.CustomAuthenticated, sessionMiddle.PlayedQuizValidation, websocket.New(quizSocketController.Join))
 
+	v1.Post("/quiz/answer", middleware.Authenticated, quizController.SetAnswer)
 	// admin endpoints
 	allowRoles, err := helper.RoleModel.NewAllowedRoles("admin")
 	if err != nil {

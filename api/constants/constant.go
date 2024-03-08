@@ -140,6 +140,9 @@ const (
 	EventStartCount5     = "5_sec_counter" // use by web
 	ActionCounter        = "5 second counter"
 
+	// Event 8. Submit answer
+	ErrQuizNotFound = "error current quiz not found"
+
 	// Event 8. Get score page
 	EventShowScore  = "show_score"
 	ActionShowScore = "show score page during quiz"

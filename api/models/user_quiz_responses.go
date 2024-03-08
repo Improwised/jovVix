@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 )
 
-const UserQuizResponseTable = "user_quiz_response"
+const UserQuizResponseTable = "user_quiz_responses"
 
 // Question model
 type UserQuizResponse struct {

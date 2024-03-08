@@ -2,7 +2,6 @@ package middlewares
 
 import (
 	"database/sql"
-	"fmt"
 
 	"github.com/Improwised/quizz-app/api/config"
 	"github.com/Improwised/quizz-app/api/constants"
@@ -44,7 +43,6 @@ func (m *PlayedQuizValidationMiddleware) PlayedQuizValidation(c *fiber.Ctx) erro
 
 		if err != nil {
 			if err == sql.ErrNoRows {
-				fmt.Println(err, "--------------------------")
 				c.Cookie(RemoveCookie(constants.CurrentUserQuiz))
 				c.Locals(constants.MiddlewareError, constants.ErrUserQuizSessionValidation)
 				return c.Next()
