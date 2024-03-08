@@ -208,13 +208,21 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 
 	// check for middleware error
 	if c.Locals(constants.MiddlewareError) != nil {
+		// handle error type
 		errorInfo, ok := quizUtilsHelper.ConvertType[error](c.Locals(constants.MiddlewareError))
-		if !ok {
-			qc.logger.Error(fmt.Sprintf("socket error in middleware: %s event, %s action, error %v", constants.EventAuthentication, response.Action, c.Locals(constants.MiddlewareError)))
+		if ok {
+			response.Data = errorInfo.Error()
+			err := utils.JSONErrorWs(c, constants.EventAuthentication, response)
+			if err != nil {
+				qc.logger.Error(fmt.Sprintf("socket error in middleware: %s event, %s action", constants.EventAuthentication, response.Action), zap.Error(err))
+			}
+			return
 		}
 
-		if errorInfo != nil {
-			response.Data = errorInfo.Error()
+		// handle string type
+		errorString := quizUtilsHelper.GetString(c.Locals(constants.MiddlewareError))
+		if errorString != "<nil>" {
+			response.Data = errorString
 			err := utils.JSONFailWs(c, constants.EventAuthentication, response)
 			if err != nil {
 				qc.logger.Error(fmt.Sprintf("socket error in middleware: %s event, %s action", constants.EventAuthentication, response.Action), zap.Error(err))
@@ -222,11 +230,12 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 			return
 		}
 
+		fmt.Println("here")
 	}
 
 	invitationCode := quizUtilsHelper.GetString(c.Locals(constants.QuizSessionInvitationCode))
 
-	session, ok := quizUtilsHelper.ConvertType[models.ActiveQuiz](c.Locals(constants.SessionObj))
+	session, ok := quizUtilsHelper.ConvertType[models.ActiveQuiz](c.Locals(constants.ActiveQuizObj))
 
 	if !ok {
 		response.Action = constants.ActionSessionValidation
@@ -270,7 +279,7 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 }
 
 func handleQuestion(c *websocket.Conn, qc *quizSocketController, session models.ActiveQuiz, response QuizSendResponse) {
-	pubsub := qc.helpers.PubSubModel.Client.Subscribe(qc.helpers.PubSubModel.Ctx, session.ID.String())
+	pubsub := qc.helpers.PubSubModel.Client.Subscribe(qc.helpers.PubSubModel.Ctx, session.ID.String()) // TODO: Easily replace
 	defer pubsub.Close()
 
 	ch := pubsub.Channel()
@@ -440,7 +449,7 @@ func ActivateAndGetSession(c *websocket.Conn, helpers *quizHelper.HelperGroup, l
 		Data:      "",
 	}
 
-	session, err := helpers.ActiveQuizModel.GetActiveSession(sessionId, userId)
+	session, err := helpers.ActiveQuizModel.GetOrActivateSession(sessionId, userId)
 
 	if err != nil {
 		if err.Error() == constants.Unauthenticated {
@@ -462,7 +471,7 @@ func ActivateAndGetSession(c *websocket.Conn, helpers *quizHelper.HelperGroup, l
 		return session, err
 	}
 
-	c.Locals(constants.SessionObj, session)
+	c.Locals(constants.ActiveQuizObj, session)
 
 	return session, nil
 }

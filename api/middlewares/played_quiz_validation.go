@@ -35,27 +35,48 @@ func (m *PlayedQuizValidationMiddleware) PlayedQuizValidation(c *fiber.Ctx) erro
 		return c.Next()
 	}
 
+	cookieUserPlayedQuizId := c.Cookies(constants.CurrentUserQuiz)
 	invitationCode := quizUtilsHelper.GetString(c.Locals(constants.QuizSessionInvitationCode))
+	userId := quizUtilsHelper.GetString(c.Locals(constants.ContextUid))
+
+	if cookieUserPlayedQuizId != "" {
+		session, err := m.helpers.UserPlayedQuizModel.GetActiveSession(cookieUserPlayedQuizId, invitationCode, userId)
+
+		if err != nil {
+			if err == sql.ErrNoRows {
+				fmt.Println(err, "--------------------------")
+				c.Cookie(RemoveCookie(constants.CurrentUserQuiz))
+				c.Locals(constants.MiddlewareError, constants.ErrUserQuizSessionValidation)
+				return c.Next()
+			} else if err.Error() == constants.ErrInvitationCodeNotFound {
+				c.Cookie(RemoveCookie(constants.CurrentUserQuiz))
+				c.Locals(constants.MiddlewareError, constants.ErrInvitationCodeNotFound)
+				return c.Next()
+			}
+			c.Locals(constants.MiddlewareError, constants.UnknownError)
+			m.Logger.Error("error in invitation code", zap.Error(err))
+			return c.Next()
+		}
+
+		c.Locals(constants.ActiveQuizObj, session)
+		c.Locals(constants.CurrentUserQuiz, cookieUserPlayedQuizId)
+		return c.Next()
+	}
 
 	session, err := m.helpers.ActiveQuizModel.GetSessionByCode(invitationCode)
 
 	if err != nil {
-		c.Locals(constants.MiddlewareError, constants.ErrInvitationCodeNotFound)
+
+		if err == sql.ErrNoRows {
+			c.Locals(constants.MiddlewareError, constants.ErrInvitationCodeNotFound)
+			return c.Next()
+		}
+
+		c.Locals(constants.MiddlewareError, constants.UnknownError)
 		m.Logger.Error("error in invitation code", zap.Error(err))
 		return c.Next()
 	}
-	c.Locals(constants.SessionObj, session)
-	fmt.Println("hello", session)
-
-	if !session.IsActive || session.ActivatedTo.Valid {
-
-		c.Locals(constants.MiddlewareError, constants.ErrInvitationCodeNotFound)
-		m.Logger.Error("invitation code is un-active", zap.Error(fmt.Errorf(constants.ErrInvitationCodeNotFound)))
-		return c.Next()
-	}
-
-	// get or create user session
-	userId := quizUtilsHelper.GetString(c.Locals(constants.ContextUid))
+	c.Locals(constants.ActiveQuizObj, session)
 
 	// if current user is admin of the quiz then no need to create user-played-quiz record
 	if userId == session.AdminID {
@@ -75,8 +96,7 @@ func (m *PlayedQuizValidationMiddleware) PlayedQuizValidation(c *fiber.Ctx) erro
 		m.Logger.Error("Username not provided", zap.Error(err))
 		return c.Next()
 	}
-	c.Locals(constants.CurrentUserQuiz, userPlayedQuizId.String())
-
 	c.Cookie(CreateStrictCookie(constants.CurrentUserQuiz, userPlayedQuizId.String()))
+	c.Locals(constants.CurrentUserQuiz, userPlayedQuizId.String())
 	return c.Next()
 }

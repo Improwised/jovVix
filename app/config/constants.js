@@ -4,7 +4,7 @@ export default {
   IncorrectCredentials: "Error or password incorrect, try again",
 
   // Defaults
-  InvitationCode: "000000",
+  InvitationCode: "",
   UserIdentifier: "user",
   CountTill: 3000,
   ReadyMessage: "Ready to go...",
@@ -28,4 +28,6 @@ export default {
   Unauthorized: "unauthorized to access resource",
   CodeNotFound: "invitation code not found",
   ReloadRequired: "there was some error, please reload the page!!!",
+  InvitationCodeNotFound: "invitation code not found",
+  QuizSessionValidationFailed: "quiz-session-validation-failed",
 };

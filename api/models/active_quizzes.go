@@ -11,7 +11,7 @@ import (
 	"github.com/google/uuid"
 )
 
-const tableName = "active_quizzes"
+const ActiveQuizzesTable = "active_quizzes"
 
 // ActiveQuiz model
 type ActiveQuiz struct {
@@ -81,7 +81,7 @@ func (model *ActiveQuizModel) CreateActiveQuiz(invitationCode int, title string,
 		record["activated_to"] = nil
 	}
 
-	_, err = model.db.Insert(tableName).Rows(record).Executor().Exec()
+	_, err = model.db.Insert(ActiveQuizzesTable).Rows(record).Executor().Exec()
 
 	if err != nil {
 		return model.defaultUUID, err
@@ -93,20 +93,20 @@ func (model *ActiveQuizModel) CreateActiveQuiz(invitationCode int, title string,
 func (model *ActiveQuizModel) GetSessionByCode(invitationCode string) (ActiveQuiz, error) {
 	var activeQuiz ActiveQuiz = ActiveQuiz{}
 
-	found, err := model.db.Select("*").From(tableName).Where(goqu.I("invitation_code").Eq(invitationCode), goqu.I("is_active").Eq(true)).Limit(1).ScanStruct(&activeQuiz)
+	found, err := model.db.Select("*").From(ActiveQuizzesTable).Where(goqu.I("invitation_code").Eq(invitationCode), goqu.I("is_active").Eq(true)).Limit(1).ScanStruct(&activeQuiz)
 
 	if err != nil {
 		return activeQuiz, err
 	}
 
 	if !found {
-		return activeQuiz, fmt.Errorf(constants.ErrSessionNotFound)
+		return activeQuiz, sql.ErrNoRows
 	}
 
 	return activeQuiz, nil
 }
 
-func (model *ActiveQuizModel) GetActiveSession(sessionId string, userId string) (ActiveQuiz, error) {
+func (model *ActiveQuizModel) GetOrActivateSession(sessionId string, userId string) (ActiveQuiz, error) {
 	var activeQuiz ActiveQuiz = ActiveQuiz{}
 	var isOk bool = false
 
@@ -149,6 +149,56 @@ func (model *ActiveQuizModel) GetActiveSession(sessionId string, userId string) 
 		return activeQuiz, fmt.Errorf(constants.ErrSessionWasCompleted)
 	}
 
+	maxTry := 10
+	// handle invitation_code generation
+	invitation_code, err := activateSession(transactionObj, maxTry, activeQuiz.ID, userId)
+
+	if err != nil {
+		return activeQuiz, err
+	}
+	isOk = (invitation_code != -1)
+
+	activeQuiz, err = model.GetSessionById(transactionObj, sessionId)
+	if err != nil {
+		return activeQuiz, err
+	}
+	return activeQuiz, nil
+
+}
+
+func (model *ActiveQuizModel) GetSessionById(db *goqu.TxDatabase, sessionId string) (ActiveQuiz, error) {
+	var activeQuiz ActiveQuiz = ActiveQuiz{}
+	found, err := db.Select("*").From(ActiveQuizzesTable).Where(goqu.I("id").Eq(sessionId)).Limit(1).ScanStruct(&activeQuiz)
+
+	if err != nil {
+		return activeQuiz, err
+	}
+
+	if !found {
+		return activeQuiz, fmt.Errorf(constants.ErrSessionNotFound)
+	}
+
+	return activeQuiz, nil
+}
+
+func (model *ActiveQuizModel) GetSession(sessionId string) (ActiveQuiz, error) {
+	var activeQuiz ActiveQuiz = ActiveQuiz{}
+	found, err := model.db.Select("*").From(ActiveQuizzesTable).Where(goqu.I("id").Eq(sessionId)).Limit(1).ScanStruct(&activeQuiz)
+
+	if err != nil {
+		return activeQuiz, err
+	}
+
+	if !found {
+		return activeQuiz, fmt.Errorf(constants.ErrSessionNotFound)
+	}
+
+	return activeQuiz, nil
+}
+
+func activateSession(transactionObj *goqu.TxDatabase, maxTry int, sessionId uuid.UUID, userId string) (int, error) {
+	var err error
+	var invitation_code int
 	statement, err := transactionObj.Prepare(`
 	update active_quizzes
 		SET
@@ -168,45 +218,11 @@ func (model *ActiveQuizModel) GetActiveSession(sessionId string, userId string) 
 	`)
 
 	if err != nil {
-		return activeQuiz, err
+		return -1, err
 	}
+
 	defer statement.Close()
 
-	maxTry := 10
-	// handle invitation_code generation
-	invitation_code, err := activateSession(maxTry, statement, activeQuiz.ID, userId)
-
-	if err != nil {
-		return activeQuiz, err
-	}
-	isOk = (invitation_code != -1)
-
-	activeQuiz, err = model.GetSessionById(transactionObj, sessionId)
-	if err != nil {
-		return activeQuiz, err
-	}
-	return activeQuiz, nil
-
-}
-
-func (model *ActiveQuizModel) GetSessionById(db *goqu.TxDatabase, sessionId string) (ActiveQuiz, error) {
-	var activeQuiz ActiveQuiz = ActiveQuiz{}
-	found, err := db.Select("*").From("active_quizzes").Where(goqu.I("id").Eq(sessionId)).Limit(1).ScanStruct(&activeQuiz)
-
-	if err != nil {
-		return activeQuiz, err
-	}
-
-	if !found {
-		return activeQuiz, fmt.Errorf(constants.ErrSessionNotFound)
-	}
-
-	return activeQuiz, nil
-}
-
-func activateSession(maxTry int, statement *sql.Stmt, sessionId uuid.UUID, userId string) (int, error) {
-	var err error
-	var invitation_code int
 	for {
 		invitation_code = quizUtilsHelper.GenerateRandomInt(constants.MinInvitationCode, constants.MaxInvitationCode)
 

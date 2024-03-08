@@ -99,7 +99,7 @@ const (
 	EventUserSessionValidation   = "user_validation"
 	ActionUserSessionValidation  = "user session get or create"
 	CurrentUserQuiz              = "user_played_quiz"
-	ErrUserQuizSessionValidation = "quiz-session-validation failed"
+	ErrUserQuizSessionValidation = "quiz-session-validation-failed" // use by web
 
 	EventRedirectToAdmin     = "redirect_to_admin"
 	ActionCurrentUserIsAdmin = "current user is admin"
@@ -110,14 +110,13 @@ const (
 	ActionSessionActivation   = "activate demanded session and sent invitation code"
 	QuizSessionInvitationCode = "invitationCode"
 	SessionIDParam            = "session_id"
-	SessionObj                = "current session object"
+	ActiveQuizObj             = "current active quiz obj"
 
 	// Event 5. Join quiz <User>
 	EventJoinQuiz                  = "invitation_code_validation"
 	ActionJoinQuiz                 = "invitation code validation"
 	ErrInvitationCodeInWrongFormat = "invitation code is not in proper format"
 	ErrInvitationCodeNotFound      = "invitation code not found" // use by web
-	ErrInvitationCodeNotActive     = "invitation code is not active"
 	ErrSessionWasCompleted         = "session was completed"
 	ErrMaxTryToGenerateCode        = "maximum times excide to generate code"
 

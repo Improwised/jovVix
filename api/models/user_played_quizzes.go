@@ -2,8 +2,10 @@ package models
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
 
+	"github.com/Improwised/quizz-app/api/constants"
 	"github.com/doug-martin/goqu/v9"
 	"github.com/google/uuid"
 )
@@ -133,4 +135,40 @@ func (model *UserPlayedQuizModel) CreateUserPlayedQuiz(userId sql.NullString, ac
 
 	return userPlayedQuizId, nil
 
+}
+
+func (model *UserPlayedQuizModel) GetActiveSession(id string, invitationCode string, userID string) (ActiveQuiz, error) {
+	var activeQuiz ActiveQuiz
+	userIDObj := sql.NullString{
+		Valid:  userID != "",
+		String: userID,
+	}
+
+	found, err := model.db.From(goqu.T(UserPlayedQuizTable).As("upq")).Join(
+		goqu.I(ActiveQuizzesTable).As("aq"),
+		goqu.On(goqu.I("upq.active_quiz_id").Eq(goqu.I("aq.id"))),
+	).Select(
+		goqu.I("aq.*"),
+	).Where(
+		goqu.Ex{
+			"upq.id":             id,
+			"upq.user_id":        userIDObj,
+			"aq.invitation_code": invitationCode,
+		},
+	).Limit(1).ScanStruct(&activeQuiz)
+
+	fmt.Println(activeQuiz, err, found, id, invitationCode, userID)
+
+	if err != nil {
+		return activeQuiz, err
+	}
+	if !found {
+		return activeQuiz, sql.ErrNoRows
+	}
+
+	if !activeQuiz.IsActive {
+		return activeQuiz, fmt.Errorf(constants.ErrInvitationCodeNotFound)
+	}
+
+	return activeQuiz, nil
 }
