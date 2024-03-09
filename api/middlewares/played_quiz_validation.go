@@ -51,6 +51,7 @@ func (m *PlayedQuizValidationMiddleware) PlayedQuizValidation(c *fiber.Ctx) erro
 				c.Locals(constants.MiddlewareError, constants.ErrInvitationCodeNotFound)
 				return c.Next()
 			}
+
 			c.Locals(constants.MiddlewareError, constants.UnknownError)
 			m.Logger.Error("error in invitation code", zap.Error(err))
 			return c.Next()
@@ -94,7 +95,17 @@ func (m *PlayedQuizValidationMiddleware) PlayedQuizValidation(c *fiber.Ctx) erro
 		m.Logger.Error("Username not provided", zap.Error(err))
 		return c.Next()
 	}
+
+	err = m.helpers.UserQuizResponseModel.GetQuestionsCopy(userPlayedQuizId, session.QuizID)
+
+	if err != nil {
+		c.Locals(constants.MiddlewareError, constants.UnknownError)
+		m.Logger.Error("error in invitation code", zap.Error(err))
+		return c.Next()
+	}
+
 	c.Cookie(CreateStrictCookie(constants.CurrentUserQuiz, userPlayedQuizId.String()))
 	c.Locals(constants.CurrentUserQuiz, userPlayedQuizId.String())
+
 	return c.Next()
 }

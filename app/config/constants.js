@@ -6,13 +6,18 @@ export default {
   // Defaults
   InvitationCode: "",
   UserIdentifier: "user",
+  CurrentQuizIdentifier: "user_played_quiz",
   CountTill: 3000,
   ReadyMessage: "Ready to go...",
+  AnswerSubmitted: "Answer submitted successfully",
 
   // Status
   Fail: "fail",
   Success: "success",
   Error: "error",
+
+  // Components
+  Question: "Question",
 
   // Events
   StartQuiz: "start_quiz",
@@ -30,4 +35,5 @@ export default {
   ReloadRequired: "there was some error, please reload the page!!!",
   InvitationCodeNotFound: "invitation code not found",
   QuizSessionValidationFailed: "quiz-session-validation-failed",
+  SessionWasCompleted: "session was completed",
 };

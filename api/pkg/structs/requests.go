@@ -1,5 +1,7 @@
 package structs
 
+import "github.com/google/uuid"
+
 // All request sturcts
 // Request struct have Req prefix
 
@@ -16,7 +18,7 @@ type ReqLoginUser struct {
 	Password string `json:"password" validate:"required"`
 }
 
-type ReqQuickRegisterUser struct {
-	UserName string `json:"username" validate:"required"`
-	Role     string `json:"role" validate:"required"`
+type ReqAnswerSubmit struct {
+	QuestionId uuid.UUID `json:"id" validate:"required"`
+	AnswerKeys []int     `json:"keys" validate:"required"`
 }

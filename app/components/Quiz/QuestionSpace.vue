@@ -25,13 +25,11 @@ const props = defineProps({
 const emits = defineEmits(["sendAnswer"]);
 
 // custom refs
-const question = ref({
-  question: "",
-  options: {},
-});
+const question = ref();
 const answer = ref([]);
 const counter = ref(null);
 const count = ref(0);
+const isSubmitted = ref(false);
 
 // watchers
 watch(
@@ -50,35 +48,40 @@ watch(
 function handleEvent(message) {
   if (message.event == app.$GetQuestion) {
     question.value = message.data;
-    answer.value = null;
+    answer.value = [];
     count.value = null;
   } else if (message.event == app.$Counter) {
-    handleCounter();
+    let secs = 0;
+    question.value = null;
+    count.value = 1;
+    counter.value = setInterval(() => {
+      count.value += 1;
+      secs += 1000;
+      if (parseInt(props.data.data.count) * 1000 <= secs) {
+        clearInterval(counter.value);
+        count.value = app.$ReadyMessage;
+        counter.value = null;
+      }
+    }, 1000);
   }
 }
-
-function handleCounter() {
-  let secs = 0;
-  count.value = 1;
-  counter.value = setInterval(() => {
-    count.value += 1;
-    secs += 1000;
-    if (parseInt(props.data.data.count) * 1000 <= secs) {
-      clearInterval(counter.value);
-      count.value = app.$ReadyMessage;
-      counter.value = null;
-    }
-  }, 1000);
-}
-
 function handleSubmit(e) {
   e.preventDefault();
-  emits("sendAnswer");
+  let final_val = answer.value;
+
+  if (final_val != null) {
+    emits("sendAnswer", [parseInt(answer.value.key)]);
+    isSubmitted.value = true;
+  }
 }
 </script>
 
 <template>
-  <Frame v-if="count == null" page-title="Question" page-message="let's play">
+  <Frame
+    v-if="question != null"
+    page-title="Question"
+    page-message="let's play"
+  >
     <div>{{ question.no }}</div>
     <div>
       {{ question.question }}
@@ -92,14 +95,14 @@ function handleSubmit(e) {
         <div class="form-check form-check-inline">
           <input
             v-if="!isAdmin"
-            id="answer"
             v-model="answer"
             class="form-check-input"
             type="radio"
             name="answer"
             :value="{ key }"
+            :disabled="isSubmitted"
           />
-          <label class="form-check-label" for="answer">{{ value }}</label>
+          <label class="form-check-label">{{ value }}</label>
         </div>
       </div>
     </div>
@@ -107,6 +110,7 @@ function handleSubmit(e) {
       v-if="!isAdmin"
       type="button"
       class="btn btn-primary mt-3"
+      :disabled="isSubmitted"
       @click="handleSubmit"
     >
       submit

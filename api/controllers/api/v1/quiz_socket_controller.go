@@ -198,7 +198,9 @@ func (*quizSocketController) Ping(c *websocket.Conn) {
 
 func (qc *quizSocketController) Join(c *websocket.Conn) {
 
-	defer c.Close()
+	defer func() {
+		c.Close()
+	}()
 
 	response := QuizSendResponse{
 		Component: constants.Waiting,
@@ -230,7 +232,6 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 			return
 		}
 
-		fmt.Println("here")
 	}
 
 	invitationCode := quizUtilsHelper.GetString(c.Locals(constants.QuizSessionInvitationCode))
@@ -279,8 +280,16 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 }
 
 func handleQuestion(c *websocket.Conn, qc *quizSocketController, session models.ActiveQuiz, response QuizSendResponse) {
-	pubsub := qc.helpers.PubSubModel.Client.Subscribe(qc.helpers.PubSubModel.Ctx, session.ID.String()) // TODO: Easily replace
-	defer pubsub.Close()
+	pubsub := qc.helpers.PubSubModel.Client.Subscribe(qc.helpers.PubSubModel.Ctx, session.ID.String())
+	defer func() {
+		if pubsub != nil {
+			err := pubsub.Unsubscribe(qc.helpers.PubSubModel.Ctx, session.ID.String())
+			if err != nil {
+				qc.logger.Error("unsubscribe failed", zap.Error(err))
+			}
+			pubsub.Close()
+		}
+	}()
 
 	ch := pubsub.Channel()
 
@@ -381,6 +390,7 @@ func (qc *quizSocketController) Arrange(c *websocket.Conn) {
 
 	if err != nil {
 		qc.logger.Error(fmt.Sprintf("socket error get remaining questions: %s event, %s action %v code", constants.EventStartQuiz, response.Action, session.InvitationCode), zap.Error(err))
+		return
 	}
 
 	response.Component = constants.Question
@@ -394,6 +404,12 @@ func (qc *quizSocketController) Arrange(c *websocket.Conn) {
 	response.Component = constants.Score
 	response.Data = constants.ActionTerminateQuiz
 	shareEvenWithUser(c, qc, response, constants.EventTerminateQuiz, sessionId, int(session.InvitationCode.Int32))
+
+	err = qc.helpers.ActiveQuizModel.Deactivate(session.ID)
+	if err != nil {
+		qc.logger.Error(fmt.Sprintf("socket error get remaining questions: %s event, %s action %v code", constants.EventStartQuiz, response.Action, session.InvitationCode), zap.Error(err))
+		return
+	}
 }
 
 func sendQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.WaitGroup, response QuizSendResponse, session models.ActiveQuiz, question models.Question) {
@@ -401,7 +417,7 @@ func sendQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.WaitGrou
 	response.Action = constants.ActionCounter
 	response.Data = map[string]int{"counter": constants.Counter, "count": constants.Count}
 	shareEvenWithUser(c, qc, response, constants.EventStartCount5, session.ID.String(), int(session.InvitationCode.Int32))
-	time.Sleep(time.Duration(constants.Count) * time.Second)
+	time.Sleep(time.Duration(constants.Counter) * time.Second)
 
 	// update question status to activate
 	err := qc.helpers.QuizModel.UpdateCurrentQuestion(session.ID, question.ID, true)
@@ -412,6 +428,7 @@ func sendQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.WaitGrou
 	// question sent
 	response.Action = constants.ActionSendQuestion
 	response.Data = map[string]any{
+		"id":       question.ID,
 		"no":       question.OrderNumber,
 		"question": question.Question,
 		"options":  question.Options,
@@ -435,7 +452,7 @@ func sendQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.WaitGrou
 		"no": question.OrderNumber,
 	}
 	shareEvenWithUser(c, qc, response, constants.EventShowScore, session.ID.String(), int(session.InvitationCode.Int32))
-	time.Sleep(15 * time.Second)
+	time.Sleep(5 * time.Second)
 	wg.Done()
 }
 
@@ -455,6 +472,14 @@ func ActivateAndGetSession(c *websocket.Conn, helpers *quizHelper.HelperGroup, l
 		if err.Error() == constants.Unauthenticated {
 			response.Action = constants.ActionSessionValidation
 			response.Data = constants.Unauthorized
+			err = utils.JSONFailWs(c, constants.EventAuthorization, response)
+			if err != nil {
+				logger.Error(fmt.Sprintf("socket error authentication host: %s event, %s action", constants.EventAuthorization, response.Action), zap.Error(err))
+			}
+			return session, err
+		} else if err.Error() == constants.ErrSessionWasCompleted {
+			response.Action = constants.ActionSessionActivation
+			response.Data = constants.ErrSessionWasCompleted
 			err = utils.JSONFailWs(c, constants.EventAuthorization, response)
 			if err != nil {
 				logger.Error(fmt.Sprintf("socket error authentication host: %s event, %s action", constants.EventAuthorization, response.Action), zap.Error(err))

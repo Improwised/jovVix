@@ -98,7 +98,7 @@ const (
 	// Event 4. UserSession Validation <admin/user>
 	EventUserSessionValidation   = "user_validation"
 	ActionUserSessionValidation  = "user session get or create"
-	CurrentUserQuiz              = "user_played_quiz"
+	CurrentUserQuiz              = "user_played_quiz"               // use by web
 	ErrUserQuizSessionValidation = "quiz-session-validation-failed" // use by web
 
 	EventRedirectToAdmin     = "redirect_to_admin"
@@ -117,7 +117,7 @@ const (
 	ActionJoinQuiz                 = "invitation code validation"
 	ErrInvitationCodeInWrongFormat = "invitation code is not in proper format"
 	ErrInvitationCodeNotFound      = "invitation code not found" // use by web
-	ErrSessionWasCompleted         = "session was completed"
+	ErrSessionWasCompleted         = "session was completed"     // use by web
 	ErrMaxTryToGenerateCode        = "maximum times excide to generate code"
 
 	UserName          = "username"
@@ -141,7 +141,9 @@ const (
 	ActionCounter        = "5 second counter"
 
 	// Event 8. Submit answer
-	ErrQuizNotFound = "error current quiz not found"
+	ErrQuizNotFound           = "error current quiz not found"
+	ErrAnswerSubmit           = "error malfunction in inputs"
+	ErrAnswerAlreadySubmitted = "answer already submitted"
 
 	// Event 8. Get score page
 	EventShowScore  = "show_score"

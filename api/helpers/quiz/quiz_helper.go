@@ -5,6 +5,7 @@ import (
 	"github.com/Improwised/quizz-app/api/models"
 	"github.com/Improwised/quizz-app/api/services"
 	"github.com/doug-martin/goqu/v9"
+	"go.uber.org/zap"
 )
 
 type HelperGroup struct {
@@ -13,11 +14,12 @@ type HelperGroup struct {
 	QuizModel             *models.QuizModel
 	ActiveQuizModel       *models.ActiveQuizModel
 	UserQuizResponseModel *models.UserQuizResponseModel
-	PubSubModel           *models.PubSubModel
+	QuestionModel         *models.QuestionModel
 	UserPlayedQuizModel   *models.UserPlayedQuizModel
+	PubSubModel           *models.PubSubModel
 }
 
-func InitHelper(db *goqu.Database, pubSubCfg config.RedisClientConfig) (*HelperGroup, error) {
+func InitHelper(db *goqu.Database, pubSubCfg config.RedisClientConfig, logger *zap.Logger) (*HelperGroup, error) {
 	userModel, err := models.InitUserModel(db)
 
 	if err != nil {
@@ -26,19 +28,12 @@ func InitHelper(db *goqu.Database, pubSubCfg config.RedisClientConfig) (*HelperG
 
 	userService := services.NewUserService(&userModel)
 
-	sessionModel, err := models.InitActiveQuizModel(db)
-	if err != nil {
-		return nil, err
-	}
-
+	sessionModel := models.InitActiveQuizModel(db, logger)
 	roleModel := models.InitRoleModel(db)
 	quizModel := models.InitQuizModel(db)
 	userQuizResponseModel := models.InitUserQuizResponseModel(db)
-	userPlayedQuizModel, err := models.InitUserPlayedQuizModel(db)
-
-	if err != nil {
-		return nil, err
-	}
+	userPlayedQuizModel := models.InitUserPlayedQuizModel(db)
+	questionModel := models.InitQuestionModel(db)
 
 	pubSubClientModel, err := models.InitPubSubModel(pubSubCfg.RedisAddr+":"+pubSubCfg.RedisPort, pubSubCfg.RedisPass, pubSubCfg.RedisDb)
 
@@ -52,6 +47,7 @@ func InitHelper(db *goqu.Database, pubSubCfg config.RedisClientConfig) (*HelperG
 		QuizModel:             quizModel,
 		ActiveQuizModel:       sessionModel,
 		UserQuizResponseModel: userQuizResponseModel,
+		QuestionModel:         questionModel,
 		PubSubModel:           pubSubClientModel,
 		UserPlayedQuizModel:   userPlayedQuizModel,
 	}, nil

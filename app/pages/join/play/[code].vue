@@ -52,6 +52,8 @@ const handleQuizEvents = async (message) => {
       "/error?status=" + message.status + "&error=" + message.data
     );
   } else if (message.event == app.$TerminateQuiz) {
+    const quizCookie = useCookie(app.$CurrentQuizIdentifier);
+    quizCookie.value = null;
     return await router.push("/join/scoreboard");
   } else if (message.event == app.$RedirectToAdmin) {
     return await router.push("/admin/arrange/" + message.data.sessionId);
@@ -91,6 +93,17 @@ const startQuiz = () => {
   myRef.value = true;
 };
 
+const sendAnswer = async (answers) => {
+  const response = await userOperationHandler.value.handleSendAnswer(answers);
+
+  console.log(response.error);
+  if (response.error) {
+    toast.error(response.error);
+    return;
+  }
+  toast.success(app.$AnswerSubmitted);
+};
+
 definePageMeta({
   layout: "empty",
 });
@@ -111,6 +124,7 @@ definePageMeta({
       v-else-if="currentComponent == 'Question'"
       :data="data"
       :is-admin="false"
+      @send-answer="sendAnswer"
     ></QuizQuestionSpace>
     <QuizScoreSpace
       v-else-if="currentComponent == 'Score'"

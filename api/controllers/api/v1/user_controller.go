@@ -3,7 +3,6 @@ package v1
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -148,7 +147,6 @@ func (ctrl *UserController) IsAdmin(c *fiber.Ctx) error {
 		return utils.JSONSuccess(c, http.StatusOK, true)
 	}
 
-	fmt.Println(user)
 	return utils.JSONFail(c, http.StatusBadRequest, constants.Unauthenticated)
 }
 

@@ -19,7 +19,7 @@ export default class AdminOperations extends QuizHandler {
   }
 
   quizStartRequest() {
-    this.sendMessage(this.currentComponent, this.app.$StartQuiz);
+    this.sendMessage(this, this.currentComponent, this.app.$StartQuiz);
   }
 
   handleConnectionProblem(self) {

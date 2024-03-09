@@ -9,6 +9,7 @@ import (
 	quizUtilsHelper "github.com/Improwised/quizz-app/api/helpers/utils"
 	"github.com/doug-martin/goqu/v9"
 	"github.com/google/uuid"
+	"go.uber.org/zap"
 )
 
 const ActiveQuizzesTable = "active_quizzes"
@@ -34,15 +35,13 @@ type ActiveQuiz struct {
 type ActiveQuizModel struct {
 	db          *goqu.Database
 	defaultUUID uuid.UUID
+	logger      *zap.Logger
 }
 
 // InitActiveQuizModel initializes the ActiveQuizModel
-func InitActiveQuizModel(goqu *goqu.Database) (*ActiveQuizModel, error) {
-	var uuid, err = uuid.NewUUID()
-	if err != nil {
-		return nil, err
-	}
-	return &ActiveQuizModel{db: goqu, defaultUUID: uuid}, nil
+func InitActiveQuizModel(goqu *goqu.Database, logger *zap.Logger) *ActiveQuizModel {
+	var uuid = uuid.UUID{}
+	return &ActiveQuizModel{db: goqu, defaultUUID: uuid, logger: logger}
 }
 
 func (model *ActiveQuizModel) CreateActiveQuiz(invitationCode int, title string, quizID uuid.UUID, adminID string, maxAttempt int, activatedTo sql.NullTime, activatedFrom sql.NullTime) (uuid.UUID, error) {
@@ -241,4 +240,31 @@ func activateSession(transactionObj *goqu.TxDatabase, maxTry int, sessionId uuid
 
 		return invitation_code, nil
 	}
+}
+
+func (model *ActiveQuizModel) Deactivate(id uuid.UUID) error {
+	result, err := model.db.Update("active_quizzes").Set(goqu.Record{
+		"invitation_code":    nil,
+		"is_active":          false,
+		"activated_to":       goqu.L("now()"),
+		"current_question":   nil,
+		"is_question_active": nil,
+	}).Where(goqu.I("id").Eq(id)).Executor().Exec()
+
+	if err != nil {
+		return err
+	}
+
+	affectedRow, err := result.RowsAffected()
+
+	if err != nil {
+		return err
+	}
+
+	if affectedRow == 0 {
+		return sql.ErrNoRows
+	}
+
+	return nil
+
 }

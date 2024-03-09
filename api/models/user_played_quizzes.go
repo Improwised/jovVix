@@ -31,15 +31,13 @@ type UserPlayedQuizModel struct {
 	defaultUUID uuid.UUID
 }
 
-func InitUserPlayedQuizModel(db *goqu.Database) (*UserPlayedQuizModel, error) {
-	var uuid, err = uuid.NewUUID()
-	if err != nil {
-		return nil, err
-	}
+func InitUserPlayedQuizModel(db *goqu.Database) *UserPlayedQuizModel {
+	uuid := uuid.UUID{}
+
 	return &UserPlayedQuizModel{
 		db:          db,
 		defaultUUID: uuid,
-	}, nil
+	}
 }
 
 // return: (uuid, int, err) -> user_quiz_session_id, status, err
@@ -156,8 +154,6 @@ func (model *UserPlayedQuizModel) GetActiveSession(id string, invitationCode str
 			"aq.invitation_code": invitationCode,
 		},
 	).Limit(1).ScanStruct(&activeQuiz)
-
-	fmt.Println(activeQuiz, err, found, id, invitationCode, userID)
 
 	if err != nil {
 		return activeQuiz, err

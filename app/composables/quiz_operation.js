@@ -1,3 +1,5 @@
+import constants from "~~/config/constants";
+
 export default class QuizHandler {
   JOIN_EVENT = "JOIN_REQUEST";
 
@@ -23,15 +25,21 @@ export default class QuizHandler {
     this.isOpen = false;
     this.retrying = 0;
 
+    // handle question
+    this.currentQuestion = null;
+    this.currentQuestionGetTime = null;
+
     // custom attributes
     this.socket = null;
     this.connect(this);
   }
 
+  // get address
   getAddress(self = this) {
     return self.socket_url;
   }
 
+  // connect and set websocket
   connect(self = this) {
     self.socket = new WebSocket(self.getAddress(self));
     self.socket.onopen = (event) => self.onOpen(self, event);
@@ -40,22 +48,115 @@ export default class QuizHandler {
     self.socket.onmessage = (event) => self.onMessage(self, event);
   }
 
-  async handler(_, message) {
-    if (!this.componentHandler) {
-      throw Error(
-        `Handler for component "${message.component}" is not registered`
-      );
+  // handle open event
+  onOpen(self = this, event) {
+    self.isOpen = true;
+    self.retrying = 0;
+    self.log.push({
+      state: "Init",
+      message: event,
+      time: new Date().toLocaleString(),
+    });
+  }
+
+  // destructure up-coming messages
+  destructureMessage(e) {
+    try {
+      const obj = JSON.parse(e.data);
+      obj["event"] = obj.data.event;
+      delete obj.data["event"];
+      obj["action"] = obj.data.data.action;
+      delete obj.data.data["action"];
+      obj["component"] = obj.data.data.component;
+      delete obj.data.data["component"];
+      obj["data"] = obj.data.data.data;
+      return obj;
+    } catch (err) {
+      this.onError(err);
+    }
+  }
+
+  // onmessage handler ans setup self object
+  onMessage(self = this, event) {
+    const message = self.destructureMessage(event);
+    self.currentComponent = message.component;
+    self.currentEvent = message.event;
+    self.log.push({
+      state: "Receive",
+      message,
+      time: new Date().toLocaleString(),
+    });
+    self.handler(self, message, event);
+  }
+
+  // pre-process message if needed and assign to outside function
+  async handler(self, message) {
+    if (
+      self.currentComponent == constants.Question &&
+      self.currentEvent == constants.GetQuestion
+    ) {
+      self.currentQuestion = message.data.id;
+      self.currentQuestionGetTime = new Date();
+    } else {
+      self.currentQuestionGetTime = null;
+    }
+
+    if (message.event == constants.TerminateQuiz) {
+      await self.handleTerminate();
     }
     this.componentHandler(message);
   }
 
-  onOpen(self = this, event) {
-    self.isOpen = true;
-    self.retrying = 0;
-    self.log.push({ state: "Init", message: event });
-    // console.log(event);
+  getAnswerResponseTime(self = this) {
+    if (self.currentQuestionGetTime != null) {
+      return new Date() - self.currentQuestionGetTime;
+    }
   }
 
+  // send message through socket
+  sendMessage(
+    self = this,
+    component = this.currentComponent,
+    event = this.currentEvent,
+    data = ""
+  ) {
+    if (self.socket.readyState == WebSocket.CLOSED) {
+      this.handleConnectionProblem(this);
+    }
+    const message = {
+      component: component,
+      event: event,
+      data: data,
+    };
+    try {
+      this.socket.send(JSON.stringify(message));
+    } catch (err) {
+      console.err(err);
+    } finally {
+      this.log.push({
+        state: "Sent",
+        message,
+        time: new Date().toLocaleString(),
+      });
+    }
+  }
+
+  // print full communication if needed
+  printLog() {
+    this.log.forEach((message) => {
+      if (message.state == "Sent") {
+        console.warn(message);
+      } else if (message.state == "Receive") {
+        console.warn(message);
+      } else if (message.state == "Init") {
+        console.log(message);
+      } else {
+        console.error(message);
+      }
+    });
+  }
+
+  // handle error and re-connecting
   onError(self = this, event) {
     // websocket can not connect to the server
     if (self.socket.readyState == WebSocket.CLOSED && !self.isOpen) {
@@ -76,68 +177,44 @@ export default class QuizHandler {
         }, 2000);
       }
     }
-    self.log.push({ state: "err", message: event });
-    // console.log(event);
+    self.log.push({
+      state: "err",
+      message: event,
+      time: new Date().toLocaleString(),
+    });
   }
 
+  // handle reconnecting problem - this function needs to override by the child
   handleConnectionProblem(self = this) {
     console.log("connection problem, retrying", self.retrying);
   }
 
+  // handle close event
   onClose(self = this, event) {
-    self.log.push({ state: "Init", message: event });
-    // console.log(event);
-  }
-
-  onMessage(self = this, event) {
-    const message = self.destructureMessage(event);
-    this.currentComponent = message.component;
-    this.currentEvent = message.event;
-    this.log.push({ state: "Receive", message });
-    self.handler(self, message, event);
-  }
-
-  destructureMessage(e) {
-    try {
-      const obj = JSON.parse(e.data);
-      obj["event"] = obj.data.event;
-      delete obj.data["event"];
-      obj["action"] = obj.data.data.action;
-      delete obj.data.data["action"];
-      obj["component"] = obj.data.data.component;
-      delete obj.data.data["component"];
-      obj["data"] = obj.data.data.data;
-      return obj;
-    } catch (err) {
-      this.onError(err);
-    }
-  }
-
-  sendMessage(
-    component = this.currentComponent,
-    event = this.currentEvent,
-    data = ""
-  ) {
-    const message = {
-      component: component,
-      event: event,
-      data: data,
-    };
-    this.log.push({ state: "Sent", message });
-    this.socket.send(JSON.stringify(message));
-  }
-
-  printLog() {
-    this.log.forEach((message) => {
-      if (message.state == "Sent") {
-        console.warn(message);
-      } else if (message.state == "Receive") {
-        console.warn(message);
-      } else if (message.state == "Init") {
-        console.log(message);
-      } else {
-        console.error(message);
-      }
+    self.log.push({
+      state: "Init",
+      message: event,
+      time: new Date().toLocaleString(),
     });
+    console.clear();
+    console.log("start printing log...");
+    self.printLog();
+    console.log("end log...");
+  }
+
+  async handleTerminate() {
+    let error;
+    try {
+      const response = await useFetch(this.api_url + "/quiz/terminate", {
+        method: "GET",
+        credentials: "include",
+        mode: "cors",
+      });
+      error = response.error.value;
+    } catch (err) {
+      error = err;
+    }
+
+    return { error };
   }
 }

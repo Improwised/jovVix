@@ -62,7 +62,7 @@ func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config confi
 		return err
 	}
 
-	helperStructs, err := quizHelper.InitHelper(goqu, config.RedisClient)
+	helperStructs, err := quizHelper.InitHelper(goqu, config.RedisClient, logger)
 
 	if err != nil {
 		return err
@@ -213,6 +213,9 @@ func quizController(
 	v1.Get(fmt.Sprintf("/socket/join/:%s", constants.QuizSessionInvitationCode), middleware.CheckSessionCode, middleware.CustomAuthenticated, sessionMiddle.PlayedQuizValidation, websocket.New(quizSocketController.Join))
 
 	v1.Post("/quiz/answer", middleware.Authenticated, quizController.SetAnswer)
+
+	v1.Get("/quiz/terminate", middleware.Authenticated, quizController.Terminate)
+
 	// admin endpoints
 	allowRoles, err := helper.RoleModel.NewAllowedRoles("admin")
 	if err != nil {

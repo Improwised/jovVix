@@ -3,7 +3,6 @@ package models
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"time"
 
 	"github.com/doug-martin/goqu/v9"
@@ -108,14 +107,14 @@ func (model *QuizModel) GetSharedQuestions(invitationCode int) ([]Question, erro
 			q.*,
 			aq.current_question,
 			aq.is_question_active,
-			sq.order_no
+			aqq.order_no
 		from
-			session_questions sq
+			active_quiz_questions aqq
 		join active_quizzes aq on
 			aq.invitation_code = $1
-			and aq.id = sq.active_quiz_id
+			and aq.id = aqq.active_quiz_id
 		join questions q on
-			q.id = sq.question_id
+			q.id = aqq.question_id
 		),
 		max_order as (
 			select order_no from (
@@ -168,7 +167,7 @@ func (model *QuizModel) GetSharedQuestions(invitationCode int) ([]Question, erro
 		var answers []byte
 		err := rows.Scan(&question.ID, &question.OrderNumber, &question.Question, &options, &answers, &question.Score, &question.CreatedAt, &question.UpdatedAt)
 		if err != nil {
-			fmt.Printf("Error scanning row: %v\n", err)
+
 			return nil, err
 		}
 
