@@ -111,6 +111,7 @@ const (
 	QuizSessionInvitationCode = "invitationCode"
 	SessionIDParam            = "session_id"
 	ActiveQuizObj             = "current active quiz obj"
+	NoPlayerFound             = "no player found"
 
 	// Event 5. Join quiz <User>
 	EventJoinQuiz                  = "invitation_code_validation"

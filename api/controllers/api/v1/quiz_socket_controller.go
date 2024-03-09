@@ -358,8 +358,6 @@ func (qc *quizSocketController) Arrange(c *websocket.Conn) {
 	// is isQuestionActive true -> quiz started
 	isInvitationCodeSent := session.CurrentQuestion.Valid
 
-	// fmt.Println(qc.helpers.PubSubModel.Client.PubSubNumSub(qc.helpers.PubSubModel.Ctx, sessionId).Val()[sessionId])
-
 	if !isInvitationCodeSent {
 		// handle Waiting page
 		for {
@@ -378,9 +376,17 @@ func (qc *quizSocketController) Arrange(c *websocket.Conn) {
 			// once code sent receive start signal
 			if isInvitationCodeSent {
 				isBreak := handleStartQuiz(c, qc.logger, &isConnected, response.Action)
-				if isBreak {
+				subscriberCount := qc.helpers.PubSubModel.Client.PubSubNumSub(qc.helpers.PubSubModel.Ctx, sessionId).Val()[sessionId]
+				if subscriberCount != 0 && isBreak {
 					break
+				} else {
+					response.Data = constants.NoPlayerFound
+					err := utils.JSONFailWs(c, constants.EventStartQuiz, response)
+					if err != nil {
+						qc.logger.Error(fmt.Sprintf("socket error middleware: %s event, %s action", constants.EventAuthentication, response.Action), zap.Error(err))
+					}
 				}
+
 			}
 		}
 	}
@@ -401,15 +407,7 @@ func (qc *quizSocketController) Arrange(c *websocket.Conn) {
 		wg.Wait()
 	}
 
-	response.Component = constants.Score
-	response.Data = constants.ActionTerminateQuiz
-	shareEvenWithUser(c, qc, response, constants.EventTerminateQuiz, sessionId, int(session.InvitationCode.Int32))
-
-	err = qc.helpers.ActiveQuizModel.Deactivate(session.ID)
-	if err != nil {
-		qc.logger.Error(fmt.Sprintf("socket error get remaining questions: %s event, %s action %v code", constants.EventStartQuiz, response.Action, session.InvitationCode), zap.Error(err))
-		return
-	}
+	terminateQuiz(c, qc, response, session)
 }
 
 func sendQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.WaitGroup, response QuizSendResponse, session models.ActiveQuiz, question models.Question) {
@@ -467,6 +465,7 @@ func ActivateAndGetSession(c *websocket.Conn, helpers *quizHelper.HelperGroup, l
 	}
 
 	session, err := helpers.ActiveQuizModel.GetOrActivateSession(sessionId, userId)
+	fmt.Println(session, err)
 
 	if err != nil {
 		if err.Error() == constants.Unauthenticated {
@@ -552,5 +551,17 @@ func shareEvenWithUser(c *websocket.Conn, qc *quizSocketController, response Qui
 	err = utils.JSONSuccessWs(c, event, response)
 	if err != nil {
 		qc.logger.Error(fmt.Sprintf("socket error sending event: %s event, %s action %v code", constants.EventSendQuestion, response.Action, invitationCode), zap.Error(err))
+	}
+}
+
+func terminateQuiz(c *websocket.Conn, qc *quizSocketController, response QuizSendResponse, session models.ActiveQuiz) {
+	response.Component = constants.Score
+	response.Data = constants.ActionTerminateQuiz
+	shareEvenWithUser(c, qc, response, constants.EventTerminateQuiz, session.ID.String(), int(session.InvitationCode.Int32))
+
+	err := qc.helpers.ActiveQuizModel.Deactivate(session.ID)
+	if err != nil {
+		qc.logger.Error(fmt.Sprintf("socket error get remaining questions: %s event, %s action %v code", constants.EventStartQuiz, response.Action, session.InvitationCode), zap.Error(err))
+		return
 	}
 }
