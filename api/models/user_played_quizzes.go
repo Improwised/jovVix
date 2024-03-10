@@ -168,3 +168,18 @@ func (model *UserPlayedQuizModel) GetActiveSession(id string, invitationCode str
 
 	return activeQuiz, nil
 }
+
+func (model *UserPlayedQuizModel) GetCurrentActiveQuestion(id uuid.UUID) (uuid.UUID, error) {
+	var currentQuestion uuid.UUID
+	found, err := model.db.Select("current_question").From(goqu.T(ActiveQuizzesTable).As("aq")).Join(goqu.T(UserPlayedQuizTable).As("upq"), goqu.On(goqu.I("upq.id").Eq(id), goqu.I("aq.is_question_active").Eq(true), goqu.I("upq.active_quiz_id").Eq(goqu.I("aq.id")))).ScanVal(&currentQuestion)
+
+	if err != nil {
+		return uuid.UUID{}, err
+	}
+
+	if !found {
+		return uuid.UUID{}, sql.ErrNoRows
+	}
+
+	return currentQuestion, nil
+}

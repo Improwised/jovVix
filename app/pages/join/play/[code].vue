@@ -96,8 +96,7 @@ const startQuiz = () => {
 const sendAnswer = async (answers) => {
   const response = await userOperationHandler.value.handleSendAnswer(answers);
 
-  console.log(response.error);
-  if (response.error) {
+  if (response?.error) {
     toast.error(response.error);
     return;
   }

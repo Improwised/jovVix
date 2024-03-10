@@ -145,6 +145,7 @@ const (
 	ErrQuizNotFound           = "error current quiz not found"
 	ErrAnswerSubmit           = "error malfunction in inputs"
 	ErrAnswerAlreadySubmitted = "answer already submitted"
+	ErrQuestionNotActive      = "question can not receive answers anymore"
 
 	// Event 8. Get score page
 	EventShowScore  = "show_score"

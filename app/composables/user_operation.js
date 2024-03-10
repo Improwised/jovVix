@@ -26,7 +26,7 @@ export default class UserOperation extends QuizHandler {
   async handleSendAnswer(answers) {
     let error;
     try {
-      const response = await useFetch(this.api_url + "/quiz/answer", {
+      const response = await fetch(this.api_url + "/quiz/answer", {
         method: "POST",
         body: JSON.stringify({
           id: this.currentQuestion,
@@ -35,9 +35,9 @@ export default class UserOperation extends QuizHandler {
         credentials: "include",
         mode: "cors",
       });
-      error = response.error.value;
+      const responseJson = await response.json();
+      error = responseJson.data;
     } catch (err) {
-      console.log(err, "---------------------------------");
       error = err;
     }
 

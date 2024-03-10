@@ -268,3 +268,18 @@ func (model *ActiveQuizModel) Deactivate(id uuid.UUID) error {
 	return nil
 
 }
+
+func (model *ActiveQuizModel) GetCurrentActiveQuestion(id uuid.UUID) (uuid.UUID, error) {
+	var currentQuestion uuid.UUID
+	found, err := model.db.Select("current_question").From(ActiveQuizzesTable).Where(goqu.I("id").Eq(id), goqu.I("is_question_active").Eq(true)).ScanVal(&currentQuestion)
+
+	if err != nil {
+		return uuid.UUID{}, err
+	}
+
+	if !found {
+		return uuid.UUID{}, sql.ErrNoRows
+	}
+
+	return currentQuestion, nil
+}

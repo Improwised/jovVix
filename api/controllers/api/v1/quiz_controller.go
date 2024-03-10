@@ -84,6 +84,23 @@ func (ctrl *QuizController) SetAnswer(c *fiber.Ctx) error {
 		return utils.JSONFail(c, http.StatusBadRequest, utils.ValidatorErrorString(err))
 	}
 
+	// check for question is active or not to receive answers
+	currentQuestion, err := ctrl.helper.UserPlayedQuizModel.GetCurrentActiveQuestion(currentQuizId)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			ctrl.logger.Error("error during answer submit get current active question", zap.Any("answers", answer), zap.Any("current_quiz_id", currentQuizId))
+			return utils.JSONFail(c, http.StatusBadRequest, constants.ErrAnswerSubmit)
+		}
+
+		ctrl.logger.Error("error during answer submit", zap.Error(err))
+		return utils.JSONFail(c, http.StatusBadRequest, constants.UnknownError)
+	}
+
+	if currentQuestion != answer.QuestionId {
+		return utils.JSONFail(c, http.StatusBadRequest, constants.ErrQuestionNotActive)
+	}
+
 	// calculate score
 	score, err := ctrl.helper.QuestionModel.CalculateScore(answer)
 
