@@ -119,12 +119,12 @@ func (model *ActiveQuizModel) GetOrActivateSession(sessionId string, userId stri
 		if isOk {
 			err = transactionObj.Commit()
 			if err != nil {
-				fmt.Println(err)
+				model.logger.Error("error is transaction commit during GetOrActivateSession", zap.Error(err))
 			}
 		} else {
 			err = transactionObj.Rollback()
 			if err != nil {
-				fmt.Println(err)
+				model.logger.Error("error is transaction commit during GetOrActivateSession", zap.Error(err))
 			}
 		}
 	}()

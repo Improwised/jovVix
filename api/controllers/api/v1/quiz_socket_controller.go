@@ -465,7 +465,6 @@ func ActivateAndGetSession(c *websocket.Conn, helpers *quizHelper.HelperGroup, l
 	}
 
 	session, err := helpers.ActiveQuizModel.GetOrActivateSession(sessionId, userId)
-	fmt.Println(session, err)
 
 	if err != nil {
 		if err.Error() == constants.Unauthenticated {
