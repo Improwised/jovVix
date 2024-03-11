@@ -25,12 +25,14 @@ export default class UserOperation extends QuizHandler {
 
   async handleSendAnswer(answers) {
     let error;
+    const responseTime = this.getAnswerResponseTime();
     try {
       const response = await fetch(this.api_url + "/quiz/answer", {
         method: "POST",
         body: JSON.stringify({
           id: this.currentQuestion,
           keys: answers || [],
+          response_time: responseTime,
         }),
         credentials: "include",
         mode: "cors",

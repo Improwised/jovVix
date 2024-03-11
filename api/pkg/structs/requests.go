@@ -19,6 +19,7 @@ type ReqLoginUser struct {
 }
 
 type ReqAnswerSubmit struct {
-	QuestionId uuid.UUID `json:"id" validate:"required"`
-	AnswerKeys []int     `json:"keys" validate:"required"`
+	QuestionId   uuid.UUID `json:"id" validate:"required"`
+	AnswerKeys   []int     `json:"keys" validate:"required"`
+	ResponseTime int       `json:"response_time" validate:"required"`
 }

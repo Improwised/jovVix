@@ -107,9 +107,9 @@ export default class QuizHandler {
     this.componentHandler(message);
   }
 
-  getAnswerResponseTime(self = this) {
-    if (self.currentQuestionGetTime != null) {
-      return new Date() - self.currentQuestionGetTime;
+  getAnswerResponseTime() {
+    if (this.currentQuestionGetTime != null) {
+      return new Date() - this.currentQuestionGetTime;
     }
   }
 
