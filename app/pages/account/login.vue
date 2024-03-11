@@ -14,8 +14,9 @@ async function login_user(e) {
   e.preventDefault();
   const urls = useSystemEnv("urls");
 
-  if (urls.value === undefined) {
+  if (urls.value?.api_url === undefined) {
     toast.info(app.$ReloadRequired);
+    return
   }
 
   const login_url = urls.value?.api_url + "/login";

@@ -59,7 +59,7 @@ const handleQuizEvents = async (message) => {
     message.data == app.$SessionWasCompleted
   ) {
     return await router.push(
-      "/join?status=" + message.status + "&error=" + message.data
+      "/admin/arrange?status=" + message.status + "&error=" + message.data
     );
   } else {
     if (
