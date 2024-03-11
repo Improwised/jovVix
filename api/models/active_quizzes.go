@@ -145,7 +145,6 @@ func (model *ActiveQuizModel) GetOrActivateSession(sessionId string, userId stri
 	}
 
 	if activeQuiz.ActivatedTo.Valid {
-		fmt.Println("here ........................................", activeQuiz, activeQuiz.ActivatedTo, activeQuiz.ActivatedFrom)
 		return activeQuiz, fmt.Errorf(constants.ErrSessionWasCompleted)
 	}
 
@@ -178,7 +177,6 @@ func (model *ActiveQuizModel) GetSessionById(db *goqu.TxDatabase, sessionId stri
 		return activeQuiz, fmt.Errorf(constants.ErrSessionNotFound)
 	}
 
-	fmt.Println(activeQuiz, "------------------------------------")
 	return activeQuiz, nil
 }
 

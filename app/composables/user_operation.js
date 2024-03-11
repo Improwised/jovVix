@@ -14,11 +14,10 @@ export default class UserOperation extends QuizHandler {
     );
     this.errorHandler = errorHandler;
     this.api_url = url.value.api_url;
-    console.log(url.value.api_url);
   }
 
-  handleConnectionProblem(self) {
-    self.errorHandler("problem in connecting with server");
+  handleConnectionProblem() {
+    this.errorHandler("problem in connecting with server");
   }
 
   async handleSendAnswer(answers) {

@@ -352,8 +352,6 @@ func (qc *quizSocketController) Arrange(c *websocket.Conn) {
 
 	// activate session
 	session, err := ActivateAndGetSession(c, qc.helpers, qc.logger, sessionId, user.ID)
-	fmt.Println(sessionId, "=======================", session)
-	fmt.Println(sessionId, "=======================", session.ActivatedFrom, session.ActivatedTo, session.IsActive)
 
 	if err != nil {
 		qc.logger.Error(fmt.Sprintf("socket error middleware: %s event, %s action", constants.EventAuthentication, response.Action), zap.Error(fmt.Errorf("user-type conversion failed")))
@@ -363,7 +361,6 @@ func (qc *quizSocketController) Arrange(c *websocket.Conn) {
 
 	// is isQuestionActive true -> quiz started
 	isInvitationCodeSent := session.CurrentQuestion.Valid
-	fmt.Println(isInvitationCodeSent, "is started?")
 
 	if !isInvitationCodeSent {
 		// handle Waiting page
@@ -405,7 +402,6 @@ func (qc *quizSocketController) Arrange(c *websocket.Conn) {
 
 	response.Component = constants.Question
 	questions, err := qc.helpers.QuizModel.GetSharedQuestions(int(session.InvitationCode.Int32))
-	fmt.Println(questions)
 	if err != nil {
 		qc.logger.Error(fmt.Sprintf("socket error get remaining questions: %s event, %s action %v code", constants.EventStartQuiz, response.Action, session.InvitationCode), zap.Error(err))
 		return

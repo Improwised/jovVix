@@ -115,8 +115,7 @@ func (ctrl *QuizController) SetAnswer(c *fiber.Ctx) error {
 
 		return utils.JSONFail(c, http.StatusBadRequest, constants.UnknownError)
 	}
-
-	fmt.Println("\n\n\n\n", "---------------------------------", score, err, answer)
+	
 	// core logic
 	err = ctrl.helper.UserQuizResponseModel.SubmitAnswer(currentQuizId, answer, score)
 
