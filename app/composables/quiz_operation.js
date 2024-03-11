@@ -13,7 +13,6 @@ export default class QuizHandler {
     }
 
     // general attributes
-    this.socket_url = socket_url;
     this.others = others;
     this.identifier = identifier;
     this.componentHandler = componentHandler;
@@ -31,28 +30,24 @@ export default class QuizHandler {
 
     // custom attributes
     this.socket = null;
+    this.socket_url = socket_url;
     this.connect(this);
   }
 
-  // get address
-  getAddress(self = this) {
-    return self.socket_url;
-  }
-
   // connect and set websocket
-  connect(self = this) {
-    self.socket = new WebSocket(self.getAddress(self));
-    self.socket.onopen = (event) => self.onOpen(self, event);
-    self.socket.onerror = (event) => self.onError(self, event);
-    self.socket.onclose = (event) => self.onClose(self, event);
-    self.socket.onmessage = (event) => self.onMessage(self, event);
+  connect() {
+    this.socket = new WebSocket(this.socket_url);
+    this.socket.onopen = (event) => this.onOpen(event);
+    this.socket.onerror = (event) => this.onError(event);
+    this.socket.onclose = (event) => this.onClose(event);
+    this.socket.onmessage = (event) => this.onMessage(event);
   }
 
   // handle open event
-  onOpen(self = this, event) {
-    self.isOpen = true;
-    self.retrying = 0;
-    self.log.push({
+  onOpen(event) {
+    this.isOpen = true;
+    this.retrying = 0;
+    this.log.push({
       state: "Init",
       message: event,
       time: new Date().toLocaleString(),
@@ -77,33 +72,34 @@ export default class QuizHandler {
   }
 
   // onmessage handler ans setup self object
-  onMessage(self = this, event) {
-    const message = self.destructureMessage(event);
-    self.currentComponent = message.component;
-    self.currentEvent = message.event;
-    self.log.push({
+  onMessage(event) {
+    const message = this.destructureMessage(event);
+    this.currentComponent = message.component;
+    this.currentEvent = message.event;
+    this.log.push({
       state: "Receive",
       message,
       time: new Date().toLocaleString(),
     });
-    self.handler(self, message, event);
+    this.handler(message, event);
   }
 
   // pre-process message if needed and assign to outside function
-  async handler(self, message) {
+  async handler(message) {
     if (
-      self.currentComponent == constants.Question &&
-      self.currentEvent == constants.GetQuestion
+      this.currentComponent == constants.Question &&
+      this.currentEvent == constants.GetQuestion
     ) {
-      self.currentQuestion = message.data.id;
-      self.currentQuestionGetTime = new Date();
+      this.currentQuestion = message.data.id;
+      this.currentQuestionGetTime = new Date();
     } else {
-      self.currentQuestionGetTime = null;
+      this.currentQuestionGetTime = null;
     }
 
     if (message.event == constants.TerminateQuiz) {
-      await self.handleTerminate();
+      await this.handleTerminate();
     }
+
     this.componentHandler(message);
   }
 
@@ -115,12 +111,11 @@ export default class QuizHandler {
 
   // send message through socket
   sendMessage(
-    self = this,
     component = this.currentComponent,
     event = this.currentEvent,
     data = ""
   ) {
-    if (self.socket.readyState == WebSocket.CLOSED) {
+    if (this.socket.readyState == WebSocket.CLOSED) {
       this.handleConnectionProblem(this);
     }
     const message = {
@@ -131,7 +126,7 @@ export default class QuizHandler {
     try {
       this.socket.send(JSON.stringify(message));
     } catch (err) {
-      console.err(err);
+      console.error(err);
     } finally {
       this.log.push({
         state: "Sent",
@@ -157,27 +152,27 @@ export default class QuizHandler {
   }
 
   // handle error and re-connecting
-  onError(self = this, event) {
+  onError(event) {
     // websocket can not connect to the server
-    if (self.socket.readyState == WebSocket.CLOSED && !self.isOpen) {
+    if (this.socket.readyState == WebSocket.CLOSED && !this.isOpen) {
       // sent alert
-      self.handleConnectionProblem(self);
+      this.handleConnectionProblem();
 
       // check if retrying process is undergoing
-      if (self.retrying == 0) {
+      if (this.retrying == 0) {
         // check for every 2 second
         const id = setInterval(() => {
-          if (self.retrying < 3 && !self.isOpen) {
-            self.retrying += 1;
-            self.connect(self);
+          if (this.retrying < 3 && !this.isOpen) {
+            this.retrying += 1;
+            this.connect();
           } else {
             clearInterval(id);
-            self.retrying = -1;
+            this.retrying = -1;
           }
         }, 2000);
       }
     }
-    self.log.push({
+    this.log.push({
       state: "err",
       message: event,
       time: new Date().toLocaleString(),
@@ -185,21 +180,17 @@ export default class QuizHandler {
   }
 
   // handle reconnecting problem - this function needs to override by the child
-  handleConnectionProblem(self = this) {
-    console.log("connection problem, retrying", self.retrying);
+  handleConnectionProblem() {
+    console.log("connection problem, retrying", this.retrying);
   }
 
   // handle close event
-  onClose(self = this, event) {
-    self.log.push({
+  onClose(event) {
+    this.log.push({
       state: "Init",
       message: event,
       time: new Date().toLocaleString(),
     });
-    console.clear();
-    console.log("start printing log...");
-    self.printLog();
-    console.log("end log...");
   }
 
   async handleTerminate() {

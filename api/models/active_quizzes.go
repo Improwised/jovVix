@@ -204,11 +204,11 @@ func activateSession(transactionObj *goqu.TxDatabase, maxTry int, sessionId uuid
 			invitation_code=$3,
 			is_active=true,
 			activated_from=now(),
-			updated_at = now()
+			updated_at=now()
 		WHERE
 			id=$1 and
 			admin_id=$2 and
-			is_active = false and
+			is_active=false and
 			not exists (
 				select 1 from active_quizzes where invitation_code = $3 limit 1
 			)
