@@ -64,6 +64,8 @@ const handleQuizEvents = async (message) => {
     return await router.push(
       "/join?status=" + message.status + "&error=" + message.data
     );
+  } else if (message.data == app.$AdminDisconnected) {
+    toast.warning(app.$AdminDisconnectedMessage);
   } else {
     if (
       message.status == app.$Fail &&

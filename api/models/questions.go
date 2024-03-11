@@ -25,14 +25,15 @@ type ActiveQuizQuestions struct {
 const QuestionTable = "questions"
 
 type Question struct {
-	ID          uuid.UUID         `json:"id" db:"id"`
-	Question    string            `json:"question" db:"question"`
-	Options     map[string]string `json:"options" db:"options"`
-	Answers     []int             `json:"answers" db:"answers"`
-	Score       int16             `json:"score,omitempty" db:"score"`
-	CreatedAt   time.Time         `json:"created_at" db:"created_at"`
-	UpdatedAt   time.Time         `json:"updated_at" db:"updated_at"`
-	OrderNumber int               `json:"order"`
+	ID                uuid.UUID         `json:"id" db:"id"`
+	Question          string            `json:"question" db:"question"`
+	Options           map[string]string `json:"options" db:"options"`
+	Answers           []int             `json:"answers" db:"answers"`
+	Score             int16             `json:"score,omitempty" db:"score"`
+	DurationInSeconds int               `json:"duration" db:"duration_in_seconds"`
+	CreatedAt         time.Time         `json:"created_at" db:"created_at"`
+	UpdatedAt         time.Time         `json:"updated_at" db:"updated_at"`
+	OrderNumber       int               `json:"order"`
 }
 
 // QuizModel implements quiz related database operations

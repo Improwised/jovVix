@@ -28,6 +28,9 @@ export default {
   TerminateQuiz: "terminate_quiz",
   InvitationCodeValidation: "invitation_code_validation",
   RedirectToAdmin: "redirect_to_admin",
+  NextQuestionAsk: "next_question",
+  AdminDisconnected: "admin_is_disconnected",
+  AdminDisconnectedMessage: "admin is disconnected, please wait...",
 
   // Errors
   Unauthorized: "unauthorized to access resource",

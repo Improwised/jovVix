@@ -29,6 +29,11 @@ const question = ref();
 const answer = ref([]);
 const counter = ref(null);
 const count = ref(0);
+const timer = ref(null);
+const time = ref(0);
+const progressValue = computed(() => {
+  return (time.value * 100) / question.value.duration;
+});
 const isSubmitted = ref(false);
 
 // watchers
@@ -50,14 +55,26 @@ function handleEvent(message) {
     question.value = message.data;
     answer.value = [];
     count.value = null;
+    clearInterval(timer.value);
+    timer.value = setInterval(() => {
+      time.value += 1;
+      console.log(message.data.duration, time.value);
+      if (time.value == message.data?.duration + 1) {
+        clearInterval(timer.value);
+        time.value = -1;
+        timer.value = null;
+      }
+    }, 1000);
   } else if (message.event == app.$Counter) {
     let secs = 0;
     question.value = null;
     count.value = 1;
+    time.value = 0;
+    clearInterval(counter.value);
     counter.value = setInterval(() => {
       count.value += 1;
-      secs += 1000;
-      if (parseInt(props.data.data.count) * 1000 <= secs) {
+      secs += 1;
+      if (parseInt(props.data.data.count) <= secs) {
         clearInterval(counter.value);
         count.value = app.$ReadyMessage;
         counter.value = null;
@@ -82,9 +99,23 @@ function handleSubmit(e) {
     page-title="Question"
     page-message="let's play"
   >
+    <template #sub-title>
+      <v-progress-circular
+        :model-value="progressValue"
+        :rotate="0"
+        :size="80"
+        :width="13"
+        color="primary"
+      >
+        {{ question.duration - time }}
+      </v-progress-circular>
+    </template>
     <div>{{ question.no }}</div>
     <div>
       {{ question.question }}
+    </div>
+    <div>
+      {{ question.duration }}
     </div>
     <div class="d-flex">
       <div

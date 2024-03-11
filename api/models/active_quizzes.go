@@ -16,19 +16,20 @@ const ActiveQuizzesTable = "active_quizzes"
 
 // ActiveQuiz model
 type ActiveQuiz struct {
-	ID               uuid.UUID      `json:"id" db:"id"`
-	InvitationCode   sql.NullInt32  `json:"invitation_code" db:"invitation_code"`
-	Title            string         `json:"title,omitempty" db:"title"`
-	QuizID           uuid.UUID      `json:"quiz_id" db:"quiz_id"`
-	AdminID          string         `json:"admin_id,omitempty" db:"admin_id"`
-	ActivatedTo      sql.NullTime   `json:"activated_to,omitempty" db:"activated_to"`
-	ActivatedFrom    sql.NullTime   `json:"activated_from,omitempty" db:"activated_from"`
-	IsActive         bool           `json:"is_active" db:"is_active"`
-	QuizAnalysis     sql.NullString `json:"quiz_analysis,omitempty" db:"quiz_analysis"`
-	CurrentQuestion  sql.NullString `json:"current_question" db:"current_question"`
-	IsQuestionActive sql.NullBool   `json:"is_question_active" db:"is_question_active"`
-	CreatedAt        time.Time      `json:"created_at,omitempty" db:"created_at,omitempty"`
-	UpdatedAt        time.Time      `json:"updated_at,omitempty" db:"updated_at,omitempty"`
+	ID                   uuid.UUID      `json:"id" db:"id"`
+	InvitationCode       sql.NullInt32  `json:"invitation_code" db:"invitation_code"`
+	Title                string         `json:"title,omitempty" db:"title"`
+	QuizID               uuid.UUID      `json:"quiz_id" db:"quiz_id"`
+	AdminID              string         `json:"admin_id,omitempty" db:"admin_id"`
+	ActivatedTo          sql.NullTime   `json:"activated_to,omitempty" db:"activated_to"`
+	ActivatedFrom        sql.NullTime   `json:"activated_from,omitempty" db:"activated_from"`
+	IsActive             bool           `json:"is_active" db:"is_active"`
+	QuizAnalysis         sql.NullString `json:"quiz_analysis,omitempty" db:"quiz_analysis"`
+	CurrentQuestion      sql.NullString `json:"current_question" db:"current_question"`
+	IsQuestionActive     sql.NullBool   `json:"is_question_active" db:"is_question_active"`
+	QuestionDeliveryTime sql.NullTime   `json:"question_time" db:"question_delivery_time"`
+	CreatedAt            time.Time      `json:"created_at,omitempty" db:"created_at,omitempty"`
+	UpdatedAt            time.Time      `json:"updated_at,omitempty" db:"updated_at,omitempty"`
 }
 
 // ActiveQuizModel implements quiz session related database operations
@@ -244,11 +245,12 @@ func activateSession(transactionObj *goqu.TxDatabase, maxTry int, sessionId uuid
 
 func (model *ActiveQuizModel) Deactivate(id uuid.UUID) error {
 	result, err := model.db.Update("active_quizzes").Set(goqu.Record{
-		"invitation_code":    nil,
-		"is_active":          false,
-		"activated_to":       goqu.L("now()"),
+		"invitation_code": nil,
+		"is_active":       false,
+		// "activated_to":       goqu.L("now()"),
 		"current_question":   nil,
 		"is_question_active": nil,
+		"updated_at":         goqu.L("now()"),
 	}).Where(goqu.I("id").Eq(id)).Executor().Exec()
 
 	if err != nil {

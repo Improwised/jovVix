@@ -40,8 +40,15 @@ watch(
 <template>
   <div class="d-flex justify-content-center">
     <div class="border p-2 m-0 m-sm-5 p-sm-5 max-width rounded">
-      <h1>{{ pageTitle }}</h1>
-      <h6 v-if="props.pageMessage">{{ pageMessage }}</h6>
+      <div class="d-flex flex-row">
+        <div class="flex-grow-1">
+          <h1>{{ pageTitle }}</h1>
+          <h6 v-if="props.pageMessage">{{ pageMessage }}</h6>
+        </div>
+        <div>
+          <slot name="sub-title"></slot>
+        </div>
+      </div>
 
       <hr class="m-2" />
       <slot></slot>

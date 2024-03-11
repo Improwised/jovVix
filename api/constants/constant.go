@@ -66,6 +66,7 @@ const (
 	Waiting  = "Waiting"
 	Question = "Question"
 	Score    = "Score"
+	Loading  = "Loading"
 )
 
 // constants
@@ -140,6 +141,8 @@ const (
 	EventPublishQuestion = "publish_question"
 	EventStartCount5     = "5_sec_counter" // use by web
 	ActionCounter        = "5 second counter"
+	EventNextQuestionAsk = "next_question"         // use by web
+	AdminDisconnected    = "admin_is_disconnected" // use by web
 
 	// Event 8. Submit answer
 	ErrQuizNotFound           = "error current quiz not found"

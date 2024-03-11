@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -366,7 +367,7 @@ func (qc *quizSocketController) Arrange(c *websocket.Conn) {
 	}
 
 	// handle code sharing with admin
-	handleCodeGeneration(c, qc, session, &isConnected, response)
+	handleCodeGeneration(c, qc, session, &isConnected, &response)
 
 	// if connection lost during waiting of start event
 	if !(isConnected) {
@@ -376,27 +377,47 @@ func (qc *quizSocketController) Arrange(c *websocket.Conn) {
 
 	// question component handling
 	response.Component = constants.Question
-	questions, err := qc.helpers.QuizModel.GetSharedQuestions(int(session.InvitationCode.Int32))
+	questions, lastQuestionDeliveryTime, err := qc.helpers.QuizModel.GetSharedQuestions(int(session.InvitationCode.Int32))
 	if err != nil {
 		qc.logger.Error(fmt.Sprintf("socket error get remaining questions: %s event, %s action %v code", constants.EventStartQuiz, response.Action, session.InvitationCode), zap.Error(err))
 		return
 	}
 
-	response.Component = constants.Question
+	fmt.Println(questions, lastQuestionDeliveryTime, "\n\n\n\n\n\n", "--------------------------")
+	var isFirst bool = lastQuestionDeliveryTime.Valid
 	var wg sync.WaitGroup
+	response.Component = constants.Question
 	for _, question := range questions {
 		wg.Add(1)
-		go sendQuestion(c, qc, &wg, response, session, question)
+		if isFirst {
+			isFirst = false
+			sendQuestion(c, qc, &wg, &response, session, question, lastQuestionDeliveryTime)
+		} else {
+			sendQuestion(c, qc, &wg, &response, session, question, sql.NullTime{})
+		}
 		wg.Wait()
+
+		err := utils.JSONSuccessWs(c, constants.EventNextQuestionAsk, response)
+
+		if err != nil {
+			qc.logger.Error("socket error during asking for next question", zap.Error(err))
+		}
+
+		if !handleNextQuestion(c, qc.logger, &isConnected) {
+			response.Component = constants.Loading
+			response.Data = constants.AdminDisconnected
+			shareEvenWithUser(c, qc, &response, constants.AdminDisconnected, sessionId, int(session.InvitationCode.Int32), false)
+			break
+		}
 	}
 
 	// termination of quiz
-	if session.ActivatedFrom.Valid {
-		terminateQuiz(c, qc, response, session)
+	if session.ActivatedFrom.Valid && isConnected {
+		terminateQuiz(c, qc, &response, session)
 	}
 }
 
-func handleCodeGeneration(c *websocket.Conn, qc *quizSocketController, session models.ActiveQuiz, isConnected *bool, response QuizSendResponse) {
+func handleCodeGeneration(c *websocket.Conn, qc *quizSocketController, session models.ActiveQuiz, isConnected *bool, response *QuizSendResponse) {
 	// is isQuestionActive true -> quiz started
 	isInvitationCodeSent := session.CurrentQuestion.Valid
 
@@ -434,34 +455,54 @@ func handleCodeGeneration(c *websocket.Conn, qc *quizSocketController, session m
 	}
 }
 
-func sendQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.WaitGroup, response QuizSendResponse, session models.ActiveQuiz, question models.Question) {
-	// start counter
-	response.Action = constants.ActionCounter
-	response.Data = map[string]int{"counter": constants.Counter, "count": constants.Count}
-	shareEvenWithUser(c, qc, response, constants.EventStartCount5, session.ID.String(), int(session.InvitationCode.Int32))
-	time.Sleep(time.Duration(constants.Counter) * time.Second)
+func sendQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.WaitGroup, response *QuizSendResponse, session models.ActiveQuiz, question models.Question, lastQuestionTimeStamp sql.NullTime) {
+	// start counter if not any question running
+	if !lastQuestionTimeStamp.Valid {
+		response.Action = constants.ActionCounter
+		response.Data = map[string]int{"counter": constants.Counter, "count": constants.Count}
+		shareEvenWithUser(c, qc, response, constants.EventStartCount5, session.ID.String(), int(session.InvitationCode.Int32), false)
+		time.Sleep(time.Duration(constants.Counter) * time.Second)
 
-	// update question status to activate
-	err := qc.helpers.QuizModel.UpdateCurrentQuestion(session.ID, question.ID, true)
-	if err != nil {
-		qc.logger.Error(fmt.Sprintf("socket error update current question: %s event, %s action %v code", constants.EventSendQuestion, response.Action, session.InvitationCode), zap.Error(err))
+		// update question status to activate
+		err := qc.helpers.QuizModel.UpdateCurrentQuestion(session.ID, question.ID, true)
+		if err != nil {
+			qc.logger.Error(fmt.Sprintf("socket error update current question: %s event, %s action %v code", constants.EventSendQuestion, response.Action, session.InvitationCode), zap.Error(err))
+		}
 	}
 
 	// question sent
 	response.Action = constants.ActionSendQuestion
-	response.Data = map[string]any{
-		"id":       question.ID,
-		"no":       question.OrderNumber,
-		"question": question.Question,
-		"options":  question.Options,
+	responseData := map[string]any{
+		"id":            question.ID,
+		"no":            question.OrderNumber,
+		"duration":      question.DurationInSeconds,
+		"question_time": lastQuestionTimeStamp.Time,
+		"question":      question.Question,
+		"options":       question.Options,
 	}
-	shareEvenWithUser(c, qc, response, constants.EventSendQuestion, session.ID.String(), int(session.InvitationCode.Int32))
 
-	// ideal time for answer submission
-	time.Sleep(10 * time.Second)
+	if !lastQuestionTimeStamp.Valid {
+		responseData["question_time"] = ""
+		response.Data = responseData
+		shareEvenWithUser(c, qc, response, constants.EventSendQuestion, session.ID.String(), int(session.InvitationCode.Int32), false)
+	} else {
+		responseData["duration"] = question.DurationInSeconds - int(time.Since(lastQuestionTimeStamp.Time).Seconds())
+		response.Data = responseData
+		shareEvenWithUser(c, qc, response, constants.EventSendQuestion, session.ID.String(), int(session.InvitationCode.Int32), true)
+	}
+
+	wgForQuestion := &sync.WaitGroup{}
+	wgForQuestion.Add(1)
+	if !lastQuestionTimeStamp.Valid { // new question
+		go handleAnswerSubmission(question.DurationInSeconds, wgForQuestion)
+	} else { // current question
+		duration := question.DurationInSeconds - int(time.Since(lastQuestionTimeStamp.Time).Seconds())
+		go handleAnswerSubmission(duration, wgForQuestion)
+	}
+	wgForQuestion.Wait()
 
 	// update current status to deactivate
-	err = qc.helpers.QuizModel.UpdateCurrentQuestion(session.ID, question.ID, false)
+	err := qc.helpers.QuizModel.UpdateCurrentQuestion(session.ID, question.ID, false)
 	if err != nil {
 		qc.logger.Error(fmt.Sprintf("socket error update current question: %s event, %s action %v code", constants.EventSendQuestion, response.Action, session.InvitationCode), zap.Error(err))
 	}
@@ -473,8 +514,13 @@ func sendQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.WaitGrou
 	response.Data = map[string]any{
 		"no": question.OrderNumber,
 	}
-	shareEvenWithUser(c, qc, response, constants.EventShowScore, session.ID.String(), int(session.InvitationCode.Int32))
+	shareEvenWithUser(c, qc, response, constants.EventShowScore, session.ID.String(), int(session.InvitationCode.Int32), false)
 	time.Sleep(5 * time.Second)
+	wg.Done()
+}
+
+func handleAnswerSubmission(duration int, wg *sync.WaitGroup) {
+	time.Sleep(time.Duration(duration) * time.Second)
 	wg.Done()
 }
 
@@ -525,7 +571,7 @@ func ActivateAndGetSession(c *websocket.Conn, helpers *quizHelper.HelperGroup, l
 
 // handle waiting page
 
-func handleInvitationCodeSend(c *websocket.Conn, response QuizSendResponse, logger *zap.Logger, invitationCode int32) bool {
+func handleInvitationCodeSend(c *websocket.Conn, response *QuizSendResponse, logger *zap.Logger, invitationCode int32) bool {
 
 	// send code to client
 	response.Action = constants.ActionSessionActivation
@@ -557,17 +603,37 @@ func handleStartQuiz(c *websocket.Conn, logger *zap.Logger, isConnected *bool, a
 	return false
 }
 
-func shareEvenWithUser(c *websocket.Conn, qc *quizSocketController, response QuizSendResponse, event string, sessionId string, invitationCode int) {
+func handleNextQuestion(c *websocket.Conn, logger *zap.Logger, isConnected *bool) bool {
+	message := QuizReceiveResponse{}
+	err := c.ReadJSON(&message)
+
+	if err != nil {
+		logger.Error(fmt.Sprintf("socket error during asking for next question: %s event", constants.EventNextQuestionAsk), zap.Error(err))
+		*isConnected = false
+		return false
+	}
+
+	if message.Event == constants.EventNextQuestionAsk {
+		return true
+	}
+
+	return false
+}
+
+func shareEvenWithUser(c *websocket.Conn, qc *quizSocketController, response *QuizSendResponse, event string, sessionId string, invitationCode int, prevent bool) {
 	payload := map[string]any{"event": event, "response": response}
 	data, err := json.Marshal(payload)
 	if err != nil {
 		qc.logger.Error(fmt.Sprintf("socket error marshal redis payload: %s event, %s action %v code", constants.EventSendQuestion, response.Action, invitationCode), zap.Error(err))
 	}
-	// send event to user
-	err = qc.helpers.PubSubModel.Client.Publish(qc.helpers.PubSubModel.Ctx, sessionId, data).Err()
 
-	if err != nil {
-		qc.logger.Error(fmt.Sprintf("socket error publishing event: %s event, %s action %v code", constants.EventPublishQuestion, response.Action, invitationCode), zap.Error(err))
+	if !prevent {
+		// send event to user
+		err = qc.helpers.PubSubModel.Client.Publish(qc.helpers.PubSubModel.Ctx, sessionId, data).Err()
+
+		if err != nil {
+			qc.logger.Error(fmt.Sprintf("socket error publishing event: %s event, %s action %v code", constants.EventPublishQuestion, response.Action, invitationCode), zap.Error(err))
+		}
 	}
 
 	// send event to admin
@@ -577,10 +643,10 @@ func shareEvenWithUser(c *websocket.Conn, qc *quizSocketController, response Qui
 	}
 }
 
-func terminateQuiz(c *websocket.Conn, qc *quizSocketController, response QuizSendResponse, session models.ActiveQuiz) {
+func terminateQuiz(c *websocket.Conn, qc *quizSocketController, response *QuizSendResponse, session models.ActiveQuiz) {
 	response.Component = constants.Score
 	response.Data = constants.ActionTerminateQuiz
-	shareEvenWithUser(c, qc, response, constants.EventTerminateQuiz, session.ID.String(), int(session.InvitationCode.Int32))
+	shareEvenWithUser(c, qc, response, constants.EventTerminateQuiz, session.ID.String(), int(session.InvitationCode.Int32), false)
 
 	err := qc.helpers.ActiveQuizModel.Deactivate(session.ID)
 	if err != nil {
