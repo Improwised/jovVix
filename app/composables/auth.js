@@ -15,7 +15,6 @@ export async function useIsAdmin() {
   );
 
   if (err?.value) {
-    console.log(err, data);
     return { ok: false, err: err.value.data?.data || "unknown error" };
   }
 

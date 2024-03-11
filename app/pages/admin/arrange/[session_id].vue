@@ -77,7 +77,6 @@ const handleQuizEvents = async (message) => {
       );
       return;
     }
-    console.log(message, message.component);
     data.value = message;
     currentComponent.value = message.component;
   }

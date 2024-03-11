@@ -46,7 +46,6 @@ onMounted(() => {
 });
 
 const handleQuizEvents = async (message) => {
-  console.log(message);
   if (message.status == app.$Error) {
     return await router.push(
       "/error?status=" + message.status + "&error=" + message.data

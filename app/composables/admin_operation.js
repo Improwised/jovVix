@@ -27,7 +27,6 @@ export default class AdminOperations extends QuizHandler {
   }
 
   async handler(message) {
-    console.log("here");
     if (this.currentEvent == constants.NextQuestionAsk) {
       this.sendMessage(this.currentComponent, this.currentEvent);
     }

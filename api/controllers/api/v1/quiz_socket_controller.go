@@ -383,7 +383,6 @@ func (qc *quizSocketController) Arrange(c *websocket.Conn) {
 		return
 	}
 
-	fmt.Println(questions, lastQuestionDeliveryTime, "\n\n\n\n\n\n", "--------------------------")
 	var isFirst bool = lastQuestionDeliveryTime.Valid
 	var wg sync.WaitGroup
 	response.Component = constants.Question
@@ -458,6 +457,7 @@ func handleCodeGeneration(c *websocket.Conn, qc *quizSocketController, session m
 func sendQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.WaitGroup, response *QuizSendResponse, session models.ActiveQuiz, question models.Question, lastQuestionTimeStamp sql.NullTime) {
 	// start counter if not any question running
 	if !lastQuestionTimeStamp.Valid {
+		response.Component = constants.Question
 		response.Action = constants.ActionCounter
 		response.Data = map[string]int{"counter": constants.Counter, "count": constants.Count}
 		shareEvenWithUser(c, qc, response, constants.EventStartCount5, session.ID.String(), int(session.InvitationCode.Int32), false)

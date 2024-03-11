@@ -53,35 +53,41 @@ watch(
 function handleEvent(message) {
   if (message.event == app.$GetQuestion) {
     question.value = message.data;
-    answer.value = [];
     count.value = null;
-    clearInterval(timer.value);
-    timer.value = setInterval(() => {
-      time.value += 1;
-      console.log(message.data.duration, time.value);
-      if (time.value == message.data?.duration + 1) {
-        clearInterval(timer.value);
-        time.value = -1;
-        timer.value = null;
-      }
-    }, 1000);
+    answer.value = [];
+    handleTimer();
   } else if (message.event == app.$Counter) {
-    let secs = 0;
     question.value = null;
     count.value = 1;
     time.value = 0;
-    clearInterval(counter.value);
-    counter.value = setInterval(() => {
-      count.value += 1;
-      secs += 1;
-      if (parseInt(props.data.data.count) <= secs) {
-        clearInterval(counter.value);
-        count.value = app.$ReadyMessage;
-        counter.value = null;
-      }
-    }, 1000);
+    handleCounter();
   }
 }
+
+function handleTimer() {
+  clearInterval(timer.value);
+  timer.value = setInterval(() => {
+    time.value += 1;
+    if (time.value == question.value?.duration + 1) {
+      clearInterval(timer.value);
+      time.value = -1;
+      timer.value = null;
+    }
+  }, 1000);
+}
+
+function handleCounter() {
+  clearInterval(counter.value);
+  counter.value = setInterval(() => {
+    count.value += 1;
+    if (parseInt(props.data.data.count) <= count.value) {
+      clearInterval(counter.value);
+      count.value = app.$ReadyMessage;
+      counter.value = null;
+    }
+  }, 1000);
+}
+
 function handleSubmit(e) {
   e.preventDefault();
   let final_val = answer.value;

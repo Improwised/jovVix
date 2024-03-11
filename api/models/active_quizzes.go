@@ -245,9 +245,9 @@ func activateSession(transactionObj *goqu.TxDatabase, maxTry int, sessionId uuid
 
 func (model *ActiveQuizModel) Deactivate(id uuid.UUID) error {
 	result, err := model.db.Update("active_quizzes").Set(goqu.Record{
-		"invitation_code": nil,
-		"is_active":       false,
-		// "activated_to":       goqu.L("now()"),
+		"invitation_code":    nil,
+		"is_active":          false,
+		"activated_to":       goqu.L("now()"),
 		"current_question":   nil,
 		"is_question_active": nil,
 		"updated_at":         goqu.L("now()"),
