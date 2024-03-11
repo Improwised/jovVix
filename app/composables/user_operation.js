@@ -3,20 +3,20 @@ import QuizHandler from "./quiz_operation";
 export default class UserOperation extends QuizHandler {
   constructor(code, username, handler, errorHandler) {
     const url = useState("urls");
-    super(url.value.socket_url, code, handler, { username });
+    super(url.value.socket_url +
+      "/join/" +
+      code +
+      "?username=" +
+      username, code, handler, { username, url: 
+      url.value.socket_url +
+      "/join/" +
+      code +
+      "?username=" +
+      username
+    });
     this.errorHandler = errorHandler;
     this.api_url = url.value.api_url;
     console.log(url.value.api_url);
-  }
-
-  getAddress(self) {
-    return (
-      self.socket_url +
-      "/join/" +
-      self.identifier +
-      "?username=" +
-      self.others.username
-    );
   }
 
   handleConnectionProblem(self) {

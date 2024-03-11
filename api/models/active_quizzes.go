@@ -145,6 +145,7 @@ func (model *ActiveQuizModel) GetOrActivateSession(sessionId string, userId stri
 	}
 
 	if activeQuiz.ActivatedTo.Valid {
+		fmt.Println("here ........................................", activeQuiz.ActivatedTo)
 		return activeQuiz, fmt.Errorf(constants.ErrSessionWasCompleted)
 	}
 

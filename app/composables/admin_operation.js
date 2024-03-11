@@ -7,17 +7,13 @@ export default class AdminOperations extends QuizHandler {
     const url = useState("urls");
 
     // Initialize object
-    super(url.value.socket_url, session_id, handler);
+    super(url.value.socket_url + "/admin/arrange/" + session_id, session_id, handler, {url: url.value.socket_url + "/admin/arrange/" + session_id});
 
     // Initialize custom attribute
     this.app = app;
     this.errorHandler = errorHandler;
   }
-
-  getAddress(self = this) {
-    return self.socket_url + "/admin/arrange/" + self.identifier;
-  }
-
+  
   quizStartRequest() {
     this.sendMessage(this, this.currentComponent, this.app.$StartQuiz);
   }
