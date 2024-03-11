@@ -3,7 +3,6 @@ package v1
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/Improwised/quizz-app/api/constants"
@@ -115,7 +114,7 @@ func (ctrl *QuizController) SetAnswer(c *fiber.Ctx) error {
 
 		return utils.JSONFail(c, http.StatusBadRequest, constants.UnknownError)
 	}
-	
+
 	// core logic
 	err = ctrl.helper.UserQuizResponseModel.SubmitAnswer(currentQuizId, answer, score)
 

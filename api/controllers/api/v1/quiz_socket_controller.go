@@ -345,8 +345,11 @@ func (qc *quizSocketController) Arrange(c *websocket.Conn) {
 	user, ok := quizUtilsHelper.ConvertType[models.User](c.Locals(constants.ContextUser))
 
 	if !ok {
-		qc.logger.Error(fmt.Sprintf("socket error middleware: %s event, %s action", constants.EventAuthentication, response.Action), zap.Error(fmt.Errorf("user-type conversion failed")))
-		utils.JSONFailWs(c, constants.EventSessionValidation, constants.UnknownError)
+		qc.logger.Error("socket user-model type conversion")
+		err := utils.JSONFailWs(c, constants.EventSessionValidation, constants.UnknownError)
+		if err != nil {
+			qc.logger.Error("socket user-model type conversion")
+		}
 		return
 	}
 
@@ -354,52 +357,24 @@ func (qc *quizSocketController) Arrange(c *websocket.Conn) {
 	session, err := ActivateAndGetSession(c, qc.helpers, qc.logger, sessionId, user.ID)
 
 	if err != nil {
-		qc.logger.Error(fmt.Sprintf("socket error middleware: %s event, %s action", constants.EventAuthentication, response.Action), zap.Error(fmt.Errorf("user-type conversion failed")))
-		utils.JSONFailWs(c, constants.EventSessionValidation, constants.UnknownError)
+		qc.logger.Error("get active session", zap.Error(err))
+		err := utils.JSONFailWs(c, constants.EventSessionValidation, constants.UnknownError)
+		if err != nil {
+			qc.logger.Error("get active session", zap.Error(err))
+		}
 		return
 	}
 
-	// is isQuestionActive true -> quiz started
-	isInvitationCodeSent := session.CurrentQuestion.Valid
+	// handle code sharing with admin
+	handleCodeGeneration(c, qc, session, &isConnected, response)
 
-	if !isInvitationCodeSent {
-		// handle Waiting page
-		for {
-
-			if !isConnected {
-				break
-			}
-
-			// if code not sent then sent it
-			if !isInvitationCodeSent {
-				// send code to client
-				handleInvitationCodeSend(c, response, qc.logger, session.InvitationCode.Int32)
-				isInvitationCodeSent = true
-			}
-
-			// once code sent receive start signal
-			if isInvitationCodeSent {
-				isBreak := handleStartQuiz(c, qc.logger, &isConnected, response.Action)
-				subscriberCount := qc.helpers.PubSubModel.Client.PubSubNumSub(qc.helpers.PubSubModel.Ctx, sessionId).Val()[sessionId]
-				if subscriberCount != 0 && isBreak {
-					break
-				} else {
-					response.Data = constants.NoPlayerFound
-					err := utils.JSONFailWs(c, constants.EventStartQuiz, response)
-					if err != nil {
-						qc.logger.Error(fmt.Sprintf("socket error middleware: %s event, %s action", constants.EventAuthentication, response.Action), zap.Error(err))
-					}
-				}
-
-			}
-		}
-	}
-
+	// if connection lost during waiting of start event
 	if !(isConnected) {
 		qc.logger.Error("user disconnected:")
 		return
 	}
 
+	// question component handling
 	response.Component = constants.Question
 	questions, err := qc.helpers.QuizModel.GetSharedQuestions(int(session.InvitationCode.Int32))
 	if err != nil {
@@ -415,8 +390,47 @@ func (qc *quizSocketController) Arrange(c *websocket.Conn) {
 		wg.Wait()
 	}
 
+	// termination of quiz
 	if session.ActivatedFrom.Valid {
 		terminateQuiz(c, qc, response, session)
+	}
+}
+
+func handleCodeGeneration(c *websocket.Conn, qc *quizSocketController, session models.ActiveQuiz, isConnected *bool, response QuizSendResponse) {
+	// is isQuestionActive true -> quiz started
+	isInvitationCodeSent := session.CurrentQuestion.Valid
+
+	if !isInvitationCodeSent {
+		// handle Waiting page
+		for {
+
+			if !(*isConnected) {
+				break
+			}
+
+			// if code not sent then sent it
+			if !isInvitationCodeSent {
+				// send code to client
+				handleInvitationCodeSend(c, response, qc.logger, session.InvitationCode.Int32)
+				isInvitationCodeSent = true
+			}
+
+			// once code sent receive start signal
+			if isInvitationCodeSent {
+				isBreak := handleStartQuiz(c, qc.logger, isConnected, response.Action)
+				subscriberCount := qc.helpers.PubSubModel.Client.PubSubNumSub(qc.helpers.PubSubModel.Ctx, session.ID.String()).Val()[session.ID.String()]
+				if subscriberCount != 0 && isBreak {
+					break
+				} else {
+					response.Data = constants.NoPlayerFound
+					err := utils.JSONFailWs(c, constants.EventStartQuiz, response)
+					if err != nil {
+						qc.logger.Error(fmt.Sprintf("socket error middleware: %s event, %s action", constants.EventAuthentication, response.Action), zap.Error(err))
+					}
+				}
+
+			}
+		}
 	}
 }
 

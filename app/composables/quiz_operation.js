@@ -99,6 +99,7 @@ export default class QuizHandler {
     if (message.event == constants.TerminateQuiz) {
       await this.handleTerminate();
     }
+
     this.componentHandler(message);
   }
 
@@ -190,10 +191,6 @@ export default class QuizHandler {
       message: event,
       time: new Date().toLocaleString(),
     });
-    console.clear();
-    console.log("start printing log...");
-    this.printLog();
-    console.log("end log...");
   }
 
   async handleTerminate() {

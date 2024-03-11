@@ -6,11 +6,7 @@ export default class UserOperation extends QuizHandler {
     super(
       url.value.socket_url + "/join/" + code + "?username=" + username,
       code,
-      handler,
-      {
-        username,
-        url: url.value.socket_url + "/join/" + code + "?username=" + username,
-      }
+      handler
     );
     this.errorHandler = errorHandler;
     this.api_url = url.value.api_url;

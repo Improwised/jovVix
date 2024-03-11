@@ -10,8 +10,7 @@ export default class AdminOperations extends QuizHandler {
     super(
       url.value.socket_url + "/admin/arrange/" + session_id,
       session_id,
-      handler,
-      { url: url.value.socket_url + "/admin/arrange/" + session_id }
+      handler
     );
 
     // Initialize custom attribute
