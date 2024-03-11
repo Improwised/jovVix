@@ -346,12 +346,18 @@ func (qc *quizSocketController) Arrange(c *websocket.Conn) {
 
 	if !ok {
 		qc.logger.Error(fmt.Sprintf("socket error middleware: %s event, %s action", constants.EventAuthentication, response.Action), zap.Error(fmt.Errorf("user-type conversion failed")))
+		utils.JSONFailWs(c, constants.EventSessionValidation, constants.UnknownError)
+		return 
 	}
 
 	// activate session
 	session, err := ActivateAndGetSession(c, qc.helpers, qc.logger, sessionId, user.ID)
+	fmt.Println(sessionId, "=======================", session)
+	fmt.Println(sessionId, "=======================", session.ActivatedFrom, session.ActivatedTo, session.IsActive)
 
 	if err != nil {
+		qc.logger.Error(fmt.Sprintf("socket error middleware: %s event, %s action", constants.EventAuthentication, response.Action), zap.Error(fmt.Errorf("user-type conversion failed")))
+		utils.JSONFailWs(c, constants.EventSessionValidation, constants.UnknownError)
 		return
 	}
 
@@ -407,7 +413,9 @@ func (qc *quizSocketController) Arrange(c *websocket.Conn) {
 		wg.Wait()
 	}
 
-	terminateQuiz(c, qc, response, session)
+	if session.ActivatedFrom.Valid{
+		terminateQuiz(c, qc, response, session)
+	}
 }
 
 func sendQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.WaitGroup, response QuizSendResponse, session models.ActiveQuiz, question models.Question) {

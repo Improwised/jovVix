@@ -145,7 +145,7 @@ func (model *ActiveQuizModel) GetOrActivateSession(sessionId string, userId stri
 	}
 
 	if activeQuiz.ActivatedTo.Valid {
-		fmt.Println("here ........................................", activeQuiz.ActivatedTo)
+		fmt.Println("here ........................................", activeQuiz, activeQuiz.ActivatedTo, activeQuiz.ActivatedFrom)
 		return activeQuiz, fmt.Errorf(constants.ErrSessionWasCompleted)
 	}
 
@@ -178,6 +178,7 @@ func (model *ActiveQuizModel) GetSessionById(db *goqu.TxDatabase, sessionId stri
 		return activeQuiz, fmt.Errorf(constants.ErrSessionNotFound)
 	}
 
+	fmt.Println(activeQuiz, "------------------------------------")
 	return activeQuiz, nil
 }
 
@@ -205,11 +206,11 @@ func activateSession(transactionObj *goqu.TxDatabase, maxTry int, sessionId uuid
 			invitation_code=$3,
 			is_active=true,
 			activated_from=now(),
-			updated_at = now()
+			updated_at=now()
 		WHERE
 			id=$1 and
 			admin_id=$2 and
-			is_active = false and
+			is_active=false and
 			not exists (
 				select 1 from active_quizzes where invitation_code = $3 limit 1
 			)

@@ -16,22 +16,21 @@ export default class QuizHandler {
     this.others = others;
     this.identifier = identifier;
     this.componentHandler = componentHandler;
-    
+
     // states and log
     this.currentComponent = null;
     this.currentEvent = null;
     this.log = [];
     this.isOpen = false;
     this.retrying = 0;
-    
+
     // handle question
     this.currentQuestion = null;
     this.currentQuestionGetTime = null;
-    
+
     // custom attributes
     this.socket = null;
     this.socket_url = socket_url;
-    console.log(others?.url, this.socket_url)
     this.connect(this);
   }
 
