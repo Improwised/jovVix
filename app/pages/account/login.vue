@@ -16,7 +16,7 @@ async function login_user(e) {
 
   if (urls.value?.api_url === undefined) {
     toast.info(app.$ReloadRequired);
-    return
+    return;
   }
 
   const login_url = urls.value?.api_url + "/login";
