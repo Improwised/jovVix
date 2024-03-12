@@ -92,9 +92,11 @@ function handleSubmit(e) {
   e.preventDefault();
   let final_val = answer.value;
 
-  if (final_val != null) {
+  if (final_val.length != 0) {
     emits("sendAnswer", [parseInt(answer.value.key)]);
     isSubmitted.value = true;
+  } else {
+    toast.warning(app.$NoAnswerFound);
   }
 }
 
@@ -121,12 +123,10 @@ function handleSkip(e) {
         {{ question.duration - time }}
       </v-progress-circular>
     </template>
-    <div>{{ question.no }}</div>
+    <div></div>
     <div>
-      {{ question.question }}
-    </div>
-    <div>
-      {{ question.duration }}
+      <span>{{ question.no }}. </span>
+      <span>{{ question.question }}</span>
     </div>
     <div class="d-flex">
       <div

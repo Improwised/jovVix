@@ -207,9 +207,6 @@ func quizController(
 
 	// middleware format := param-check/pass... , authentication... , authorization..., controller(API/SOCKET)...
 
-	// general for all
-	v1.Get("/socket/ping", websocket.New(quizSocketController.Ping))
-
 	v1.Get(fmt.Sprintf("/socket/join/:%s", constants.QuizSessionInvitationCode), middleware.CheckSessionCode, middleware.CustomAuthenticated, sessionMiddle.PlayedQuizValidation, websocket.New(quizSocketController.Join))
 
 	v1.Post("/quiz/answer", middleware.Authenticated, quizController.SetAnswer)

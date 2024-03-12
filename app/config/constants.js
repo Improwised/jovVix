@@ -40,4 +40,5 @@ export default {
   InvitationCodeNotFound: "invitation code not found",
   QuizSessionValidationFailed: "quiz-session-validation-failed",
   SessionWasCompleted: "session was completed",
+  NoAnswerFound: "please select an answer",
 };
