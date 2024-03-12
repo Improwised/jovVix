@@ -150,6 +150,9 @@ const (
 	ErrAnswerAlreadySubmitted = "answer already submitted"
 	ErrQuestionNotActive      = "question can not receive answers anymore"
 
+	// Event skip
+	EventSkipAsked = "ask_skip" // use by web
+
 	// Event 8. Get score page
 	EventShowScore  = "show_score"
 	ActionShowScore = "show score page during quiz"

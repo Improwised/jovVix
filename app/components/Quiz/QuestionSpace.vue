@@ -22,7 +22,7 @@ const props = defineProps({
     required: false,
   },
 });
-const emits = defineEmits(["sendAnswer"]);
+const emits = defineEmits(["sendAnswer", "askSkip"]);
 
 // custom refs
 const question = ref();
@@ -97,6 +97,11 @@ function handleSubmit(e) {
     isSubmitted.value = true;
   }
 }
+
+function handleSkip(e) {
+  e.preventDefault();
+  emits("askSkip");
+}
 </script>
 
 <template>
@@ -151,6 +156,14 @@ function handleSubmit(e) {
       @click="handleSubmit"
     >
       submit
+    </button>
+    <button
+      v-if="isAdmin"
+      type="button"
+      class="btn btn-primary mt-3"
+      @click="handleSkip"
+    >
+      skip
     </button>
   </Frame>
   <div

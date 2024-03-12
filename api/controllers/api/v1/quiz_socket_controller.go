@@ -18,6 +18,7 @@ import (
 	"github.com/Improwised/quizz-app/api/utils"
 	"github.com/doug-martin/goqu/v9"
 	"github.com/gofiber/contrib/websocket"
+	"github.com/google/uuid"
 	"github.com/lib/pq"
 	"go.uber.org/zap"
 )
@@ -493,12 +494,13 @@ func sendQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.WaitGrou
 
 	wgForQuestion := &sync.WaitGroup{}
 	wgForQuestion.Add(1)
+	var duration int
 	if !lastQuestionTimeStamp.Valid { // new question
-		go handleAnswerSubmission(question.DurationInSeconds, wgForQuestion)
+		duration = question.DurationInSeconds
 	} else { // current question
-		duration := question.DurationInSeconds - int(time.Since(lastQuestionTimeStamp.Time).Seconds())
-		go handleAnswerSubmission(duration, wgForQuestion)
+		duration = question.DurationInSeconds - int(time.Since(lastQuestionTimeStamp.Time).Seconds())
 	}
+	go handleAnswerSubmission(c, qc, session.ID, duration, wgForQuestion)
 	wgForQuestion.Wait()
 
 	// update current status to deactivate
@@ -519,9 +521,33 @@ func sendQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.WaitGrou
 	wg.Done()
 }
 
-func handleAnswerSubmission(duration int, wg *sync.WaitGroup) {
+func handleAnswerSubmission(c *websocket.Conn, qc *quizSocketController, sessionId uuid.UUID, duration int, wg *sync.WaitGroup) {
+	isTimeout := time.NewTicker(time.Duration(duration) * time.Second)
 	time.Sleep(time.Duration(duration) * time.Second)
-	wg.Done()
+	go handleSkip(c, qc, isTimeout, sessionId, wg)
+
+}
+
+func handleSkip(c *websocket.Conn, qc *quizSocketController, isTimeOut *time.Ticker, sessionId uuid.UUID, wg *sync.WaitGroup) {
+	for {
+		select {
+		case <-isTimeOut.C:
+			wg.Done()
+			return
+		default:
+			message := QuizReceiveResponse{}
+			err := c.ReadJSON(&message)
+			if err != nil {
+				qc.logger.Error("error during listening skip event", zap.Error(err))
+			}
+			if message.Event == constants.EventSkipAsked {
+				if qc.helpers.QuizModel.IsAllAnswerGathered(sessionId) {
+					wg.Done()
+					return
+				}
+			}
+		}
+	}
 }
 
 // Activate session

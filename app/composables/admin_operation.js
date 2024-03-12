@@ -22,6 +22,10 @@ export default class AdminOperations extends QuizHandler {
     this.sendMessage(this.currentComponent, constants.StartQuiz);
   }
 
+  handleSkip() {
+    this.sendMessage(this.currentComponent, constants.AskSkip);
+  }
+
   handleConnectionProblem() {
     this.errorHandler("problem in connecting with server");
   }

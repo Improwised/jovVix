@@ -95,6 +95,10 @@ const sendAnswer = (answers) => {
   adminOperationHandler.value.handleSendAnswer(answers);
 };
 
+const askSkip = () => {
+  adminOperationHandler.value.handleSkip();
+};
+
 definePageMeta({
   layout: "empty",
 });
@@ -116,6 +120,7 @@ definePageMeta({
       :data="data"
       :is-admin="true"
       @send-answer="sendAnswer"
+      @ask-skip="askSkip"
     ></QuizQuestionSpace>
     <QuizScoreSpace
       v-else-if="currentComponent == 'Score'"

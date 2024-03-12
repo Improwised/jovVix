@@ -30,6 +30,7 @@ export default {
   RedirectToAdmin: "redirect_to_admin",
   NextQuestionAsk: "next_question",
   AdminDisconnected: "admin_is_disconnected",
+  AskSkip: "ask_skip",
   AdminDisconnectedMessage: "admin is disconnected, please wait...",
 
   // Errors

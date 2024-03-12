@@ -239,3 +239,8 @@ func (model *QuizModel) UpdateCurrentQuestion(sessionId, questionID uuid.UUID, i
 
 	return nil
 }
+
+func (model *QuizModel) IsAllAnswerGathered(sessionId uuid.UUID) bool {
+	// model.db.Select().From().Join().
+	return false
+}
