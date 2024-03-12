@@ -157,6 +157,8 @@ const (
 
 	// Event skip
 	EventSkipAsked = "ask_skip" // use by web
+	WarnSkip       = "some player didn't submit their answer yet. would you want to skip?"
+	EventForceSkip = "ask_force_skip"
 
 	// Event 8. Get score page
 	EventShowScore  = "show_score"

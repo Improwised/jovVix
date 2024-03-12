@@ -7,12 +7,14 @@ export default defineNuxtRouteMiddleware(async (to) => {
     const is_admin = await useIsAdmin();
 
     if (!is_admin.ok) {
-      to.query["error"] = is_admin.err;
       delete to.query["url"];
       to.query["t"] = new Date().valueOf();
-      const url = constructPath(to.path, to.params, to.query);
-
-      const login_url = constructPath("/account/login", {}, url);
+      const url = constructPath(to.path, {}, to.query);
+      const login_url = constructPath(
+        "/account/login",
+        {},
+        { url, error: is_admin.err }
+      );
       return callWithNuxt(app, () => navigateTo(login_url));
     }
   }

@@ -29,7 +29,7 @@ export default defineNuxtConfig({
     },
   },
 
-  css: ["bootstrap/dist/css/bootstrap.min.css"], // add
+  css: ["bootstrap/dist/css/bootstrap.min.css", "assets/stylesheet/index.css"], // add
   modules: [
     [
       "@pinia/nuxt",
