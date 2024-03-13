@@ -2,13 +2,13 @@ package middlewares
 
 import (
 	"database/sql"
-	"net/http"
+	"fmt"
 
 	"github.com/Improwised/quizz-app/api/constants"
 	quizUtilsHelper "github.com/Improwised/quizz-app/api/helpers/utils"
 	"github.com/Improwised/quizz-app/api/models"
-	"github.com/Improwised/quizz-app/api/utils"
 	fiber "github.com/gofiber/fiber/v2"
+	"go.uber.org/zap"
 )
 
 type RolePermissionMiddleware struct {
@@ -23,7 +23,12 @@ func NewRolePermissionMiddleware(middleware Middleware, allowedRoles models.Allo
 	}
 }
 
-func (rpm *RolePermissionMiddleware) IsAllowed(c *fiber.Ctx) error {
+func (m *RolePermissionMiddleware) IsAllowed(c *fiber.Ctx) error {
+
+	if c.Locals(constants.MiddlewareError) != nil {
+		return c.Next()
+	}
+
 	userAny := c.Locals(constants.ContextUser)
 	userLocal, ok := quizUtilsHelper.ConvertType[models.User](userAny)
 
@@ -33,26 +38,33 @@ func (rpm *RolePermissionMiddleware) IsAllowed(c *fiber.Ctx) error {
 
 		// if userID not exists then take it as fail
 		if userAny == any(nil) {
-			return utils.JSONFail(c, http.StatusNotFound, constants.ErrUnauthenticated)
+			c.Locals(constants.MiddlewareError, constants.ErrUnauthenticated)
+			m.middleware.Logger.Error("Username not provided", zap.Error(fmt.Errorf(constants.ErrUserRequiredToCheckRole)))
+			return c.Next()
 		}
 
 		userID := quizUtilsHelper.GetString(userAny)
-		user, err := rpm.middleware.UserService.GetUser(userID)
+		user, err := m.middleware.UserService.GetUser(userID)
 
 		if err != nil {
 			if err == sql.ErrNoRows {
-				return utils.JSONFail(c, http.StatusNotFound, constants.ErrUnauthenticated)
+				c.Locals(constants.MiddlewareError, constants.ErrUnauthenticated)
+				m.middleware.Logger.Error("User not found", zap.Error(fmt.Errorf(constants.UserNotExist)))
+				return c.Next()
 			}
 
-			return utils.JSONError(c, http.StatusInternalServerError, constants.ErrGetUser)
+			c.Locals(constants.MiddlewareError, constants.ErrGetUser)
+			m.middleware.Logger.Error("Error in Get user", zap.Error(fmt.Errorf(constants.ErrGetUser)))
+			return c.Next()
 		}
 
 		c.Locals(constants.ContextUser, user)
 		userLocal = user
 	}
 
-	if !rpm.allowedRoles.IsAllowed(models.Role((userLocal.Roles))) {
-		return utils.JSONFail(c, http.StatusUnauthorized, constants.ErrNotAllowed)
+	if !m.allowedRoles.IsAllowed(models.Role((userLocal.Roles))) {
+		c.Locals(constants.MiddlewareError, constants.ErrNotAllowed)
+		m.middleware.Logger.Error("User have no demanded role", zap.Error(fmt.Errorf(constants.ErrNotAllowed)))
 	}
 
 	return c.Next()

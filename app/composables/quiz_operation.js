@@ -1,3 +1,5 @@
+import constants from "~~/config/constants";
+
 export default class QuizHandler {
   JOIN_EVENT = "JOIN_REQUEST";
 
@@ -11,7 +13,6 @@ export default class QuizHandler {
     }
 
     // general attributes
-    this.socket_url = socket_url;
     this.others = others;
     this.identifier = identifier;
     this.componentHandler = componentHandler;
@@ -23,80 +24,37 @@ export default class QuizHandler {
     this.isOpen = false;
     this.retrying = 0;
 
+    // handle question
+    this.currentQuestion = null;
+    this.currentQuestionGetTime = null;
+
     // custom attributes
     this.socket = null;
+    this.socket_url = socket_url;
     this.connect(this);
   }
 
-  getAddress(self = this) {
-    return self.socket_url;
+  // connect and set websocket
+  connect() {
+    this.socket = new WebSocket(this.socket_url);
+    this.socket.onopen = (event) => this.onOpen(event);
+    this.socket.onerror = (event) => this.onError(event);
+    this.socket.onclose = (event) => this.onClose(event);
+    this.socket.onmessage = (event) => this.onMessage(event);
   }
 
-  connect(self = this) {
-    self.socket = new WebSocket(self.getAddress(self));
-    self.socket.onopen = (event) => self.onOpen(self, event);
-    self.socket.onerror = (event) => self.onError(self, event);
-    self.socket.onclose = (event) => self.onClose(self, event);
-    self.socket.onmessage = (event) => self.onMessage(self, event);
+  // handle open event
+  onOpen(event) {
+    this.isOpen = true;
+    this.retrying = 0;
+    this.log.push({
+      state: "Init",
+      message: event,
+      time: new Date().toLocaleString(),
+    });
   }
 
-  async handler(_, message) {
-    if (!this.componentHandler) {
-      throw Error(
-        `Handler for component "${message.component}" is not registered`
-      );
-    }
-    this.componentHandler(message);
-  }
-
-  onOpen(self = this, event) {
-    self.isOpen = true;
-    self.retrying = 0;
-    self.log.push({ state: "Init", message: event });
-    // console.log(event);
-  }
-
-  onError(self = this, event) {
-    // websocket can not connect to the server
-    if (self.socket.readyState == WebSocket.CLOSED && !self.isOpen) {
-      // sent alert
-      self.handleConnectionProblem(self);
-
-      // check if retrying process is undergoing
-      if (self.retrying == 0) {
-        // check for every 2 second
-        const id = setInterval(() => {
-          if (self.retrying < 3) {
-            self.retrying += 1;
-            self.connect(self);
-          } else {
-            clearInterval(id);
-            self.retrying = -1;
-          }
-        }, 2000);
-      }
-    }
-    self.log.push({ state: "err", message: event });
-    // console.log(event);
-  }
-
-  handleConnectionProblem(self = this) {
-    console.log("connection problem, retrying", self.retrying);
-  }
-
-  onClose(self = this, event) {
-    self.log.push({ state: "Init", message: event });
-    // console.log(event);
-  }
-
-  onMessage(self = this, event) {
-    const message = self.destructureMessage(event);
-    this.currentComponent = message.component;
-    this.currentEvent = message.event;
-    this.log.push({ state: "Receive", message });
-    self.handler(self, message, event);
-  }
-
+  // destructure up-coming messages
   destructureMessage(e) {
     try {
       const obj = JSON.parse(e.data);
@@ -113,20 +71,72 @@ export default class QuizHandler {
     }
   }
 
+  // onmessage handler ans setup self object
+  onMessage(event) {
+    const message = this.destructureMessage(event);
+    this.currentComponent = message.component;
+    this.currentEvent = message.event;
+    this.log.push({
+      state: "Receive",
+      message,
+      time: new Date().toLocaleString(),
+    });
+    this.handler(message, event);
+  }
+
+  // pre-process message if needed and assign to outside function
+  async handler(message) {
+    if (
+      this.currentComponent == constants.Question &&
+      this.currentEvent == constants.GetQuestion
+    ) {
+      this.currentQuestion = message.data.id;
+      this.currentQuestionGetTime = new Date();
+    } else {
+      this.currentQuestionGetTime = null;
+    }
+
+    if (message.event == constants.TerminateQuiz) {
+      await this.handleTerminate();
+    }
+
+    this.componentHandler(message);
+  }
+
+  getAnswerResponseTime() {
+    if (this.currentQuestionGetTime != null) {
+      return new Date() - this.currentQuestionGetTime;
+    }
+  }
+
+  // send message through socket
   sendMessage(
     component = this.currentComponent,
     event = this.currentEvent,
     data = ""
   ) {
+    if (this.socket.readyState == WebSocket.CLOSED) {
+      this.handleConnectionProblem(this);
+    }
     const message = {
       component: component,
       event: event,
       data: data,
     };
-    this.log.push({ state: "Sent", message });
-    this.socket.send(JSON.stringify(message));
+    try {
+      this.socket.send(JSON.stringify(message));
+    } catch (err) {
+      console.error(err);
+    } finally {
+      this.log.push({
+        state: "Sent",
+        message,
+        time: new Date().toLocaleString(),
+      });
+    }
   }
 
+  // print full communication if needed
   printLog() {
     this.log.forEach((message) => {
       if (message.state == "Sent") {
@@ -139,5 +149,63 @@ export default class QuizHandler {
         console.error(message);
       }
     });
+  }
+
+  // handle error and re-connecting
+  onError(event) {
+    // websocket can not connect to the server
+    if (this.socket.readyState == WebSocket.CLOSED && !this.isOpen) {
+      // sent alert
+      this.handleConnectionProblem();
+
+      // check if retrying process is undergoing
+      if (this.retrying == 0) {
+        // check for every 2 second
+        const id = setInterval(() => {
+          if (this.retrying < 3 && !this.isOpen) {
+            this.retrying += 1;
+            this.connect();
+          } else {
+            clearInterval(id);
+            this.retrying = -1;
+          }
+        }, 2000);
+      }
+    }
+    this.log.push({
+      state: "err",
+      message: event,
+      time: new Date().toLocaleString(),
+    });
+  }
+
+  // handle reconnecting problem - this function needs to override by the child
+  handleConnectionProblem() {
+    console.log("connection problem, retrying", this.retrying);
+  }
+
+  // handle close event
+  onClose(event) {
+    this.log.push({
+      state: "Init",
+      message: event,
+      time: new Date().toLocaleString(),
+    });
+  }
+
+  async handleTerminate() {
+    let error;
+    try {
+      const response = await useFetch(this.api_url + "/quiz/terminate", {
+        method: "GET",
+        credentials: "include",
+        mode: "cors",
+      });
+      error = response.error.value;
+    } catch (err) {
+      error = err;
+    }
+
+    return { error };
   }
 }

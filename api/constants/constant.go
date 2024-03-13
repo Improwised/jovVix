@@ -53,11 +53,12 @@ const (
 // Middleware
 const (
 	// socket
-	MiddlewarePass  = "allowed"
-	MiddlewareError = "middleware_error"
+	MiddlewareError     = "middleware_error"
+	ErrorTypeConversion = "type conversion failed"
 
 	// http/https
-	ErrNotAllowed = "Not allowed to access Resource"
+	ErrNotAllowed              = "not allowed to access Resource"
+	ErrUserRequiredToCheckRole = "user not logged in"
 )
 
 // components
@@ -65,6 +66,7 @@ const (
 	Waiting  = "Waiting"
 	Question = "Question"
 	Score    = "Score"
+	Loading  = "Loading"
 )
 
 // constants
@@ -94,21 +96,30 @@ const (
 	ActionSessionValidation = "session validation from server side"
 	ErrSessionNotFound      = "session unavailable"
 
+	// Event 4. UserSession Validation <admin/user>
+	EventUserSessionValidation   = "user_validation"
+	ActionUserSessionValidation  = "user session get or create"
+	CurrentUserQuiz              = "user_played_quiz"               // use by web
+	ErrUserQuizSessionValidation = "quiz-session-validation-failed" // use by web
+
+	EventRedirectToAdmin     = "redirect_to_admin"
+	ActionCurrentUserIsAdmin = "current user is admin"
+
 	// Event 4. Active session <admin>
 	EventActivateSession      = "session_activation"
 	EventSendInvitationCode   = "send_invitation_code" // use by web
 	ActionSessionActivation   = "activate demanded session and sent invitation code"
 	QuizSessionInvitationCode = "invitationCode"
 	SessionIDParam            = "session_id"
-	SessionObj                = "current session object"
+	ActiveQuizObj             = "current active quiz obj"
+	NoPlayerFound             = "no player found"
 
 	// Event 5. Join quiz <User>
 	EventJoinQuiz                  = "invitation_code_validation"
 	ActionJoinQuiz                 = "invitation code validation"
 	ErrInvitationCodeInWrongFormat = "invitation code is not in proper format"
 	ErrInvitationCodeNotFound      = "invitation code not found" // use by web
-	ErrInvitationCodeNotActive     = "invitation code is not active"
-	ErrSessionWasCompleted         = "session was completed"
+	ErrSessionWasCompleted         = "session was completed"     // use by web
 	ErrMaxTryToGenerateCode        = "maximum times excide to generate code"
 
 	UserName          = "username"
@@ -130,6 +141,14 @@ const (
 	EventPublishQuestion = "publish_question"
 	EventStartCount5     = "5_sec_counter" // use by web
 	ActionCounter        = "5 second counter"
+	EventNextQuestionAsk = "next_question"         // use by web
+	AdminDisconnected    = "admin_is_disconnected" // use by web
+
+	// Event 8. Submit answer
+	ErrQuizNotFound           = "error current quiz not found"
+	ErrAnswerSubmit           = "error malfunction in inputs"
+	ErrAnswerAlreadySubmitted = "answer already submitted"
+	ErrQuestionNotActive      = "question can not receive answers anymore"
 
 	// Event 8. Get score page
 	EventShowScore  = "show_score"

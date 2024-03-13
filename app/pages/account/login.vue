@@ -1,7 +1,7 @@
 <script setup>
 import { useToast } from "vue-toastification";
 
-const nuxtApp = useNuxtApp();
+const app = useNuxtApp();
 const route = useRoute();
 const router = useRouter();
 const toast = useToast();
@@ -14,14 +14,15 @@ async function login_user(e) {
   e.preventDefault();
   const urls = useSystemEnv("urls");
 
-  if (urls === undefined) {
-    toast.error("some error occurred. please reload the page!!!");
+  if (urls.value?.api_url === undefined) {
+    toast.info(app.$ReloadRequired);
+    return;
   }
 
   const login_url = urls.value?.api_url + "/login";
 
   if (email.value.trim() == "" || password.value.trim() == "") {
-    toast.error(nuxtApp.$IncorrectCredentials);
+    toast.error(app.$IncorrectCredentials);
     return;
   }
 
@@ -42,7 +43,7 @@ async function login_user(e) {
     if (status >= 500) {
       toast.error(error.value);
     } else {
-      toast.error(nuxtApp.$IncorrectCredentials);
+      toast.error(app.$IncorrectCredentials);
     }
     return;
   }

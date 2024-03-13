@@ -25,13 +25,16 @@ const props = defineProps({
 const emits = defineEmits(["sendAnswer"]);
 
 // custom refs
-const question = ref({
-  question: "",
-  options: {},
-});
+const question = ref();
 const answer = ref([]);
 const counter = ref(null);
 const count = ref(0);
+const timer = ref(null);
+const time = ref(0);
+const progressValue = computed(() => {
+  return (time.value * 100) / question.value.duration;
+});
+const isSubmitted = ref(false);
 
 // watchers
 watch(
@@ -50,20 +53,34 @@ watch(
 function handleEvent(message) {
   if (message.event == app.$GetQuestion) {
     question.value = message.data;
-    answer.value = null;
     count.value = null;
+    answer.value = [];
+    handleTimer();
   } else if (message.event == app.$Counter) {
+    question.value = null;
+    count.value = 1;
+    time.value = 0;
     handleCounter();
   }
 }
 
+function handleTimer() {
+  clearInterval(timer.value);
+  timer.value = setInterval(() => {
+    time.value += 1;
+    if (time.value == question.value?.duration + 1) {
+      clearInterval(timer.value);
+      time.value = -1;
+      timer.value = null;
+    }
+  }, 1000);
+}
+
 function handleCounter() {
-  let secs = 0;
-  count.value = 1;
+  clearInterval(counter.value);
   counter.value = setInterval(() => {
     count.value += 1;
-    secs += 1000;
-    if (parseInt(props.data.data.count) * 1000 <= secs) {
+    if (parseInt(props.data.data.count) <= count.value) {
       clearInterval(counter.value);
       count.value = app.$ReadyMessage;
       counter.value = null;
@@ -73,15 +90,38 @@ function handleCounter() {
 
 function handleSubmit(e) {
   e.preventDefault();
-  emits("sendAnswer");
+  let final_val = answer.value;
+
+  if (final_val != null) {
+    emits("sendAnswer", [parseInt(answer.value.key)]);
+    isSubmitted.value = true;
+  }
 }
 </script>
 
 <template>
-  <Frame v-if="count == null" page-title="Question" page-message="let's play">
+  <Frame
+    v-if="question != null"
+    page-title="Question"
+    page-message="let's play"
+  >
+    <template #sub-title>
+      <v-progress-circular
+        :model-value="progressValue"
+        :rotate="0"
+        :size="80"
+        :width="13"
+        color="primary"
+      >
+        {{ question.duration - time }}
+      </v-progress-circular>
+    </template>
     <div>{{ question.no }}</div>
     <div>
       {{ question.question }}
+    </div>
+    <div>
+      {{ question.duration }}
     </div>
     <div class="d-flex">
       <div
@@ -92,14 +132,14 @@ function handleSubmit(e) {
         <div class="form-check form-check-inline">
           <input
             v-if="!isAdmin"
-            id="answer"
             v-model="answer"
             class="form-check-input"
             type="radio"
             name="answer"
             :value="{ key }"
+            :disabled="isSubmitted"
           />
-          <label class="form-check-label" for="answer">{{ value }}</label>
+          <label class="form-check-label">{{ value }}</label>
         </div>
       </div>
     </div>
@@ -107,6 +147,7 @@ function handleSubmit(e) {
       v-if="!isAdmin"
       type="button"
       class="btn btn-primary mt-3"
+      :disabled="isSubmitted"
       @click="handleSubmit"
     >
       submit

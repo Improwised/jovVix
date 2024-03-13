@@ -34,8 +34,7 @@ import (
 //	B. not exists :- trying to get userName from query and create new_user get userID and role and set in context and cookie
 func (m *Middleware) CustomAuthenticated(c *fiber.Ctx) error {
 
-	quizUtilsHelper.GetBool(c.Locals(constants.MiddlewarePass))
-	if !quizUtilsHelper.GetBool(c.Locals(constants.MiddlewarePass)) {
+	if c.Locals(constants.MiddlewareError) != nil {
 		return c.Next()
 	}
 
@@ -47,14 +46,12 @@ func (m *Middleware) CustomAuthenticated(c *fiber.Ctx) error {
 		AuthHavingTokenHandler(m, c, token)
 	}
 
-	c.Locals(constants.MiddlewarePass, c.Locals(constants.MiddlewareError) == nil)
-
 	return c.Next()
 }
 
 func (m *Middleware) CustomAdminAuthenticated(c *fiber.Ctx) error {
 
-	if !quizUtilsHelper.GetBool(c.Locals(constants.MiddlewarePass)) {
+	if c.Locals(constants.MiddlewareError) != nil {
 		return c.Next()
 	}
 
@@ -66,14 +63,12 @@ func (m *Middleware) CustomAdminAuthenticated(c *fiber.Ctx) error {
 		c.Locals(constants.MiddlewareError, constants.Unauthenticated)
 	}
 
-	c.Locals(constants.MiddlewarePass, c.Locals(constants.MiddlewareError) == nil)
-
 	return c.Next()
 }
 
 func (m *Middleware) CheckSessionId(c *fiber.Ctx) error {
 
-	if !quizUtilsHelper.GetBool(c.Locals(constants.MiddlewarePass)) {
+	if c.Locals(constants.MiddlewareError) != nil {
 		return c.Next()
 	}
 
@@ -81,13 +76,12 @@ func (m *Middleware) CheckSessionId(c *fiber.Ctx) error {
 	sessionId := c.Params(constants.SessionIDParam)
 
 	c.Locals(constants.SessionIDParam, sessionId)
-	c.Locals(constants.MiddlewarePass, c.Locals(constants.MiddlewareError) == nil)
 	return c.Next()
 }
 
 func (m *Middleware) CheckSessionCode(c *fiber.Ctx) error {
 
-	if !quizUtilsHelper.GetBool(c.Locals(constants.MiddlewarePass)) {
+	if c.Locals(constants.MiddlewareError) != nil {
 		return c.Next()
 	}
 
@@ -100,7 +94,6 @@ func (m *Middleware) CheckSessionCode(c *fiber.Ctx) error {
 	}
 
 	c.Locals(constants.QuizSessionInvitationCode, code)
-	c.Locals(constants.MiddlewarePass, c.Locals(constants.MiddlewareError) == nil)
 	return c.Next()
 }
 
@@ -110,7 +103,7 @@ func AuthHavingTokenHandler(m *Middleware, c *fiber.Ctx, token string) {
 
 	if err != nil {
 		if errors.Is(err, j.ErrInvalidJWT()) || errors.Is(err, j.ErrTokenExpired()) {
-			c.Cookie(RemoveUserToken(constants.CookieUser))
+			c.Cookie(RemoveCookie(constants.CookieUser))
 			c.Locals(constants.MiddlewareError, constants.Unauthenticated)
 			m.Logger.Error("JWT error during authentication in join", zap.Error(err))
 			return
@@ -185,7 +178,7 @@ func CreateStrictCookie(key, value string) *fiber.Cookie {
 	return cookie
 }
 
-func RemoveUserToken(key string) *fiber.Cookie {
+func RemoveCookie(key string) *fiber.Cookie {
 	cookie := new(fiber.Cookie)
 	cookie.Name = key
 	cookie.Value = "" // Or set a generic value like "deleted"

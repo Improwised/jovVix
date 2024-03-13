@@ -3,7 +3,6 @@ package models
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"time"
 
 	"github.com/doug-martin/goqu/v9"
@@ -100,55 +99,74 @@ func (model *QuizModel) GetQuizzesByAdmin(creator_id string) ([]Quiz, error) {
 	return quizzes, nil
 }
 
-func (model *QuizModel) GetSharedQuestions(invitationCode int) ([]Question, error) {
+func (model *QuizModel) GetSharedQuestions(invitationCode int) ([]Question, sql.NullTime, error) {
 
+	var QuestionDeliveryTime sql.NullTime = sql.NullTime{}
 	statement, err := model.db.Prepare(`
 	with core as (
 		select
 			q.*,
 			aq.current_question,
 			aq.is_question_active,
-			sq.order_no
+			aq.question_delivery_time,
+			aqq.order_no
 		from
-			session_questions sq
+			active_quiz_questions aqq
 		join active_quizzes aq on
 			aq.invitation_code = $1
-			and aq.id = sq.active_quiz_id
+			and aq.id = aqq.active_quiz_id
 		join questions q on
-			q.id = sq.question_id
-		),
-		max_order as (
-			select order_no from (
-				select order_no from core
-					where id = current_question
-				union
-				select 0
-			) x order by order_no desc limit 1
-		)
+			q.id = aqq.question_id
+			),
+			max_order as (
 		select
+			order_no
+		from
+			(
+			select
+			(case
+				when is_question_active is null then 0
+				when is_question_active then order_no
+				else order_no + 1
+				end)
+			as order_no
+			from
+				core
+			where
+				id = current_question
+			union
+				select
+					0
+		) x
+		order by
+			order_no desc
+		limit 1
+		)select
 			id,
 			order_no,
+			question_delivery_time,
 			question,
 			options,
 			answers,
 			score,
+			duration_in_seconds,
 			created_at,
 			updated_at
 		from
 			core
 		where
-			order_no > (
+			order_no >= (
 			select
 				order_no
 			from
 				max_order
-			)
+		)
 		order by
 			order_no;
 	`)
 
 	if err != nil {
-		return nil, err
+		return nil, QuestionDeliveryTime, err
 	}
 
 	rows, err := statement.Query(invitationCode)
@@ -156,45 +174,54 @@ func (model *QuizModel) GetSharedQuestions(invitationCode int) ([]Question, erro
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return questions, nil
+			return questions, QuestionDeliveryTime, nil
 		}
 
-		return nil, err
+		return nil, QuestionDeliveryTime, err
 	}
 
 	for rows.Next() {
 		question := Question{}
 		var options []byte
 		var answers []byte
-		err := rows.Scan(&question.ID, &question.OrderNumber, &question.Question, &options, &answers, &question.Score, &question.CreatedAt, &question.UpdatedAt)
+		err := rows.Scan(&question.ID, &question.OrderNumber, &QuestionDeliveryTime, &question.Question, &options, &answers, &question.Score, &question.DurationInSeconds, &question.CreatedAt, &question.UpdatedAt)
 		if err != nil {
-			fmt.Printf("Error scanning row: %v\n", err)
-			return nil, err
+
+			return nil, QuestionDeliveryTime, err
 		}
 
 		err = json.Unmarshal(options, &question.Options)
 
 		if err != nil {
-			return questions, err
+			return questions, QuestionDeliveryTime, err
 		}
 
 		err = json.Unmarshal(answers, &question.Answers)
 
 		if err != nil {
-			return questions, err
+			return questions, QuestionDeliveryTime, err
 		}
 
 		questions = append(questions, question)
 	}
 
-	return questions, nil
+	return questions, QuestionDeliveryTime, nil
 }
 
 func (model *QuizModel) UpdateCurrentQuestion(sessionId, questionID uuid.UUID, isActive bool) error {
-	result, err := model.db.Update("active_quizzes").Set(goqu.Record{
+	records := goqu.Record{
 		"current_question":   questionID,
 		"is_question_active": isActive,
-	}).Where(goqu.I("id").Eq(sessionId)).Executor().Exec()
+		"updated_at":         goqu.L("now()"),
+	}
+
+	if isActive {
+		records["question_delivery_time"] = goqu.L("now()")
+	} else {
+		records["question_delivery_time"] = nil
+	}
+
+	result, err := model.db.Update("active_quizzes").Set(records).Where(goqu.I("id").Eq(sessionId)).Executor().Exec()
 
 	if err != nil {
 		return err

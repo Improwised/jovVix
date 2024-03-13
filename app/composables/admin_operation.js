@@ -1,28 +1,36 @@
+import constants from "~~/config/constants";
 import QuizHandler from "./quiz_operation";
 
 export default class AdminOperations extends QuizHandler {
   constructor(session_id, handler, errorHandler) {
     // get nuxt hooks
-    const app = useNuxtApp();
     const url = useState("urls");
 
     // Initialize object
-    super(url.value.socket_url, session_id, handler);
+    super(
+      url.value.socket_url + "/admin/arrange/" + session_id,
+      session_id,
+      handler
+    );
 
     // Initialize custom attribute
-    this.app = app;
+    this.api_url = url.value.api_url;
     this.errorHandler = errorHandler;
   }
 
-  getAddress(self = this) {
-    return self.socket_url + "/admin/arrange/" + self.identifier;
-  }
-
   quizStartRequest() {
-    this.sendMessage(this.currentComponent, this.app.$StartQuiz);
+    this.sendMessage(this.currentComponent, constants.StartQuiz);
   }
 
-  handleConnectionProblem(self) {
-    self.errorHandler("problem in connecting with server");
+  handleConnectionProblem() {
+    this.errorHandler("problem in connecting with server");
+  }
+
+  async handler(message) {
+    if (this.currentEvent == constants.NextQuestionAsk) {
+      this.sendMessage(this.currentComponent, this.currentEvent);
+    }
+
+    super.handler(message, preventAssignment);
   }
 }

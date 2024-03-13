@@ -10,7 +10,7 @@ const router = useRouter();
 useSystemEnv();
 
 // define props and emits
-const code = ref(0);
+const code = ref(app.$InvitationCode);
 const username = ref();
 
 function join_quiz(e) {
@@ -34,12 +34,13 @@ function join_quiz(e) {
   <Frame page-title="Join page" page-message="Let's play together" max-width>
     <form method="POST" @submit="join_quiz">
       <div class="mb-3 pe-3">
-        <label for="code" class="form-label">Code</label>
+        <label for="code" class="form-label">Invitation code</label>
         <v-otp-input
           v-model="code"
           max-width="500"
           min-height="20"
           type="number"
+          placeholder="0"
         ></v-otp-input>
       </div>
       <div class="mb-3">

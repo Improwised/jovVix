@@ -3,20 +3,22 @@
 import { useToast } from "vue-toastification";
 
 // custom component
-import AdminOperation from "~/composables/admin_operation.js";
+import { useSystemEnv } from "~/composables/envs.js";
+import { useRouter } from "nuxt/app";
+import AdminOperations from "~~/composables/admin_operation";
 
 // define nuxt configs
 const route = useRoute();
+const router = useRouter();
 const toast = useToast();
 const app = useNuxtApp();
-const router = useRouter();
 useSystemEnv();
 
 // define props and emits
 const myRef = ref(false);
 const data = ref({});
-const adminOperationHandler = ref();
 const currentComponent = ref("Loading");
+const adminOperationHandler = ref();
 
 // event handlers
 const handleCustomChange = (isFullScreenEvent) => {
@@ -26,19 +28,48 @@ const handleCustomChange = (isFullScreenEvent) => {
   }
 };
 
-const startQuiz = () => {
-  // myRef.value = true;
-  adminOperationHandler.value.quizStartRequest();
-};
+// main functions
+onMounted(() => {
+  // core logic
+  if (process.client) {
+    try {
+      adminOperationHandler.value = new AdminOperations(
+        route.params.session_id,
+        handleQuizEvents,
+        handleNetworkEvent
+      );
+    } catch (err) {
+      toast.info(app.$ReloadRequired);
+    }
+  }
+});
 
-const handleQuizEvents = (message) => {
-  // error ? -> redirect to error page
+const handleQuizEvents = async (message) => {
   if (message.status == app.$Error) {
-    adminOperationHandler.value.printLog();
-    router.push("/error?status=" + message.status + "&error=" + message.data);
+    return await router.push(
+      "/error?status=" + message.status + "&error=" + message.data
+    );
   } else if (message.event == app.$TerminateQuiz) {
-    router.push("/join/scoreboard");
+    return await router.push("/join/scoreboard");
+  } else if (message.event == app.$RedirectToAdmin) {
+    return await router.push("/admin/arrange/" + message.data.sessionId);
+  } else if (
+    message.data == app.$InvitationCodeNotFound ||
+    message.data == app.$QuizSessionValidationFailed ||
+    message.data == app.$SessionWasCompleted
+  ) {
+    return await router.push(
+      "/admin/arrange?status=" + message.status + "&error=" + message.data
+    );
   } else {
+    if (
+      message.status == app.$Fail &&
+      message.event == app.$InvitationCodeValidation
+    ) {
+      return await router.push(
+        "/join?status=" + message.status + "&error=" + message.data
+      );
+    }
     // unauthorized ? -> redirect to login page
     if (message.status == app.$Fail && message.data == app.$Unauthorized) {
       router.push(
@@ -51,29 +82,24 @@ const handleQuizEvents = (message) => {
   }
 };
 
-// main functions
-onMounted(() => {
-  // core logic
-  if (process.client) {
-    try {
-      adminOperationHandler.value = new AdminOperation(
-        route.params.session_id,
-        handleQuizEvents,
-        handleNetworkEvent
-      );
-    } catch (err) {
-      toast.info(app.$ReloadRequired);
-    }
-  }
-});
-
 function handleNetworkEvent(message) {
   toast.warning(message + ", please reload the page");
 }
 
+const startQuiz = () => {
+  // myRef.value = true;
+  adminOperationHandler.value.quizStartRequest();
+};
+
+const sendAnswer = (answers) => {
+  adminOperationHandler.value.handleSendAnswer(answers);
+};
+
 definePageMeta({
   layout: "empty",
 });
+
+// custom class to bind component with
 </script>
 
 <template>
@@ -89,6 +115,7 @@ definePageMeta({
       v-else-if="currentComponent == 'Question'"
       :data="data"
       :is-admin="true"
+      @send-answer="sendAnswer"
     ></QuizQuestionSpace>
     <QuizScoreSpace
       v-else-if="currentComponent == 'Score'"
