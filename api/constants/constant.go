@@ -67,6 +67,10 @@ const (
 	Question = "Question"
 	Score    = "Score"
 	Loading  = "Loading"
+
+	ToUser  = 1
+	ToAdmin = 2
+	ToAll   = 3
 )
 
 // constants
@@ -137,18 +141,24 @@ const (
 	QuizQuestionStatus        = "quiz question status"
 	GetQuestions              = "get quiz questions"
 	NextQuestionWillServeSoon = "Next question will coming soon"
+	ErrInGettingQuestion      = "error during getting question"
 
-	EventPublishQuestion = "publish_question"
-	EventStartCount5     = "5_sec_counter" // use by web
-	ActionCounter        = "5 second counter"
-	EventNextQuestionAsk = "next_question"         // use by web
-	AdminDisconnected    = "admin_is_disconnected" // use by web
+	EventPublishQuestion   = "publish_question"
+	EventStartCount5       = "5_sec_counter" // use by web
+	ActionCounter          = "5 second counter"
+	EventNextQuestionAsked = "next_question"         // use by web
+	AdminDisconnected      = "admin_is_disconnected" // use by web
 
 	// Event 8. Submit answer
 	ErrQuizNotFound           = "error current quiz not found"
 	ErrAnswerSubmit           = "error malfunction in inputs"
 	ErrAnswerAlreadySubmitted = "answer already submitted"
 	ErrQuestionNotActive      = "question can not receive answers anymore"
+
+	// Event skip
+	EventSkipAsked = "ask_skip" // use by web
+	WarnSkip       = "some player didn't submit their answer yet. would you want to skip?"
+	EventForceSkip = "ask_force_skip"
 
 	// Event 8. Get score page
 	EventShowScore  = "show_score"

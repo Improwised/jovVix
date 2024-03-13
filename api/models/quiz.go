@@ -239,3 +239,31 @@ func (model *QuizModel) UpdateCurrentQuestion(sessionId, questionID uuid.UUID, i
 
 	return nil
 }
+
+func (model *QuizModel) IsAllAnswerGathered(sessionId uuid.UUID, questionId uuid.UUID) (bool, error) {
+
+	var skippable bool
+	found, err := model.db.
+		From(goqu.T(UserPlayedQuizTable).As("upq")).
+		InnerJoin(goqu.T(UserQuizResponsesTable).As("upr"),
+			goqu.
+				On(goqu.Ex{
+					"user_played_quiz_id": goqu.I("upq.id"),
+					"active_quiz_id":      sessionId,
+					"question_id":         questionId,
+				})).Select(
+		goqu.COUNT("upr.id").Eq(goqu.SUM(goqu.Case().
+			When(goqu.I("upr.is_attend").Eq(true), 1).
+			Else(0))).
+			As("is_skippable")).ScanVal(&skippable)
+
+	if err != nil {
+		return false, err
+	}
+
+	if !found {
+		return false, sql.ErrNoRows
+	}
+
+	return skippable, nil
+}

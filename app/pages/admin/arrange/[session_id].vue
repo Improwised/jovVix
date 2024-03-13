@@ -17,6 +17,13 @@ useSystemEnv();
 // define props and emits
 const myRef = ref(false);
 const data = ref({});
+const confirmNeeded = reactive({
+  show: false,
+  title: "title",
+  message: "message",
+  positive: "save",
+  negative: "cancel",
+});
 const currentComponent = ref("Loading");
 const adminOperationHandler = ref();
 
@@ -36,7 +43,8 @@ onMounted(() => {
       adminOperationHandler.value = new AdminOperations(
         route.params.session_id,
         handleQuizEvents,
-        handleNetworkEvent
+        handleNetworkEvent,
+        confirmSkip
       );
     } catch (err) {
       toast.info(app.$ReloadRequired);
@@ -79,6 +87,9 @@ const handleQuizEvents = async (message) => {
     }
     data.value = message;
     currentComponent.value = message.component;
+    confirmNeeded.value = {
+      show: false,
+    };
   }
 };
 
@@ -95,6 +106,26 @@ const sendAnswer = (answers) => {
   adminOperationHandler.value.handleSendAnswer(answers);
 };
 
+const askSkip = () => {
+  adminOperationHandler.value.requestSkip(false);
+};
+
+const confirmSkip = (message) => {
+  confirmNeeded.title = "Skip Forcefully !!!";
+  confirmNeeded.message = message.data;
+  confirmNeeded.positive = "skip";
+  confirmNeeded.show = true;
+
+  console.log(message, confirmNeeded.value);
+};
+
+const handleModal = (confirm) => {
+  if (confirm) {
+    adminOperationHandler.value.requestSkip(true);
+  }
+  confirmNeeded.show = false;
+};
+
 definePageMeta({
   layout: "empty",
 });
@@ -104,18 +135,28 @@ definePageMeta({
 
 <template>
   <Playground :full-screen-enabled="myRef" @is-full-screen="handleCustomChange">
+    {{ confirmNeeded.show }}
+    <UtilsConfirmModal
+      v-if="confirmNeeded.show"
+      :modal-title="confirmNeeded.title"
+      :modal-message="confirmNeeded.message"
+      :model-positive-message="confirmNeeded.positive"
+      @confirm-message="(c) => handleModal(c)"
+    ></UtilsConfirmModal>
     <QuizLoadingSpace v-if="currentComponent == 'Loading'"></QuizLoadingSpace>
     <QuizWaitingSpace
       v-else-if="currentComponent == 'Waiting'"
       :data="data"
       :is-admin="true"
       @start-quiz="startQuiz"
-    ></QuizWaitingSpace>
+    >
+    </QuizWaitingSpace>
     <QuizQuestionSpace
       v-else-if="currentComponent == 'Question'"
       :data="data"
       :is-admin="true"
       @send-answer="sendAnswer"
+      @ask-skip="askSkip"
     ></QuizQuestionSpace>
     <QuizScoreSpace
       v-else-if="currentComponent == 'Score'"
