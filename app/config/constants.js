@@ -18,6 +18,7 @@ export default {
 
   // Components
   Question: "Question",
+  Score: "Score",
 
   // Events
   StartQuiz: "start_quiz",
@@ -32,6 +33,7 @@ export default {
   AdminDisconnected: "admin_is_disconnected",
   AskSkip: "ask_skip",
   AskForceSkip: "ask_force_skip",
+  ShowScore: "show_score",
   AdminDisconnectedMessage: "admin is disconnected, please wait...",
 
   // Errors

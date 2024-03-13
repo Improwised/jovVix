@@ -183,3 +183,71 @@ func (model *UserPlayedQuizModel) GetCurrentActiveQuestion(id uuid.UUID) (uuid.U
 
 	return currentQuestion, nil
 }
+
+type UserRank struct {
+	Rank         int    `json:"rank" db:"rank"`
+	Score        int    `json:"score" db:"total_score"`
+	ResponseTime int    `json:"response_time" db:"response_time"`
+	UserName     string `json:"username" db:"username"`
+}
+
+func (model *UserPlayedQuizModel) GetRank(sessionId uuid.UUID, questionId uuid.UUID) ([]UserRank, error) {
+
+	mainQuery := model.db.
+		From(goqu.T("get_question_info").As("gqi")).
+		Join(goqu.T("get_sum").As("gs"), goqu.On(goqu.I("gs.user_id").Eq(goqu.I("gqi.user_id")))).
+		Join(goqu.T(UserTable).As("u"), goqu.On(goqu.I("gs.user_id").Eq(goqu.I("u.id"))))
+
+	// Define the common table expressions (CTEs)
+	core := mainQuery.
+		With("core", goqu.
+			Select("uqr.calculated_score", "uqr.question_id", "uqr.response_time", "uqr.is_attend", "upq.user_id").
+			From(goqu.T(UserPlayedQuizTable).As("upq")).
+			Join(goqu.T("user_quiz_responses").As("uqr"), goqu.On(goqu.Ex{
+				"upq.id":             goqu.I("uqr.user_played_quiz_id"),
+				"upq.active_quiz_id": sessionId,
+			}),
+			))
+
+	getSum := core.
+		With("get_sum", goqu.
+			Select("user_id", goqu.SUM("calculated_score").As("total_score")).
+			From("core").
+			GroupBy("user_id"),
+		)
+	getQuestionInfo := getSum.
+		With("get_question_info", goqu.
+			Select("is_attend", "user_id", "response_time").
+			From("core").
+			Where(goqu.Ex{
+				"question_id": questionId,
+				"is_attend":   true,
+			}),
+		)
+	final_query := getQuestionInfo.Select(
+		goqu.DENSE_RANK().Over(goqu.W().OrderBy(goqu.I("gs.total_score").Desc(), goqu.I("gqi.response_time").Asc())).As("rank"),
+		goqu.I("gs.total_score"),
+		goqu.I("gqi.response_time"),
+		goqu.I("u.username"),
+	)
+
+	// Define the main query to filter by rank
+	rows, err := final_query.Executor().Query()
+
+	if err != nil {
+		return []UserRank{}, err
+	}
+	defer rows.Close()
+
+	userRanks := []UserRank{}
+	for rows.Next() {
+		var userRank UserRank
+		err := rows.Scan(&userRank.Rank, &userRank.Score, &userRank.ResponseTime, &userRank.UserName)
+		if err != nil {
+			return userRanks, err
+		}
+		userRanks = append(userRanks, userRank)
+	}
+
+	return userRanks, nil
+}

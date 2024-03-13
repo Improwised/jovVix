@@ -92,6 +92,29 @@ export default class QuizHandler {
     ) {
       this.currentQuestion = message.data.id;
       this.currentQuestionGetTime = new Date();
+    } else if (
+      this.currentComponent == constants.Score &&
+      this.currentEvent == constants.ShowScore
+    ) {
+      const options = message.data.options;
+      const answers = message.data.answers;
+
+      const new_options = {};
+
+      for (const key in options) {
+        const element = options[key];
+        let isAnswer = false;
+        for (let answerIndex = 0; answerIndex < answers.length; answerIndex++) {
+          if (answers[answerIndex] == key) {
+            isAnswer = true;
+            break;
+          }
+        }
+
+        new_options[key] = { value: element, isAnswer };
+      }
+      delete message.data.answers;
+      message.data.options = new_options;
     } else {
       this.currentQuestionGetTime = null;
     }
