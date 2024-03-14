@@ -105,7 +105,7 @@ export default class QuizHandler {
         const element = options[key];
         let isAnswer = false;
         for (let answerIndex = 0; answerIndex < answers.length; answerIndex++) {
-          if (answers[answerIndex] == key) {
+          if (answers[answerIndex] === parseInt(key)) {
             isAnswer = true;
             break;
           }
