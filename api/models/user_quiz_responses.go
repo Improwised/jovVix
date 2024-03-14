@@ -97,6 +97,7 @@ func (model *UserQuizResponseModel) SubmitAnswer(userPlayedQuizId uuid.UUID, ans
 			"calculated_score": score,
 			"is_attend":        score.Valid,
 			"response_time":    answerStruct.ResponseTime,
+			"updated_at":       goqu.L("now()"),
 		},
 	).Where(
 		goqu.I("user_played_quiz_id").Eq(userPlayedQuizId),

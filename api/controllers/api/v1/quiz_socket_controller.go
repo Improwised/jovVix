@@ -465,13 +465,23 @@ func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.Wa
 	// score-board rendering
 	response.Component = constants.Score
 	response.Action = constants.ActionShowScore
+	userRankBoard, err := qc.helpers.UserPlayedQuizModel.GetRank(session.ID, question.ID)
+
+	if err != nil {
+		qc.logger.Error("error during get userRankBoard", zap.Error(err))
+	}
+
 	response.Data = map[string]any{
-		"no": question.OrderNumber,
+		"rankList": userRankBoard,
+		"question": question.Question,
+		"answers":  question.Answers,
+		"options":  question.Options,
+		"duration": 20,
 	}
 	shareEvenWithUser(c, qc, response, constants.EventShowScore, session.ID.String(), int(session.InvitationCode.Int32), constants.ToAll)
 
 	// ideal time for showing score-board
-	time.Sleep(5 * time.Second)
+	time.Sleep(20 * time.Second)
 	wg.Done()
 }
 

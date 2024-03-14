@@ -1,21 +1,23 @@
 import { callWithNuxt } from "nuxt/app";
-import { constructPath } from "~/composables/url_operation";
 
 export default defineNuxtRouteMiddleware(async (to) => {
   if (to.fullPath.startsWith("/admin")) {
-    const app = useNuxtApp();
-    const is_admin = await useIsAdmin();
+    let is_admin;
+
+    is_admin = await useIsAdmin();
 
     if (!is_admin.ok) {
-      delete to.query["url"];
-      to.query["t"] = new Date().valueOf();
-      const url = constructPath(to.path, {}, to.query);
-      const login_url = constructPath(
-        "/account/login",
-        {},
-        { url, error: is_admin.err }
+      const app = useNuxtApp();
+      return callWithNuxt(app, () =>
+        navigateTo(
+          "/account/login?error=" +
+            is_admin.err +
+            "&t=" +
+            new Date().valueOf() +
+            "&url=" +
+            to.fullPath
+        )
       );
-      return callWithNuxt(app, () => navigateTo(login_url));
     }
   }
 });

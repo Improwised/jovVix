@@ -115,8 +115,6 @@ const confirmSkip = (message) => {
   confirmNeeded.message = message.data;
   confirmNeeded.positive = "skip";
   confirmNeeded.show = true;
-
-  console.log(message, confirmNeeded.value);
 };
 
 const handleModal = (confirm) => {
@@ -135,7 +133,6 @@ definePageMeta({
 
 <template>
   <Playground :full-screen-enabled="myRef" @is-full-screen="handleCustomChange">
-    {{ confirmNeeded.show }}
     <UtilsConfirmModal
       v-if="confirmNeeded.show"
       :modal-title="confirmNeeded.title"
