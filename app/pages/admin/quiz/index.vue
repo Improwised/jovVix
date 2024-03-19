@@ -31,7 +31,7 @@ async function submit(e) {
   formData.append(attachment.name, attachment.files[0]);
 
   const { error } = await useFetch(
-    encodeURI(urls.value.api_url + "/admin/quizzes/upload/" + title.value),
+    encodeURI(urls.value.api_url + "/admin/quizzes/" + title.value + "/upload"),
     {
       method: "POST",
       body: formData,
