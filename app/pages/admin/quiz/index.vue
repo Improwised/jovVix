@@ -8,9 +8,9 @@ const app = useNuxtApp();
 useSystemEnv();
 
 // define props and emits
+let file = ref(0);
+let title = ref("");
 let urls = useState("urls");
-let title = ref('')
-let file = ref(0)
 
 // if urls not found
 if (!urls.value.api_url) {
@@ -57,15 +57,17 @@ async function submit(e) {
           <label for="title" class="form-label">Quiz title</label>
           <input
             id="title"
+            v-model="title"
             type="text"
             class="form-control"
             name="title"
             aria-describedby="helpId"
             placeholder=""
-            v-model="title"
             required
           />
-          <small v-if="title == ''" id="helpId" class="form-text text-danger">Required</small>
+          <small v-if="title == ''" id="helpId" class="form-text text-danger"
+            >Required</small
+          >
         </div>
         <div class="mb-3">
           <label for="description" class="form-label">Quiz description</label>
@@ -89,10 +91,15 @@ async function submit(e) {
           placeholder="upload"
           aria-describedby="fileHelpId"
           accept=".csv"
-          v-on:change="(e) => file = e.target.files.length"
+          @change="(e) => (file = e.target.files.length)"
         />
-        <div v-if="file == 0" id="fileHelpId" class="form-text text-danger">Required</div>
+        <div v-if="file == 0" id="fileHelpId" class="form-text text-danger">
+          Required
+        </div>
       </div>
+      <a class="btn btn-primary me-2" href="/files/demo.csv" download="demo.csv"
+        >Download sample</a
+      >
       <button type="submit" class="btn btn-primary">Submit</button>
     </form>
   </Frame>
