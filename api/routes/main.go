@@ -226,7 +226,7 @@ func quizController(
 	quizzes := admin.Group("/quizzes")
 
 	quizzes.Get("/", quizController.GetQuizByUser)
-	quizzes.Post(fmt.Sprintf("/upload/:%s", constants.QuizTitle), middleware.ValidateCsv, quizController.CreateQuizByCsv)
+	quizzes.Post(fmt.Sprintf("/:%s/upload", constants.QuizTitle), middleware.ValidateCsv, quizController.CreateQuizByCsv)
 
 	v1.Get(fmt.Sprintf("/socket/admin/arrange/:%s", constants.SessionIDParam), middleware.CheckSessionId, middleware.CustomAdminAuthenticated, websocket.New(quizSocketController.Arrange))
 
