@@ -220,7 +220,11 @@ func quizController(
 	}
 	rbObj := middlewares.NewRolePermissionMiddleware(middleware, allowRoles)
 
-	v1.Get("/admin/quizzes", middleware.Authenticated, rbObj.IsAllowed, quizController.GetQuizByUser)
+	admin := v1.Group("/admin")
+	admin.Use(middleware.Authenticated, rbObj.IsAllowed)
+
+	admin.Get("/quizzes", quizController.GetQuizByUser)
+	admin.Post("/uploads", middleware.ValidateCsv, quizController.CreateQuizByCsv)
 
 	v1.Get(fmt.Sprintf("/socket/admin/arrange/:%s", constants.SessionIDParam), middleware.CheckSessionId, middleware.CustomAdminAuthenticated, websocket.New(quizSocketController.Arrange))
 

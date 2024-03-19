@@ -1,0 +1,230 @@
+package v1
+
+import (
+	"encoding/csv"
+	"fmt"
+	"net/http"
+	"os"
+	"strconv"
+	"strings"
+
+	"github.com/Improwised/quizz-app/api/constants"
+	quizUtilsHelper "github.com/Improwised/quizz-app/api/helpers/utils"
+	"github.com/Improwised/quizz-app/api/models"
+	"github.com/Improwised/quizz-app/api/pkg/structs"
+	"github.com/Improwised/quizz-app/api/utils"
+	fiber "github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
+	"go.uber.org/zap"
+	validator "gopkg.in/go-playground/validator.v9"
+)
+
+func validateCSVFileFormat(fileName string) error {
+	// Open the CSV file
+	file, err := os.Open(fileName)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	// Create a new CSV reader
+	reader := csv.NewReader(file)
+
+	// Read the first row from the CSV file
+	row, err := reader.Read()
+	if err != nil {
+		return err
+	}
+
+	// Required headers
+	requiredHeaders := []string{
+		"Question Text",
+		"Question Type",
+		"Time in seconds",
+		"Score",
+		"Option 1",
+		"Option 2",
+		"Option 3",
+		"Option 4",
+		"Option 5",
+		"Correct Answer",
+	}
+
+	// Validate the headers
+	if len(row) < len(requiredHeaders) {
+		return fmt.Errorf("CSV file has fewer columns than expected")
+	}
+
+	for index, col := range requiredHeaders {
+		if col != row[index] {
+			return fmt.Errorf("column mismatch at index %d: expected '%s', found '%s'", index, col, row[index])
+		}
+	}
+
+	return nil
+}
+
+func extractQuestionsFromCSV(fileName string) ([]models.Question, error) {
+	questions := []models.Question{}
+
+	// Open the CSV file
+	file, err := os.Open(fileName)
+	if err != nil {
+		return questions, err
+	}
+	defer file.Close()
+
+	// Create a new CSV reader
+	reader := csv.NewReader(file)
+
+	// Read all the rows from the CSV file
+	rows, err := reader.ReadAll()
+	if err != nil {
+		return questions, err
+	}
+
+	// get first row and validate it
+	for rowNumber, row := range rows {
+
+		// ignore first column
+		if rowNumber == 0 {
+			continue
+		}
+
+		id, err := uuid.NewUUID()
+
+		if err != nil {
+			return questions, nil
+		}
+
+		/*
+			Index: column
+			0:  "Question Text",
+			1:  "Question Type",
+			2:  "Time in seconds",
+			3:  "Score",
+			4:  "Option 1",
+			5:  "Option 2",
+			6:  "Option 3",
+			7:  "Option 4",
+			8:  "Option 5",
+			9:  "Correct Answer",
+
+		*/
+
+		var options map[string]string = map[string]string{}
+		var optionKey = 1
+
+		// extract options
+		for _, option := range []string{row[4], row[5], row[6], row[7], row[8]} {
+			if option != "" {
+				options[quizUtilsHelper.GetString(optionKey)] = option
+				optionKey += 1
+			}
+		}
+
+		var answers []int
+
+		// extract answers
+		for _, answer := range strings.Split(row[9], "|") {
+			if _, ok := options[answer]; !ok {
+				return questions, fmt.Errorf(fmt.Sprintf("answer not in option list options: %s, answers: %s", options, row[9]))
+			}
+
+			answerInt, err := strconv.Atoi(answer)
+
+			if err != nil {
+				return questions, fmt.Errorf(fmt.Sprintf("answer string to int fail options: %s, answers: %s", options, row[9]))
+			}
+
+			answers = append(answers, answerInt)
+		}
+
+		// extract score
+		var score int16
+		if row[3] == "" {
+			score = 1
+		} else {
+			scoreInt, err := strconv.Atoi(row[3])
+
+			if err != nil {
+				return questions, fmt.Errorf(fmt.Sprintf("score string to int fail score: %s", row[3]))
+			}
+
+			score = int16(scoreInt)
+		}
+
+		// extract duration
+		var duration int
+		if row[2] == "" {
+			duration = 30
+		} else {
+			duration, err = strconv.Atoi(row[2])
+
+			if err != nil {
+				return questions, fmt.Errorf(fmt.Sprintf("duration string to int fail score: %s", row[2]))
+			}
+		}
+
+		questions = append(questions,
+			models.Question{
+				ID:                id,
+				Question:          row[0],
+				Options:           options,
+				Answers:           answers,
+				Score:             score,
+				DurationInSeconds: duration,
+				OrderNumber:       rowNumber + 1,
+			},
+		)
+	}
+	return questions, nil
+}
+
+func (ctrl *QuizController) CreateQuizByCsv(c *fiber.Ctx) error {
+
+	var quizReq structs.ReqCreateQuizByCsv = structs.ReqCreateQuizByCsv{
+		Title:       c.FormValue("title"),
+		Description: c.FormValue("description"),
+	}
+
+	validate := validator.New()
+	err := validate.Struct(quizReq)
+	if err != nil {
+		ctrl.logger.Error("error in Unmarshal create-quiz by csv", zap.Error(err))
+		return utils.JSONFail(c, http.StatusBadRequest, utils.ValidatorErrorString(err))
+	}
+
+	userID := quizUtilsHelper.GetString(c.Locals(constants.ContextUid))
+	filePath := quizUtilsHelper.GetString(c.Locals(constants.FileName))
+
+	defer func() {
+		err := os.Remove(filePath)
+		if err != nil {
+			ctrl.logger.Error("error in deleting file", zap.Error(err))
+			return
+		}
+	}()
+
+	err = validateCSVFileFormat(filePath)
+	if err != nil {
+		ctrl.logger.Error("file validation failed", zap.Error(err))
+		return utils.JSONFail(c, http.StatusBadRequest, constants.ErrValidatingColumns)
+	}
+
+	questions, err := extractQuestionsFromCSV(filePath)
+
+	if err != nil {
+		ctrl.logger.Error("file validation failed", zap.Error(err))
+		return utils.JSONFail(c, http.StatusBadRequest, constants.ErrParsingFile)
+	}
+
+	quizId, err := ctrl.helper.QuestionModel.RegisterQuestions(userID, quizReq.Title, quizReq.Description, questions)
+
+	if err != nil {
+		ctrl.logger.Error("error in creating quiz", zap.Error(err))
+		return utils.JSONFail(c, http.StatusBadRequest, constants.ErrRegisterQuiz)
+	}
+
+	return utils.JSONSuccess(c, http.StatusAccepted, quizId)
+}

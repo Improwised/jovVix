@@ -43,6 +43,7 @@ const (
 	ErrKratosDataInsertion = "error while inserting user data came from kratos"
 	ErrKratosIDEmpty       = "error no session_id found in kratos cookie"
 	ErrKratosCookieTime    = "error while parsing the expiration time of the cookie"
+	ErrRegisterQuiz        = "error while creating quiz"
 )
 
 // default Events
@@ -59,6 +60,17 @@ const (
 	// http/https
 	ErrNotAllowed              = "not allowed to access Resource"
 	ErrUserRequiredToCheckRole = "user not logged in"
+
+	// xlsx
+	FileName                    = "file_name"
+	FileSize                    = 50000 // TODO: change file size, ~50kb
+	SheetName                   = "demo"
+	ErrGettingAttachment        = "error in getting file"
+	ErrFileSizeExceed           = "file size exceed"
+	ErrFileIsNotInSupportedType = "file has no supported type"
+	ErrProblemInUploadFile      = "there was some error in file upload"
+	ErrValidatingColumns        = "file columns not in proper format"
+	ErrParsingFile              = "error in parsing file"
 )
 
 // components

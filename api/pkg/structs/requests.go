@@ -23,3 +23,8 @@ type ReqAnswerSubmit struct {
 	AnswerKeys   []int     `json:"keys" validate:"required"`
 	ResponseTime int       `json:"response_time" validate:"required"`
 }
+
+type ReqCreateQuizByCsv struct {
+	Title       string `json:"title" form:"title" validate:"required"`
+	Description string `json:"description" form:"description"`
+}
