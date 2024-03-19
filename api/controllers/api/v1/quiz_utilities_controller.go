@@ -201,7 +201,7 @@ func (ctrl *QuizController) CreateQuizByCsv(c *fiber.Ctx) error {
 	err := validateCSVFileFormat(filePath)
 	if err != nil {
 		ctrl.logger.Error("file validation failed", zap.Error(err))
-		return utils.JSONFail(c, http.StatusBadRequest, constants.ErrValidatingColumns)
+		return utils.JSONFail(c, http.StatusBadRequest, err.Error())
 	}
 
 	questions, err := extractQuestionsFromCSV(filePath)
@@ -209,7 +209,7 @@ func (ctrl *QuizController) CreateQuizByCsv(c *fiber.Ctx) error {
 	if err != nil {
 		if err.Error() == constants.ErrRowsReachesToMaxCount {
 			ctrl.logger.Error("file validation failed", zap.Error(err))
-			return utils.JSONFail(c, http.StatusBadRequest, constants.ErrRowsReachesToMaxCount)
+			return utils.JSONFail(c, http.StatusBadRequest, err.Error())
 		}
 
 		ctrl.logger.Error("file validation failed", zap.Error(err))

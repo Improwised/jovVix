@@ -5,6 +5,7 @@ import { useToast } from "vue-toastification";
 // define nuxt configs
 const toast = useToast();
 const app = useNuxtApp();
+const router = useRouter();
 useSystemEnv();
 
 // define props and emits
@@ -39,12 +40,13 @@ async function submit(e) {
     }
   );
 
-  if (error.value) {
-    toast.error(error.value);
+  if (error.value?.data) {
+    toast.error(error.value.data.data);
     return;
   }
 
   toast.success(app.$CsvUploadSuccess);
+  router.push("/");
 }
 </script>
 
