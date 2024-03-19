@@ -9,6 +9,8 @@ useSystemEnv();
 
 // define props and emits
 let urls = useState("urls");
+let title = ref('')
+let file = ref(0)
 
 // if urls not found
 if (!urls.value.api_url) {
@@ -21,15 +23,13 @@ async function submit(e) {
   e.preventDefault();
   const formData = new FormData();
 
-  const title = document.getElementById("title");
   const description = document.getElementById("description");
   const attachment = document.getElementById("attachment");
 
-  formData.append(title.name, title.value);
+  formData.append("title", title.value);
   formData.append(description.name, description.value);
   formData.append(attachment.name, attachment.files[0]);
 
-  console.log(attachment.files[0]);
   const { error } = await useFetch(urls.value.api_url + "/admin/uploads", {
     method: "POST",
     body: formData,
@@ -62,9 +62,10 @@ async function submit(e) {
             name="title"
             aria-describedby="helpId"
             placeholder=""
+            v-model="title"
             required
           />
-          <small id="helpId" class="form-text text-muted">Help text</small>
+          <small v-if="title == ''" id="helpId" class="form-text text-danger">Required</small>
         </div>
         <div class="mb-3">
           <label for="description" class="form-label">Quiz description</label>
@@ -76,7 +77,7 @@ async function submit(e) {
             aria-describedby="helpId"
             placeholder=""
           />
-          <small id="helpId" class="form-text text-muted">Help text</small>
+          <!-- <small id="helpId" class="form-text text-muted">Help text</small> -->
         </div>
 
         <label for="attachment" class="form-label">Choose file</label>
@@ -88,8 +89,9 @@ async function submit(e) {
           placeholder="upload"
           aria-describedby="fileHelpId"
           accept=".csv"
+          v-on:change="(e) => file = e.target.files.length"
         />
-        <div id="fileHelpId" class="form-text">Help text</div>
+        <div v-if="file == 0" id="fileHelpId" class="form-text text-danger">Required</div>
       </div>
       <button type="submit" class="btn btn-primary">Submit</button>
     </form>
