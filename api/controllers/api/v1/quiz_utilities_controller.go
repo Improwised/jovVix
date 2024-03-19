@@ -11,12 +11,10 @@ import (
 	"github.com/Improwised/quizz-app/api/constants"
 	quizUtilsHelper "github.com/Improwised/quizz-app/api/helpers/utils"
 	"github.com/Improwised/quizz-app/api/models"
-	"github.com/Improwised/quizz-app/api/pkg/structs"
 	"github.com/Improwised/quizz-app/api/utils"
 	fiber "github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
-	validator "gopkg.in/go-playground/validator.v9"
 )
 
 func validateCSVFileFormat(fileName string) error {
@@ -83,12 +81,10 @@ func extractQuestionsFromCSV(fileName string) ([]models.Question, error) {
 		return questions, err
 	}
 
-	// get first row and validate it
-	for rowNumber, row := range rows {
+	for rowNumber, row := range rows[1:] {
 
-		// ignore first column
-		if rowNumber == 0 {
-			continue
+		if rowNumber == constants.MaxRows {
+			return questions, fmt.Errorf(constants.ErrRowsReachesToMaxCount)
 		}
 
 		id, err := uuid.NewUUID()
@@ -183,16 +179,12 @@ func extractQuestionsFromCSV(fileName string) ([]models.Question, error) {
 
 func (ctrl *QuizController) CreateQuizByCsv(c *fiber.Ctx) error {
 
-	var quizReq structs.ReqCreateQuizByCsv = structs.ReqCreateQuizByCsv{
-		Title:       c.FormValue("title"),
-		Description: c.FormValue("description"),
-	}
+	quizTitle := c.Params(constants.QuizTitle)
+	quizDescription := c.FormValue("description")
 
-	validate := validator.New()
-	err := validate.Struct(quizReq)
-	if err != nil {
-		ctrl.logger.Error("error in Unmarshal create-quiz by csv", zap.Error(err))
-		return utils.JSONFail(c, http.StatusBadRequest, utils.ValidatorErrorString(err))
+	if quizTitle == "" {
+		ctrl.logger.Error("quiz-title not found")
+		return utils.JSONSuccess(c, http.StatusBadRequest, constants.QuizTitleRequired)
 	}
 
 	userID := quizUtilsHelper.GetString(c.Locals(constants.ContextUid))
@@ -206,7 +198,7 @@ func (ctrl *QuizController) CreateQuizByCsv(c *fiber.Ctx) error {
 		}
 	}()
 
-	err = validateCSVFileFormat(filePath)
+	err := validateCSVFileFormat(filePath)
 	if err != nil {
 		ctrl.logger.Error("file validation failed", zap.Error(err))
 		return utils.JSONFail(c, http.StatusBadRequest, constants.ErrValidatingColumns)
@@ -215,11 +207,16 @@ func (ctrl *QuizController) CreateQuizByCsv(c *fiber.Ctx) error {
 	questions, err := extractQuestionsFromCSV(filePath)
 
 	if err != nil {
+		if err.Error() == constants.ErrRowsReachesToMaxCount {
+			ctrl.logger.Error("file validation failed", zap.Error(err))
+			return utils.JSONFail(c, http.StatusBadRequest, constants.ErrRowsReachesToMaxCount)
+		}
+
 		ctrl.logger.Error("file validation failed", zap.Error(err))
 		return utils.JSONFail(c, http.StatusBadRequest, constants.ErrParsingFile)
 	}
 
-	quizId, err := ctrl.helper.QuestionModel.RegisterQuestions(userID, quizReq.Title, quizReq.Description, questions)
+	quizId, err := ctrl.helper.QuestionModel.RegisterQuestions(userID, quizTitle, quizDescription, questions)
 
 	if err != nil {
 		ctrl.logger.Error("error in creating quiz", zap.Error(err))

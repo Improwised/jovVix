@@ -61,16 +61,20 @@ const (
 	ErrNotAllowed              = "not allowed to access Resource"
 	ErrUserRequiredToCheckRole = "user not logged in"
 
-	// xlsx
+	// csv
 	FileName                    = "file_name"
-	FileSize                    = 50000 // TODO: change file size, ~50kb
+	MaxRows                     = 500
+	FileSize                    = 100000 // TODO: change file size, ~1mb
 	SheetName                   = "demo"
+	QuizTitle                   = "quiz_title"
+	QuizTitleRequired           = "quiz-title is required"
 	ErrGettingAttachment        = "error in getting file"
 	ErrFileSizeExceed           = "file size exceed"
 	ErrFileIsNotInSupportedType = "file has no supported type"
 	ErrProblemInUploadFile      = "there was some error in file upload"
 	ErrValidatingColumns        = "file columns not in proper format"
 	ErrParsingFile              = "error in parsing file"
+	ErrRowsReachesToMaxCount    = "rows limit exceed"
 )
 
 // components

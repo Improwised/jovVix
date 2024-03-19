@@ -26,16 +26,18 @@ async function submit(e) {
   const description = document.getElementById("description");
   const attachment = document.getElementById("attachment");
 
-  formData.append("title", title.value);
   formData.append(description.name, description.value);
   formData.append(attachment.name, attachment.files[0]);
 
-  const { error } = await useFetch(urls.value.api_url + "/admin/uploads", {
-    method: "POST",
-    body: formData,
-    mode: "cors",
-    credentials: "include",
-  });
+  const { error } = await useFetch(
+    encodeURI(urls.value.api_url + "/admin/quizzes/upload/" + title.value),
+    {
+      method: "POST",
+      body: formData,
+      mode: "cors",
+      credentials: "include",
+    }
+  );
 
   if (error.value) {
     toast.error(error.value);
@@ -97,10 +99,10 @@ async function submit(e) {
           Required
         </div>
       </div>
+      <button type="submit" class="btn btn-primary me-2">Submit</button>
       <a class="btn btn-primary me-2" href="/files/demo.csv" download="demo.csv"
         >Download sample</a
       >
-      <button type="submit" class="btn btn-primary">Submit</button>
     </form>
   </Frame>
 </template>
