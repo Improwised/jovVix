@@ -2,6 +2,7 @@
 vendor
 bin
 .run
+uploads
 
 # Numerous always-ignore extensions
 *.diff

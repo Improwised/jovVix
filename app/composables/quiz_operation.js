@@ -1,8 +1,6 @@
 import constants from "~~/config/constants";
 
 export default class QuizHandler {
-  JOIN_EVENT = "JOIN_REQUEST";
-
   constructor(socket_url, identifier, componentHandler, others) {
     if (!(socket_url && identifier && componentHandler)) {
       throw Error("all demanded parameters are necessary");

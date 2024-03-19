@@ -9,14 +9,16 @@ import (
 	"github.com/google/uuid"
 )
 
+const QuizzesTable = "quizzes"
+
 // Quiz model
 type Quiz struct {
-	ID          uuid.UUID `json:"id" db:"id"`
-	Title       string    `json:"title" db:"title" validate:"required"`
-	Description string    `json:"description,omitempty" db:"description"`
-	CreatorID   string    `json:"creator_id,omitempty" db:"creator_id"`
-	CreatedAt   time.Time `json:"created_at,omitempty" db:"created_at,omitempty"`
-	UpdatedAt   time.Time `json:"updated_at,omitempty" db:"updated_at,omitempty"`
+	ID          uuid.UUID      `json:"id" db:"id"`
+	Title       string         `json:"title" db:"title" validate:"required"`
+	Description sql.NullString `json:"description,omitempty" db:"description"`
+	CreatorID   string         `json:"creator_id,omitempty" db:"creator_id"`
+	CreatedAt   time.Time      `json:"created_at,omitempty" db:"created_at,omitempty"`
+	UpdatedAt   time.Time      `json:"updated_at,omitempty" db:"updated_at,omitempty"`
 }
 
 // QuizModel implements quiz related database operations
@@ -34,6 +36,34 @@ type QuizActivity struct {
 	Title        string    `json:"title" db:"title" validate:"required"`
 	Description  string    `json:"description,omitempty" db:"description"`
 	UserActivity string    `json:"user_activity" db:"role"`
+}
+
+func (model *QuizModel) CreateQuiz(userId string, title string, description string) (uuid.UUID, error) {
+	quizId, err := uuid.NewUUID()
+
+	if err != nil {
+		return quizId, err
+	}
+
+	// register quiz
+	ok, err := model.db.Insert(QuizzesTable).Rows(
+		Quiz{
+			ID:          quizId,
+			Title:       title,
+			Description: sql.NullString{Valid: description != "", String: description},
+			CreatorID:   userId,
+		},
+	).Returning("id").Executor().ScanVal(&quizId)
+
+	if !ok {
+		return quizId, sql.ErrNoRows
+	}
+
+	if err != nil {
+		return quizId, err
+	}
+
+	return quizId, nil
 }
 
 func (model *QuizModel) GetAllQuizzesActivity(user_id string) ([]QuizActivity, error) {

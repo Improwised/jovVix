@@ -33,7 +33,7 @@ func InitHelper(db *goqu.Database, pubSubCfg config.RedisClientConfig, logger *z
 	quizModel := models.InitQuizModel(db)
 	userQuizResponseModel := models.InitUserQuizResponseModel(db)
 	userPlayedQuizModel := models.InitUserPlayedQuizModel(db)
-	questionModel := models.InitQuestionModel(db)
+	questionModel := models.InitQuestionModel(db, logger)
 
 	pubSubClientModel, err := models.InitPubSubModel(pubSubCfg.RedisAddr+":"+pubSubCfg.RedisPort, pubSubCfg.RedisPass, pubSubCfg.RedisDb)
 

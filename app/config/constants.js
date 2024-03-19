@@ -44,4 +44,7 @@ export default {
   QuizSessionValidationFailed: "quiz-session-validation-failed",
   SessionWasCompleted: "session was completed",
   NoAnswerFound: "please select an answer",
+
+  // Messages
+  CsvUploadSuccess: "file upload successfully",
 };
