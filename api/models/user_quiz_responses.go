@@ -37,9 +37,9 @@ func InitUserQuizResponseModel(goqu *goqu.Database) *UserQuizResponseModel {
 
 func (model *UserQuizResponseModel) GetQuestionsCopy(userPlayedQuizId uuid.UUID, quizId uuid.UUID) error {
 
-	rows, err := model.db.From(goqu.T("quiz_questions").As("qq")).
+	rows, err := model.db.From(goqu.T("active_quiz_questions").As("qq")).
 		Select(goqu.I("qq.question_id")).
-		Where(goqu.I("qq.quiz_id").Eq(quizId)).Executor().Query()
+		Where(goqu.I("qq.active_quiz_id").Eq(quizId)).Executor().Query()
 
 	if err != nil {
 		return err

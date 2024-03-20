@@ -12,6 +12,7 @@ useSystemEnv();
 let file = ref(0);
 let title = ref("");
 let urls = useState("urls");
+let quizId = ref();
 
 // if urls not found
 if (!urls.value.api_url) {
@@ -30,7 +31,7 @@ async function submit(e) {
   formData.append(description.name, description.value);
   formData.append(attachment.name, attachment.files[0]);
 
-  const { error } = await useFetch(
+  const { data, error } = await useFetch(
     encodeURI(urls.value.api_url + "/admin/quizzes/" + title.value + "/upload"),
     {
       method: "POST",
@@ -45,8 +46,29 @@ async function submit(e) {
     return;
   }
 
+  quizId.value = data.value.data;
   toast.success(app.$CsvUploadSuccess);
-  router.push("/");
+}
+
+async function handleStartDemo() {
+  urls = useState("urls");
+  const { data, error } = await useFetch(
+    encodeURI(
+      urls.value.api_url + "/admin/quizzes/" + quizId.value + "/demo_session"
+    ),
+    {
+      method: "POST",
+      mode: "cors",
+      credentials: "include",
+    }
+  );
+
+  if (error.value?.data) {
+    toast.error(error.value.data.data);
+    return;
+  }
+
+  router.push("/admin/arrange/" + data.value.data);
 }
 </script>
 
@@ -105,6 +127,14 @@ async function submit(e) {
       <a class="btn btn-primary me-2" href="/files/demo.csv" download="demo.csv"
         >Download sample</a
       >
+      <button
+        v-if="quizId"
+        type="button"
+        class="btn btn-primary me-2"
+        @click="handleStartDemo"
+      >
+        Start Demo
+      </button>
     </form>
   </Frame>
 </template>

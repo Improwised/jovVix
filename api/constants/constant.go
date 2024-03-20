@@ -44,6 +44,7 @@ const (
 	ErrKratosIDEmpty       = "error no session_id found in kratos cookie"
 	ErrKratosCookieTime    = "error while parsing the expiration time of the cookie"
 	ErrRegisterQuiz        = "error while creating quiz"
+	ErrCreatingDemoQuiz    = "error while creating demo quiz"
 )
 
 // default Events
@@ -75,6 +76,9 @@ const (
 	ErrValidatingColumns        = "file columns not in proper format"
 	ErrParsingFile              = "error in parsing file"
 	ErrRowsReachesToMaxCount    = "rows limit exceed"
+
+	// quiz-id
+	QuizId = "quiz_id"
 )
 
 // components
