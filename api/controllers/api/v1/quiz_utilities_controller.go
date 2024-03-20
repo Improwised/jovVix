@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"database/sql"
 	"encoding/csv"
 	"fmt"
 	"net/http"
@@ -224,4 +225,24 @@ func (ctrl *QuizController) CreateQuizByCsv(c *fiber.Ctx) error {
 	}
 
 	return utils.JSONSuccess(c, http.StatusAccepted, quizId)
+}
+
+func (ctrl *QuizController) GenerateDemoSession(c *fiber.Ctx) error {
+	quizId := c.Params(constants.QuizId)
+	userId := quizUtilsHelper.GetString(c.Locals(constants.ContextUid))
+
+	sessionId, err := ctrl.helper.ActiveQuizModel.CreateActiveQuiz("demo session", quizId, userId, sql.NullTime{}, sql.NullTime{})
+
+	if err != nil {
+		ctrl.logger.Error("error in creating demo session", zap.Error(err))
+		return utils.JSONFail(c, http.StatusBadRequest, constants.ErrCreatingDemoQuiz)
+	}
+
+	err = ctrl.helper.ActiveQuizModel.GetQuestionsCopy(sessionId, quizId)
+	if err != nil {
+		ctrl.logger.Error("error in creating demo session questions", zap.Error(err))
+		return utils.JSONFail(c, http.StatusBadRequest, constants.ErrCreatingDemoQuiz)
+	}
+
+	return utils.JSONSuccess(c, http.StatusAccepted, sessionId)
 }

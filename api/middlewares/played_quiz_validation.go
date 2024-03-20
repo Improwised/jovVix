@@ -96,7 +96,7 @@ func (m *PlayedQuizValidationMiddleware) PlayedQuizValidation(c *fiber.Ctx) erro
 		return c.Next()
 	}
 
-	err = m.helpers.UserQuizResponseModel.GetQuestionsCopy(userPlayedQuizId, session.QuizID)
+	err = m.helpers.UserQuizResponseModel.GetQuestionsCopy(userPlayedQuizId, session.ID)
 
 	if err != nil {
 		c.Locals(constants.MiddlewareError, constants.UnknownError)

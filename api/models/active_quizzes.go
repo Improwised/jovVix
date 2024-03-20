@@ -45,7 +45,7 @@ func InitActiveQuizModel(goqu *goqu.Database, logger *zap.Logger) *ActiveQuizMod
 	return &ActiveQuizModel{db: goqu, defaultUUID: uuid, logger: logger}
 }
 
-func (model *ActiveQuizModel) CreateActiveQuiz(invitationCode int, title string, quizID uuid.UUID, adminID string, maxAttempt int, activatedTo sql.NullTime, activatedFrom sql.NullTime) (uuid.UUID, error) {
+func (model *ActiveQuizModel) CreateActiveQuiz(title string, quizID string, adminID string, activatedTo sql.NullTime, activatedFrom sql.NullTime) (uuid.UUID, error) {
 
 	if activatedFrom.Valid && activatedFrom.Time.Before(time.Now()) {
 		return model.defaultUUID, fmt.Errorf("session can not start with %s", activatedTo.Time)
@@ -62,14 +62,12 @@ func (model *ActiveQuizModel) CreateActiveQuiz(invitationCode int, title string,
 	}
 
 	record := goqu.Record{
-		"id":              id,
-		"invitation_code": invitationCode,
-		"title":           title,
-		"quiz_id":         quizID,
-		"admin_id":        adminID,
-		"max_attempt":     maxAttempt,
-		"activated_to":    activatedTo,
-		"activated_from":  activatedFrom,
+		"id":             id,
+		"title":          title,
+		"quiz_id":        quizID,
+		"admin_id":       adminID,
+		"activated_to":   activatedTo,
+		"activated_from": activatedFrom,
 	}
 
 	if activatedFrom.Valid {
@@ -104,6 +102,73 @@ func (model *ActiveQuizModel) GetSessionByCode(invitationCode string) (ActiveQui
 	}
 
 	return activeQuiz, nil
+}
+
+func (model *ActiveQuizModel) GetQuestionsCopy(activeQuizId uuid.UUID, quizId string) error {
+
+	rows, err := model.db.From(goqu.T("quiz_questions").As("qq")).
+		Select(goqu.I("qq.question_id")).
+		Where(goqu.I("qq.quiz_id").Eq(quizId)).Executor().Query()
+
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	activeQuizResponses := []goqu.Record{}
+	previousRecord := goqu.Record{}
+	order := 1
+
+	for rows.Next() {
+		var questionID uuid.UUID
+
+		if err := rows.Scan(&questionID); err != nil {
+			return err
+		}
+
+		id, err := uuid.NewUUID()
+
+		if err != nil {
+			return err
+		}
+
+		if _, ok := previousRecord["id"]; ok {
+			previousRecord["next_question"] = questionID
+			activeQuizResponses = append(activeQuizResponses, previousRecord)
+		}
+
+		previousRecord = goqu.Record{
+			"id":             id,
+			"question_id":    questionID,
+			"active_quiz_id": activeQuizId,
+			"order_no":       order,
+		}
+
+		order += 1
+	}
+
+	if _, ok := previousRecord["id"]; ok {
+		previousRecord["next_question"] = uuid.NullUUID{}
+		activeQuizResponses = append(activeQuizResponses, previousRecord)
+	}
+
+	result, err := model.db.Insert(ActiveQuizQuestionsTable).Rows(activeQuizResponses).Executor().Exec()
+
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return sql.ErrNoRows
+	}
+
+	return nil
 }
 
 func (model *ActiveQuizModel) GetOrActivateSession(sessionId string, userId string) (ActiveQuiz, error) {
