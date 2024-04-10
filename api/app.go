@@ -1,7 +1,7 @@
 // Quizz-app
 //
-//	Schemes: https
-//	Host: localhost
+//	Schemes: http
+//	Host: 127.0.0.1
 //	BasePath: /api
 //	Version: 0.0.1-alpha
 //

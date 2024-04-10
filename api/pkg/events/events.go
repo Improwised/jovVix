@@ -16,7 +16,7 @@ type IEvents interface {
 }
 
 type Events struct {
-	Bus evbus.Bus
+	Bus evbus.Bus `json:"bus"`
 }
 
 var logger *zap.Logger = nil

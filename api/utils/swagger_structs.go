@@ -2,6 +2,7 @@ package utils
 
 import (
 	"github.com/Improwised/quizz-app/api/models"
+	"github.com/Improwised/quizz-app/api/pkg/response"
 	"github.com/Improwised/quizz-app/api/pkg/structs"
 )
 
@@ -61,6 +62,23 @@ type ResponseAuthnUser struct {
 		Status string `json:"status"`
 		Data   struct {
 			models.User
+		} `json:"data"`
+	} `json:"body"`
+}
+
+// swagger:parameters RequestFinalScore
+type RequestFinalScore struct {
+	// in:query
+	UserPlayedQuiz string `json:"userPlayedQuiz"`
+}
+
+// swagger:response ResponseFinalScore
+type ResponseFinalScore struct {
+	//in:body
+	Body struct {
+		Status string `json:"status"`
+		Data   struct {
+			response.ResponseFinalScore
 		} `json:"data"`
 	} `json:"body"`
 }
