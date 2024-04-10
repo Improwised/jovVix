@@ -48,12 +48,10 @@ func NewFinalScoreBoardController(goqu *goqu.Database, logger *zap.Logger, event
 //	     400: GenericResFailNotFound
 //		  500: GenericResError
 func (fc *FinalScoreBoardController) GetScore(ctx *fiber.Ctx) error {
-	var userPlayedQuiz string
-	var tmpUserPlayedQuiz = ctx.Query(constants.UserPlayedQuiz)
 
-	if tmpUserPlayedQuiz != "" && len(tmpUserPlayedQuiz) == 36 {
-		userPlayedQuiz = tmpUserPlayedQuiz
-	} else {
+	var userPlayedQuiz = ctx.Query(constants.UserPlayedQuiz)
+
+	if !(userPlayedQuiz != "" && len(userPlayedQuiz) == 36) {
 		return utils.JSONFail(ctx, http.StatusBadRequest, errors.New("user play quiz should be valid string").Error())
 	}
 
