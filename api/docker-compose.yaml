@@ -7,7 +7,7 @@ services:
       POSTGRES_USER: quiz-app
       POSTGRES_PASSWORD: quiz-app
       POSTGRES_DB: quiz-app
-      POSTGRES_MULTIPLE_DATABASES: '"kratos-db"'
+      POSTGRES_MULTIPLE_DATABASES: '"kratos-db", "quiz-app-testing"'
     ports:
     - 5432:5432
     volumes:

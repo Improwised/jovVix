@@ -191,3 +191,7 @@ const (
 	// Event . unhandled event
 	UnknownError = "unknown_error"
 )
+
+// final score board for query parameter
+
+const UserPlayedQuiz = "userPlayedQuiz"

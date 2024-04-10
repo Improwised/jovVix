@@ -6,14 +6,14 @@
     "application/json"
   ],
   "schemes": [
-    "https"
+    "http"
   ],
   "swagger": "2.0",
   "info": {
     "description": "Quizz-app",
     "version": "0.0.1-alpha"
   },
-  "host": "localhost",
+  "host": "127.0.0.1",
   "basePath": "/api",
   "paths": {
     "/healthz": {
@@ -69,6 +69,41 @@
         ],
         "summary": "Prometheus metrics endpoint",
         "operationId": "ReqMetrics"
+      }
+    },
+    "/v1/finalScore": {
+      "get": {
+        "consumes": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "FinalScore"
+        ],
+        "summary": "Get a finalScore details.",
+        "operationId": "RequestFinalScore",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "UserPlayedQuiz",
+            "name": "userPlayedQuiz",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/ResponseFinalScore"
+          },
+          "400": {
+            "$ref": "#/responses/GenericResFailNotFound"
+          },
+          "500": {
+            "$ref": "#/responses/GenericResError"
+          }
+        }
       }
     },
     "/v1/kratos/auth": {
@@ -183,10 +218,6 @@
                   "type": "string",
                   "x-go-name": "Password"
                 },
-                "roles": {
-                  "type": "string",
-                  "x-go-name": "Roles"
-                },
                 "username": {
                   "type": "string",
                   "x-go-name": "UserName"
@@ -243,6 +274,28 @@
           }
         }
       }
+    }
+  },
+  "definitions": {
+    "FinalScoreBoard": {
+      "type": "object",
+      "properties": {
+        "responseTime": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "TimeTaken"
+        },
+        "score": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Score"
+        },
+        "userName": {
+          "type": "string",
+          "x-go-name": "UserName"
+        }
+      },
+      "x-go-package": "github.com/Improwised/quizz-app/api/models"
     }
   },
   "responses": {
@@ -488,6 +541,30 @@
             "enum": [
               "success"
             ],
+            "x-go-name": "Status"
+          }
+        }
+      }
+    },
+    "ResponseFinalScore": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "FinalScore": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/FinalScoreBoard"
+                }
+              }
+            },
+            "x-go-name": "Data"
+          },
+          "status": {
+            "type": "string",
             "x-go-name": "Status"
           }
         }

@@ -83,6 +83,12 @@ func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config confi
 		return fiber.ErrUpgradeRequired
 	})
 
+	// FinalScoreboard
+	err = setUpFinalScoreBoardController(v1, goqu, logger, middleware, events)
+	if err != nil {
+		return err
+	}
+
 	err = setupAuthController(v1, goqu, logger, middleware, config)
 	if err != nil {
 		return err
@@ -231,5 +237,18 @@ func quizController(
 
 	v1.Get(fmt.Sprintf("/socket/admin/arrange/:%s", constants.SessionIDParam), middleware.CheckSessionId, middleware.CustomAdminAuthenticated, websocket.New(quizSocketController.Arrange))
 
+	return nil
+}
+
+// final score board controller setup
+
+func setUpFinalScoreBoardController(v1 fiber.Router, goqu *goqu.Database, logger *zap.Logger, middlewares middlewares.Middleware, events *events.Events) error {
+	finalScoreBoardController, err := controller.NewFinalScoreBoardController(goqu, logger, events)
+	if err != nil {
+		return err
+	}
+
+	finalScoreRouter := v1.Group("/finalScore")
+	finalScoreRouter.Get("/", finalScoreBoardController.GetScore)
 	return nil
 }
