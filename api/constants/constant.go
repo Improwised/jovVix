@@ -192,6 +192,5 @@ const (
 	UnknownError = "unknown_error"
 )
 
-// final score board for query parameter
-
-const UserPlayedQuiz = "userPlayedQuiz"
+// final scoreboard cookie for user
+const UserPlayedQuiz = "user_played_quiz"

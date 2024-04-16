@@ -77,6 +77,11 @@ func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config confi
 	v1.Use("/socket", func(c *fiber.Ctx) error {
 
 		if websocket.IsWebSocketUpgrade(c) {
+			fmt.Println()
+			fmt.Println()
+			fmt.Println("---------first-------")
+			fmt.Println()
+			fmt.Println()
 			c.Locals(constants.MiddlewareError, nil)
 			return c.Next()
 		}
@@ -247,8 +252,8 @@ func setUpFinalScoreBoardController(v1 fiber.Router, goqu *goqu.Database, logger
 	if err != nil {
 		return err
 	}
+	finalScore := v1.Group("/final_score")
+	finalScore.Get("/user", finalScoreBoardController.GetScore)
 
-	finalScoreRouter := v1.Group("/finalScore")
-	finalScoreRouter.Get("/", finalScoreBoardController.GetScore)
 	return nil
 }

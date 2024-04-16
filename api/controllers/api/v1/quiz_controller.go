@@ -130,6 +130,5 @@ func (ctrl *QuizController) SetAnswer(c *fiber.Ctx) error {
 }
 
 func (ctrl *QuizController) Terminate(c *fiber.Ctx) error {
-	c.Cookie(RemoveUserToken(constants.CurrentUserQuiz))
 	return utils.JSONSuccess(c, http.StatusOK, nil)
 }

@@ -51,8 +51,6 @@ const handleQuizEvents = async (message) => {
       "/error?status=" + message.status + "&error=" + message.data
     );
   } else if (message.event == app.$TerminateQuiz) {
-    const quizCookie = useCookie(app.$CurrentQuizIdentifier);
-    quizCookie.value = null;
     return await router.push("/join/scoreboard");
   } else if (message.event == app.$RedirectToAdmin) {
     return await router.push("/admin/arrange/" + message.data.sessionId);
