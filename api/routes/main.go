@@ -252,8 +252,15 @@ func setUpFinalScoreBoardController(v1 fiber.Router, goqu *goqu.Database, logger
 	if err != nil {
 		return err
 	}
+
+	finalScoreBoardControllerAdmin, err := controller.NewFinalScoreBoardAdminController(goqu, logger, events)
+	if err != nil {
+		return err
+	}
+
 	finalScore := v1.Group("/final_score")
 	finalScore.Get("/user", finalScoreBoardController.GetScore)
+	finalScore.Get("/admin", finalScoreBoardControllerAdmin.GetScoreForAdmin)
 
 	return nil
 }

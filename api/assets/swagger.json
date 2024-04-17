@@ -71,7 +71,7 @@
         "operationId": "ReqMetrics"
       }
     },
-    "/v1/finalScore": {
+    "/v1/finalScore/user": {
       "get": {
         "consumes": [
           "application/json"
@@ -81,7 +81,7 @@
           "https"
         ],
         "tags": [
-          "FinalScore"
+          "FinalScoreForUser"
         ],
         "summary": "Get a finalScore details.",
         "operationId": "RequestFinalScore",
@@ -96,6 +96,41 @@
         "responses": {
           "200": {
             "$ref": "#/responses/ResponseFinalScore"
+          },
+          "400": {
+            "$ref": "#/responses/GenericResFailNotFound"
+          },
+          "500": {
+            "$ref": "#/responses/GenericResError"
+          }
+        }
+      }
+    },
+    "/v1/final_Score/admin": {
+      "get": {
+        "consumes": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "FinalScoreForAdmin"
+        ],
+        "summary": "Get a finalScore details for admin.",
+        "operationId": "RequestFinalScoreForAdmin",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "ActiveQuizId",
+            "name": "active_quiz_id",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/ResponseFinalScoreForAdmin"
           },
           "400": {
             "$ref": "#/responses/GenericResFailNotFound"
@@ -280,11 +315,6 @@
     "FinalScoreBoard": {
       "type": "object",
       "properties": {
-        "responseTime": {
-          "type": "integer",
-          "format": "int64",
-          "x-go-name": "TimeTaken"
-        },
         "score": {
           "type": "integer",
           "format": "int64",
@@ -547,6 +577,30 @@
       }
     },
     "ResponseFinalScore": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "FinalScore": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/FinalScoreBoard"
+                }
+              }
+            },
+            "x-go-name": "Data"
+          },
+          "status": {
+            "type": "string",
+            "x-go-name": "Status"
+          }
+        }
+      }
+    },
+    "ResponseFinalScoreForAdmin": {
       "description": "",
       "schema": {
         "type": "object",

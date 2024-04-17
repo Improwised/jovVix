@@ -194,3 +194,4 @@ const (
 
 // final scoreboard cookie for user
 const UserPlayedQuiz = "user_played_quiz"
+const ActiveQuizId = "active_quiz_id"
