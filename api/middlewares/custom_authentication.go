@@ -174,7 +174,6 @@ func CreateStrictCookie(key, value string) *fiber.Cookie {
 	cookie.SessionOnly = true
 	cookie.Secure = true
 	cookie.SameSite = "Strict"
-	cookie.Expires = time.Now().Add(2 * time.Hour)
 	return cookie
 }
 

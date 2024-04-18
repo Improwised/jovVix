@@ -135,6 +135,8 @@ func (ctrl *UserController) IsAdmin(c *fiber.Ctx) error {
 
 	user, err := ctrl.userService.GetUser(userID)
 
+	aqi := c.Query("active_quiz_id")
+
 	if err != nil {
 		if err == sql.ErrNoRows {
 			RemoveUserToken(constants.ContextUid)
@@ -144,6 +146,9 @@ func (ctrl *UserController) IsAdmin(c *fiber.Ctx) error {
 	}
 
 	if user.Roles == "admin" {
+		if aqi != "" {
+			return c.Next()
+		}
 		return utils.JSONSuccess(c, http.StatusOK, true)
 	}
 

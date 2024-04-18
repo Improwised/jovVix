@@ -84,7 +84,7 @@ func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config confi
 	})
 
 	// FinalScoreboard
-	err = setUpFinalScoreBoardController(v1, goqu, logger, middleware, events)
+	err = setUpFinalScoreBoardController(v1, goqu, logger, middleware, events, pub)
 	if err != nil {
 		return err
 	}
@@ -241,14 +241,25 @@ func quizController(
 }
 
 // final score board controller setup
+func setUpFinalScoreBoardController(v1 fiber.Router, goqu *goqu.Database, logger *zap.Logger, middlewares middlewares.Middleware, events *events.Events, pub *watermill.WatermillPublisher) error {
+	userController, err := controller.NewUserController(goqu, logger, events, pub)
+	if err != nil {
+		return err
+	}
 
-func setUpFinalScoreBoardController(v1 fiber.Router, goqu *goqu.Database, logger *zap.Logger, middlewares middlewares.Middleware, events *events.Events) error {
 	finalScoreBoardController, err := controller.NewFinalScoreBoardController(goqu, logger, events)
 	if err != nil {
 		return err
 	}
 
-	finalScoreRouter := v1.Group("/finalScore")
-	finalScoreRouter.Get("/", finalScoreBoardController.GetScore)
+	finalScoreBoardControllerAdmin, err := controller.NewFinalScoreBoardAdminController(goqu, logger, events)
+	if err != nil {
+		return err
+	}
+
+	finalScore := v1.Group("/final_score")
+	finalScore.Get("/user", finalScoreBoardController.GetScore)
+	finalScore.Get("/admin", middlewares.Authenticated, userController.IsAdmin, finalScoreBoardControllerAdmin.GetScoreForAdmin)
+
 	return nil
 }

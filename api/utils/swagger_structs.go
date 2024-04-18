@@ -83,6 +83,23 @@ type ResponseFinalScore struct {
 	} `json:"body"`
 }
 
+// swagger:parameters RequestFinalScoreForAdmin
+type RequestFinalScoreForAdmin struct {
+	// in:query
+	ActiveQuizId string `json:"active_quiz_id"`
+}
+
+// swagger:response ResponseFinalScoreForAdmin
+type ResponseFinalScoreForAdmin struct {
+	//in:body
+	Body struct {
+		Status string `json:"status"`
+		Data   struct {
+			response.ResponseFinalScore
+		} `json:"data"`
+	} `json:"body"`
+}
+
 ////////////////////
 // --- GENERIC ---//
 ////////////////////

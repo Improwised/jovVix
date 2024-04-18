@@ -34,7 +34,7 @@ func NewFinalScoreBoardController(goqu *goqu.Database, logger *zap.Logger, event
 }
 
 // GetScore to send final score after quiz over
-// swagger:route GET /v1/finalScore FinalScore RequestFinalScore
+// swagger:route GET /v1/finalScore/user FinalScoreForUser RequestFinalScore
 //
 // Get a finalScore details.
 //
@@ -49,7 +49,7 @@ func NewFinalScoreBoardController(goqu *goqu.Database, logger *zap.Logger, event
 //		  500: GenericResError
 func (fc *FinalScoreBoardController) GetScore(ctx *fiber.Ctx) error {
 
-	var userPlayedQuiz = ctx.Query(constants.UserPlayedQuiz)
+	var userPlayedQuiz = ctx.Cookies(constants.UserPlayedQuiz)
 
 	if !(userPlayedQuiz != "" && len(userPlayedQuiz) == 36) {
 		return utils.JSONFail(ctx, http.StatusBadRequest, errors.New("user play quiz should be valid string").Error())
