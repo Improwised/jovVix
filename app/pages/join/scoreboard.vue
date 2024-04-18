@@ -1,14 +1,19 @@
 <script setup>
+import { useToast } from "vue-toastification";
+
 const url = useState("urls");
 const dataForUsers = reactive([]);
 const dataForAdmin = reactive([]);
 const route = useRoute();
+const router = useRouter();
 const activeQuizId = ref("");
+const toast = useToast();
+const app = useNuxtApp();
 useSystemEnv();
 
 async function fetchScoreDataForUser() {
   const headers = useRequestHeaders(["cookie"]);
-  const { data } = await useFetch(
+  const { data, error } = await useFetch(
     () => url.value.api_url + "/final_score/user",
     {
       method: "GET",
@@ -17,12 +22,16 @@ async function fetchScoreDataForUser() {
       mode: "cors",
     }
   );
+
   watch(
-    data,
+    [data, error],
     () => {
       if (data.value) {
         dataForUsers.push(...data.value.data);
-        console.log("pending for user ", data.value);
+      }
+      if (error.value) {
+        toast.error(app.$Unauthorized);
+        router.push("/");
       }
     },
     { immediate: true, deep: true }
@@ -30,7 +39,7 @@ async function fetchScoreDataForUser() {
 }
 
 async function fetchScoreDataForAdmin() {
-  const { data } = await useFetch(
+  const { data, error } = await useFetch(
     () =>
       url.value.api_url +
       "/final_score/admin?active_quiz_id=" +
@@ -42,13 +51,15 @@ async function fetchScoreDataForAdmin() {
     }
   );
 
-  console.log("pending for admin ", data.value);
   watch(
-    data,
+    [data, error],
     () => {
       if (data.value) {
         dataForAdmin.push(...data.value.data);
-        console.log("pending for admin ", data.value);
+      }
+      if (error.value) {
+        toast.error(app.$Unauthorized);
+        router.push("/");
       }
     },
     { immediate: true, deep: true }
@@ -96,7 +107,7 @@ onBeforeMount(() => {
     </table>
 
     <!-- table for showing to Admin-->
-    <table v-if="dataForAdmin.length" class="table table-danger align-middle">
+    <table v-if="dataForAdmin.length" class="table table-dark align-middle">
       <thead>
         <caption>
           Rankings

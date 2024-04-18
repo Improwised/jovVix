@@ -13,6 +13,7 @@ import (
 )
 
 func (m *Middleware) Authenticated(c *fiber.Ctx) error {
+
 	if m.Config.Kratos.IsEnabled {
 		sessionID := c.Cookies("ory_kratos_session")
 		if sessionID == "" {
