@@ -85,7 +85,7 @@ function handleSkipTimer(e) {
             <th>Rank</th>
             <th>User</th>
             <th>Score</th>
-            <th>Response Time</th>
+            <th>Response Time (ms)</th>
           </tr>
         </thead>
         <tbody class="table-group-divider">

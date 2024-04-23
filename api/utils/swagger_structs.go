@@ -66,12 +66,6 @@ type ResponseAuthnUser struct {
 	} `json:"body"`
 }
 
-// swagger:parameters RequestFinalScore
-type RequestFinalScore struct {
-	// in:query
-	UserPlayedQuiz string `json:"userPlayedQuiz"`
-}
-
 // swagger:response ResponseFinalScore
 type ResponseFinalScore struct {
 	//in:body

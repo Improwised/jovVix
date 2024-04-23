@@ -92,15 +92,15 @@ onBeforeMount(() => {
           <th>Rank</th>
           <th>User</th>
           <th>Score</th>
-          <th>Response Time</th>
+          <th>Response Time (ms)</th>
         </tr>
       </thead>
       <tbody class="table-group-divider">
         <tr v-for="(user, index) in dataForUsers" :key="index">
           <td></td>
-          <td>{{ user.userName }}</td>
+          <td>{{ user.username }}</td>
           <td>{{ user.score }}</td>
-          <td></td>
+          <td>{{ user.response_time }}</td>
         </tr>
       </tbody>
       <tfoot></tfoot>
@@ -113,21 +113,20 @@ onBeforeMount(() => {
           Rankings
         </caption>
         <tr>
-          <th>Rank1</th>
+          <th>Rank</th>
           <th>User</th>
           <th>Score</th>
-          <th>Response Time</th>
+          <th>Response Time (ms)</th>
         </tr>
       </thead>
       <tbody class="table-group-divider">
         <tr v-for="(user, index) in dataForAdmin" :key="index">
           <td></td>
-          <td>{{ user.userName }}</td>
+          <td>{{ user.username }}</td>
           <td>{{ user.score }}</td>
-          <td></td>
+          <td>{{ user.response_time }}</td>
         </tr>
       </tbody>
-      <tfoot></tfoot>
     </table>
   </div>
 </template>
