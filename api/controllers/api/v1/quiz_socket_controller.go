@@ -343,36 +343,10 @@ func questionAndScoreHandler(c *websocket.Conn, qc *quizSocketController, respon
 	var wg sync.WaitGroup
 	chanNextEvent := make(chan bool)
 	chanSkipEvent := make(chan bool)
+	chanSkipTimer := make(chan bool)
 	var isQuizEnd bool = false
 
-	// receive response from socket
-	go func(c *websocket.Conn) {
-		for {
-			message := QuizReceiveResponse{}
-			err := c.ReadJSON(&message)
-			if err != nil {
-				qc.logger.Error("error in receiving message from question", zap.Error(err))
-				// isConnected = false
-				break
-			}
-
-			switch message.Event {
-			case constants.EventSkipAsked:
-				chanSkipEvent <- false
-			case constants.EventForceSkip:
-				chanSkipEvent <- true
-			case constants.EventNextQuestionAsked:
-				chanNextEvent <- true
-			}
-		}
-
-		// handle connection lost during quiz
-		if !isQuizEnd {
-			response.Component = constants.Loading
-			response.Data = constants.AdminDisconnected
-			shareEvenWithUser(c, qc, response, constants.AdminDisconnected, session.ID.String(), int(session.InvitationCode.Int32), constants.ToUser)
-		}
-	}(c)
+	go listenAllEvents(c, qc, response, session, chanNextEvent, chanSkipEvent, chanSkipTimer, isQuizEnd)
 
 	// handle question
 	var isFirst bool = lastQuestionDeliveryTime.Valid
@@ -381,9 +355,9 @@ func questionAndScoreHandler(c *websocket.Conn, qc *quizSocketController, respon
 		wg.Add(1)
 		if isFirst { // handle running question
 			isFirst = false
-			sendSingleQuestion(c, qc, &wg, response, session, question, lastQuestionDeliveryTime, chanSkipEvent)
+			sendSingleQuestion(c, qc, &wg, response, session, question, lastQuestionDeliveryTime, chanSkipEvent, chanSkipTimer)
 		} else { // handle new question
-			sendSingleQuestion(c, qc, &wg, response, session, question, sql.NullTime{}, chanSkipEvent)
+			sendSingleQuestion(c, qc, &wg, response, session, question, sql.NullTime{}, chanSkipEvent, chanSkipTimer)
 		}
 		err := utils.JSONSuccessWs(c, constants.EventNextQuestionAsked, response)
 
@@ -395,6 +369,7 @@ func questionAndScoreHandler(c *websocket.Conn, qc *quizSocketController, respon
 		if <-chanNextEvent {
 			continue
 		}
+
 		wg.Wait()
 	}
 
@@ -405,7 +380,37 @@ func questionAndScoreHandler(c *websocket.Conn, qc *quizSocketController, respon
 	}
 }
 
-func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.WaitGroup, response *QuizSendResponse, session models.ActiveQuiz, question models.Question, lastQuestionTimeStamp sql.NullTime, chanSkipEvent chan bool) {
+func listenAllEvents(c *websocket.Conn, qc *quizSocketController, response *QuizSendResponse, session models.ActiveQuiz, chanNextEvent chan bool, chanSkipEvent chan bool, chanSkipTimer chan bool, isQuizEnd bool) {
+	for {
+		message := QuizReceiveResponse{}
+		err := c.ReadJSON(&message)
+		if err != nil {
+			qc.logger.Error("error in receiving message from question", zap.Error(err))
+			// isConnected = false
+			break
+		}
+
+		switch message.Event {
+		case constants.EventSkipAsked:
+			chanSkipEvent <- false
+		case constants.EventForceSkip:
+			chanSkipEvent <- true
+		case constants.EventNextQuestionAsked:
+			chanNextEvent <- true
+		case constants.EventSkipTimer:
+			chanSkipTimer <- true
+		}
+	}
+
+	// handle connection lost during quiz
+	if !isQuizEnd {
+		response.Component = constants.Loading
+		response.Data = constants.AdminDisconnected
+		shareEvenWithUser(c, qc, response, constants.AdminDisconnected, session.ID.String(), int(session.InvitationCode.Int32), constants.ToUser)
+	}
+}
+
+func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.WaitGroup, response *QuizSendResponse, session models.ActiveQuiz, question models.Question, lastQuestionTimeStamp sql.NullTime, chanSkipEvent chan bool, chanSkipTimer chan bool) {
 	// start counter if not any question running
 	if !lastQuestionTimeStamp.Valid {
 		response.Component = constants.Question
@@ -478,11 +483,34 @@ func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.Wa
 		"options":  question.Options,
 		"duration": 20,
 	}
+
 	shareEvenWithUser(c, qc, response, constants.EventShowScore, session.ID.String(), int(session.InvitationCode.Int32), constants.ToAll)
 
-	// ideal time for showing score-board
-	time.Sleep(20 * time.Second)
+	wgForSkipTimer := &sync.WaitGroup{}
+	wgForSkipTimer.Add(1)
+
+	// skip 20 sec timer
+	go handleSkipTimer(wgForSkipTimer, chanSkipTimer)
+	wgForSkipTimer.Wait()
+
 	wg.Done()
+}
+
+func handleSkipTimer(wg *sync.WaitGroup, chanSkipTimer chan bool) {
+	defer wg.Done()
+
+	isTimeout := time.NewTicker(time.Duration(20) * time.Second)
+
+	for {
+		select {
+		case <-isTimeout.C:
+			return
+		case isSkip := <-chanSkipTimer: // skip 20 sec if admin clicks on skip button
+			if isSkip {
+				return
+			}
+		}
+	}
 }
 
 func handleAnswerSubmission(c *websocket.Conn, qc *quizSocketController, session models.ActiveQuiz, questionId uuid.UUID, duration int, wg *sync.WaitGroup, chanSkipEvent chan bool, response *QuizSendResponse) {
