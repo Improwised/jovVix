@@ -92,7 +92,7 @@ onBeforeMount(() => {
         <tr>
           <th>Rank</th>
           <th>User</th>
-          <th>Score</th>
+          <th>Points</th>
           <th>Time</th>
         </tr>
       </thead>
@@ -116,7 +116,7 @@ onBeforeMount(() => {
         <tr>
           <th>Rank</th>
           <th>User</th>
-          <th>Score</th>
+          <th>Points</th>
           <th>Time</th>
         </tr>
       </thead>
