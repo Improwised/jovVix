@@ -110,6 +110,11 @@ const askSkip = () => {
   adminOperationHandler.value.requestSkip(false);
 };
 
+// askFor20SecTimerToSkip
+const askSkipTimer = () => {
+  adminOperationHandler.value.requestSkipTimer();
+};
+
 const confirmSkip = (message) => {
   confirmNeeded.title = "Skip Forcefully !!!";
   confirmNeeded.message = message.data;
@@ -159,6 +164,7 @@ definePageMeta({
       v-else-if="currentComponent == 'Score'"
       :data="data"
       :is-admin="true"
+      @ask-skip-timer="askSkipTimer"
     ></QuizScoreSpace>
   </Playground>
 </template>

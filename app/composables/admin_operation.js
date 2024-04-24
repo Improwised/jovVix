@@ -30,6 +30,10 @@ export default class AdminOperations extends QuizHandler {
     );
   }
 
+  requestSkipTimer() {
+    this.sendMessage(this.currentComponent, constants.SkipTimer);
+  }
+
   handleConnectionProblem() {
     this.errorHandler("problem in connecting with server");
   }

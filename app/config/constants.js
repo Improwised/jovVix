@@ -35,6 +35,7 @@ export default {
   AskForceSkip: "ask_force_skip",
   ShowScore: "show_score",
   AdminDisconnectedMessage: "admin is disconnected, please wait...",
+  SkipTimer: "skip_timer",
 
   // Errors
   Unauthorized: "unauthorized to access resource",

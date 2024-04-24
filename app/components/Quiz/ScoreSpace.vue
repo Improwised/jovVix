@@ -13,7 +13,7 @@ const props = defineProps({
     required: false,
   },
 });
-
+const emits = defineEmits(["askSkipTimer"]);
 const timer = ref(null);
 const time = ref(0);
 
@@ -30,6 +30,11 @@ function handleTimer() {
 }
 
 handleTimer();
+
+function handleSkipTimer(e) {
+  e.preventDefault();
+  emits("askSkipTimer");
+}
 </script>
 
 <template>
@@ -58,6 +63,15 @@ handleTimer();
         </div>
       </div>
     </div>
+
+    <button
+      v-if="isAdmin"
+      type="button"
+      class="btn btn-primary mt-3"
+      @click="handleSkipTimer"
+    >
+      Next Question
+    </button>
 
     <div class="table-responsive mt-5">
       <table
