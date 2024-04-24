@@ -1,5 +1,6 @@
 <script setup>
 import { useToast } from "vue-toastification";
+import useMillisToMinutesAndSeconds from "~/composables/scoreboard_operation.js";
 
 const url = useState("urls");
 const dataForUsers = reactive([]);
@@ -92,7 +93,7 @@ onBeforeMount(() => {
           <th>Rank</th>
           <th>User</th>
           <th>Score</th>
-          <th>Response Time (ms)</th>
+          <th>Time</th>
         </tr>
       </thead>
       <tbody class="table-group-divider">
@@ -100,7 +101,7 @@ onBeforeMount(() => {
           <td></td>
           <td>{{ user.username }}</td>
           <td>{{ user.score }}</td>
-          <td>{{ user.response_time }}</td>
+          <td>{{ useMillisToMinutesAndSeconds(user.response_time, 2) }}</td>
         </tr>
       </tbody>
       <tfoot></tfoot>
@@ -116,7 +117,7 @@ onBeforeMount(() => {
           <th>Rank</th>
           <th>User</th>
           <th>Score</th>
-          <th>Response Time (ms)</th>
+          <th>Time</th>
         </tr>
       </thead>
       <tbody class="table-group-divider">
@@ -124,7 +125,7 @@ onBeforeMount(() => {
           <td></td>
           <td>{{ user.username }}</td>
           <td>{{ user.score }}</td>
-          <td>{{ user.response_time }}</td>
+          <td>{{ useMillisToMinutesAndSeconds(user.response_time, 2) }}</td>
         </tr>
       </tbody>
     </table>
