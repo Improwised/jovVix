@@ -6,8 +6,9 @@ import (
 )
 
 type FinalScoreBoard struct {
-	UserName string `db:"username" json:"userName"`
-	Score    int    `db:"score" json:"score"`
+	UserName     string `db:"username" json:"username"`
+	Score        int    `db:"score" json:"score"`
+	ResponseTime int    `db:"response_time" json:"response_time"`
 }
 
 type FinalScoreBoardModel struct {
@@ -36,11 +37,13 @@ func (model *FinalScoreBoardModel) GetScore(user_played_quiz string) ([]FinalSco
 	}
 
 	err = model.db.
+		From(goqu.T("users")).
 		Select(
 			"users.username",
 			goqu.SUM("user_quiz_responses.calculated_score").As("score"),
+			goqu.Func("coalesce", goqu.SUM(goqu.Case().
+				When(goqu.I("user_quiz_responses.calculated_score").Gt(0), goqu.I("user_quiz_responses.response_time")).Else(0)), 0).As("response_time"),
 		).
-		From("users").
 		InnerJoin(goqu.T("user_played_quizzes"), goqu.On(goqu.Ex{"users.id": goqu.I("user_played_quizzes.user_id")})).
 		InnerJoin(goqu.T("active_quizzes"), goqu.On(goqu.Ex{"user_played_quizzes.active_quiz_id": goqu.I("active_quizzes.id")})).
 		InnerJoin(goqu.T("quizzes"), goqu.On(goqu.Ex{"active_quizzes.quiz_id": goqu.I("quizzes.id")})).
@@ -54,7 +57,7 @@ func (model *FinalScoreBoardModel) GetScore(user_played_quiz string) ([]FinalSco
 			},
 		).
 		GroupBy("users.username").
-		Order(goqu.I("score").Desc()).
+		Order(goqu.I("score").Desc(), goqu.I("response_time").Asc()).
 		ScanStructs(&finalScoreBoardData)
 
 	if err != nil {

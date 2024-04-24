@@ -71,42 +71,7 @@
         "operationId": "ReqMetrics"
       }
     },
-    "/v1/finalScore/user": {
-      "get": {
-        "consumes": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "FinalScoreForUser"
-        ],
-        "summary": "Get a finalScore details.",
-        "operationId": "RequestFinalScore",
-        "parameters": [
-          {
-            "type": "string",
-            "x-go-name": "UserPlayedQuiz",
-            "name": "userPlayedQuiz",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/ResponseFinalScore"
-          },
-          "400": {
-            "$ref": "#/responses/GenericResFailNotFound"
-          },
-          "500": {
-            "$ref": "#/responses/GenericResError"
-          }
-        }
-      }
-    },
-    "/v1/final_Score/admin": {
+    "/v1/final_score/admin": {
       "get": {
         "consumes": [
           "application/json"
@@ -131,6 +96,33 @@
         "responses": {
           "200": {
             "$ref": "#/responses/ResponseFinalScoreForAdmin"
+          },
+          "400": {
+            "$ref": "#/responses/GenericResFailNotFound"
+          },
+          "500": {
+            "$ref": "#/responses/GenericResError"
+          }
+        }
+      }
+    },
+    "/v1/final_score/user": {
+      "get": {
+        "consumes": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "FinalScoreForUser"
+        ],
+        "summary": "Get a finalScore details.",
+        "operationId": "RequestFinalScore",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/ResponseFinalScore"
           },
           "400": {
             "$ref": "#/responses/GenericResFailNotFound"
@@ -315,12 +307,17 @@
     "FinalScoreBoard": {
       "type": "object",
       "properties": {
+        "response_time": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "ResponseTime"
+        },
         "score": {
           "type": "integer",
           "format": "int64",
           "x-go-name": "Score"
         },
-        "userName": {
+        "username": {
           "type": "string",
           "x-go-name": "UserName"
         }

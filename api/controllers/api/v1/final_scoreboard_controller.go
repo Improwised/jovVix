@@ -34,7 +34,7 @@ func NewFinalScoreBoardController(goqu *goqu.Database, logger *zap.Logger, event
 }
 
 // GetScore to send final score after quiz over
-// swagger:route GET /v1/finalScore/user FinalScoreForUser RequestFinalScore
+// swagger:route GET /v1/final_score/user FinalScoreForUser RequestFinalScore
 //
 // Get a finalScore details.
 //
