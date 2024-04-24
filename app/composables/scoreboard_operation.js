@@ -17,7 +17,7 @@ export default function useMillisToMinutesAndSeconds(millis, precision) {
   }
 
   if (minutes > 0) {
-    return minutes + "m" + (seconds < 10 ? "0" : "") + seconds + "s";
+    return minutes + "m " + (seconds < 10 ? "0" : "") + seconds + "s";
   }
   return (seconds < 10 ? "0" : "") + seconds + "s";
 }

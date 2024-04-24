@@ -44,7 +44,6 @@ func (model *FinalScoreBoardModel) GetScore(user_played_quiz string) ([]FinalSco
 			goqu.Func("coalesce", goqu.SUM(goqu.Case().
 				When(goqu.I("user_quiz_responses.calculated_score").Gt(0), goqu.I("user_quiz_responses.response_time")).Else(0)), 0).As("response_time"),
 		).
-		// From("users").
 		InnerJoin(goqu.T("user_played_quizzes"), goqu.On(goqu.Ex{"users.id": goqu.I("user_played_quizzes.user_id")})).
 		InnerJoin(goqu.T("active_quizzes"), goqu.On(goqu.Ex{"user_played_quizzes.active_quiz_id": goqu.I("active_quizzes.id")})).
 		InnerJoin(goqu.T("quizzes"), goqu.On(goqu.Ex{"active_quizzes.quiz_id": goqu.I("quizzes.id")})).
