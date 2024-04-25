@@ -1,4 +1,8 @@
 export default function useMillisToMinutesAndSeconds(millis, precision) {
+  if (millis < 0) {
+    return "00.00s";
+  }
+
   var minutes = Math.floor(millis / 60000);
   var seconds = (millis % 60000) / 1000;
 
