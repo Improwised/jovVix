@@ -221,7 +221,6 @@ func (model *UserPlayedQuizModel) GetRank(sessionId uuid.UUID, questionId uuid.U
 			From("core").
 			Where(goqu.Ex{
 				"question_id": questionId,
-				"is_attend":   true,
 			}),
 		)
 	final_query := getQuestionInfo.Select(
