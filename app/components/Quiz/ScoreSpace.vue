@@ -72,7 +72,7 @@ function handleSkipTimer(e) {
       class="btn btn-primary mt-3"
       @click="handleSkipTimer"
     >
-      Next Question
+      Skip
     </button>
 
     <div class="table-responsive mt-5">
