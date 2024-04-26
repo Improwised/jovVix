@@ -38,7 +38,7 @@ watch(
 </script>
 
 <template>
-  <div class="d-flex justify-content-center">
+  <div class="d-flex justify-content-center container">
     <div class="border p-2 m-0 m-sm-5 p-sm-5 max-width rounded">
       <div class="d-flex flex-row">
         <div class="flex-grow-1">
@@ -56,7 +56,7 @@ watch(
   </div>
 </template>
 
-<style>
+<style scoped>
 .max-width {
   width: 700px;
 }
