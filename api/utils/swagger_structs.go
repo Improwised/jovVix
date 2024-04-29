@@ -94,6 +94,18 @@ type ResponseFinalScoreForAdmin struct {
 	} `json:"body"`
 }
 
+// swagger:response ResponseAdminUploadedQuizDetails
+type ResponseAdminUploadedQuizDetails struct {
+	// in:body
+	Body struct {
+		// enum: success
+		Status string `json:"status"`
+		Data   struct {
+			models.QuizWithQuestions
+		} `json:"data"`
+	} `json:"body"`
+}
+
 ////////////////////
 // --- GENERIC ---//
 ////////////////////

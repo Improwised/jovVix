@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql"
 	"encoding/json"
+	"net/url"
 	"time"
 
 	"github.com/doug-martin/goqu/v9"
@@ -105,27 +106,45 @@ func (model *QuizModel) GetAllQuizzesActivity(user_id string) ([]QuizActivity, e
 	return quizzes, nil
 }
 
-func (model *QuizModel) GetQuizzesByAdmin(creator_id string) ([]Quiz, error) {
-	var quizzes []Quiz = []Quiz{}
+type QuizWithQuestions struct {
+	Quiz
+	TotalQuestions int `json:"total_questions" db:"total_questions"`
+}
 
-	rows, err := model.db.Select("*").From("quizzes").Where(goqu.Ex{"creator_id": creator_id}).Executor().Query()
+func (model *QuizModel) GetQuizzesByAdmin(creator_id string) ([]QuizWithQuestions, error) {
+
+	questionsCountSubquery := model.db.From("quiz_questions").
+		Select(goqu.COUNT("question_id")).
+		Where(goqu.C("quiz_id").Eq(goqu.I("quizzes.id")))
+
+	rows, err := model.db.From("quizzes").Select(goqu.L("*"), questionsCountSubquery.As("total_questions")).Executor().Query()
+
 	if err != nil {
 		return nil, err
 	}
 
 	defer rows.Close()
 
-	if rows.Next() {
-		var quiz Quiz
-		err := rows.Scan(quiz)
+	var quizzes []QuizWithQuestions = []QuizWithQuestions{}
+
+	for rows.Next() {
+		var quizWithQuestions QuizWithQuestions
+
+		err := rows.Scan(&quizWithQuestions.ID, &quizWithQuestions.Title, &quizWithQuestions.Description, &quizWithQuestions.CreatorID, &quizWithQuestions.CreatedAt, &quizWithQuestions.UpdatedAt, &quizWithQuestions.TotalQuestions)
 
 		if err != nil {
-			return nil, err
+			return quizzes, err
 		}
 
-		quizzes = append(quizzes, quiz)
-	}
+		decodedTitle, err := url.QueryUnescape(quizWithQuestions.Title)
 
+		if err != nil {
+			return quizzes, err
+		}
+
+		quizWithQuestions.Title = decodedTitle
+		quizzes = append(quizzes, quizWithQuestions)
+	}
 	return quizzes, nil
 }
 
