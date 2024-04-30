@@ -5,7 +5,6 @@ import { useToast } from "vue-toastification";
 // define nuxt configs
 const toast = useToast();
 const app = useNuxtApp();
-const router = useRouter();
 useSystemEnv();
 
 // define props and emits
@@ -48,27 +47,6 @@ async function submit(e) {
 
   quizId.value = data.value.data;
   toast.success(app.$CsvUploadSuccess);
-}
-
-async function handleStartDemo() {
-  urls = useState("urls");
-  const { data, error } = await useFetch(
-    encodeURI(
-      urls.value.api_url + "/admin/quizzes/" + quizId.value + "/demo_session"
-    ),
-    {
-      method: "POST",
-      mode: "cors",
-      credentials: "include",
-    }
-  );
-
-  if (error.value?.data) {
-    toast.error(error.value.data.data);
-    return;
-  }
-
-  router.push("/admin/arrange/" + data.value.data);
 }
 </script>
 
@@ -127,14 +105,7 @@ async function handleStartDemo() {
       <a class="btn btn-primary me-2" href="/files/demo.csv" download="demo.csv"
         >Download sample</a
       >
-      <button
-        v-if="quizId"
-        type="button"
-        class="btn btn-primary me-2"
-        @click="handleStartDemo"
-      >
-        Start Demo
-      </button>
+      <UtilsStartQuiz v-if="quizId" :quiz-id="quizId" />
     </form>
   </Frame>
 </template>

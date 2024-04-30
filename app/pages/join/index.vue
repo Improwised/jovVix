@@ -31,7 +31,7 @@ function join_quiz(e) {
 </script>
 
 <template>
-  <Frame page-title="Join page" page-message="Let's play together" max-width>
+  <Frame page-title="Join page" page-message="Let's play together">
     <form method="POST" @submit="join_quiz">
       <div class="mb-3 pe-3">
         <label for="code" class="form-label">Invitation code</label>

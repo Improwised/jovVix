@@ -38,7 +38,7 @@ watch(
 </script>
 
 <template>
-  <div class="d-flex justify-content-center container">
+  <div class="d-flex justify-content-center container p-0">
     <div class="border p-2 m-0 m-sm-5 p-sm-5 max-width rounded">
       <div class="d-flex flex-row">
         <div class="flex-grow-1">

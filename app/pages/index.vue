@@ -6,7 +6,6 @@ useSystemEnv();
 </template>
 <style scoped>
 .homepage {
-  /* margin-top: 400px; */
   font-size: 30px;
 }
 </style>
