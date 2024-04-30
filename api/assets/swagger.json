@@ -71,6 +71,36 @@
         "operationId": "ReqMetrics"
       }
     },
+    "/v1/admin/quizzes/list": {
+      "get": {
+        "consumes": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "AdminUploadedQuizzes"
+        ],
+        "summary": "Get details of quizzes uploaded by Admin.",
+        "operationId": "none",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/ResponseAdminUploadedQuizDetails"
+          },
+          "400": {
+            "$ref": "#/responses/GenericResFailNotFound"
+          },
+          "401": {
+            "$ref": "#/responses/GenericResFailConflict"
+          },
+          "500": {
+            "$ref": "#/responses/GenericResError"
+          }
+        }
+      }
+    },
     "/v1/final_score/admin": {
       "get": {
         "consumes": [
@@ -323,6 +353,29 @@
         }
       },
       "x-go-package": "github.com/Improwised/quizz-app/api/models"
+    },
+    "NullString": {
+      "description": "var s NullString\nerr := db.QueryRow(\"SELECT name FROM foo WHERE id=?\", id).Scan(\u0026s)\n...\nif s.Valid {\nuse s.String\n} else {\nNULL value\n}",
+      "type": "object",
+      "title": "NullString represents a string that may be null.\nNullString implements the Scanner interface so\nit can be used as a scan destination:",
+      "properties": {
+        "String": {
+          "type": "string"
+        },
+        "Valid": {
+          "type": "boolean"
+        }
+      },
+      "x-go-package": "database/sql"
+    },
+    "UUID": {
+      "description": "A UUID is a 128 bit (16 byte) Universal Unique IDentifier as defined in RFC\n4122.",
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "format": "uint8"
+      },
+      "x-go-package": "github.com/google/uuid"
     }
   },
   "responses": {
@@ -453,6 +506,56 @@
             "type": "string",
             "enum": [
               "fail"
+            ],
+            "x-go-name": "Status"
+          }
+        }
+      }
+    },
+    "ResponseAdminUploadedQuizDetails": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "created_at": {
+                "type": "string",
+                "format": "date-time",
+                "x-go-name": "CreatedAt"
+              },
+              "creator_id": {
+                "type": "string",
+                "x-go-name": "CreatorID"
+              },
+              "description": {
+                "$ref": "#/definitions/NullString"
+              },
+              "id": {
+                "$ref": "#/definitions/UUID"
+              },
+              "title": {
+                "type": "string",
+                "x-go-name": "Title"
+              },
+              "total_questions": {
+                "type": "integer",
+                "format": "int64",
+                "x-go-name": "TotalQuestions"
+              },
+              "updated_at": {
+                "type": "string",
+                "format": "date-time",
+                "x-go-name": "UpdatedAt"
+              }
+            },
+            "x-go-name": "Data"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "success"
             ],
             "x-go-name": "Status"
           }

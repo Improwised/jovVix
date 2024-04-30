@@ -79,7 +79,7 @@ onBeforeMount(() => {
 </script>
 
 <template>
-  <div class="table-responsive mt-5">
+  <div class="table-responsive mt-5 w-100">
     <!-- table for showing to user -->
     <table
       v-if="dataForUsers.length"

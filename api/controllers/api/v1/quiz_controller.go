@@ -129,6 +129,33 @@ func (ctrl *QuizController) SetAnswer(c *fiber.Ctx) error {
 	return utils.JSONSuccess(c, http.StatusAccepted, nil)
 }
 
+// GetAdminUploadedQuizzes for getting quiz details uploaded by Admin
+// swagger:route GET /v1/admin/quizzes/list AdminUploadedQuizzes none
+//
+// Get details of quizzes uploaded by Admin.
+//
+//			Consumes:
+//			- application/json
+//
+//			Schemes: http, https
+//
+//			Responses:
+//			  200: ResponseAdminUploadedQuizDetails
+//		     400: GenericResFailNotFound
+//	     401: GenericResFailConflict
+//			  500: GenericResError
+func (ctrl *QuizController) GetAdminUploadedQuizzes(c *fiber.Ctx) error {
+	userID := quizUtilsHelper.GetString(c.Locals(constants.ContextUid))
+
+	quizzes, err := ctrl.helper.QuizModel.GetQuizzesByAdmin(userID)
+
+	if err != nil {
+		return utils.JSONError(c, http.StatusInternalServerError, err.Error())
+	}
+
+	return utils.JSONSuccess(c, http.StatusOK, quizzes)
+}
+
 func (ctrl *QuizController) Terminate(c *fiber.Ctx) error {
 	return utils.JSONSuccess(c, http.StatusOK, nil)
 }
