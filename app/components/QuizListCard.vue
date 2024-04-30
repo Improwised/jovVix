@@ -35,7 +35,6 @@ const props = defineProps({
               {{ props.details?.total_questions }} Questions</span
             >
           </div>
-          <!-- flex-column flex-md-row align-items-start align-items-md-center justify-content-md-between -->
           <div
             class="d-flex flex-column flex-md-row align-items-start justify-content-md-between"
           >

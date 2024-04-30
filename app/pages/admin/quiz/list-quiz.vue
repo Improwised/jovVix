@@ -4,20 +4,41 @@ const url = useState("urls");
 const headers = useRequestHeaders(["cookie"]);
 const isLoading = ref(true);
 
-const { data } = await useFetch(url.value.api_url + "/admin/quizzes/list", {
-  method: "GET",
-  headers: headers,
-  mode: "cors",
-  credentials: "include",
-});
-quizList.value = data.value.data;
-
 // remove quiz list loader after 1 sec
 setTimeout(() => {
   if (quizList.value) {
     isLoading.value = false;
   }
 }, 1000);
+
+async function getQuizList() {
+  const { data, error } = await useFetch(
+    url.value.api_url + "/admin/quizzes/list",
+    {
+      method: "GET",
+      headers: headers,
+      mode: "cors",
+      credentials: "include",
+    }
+  );
+
+  watch(
+    [data],
+    () => {
+      if (data.value) {
+        isLoading.value = false;
+        quizList.value = data.value.data;
+      }
+      if (error.value) {
+        toast.error(error);
+      }
+    },
+    { immediate: true, deep: true }
+  );
+}
+onBeforeMount(() => {
+  getQuizList();
+});
 </script>
 <template>
   <div class="container max-width p-0">
