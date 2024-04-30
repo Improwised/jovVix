@@ -172,7 +172,7 @@ func CreateStrictCookie(key, value string) *fiber.Cookie {
 	cookie.Value = value
 	cookie.HTTPOnly = true
 	cookie.SessionOnly = true
-	cookie.Secure = true
+	// cookie.Secure = true
 	cookie.SameSite = "Strict"
 	return cookie
 }

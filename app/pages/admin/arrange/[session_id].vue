@@ -7,6 +7,16 @@ import { useSystemEnv } from "~/composables/envs.js";
 import { useRouter } from "nuxt/app";
 import AdminOperations from "~~/composables/admin_operation";
 
+import { useInvitationCodeStore } from "~/store/invitationcode";
+import { useListUserstore } from "~/store/userlist";
+import { storeToRefs } from "pinia";
+
+const invitationCodeStore = useInvitationCodeStore();
+const { invitationCode } = storeToRefs(invitationCodeStore);
+
+const listUserStore = useListUserstore();
+const { addUser, removeAllUsers } = listUserStore;
+
 // define nuxt configs
 const route = useRoute();
 const router = useRouter();
@@ -58,6 +68,8 @@ const handleQuizEvents = async (message) => {
       "/error?status=" + message.status + "&error=" + message.data
     );
   } else if (message.event == app.$TerminateQuiz) {
+    invitationCode.value = undefined;
+    removeAllUsers();
     return await router.push("/join/scoreboard?aqi=" + route.params.session_id);
   } else if (message.event == app.$RedirectToAdmin) {
     return await router.push("/admin/arrange/" + message.data.sessionId);
@@ -90,6 +102,20 @@ const handleQuizEvents = async (message) => {
     confirmNeeded.value = {
       show: false,
     };
+
+    if (
+      currentComponent.value == "Waiting" &&
+      invitationCode.value != undefined
+    ) {
+      addUser(message.data);
+    }
+
+    if (
+      currentComponent.value == "Waiting" &&
+      invitationCode.value == undefined
+    ) {
+      invitationCode.value = message.data.code;
+    }
   }
 };
 
@@ -166,5 +192,7 @@ definePageMeta({
       :is-admin="true"
       @ask-skip-timer="askSkipTimer"
     ></QuizScoreSpace>
+    <!-- <ListJoinUser v-if="currentComponent == 'Waiting'"></ListJoinUser> -->
+    <ListJoinUser></ListJoinUser>
   </Playground>
 </template>

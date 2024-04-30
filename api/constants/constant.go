@@ -153,7 +153,8 @@ const (
 	ErrUsernameExists = "username already exists"
 
 	// Event 6. Start quiz <admin>
-	EventStartQuiz = "start_quiz" // use by web
+	EventUserJoined = "user joined"
+	EventStartQuiz  = "start_quiz" // use by web
 
 	// Event 7. Get Questions
 	EventSendQuestion         = "send_question"

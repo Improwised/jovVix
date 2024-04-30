@@ -114,6 +114,8 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 		Data:      "",
 	}
 
+	userName := c.Query(constants.UserName, "")
+
 	// check for middleware error
 	if c.Locals(constants.MiddlewareError) != nil {
 		// handle error type
@@ -168,6 +170,13 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 		return
 	}
 
+	// here logic of publishing data of user to admin
+	err := qc.helpers.PubSubModel.Client.Publish(qc.helpers.PubSubModel.Ctx, constants.EventUserJoined, userName).Err()
+
+	if err != nil {
+		qc.logger.Error(fmt.Sprintf("socket error publishing event: %s event, %s action", constants.EventUserJoined, response.Action), zap.Error(err))
+	}
+
 	response.Action = constants.QuizQuestionStatus
 	if session.CurrentQuestion.Valid {
 		response.Data = constants.NextQuestionWillServeSoon
@@ -175,7 +184,7 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 		response.Data = constants.QuizStartsSoon
 	}
 
-	err := utils.JSONSuccessWs(c, constants.EventJoinQuiz, response)
+	err = utils.JSONSuccessWs(c, constants.EventJoinQuiz, response)
 	if err != nil {
 		qc.logger.Error(fmt.Sprintf("socket error send waiting message: %s event, %s action", constants.EventJoinQuiz, response.Action), zap.Error(err))
 	}
@@ -309,6 +318,8 @@ func handleCodeGeneration(c *websocket.Conn, qc *quizSocketController, session m
 
 			// once code sent receive start signal
 			if isInvitationCodeSent {
+				go handleConnectedUser(c, qc)
+
 				isBreak := handleStartQuiz(c, qc.logger, isConnected, response.Action)
 				subscriberCount := qc.helpers.PubSubModel.Client.PubSubNumSub(qc.helpers.PubSubModel.Ctx, session.ID.String()).Val()[session.ID.String()]
 				if subscriberCount != 0 && isBreak {
@@ -656,4 +667,45 @@ func terminateQuiz(c *websocket.Conn, qc *quizSocketController, response *QuizSe
 		qc.logger.Error(fmt.Sprintf("socket error get remaining questions: %s event, %s action %v code", constants.EventStartQuiz, response.Action, session.InvitationCode), zap.Error(err))
 		return
 	}
+
+	// here logic of publishing data of user to admin
+	err = qc.helpers.PubSubModel.Client.Publish(qc.helpers.PubSubModel.Ctx, constants.EventTerminateQuiz, "terminate_quiz").Err()
+	if err != nil {
+		qc.logger.Error(fmt.Sprintf("socket error while terminationg quiz %s", constants.ActionTerminateQuiz), zap.Error(err))
+		return
+	}
+
+}
+
+func handleConnectedUser(c *websocket.Conn, qc *quizSocketController) {
+	response := QuizSendResponse{}
+	response.Action = "send user join data"
+	response.Component = constants.Waiting
+
+	pubsub := qc.helpers.PubSubModel.Client.Subscribe(qc.helpers.PubSubModel.Ctx, constants.EventUserJoined, constants.EventTerminateQuiz)
+	defer func() {
+		if pubsub != nil {
+			err := pubsub.Unsubscribe(qc.helpers.PubSubModel.Ctx, constants.EventUserJoined)
+			if err != nil {
+				qc.logger.Error("unsubscribe failed", zap.Error(err))
+			}
+			pubsub.Close()
+		}
+	}()
+
+	ch := pubsub.Channel()
+
+	for msg := range ch {
+		response.Data = msg.Payload
+
+		if response.Data == "terminate_quiz" {
+			break
+		}
+
+		err := utils.JSONSuccessWs(c, constants.EventSendInvitationCode, response)
+		if err != nil {
+			qc.logger.Error(fmt.Sprintf("socket error send waiting message: %s event, %s action", constants.EventSendInvitationCode, response.Action), zap.Error(err))
+		}
+	}
+
 }
