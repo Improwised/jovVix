@@ -1,6 +1,14 @@
 package v1_test
 
 import (
+	"bytes"
+	"fmt"
+	"io"
+	"io/ioutil"
+	"mime/multipart"
+	"net/http"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/Improwised/quizz-app/api/pkg/structs"
@@ -99,49 +107,74 @@ func TestCreateQuizByCSV(t *testing.T) {
 		// }
 
 		// --------------------------------------------------------------------------------------------------------------------------
-		// url := "http://localhost:3300/api/v1/admin/quizzes/title/upload"
-		// method := "POST"
+		url := "http://localhost:3500/api/v1/admin/quizzes/title/upload"
+		method := "POST"
+		payload := &bytes.Buffer{}
+		writer := multipart.NewWriter(payload)
+		file, err := os.Open(".././././app/public/files/demo.csv")
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		defer file.Close()
 
-		// payload := &bytes.Buffer{}
-		// writer := multipart.NewWriter(payload)
-		// file, errFile1 := os.Open("/home/ridham.parmar/Downloads/demo.csv")
-		// defer file.Close()
-		// part1,
-		// 	errFile1 := writer.CreateFormFile("attachment", filepath.Base("/home/ridham.parmar/Downloads/demo.csv"))
-		// _, errFile1 = io.Copy(part1, file)
-		// if errFile1 != nil {
-		// 	fmt.Println(errFile1)
-		// 	return
-		// }
-		// _ = writer.WriteField("description", "this is description")
-		// err := writer.Close()
+		part1, errFile1 := writer.CreateFormFile("attachment", filepath.Base(".././././app/public/files/demo.csv"))
+		if errFile1 != nil {
+			fmt.Println(errFile1)
+			return
+		}
+
+		_, errFile1 = io.Copy(part1, file)
+
+		if errFile1 != nil {
+			fmt.Println(errFile1)
+			return
+		}
+		_ = writer.WriteField("description", "this is description")
+		err = writer.Close()
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		client := &http.Client{}
+		req, err := http.NewRequest(method, url, payload)
+
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		req.Header.Add("Cookie", cookies[0].Name+"="+cookies[0].Value)
+
+		req.Header.Set("Content-Type", "text/csv")
+		res, err := client.Do(req)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		defer res.Body.Close()
+		body, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		fmt.Println(string(body))
+
+		// res, err := client.
+		// 	R().
+		// 	EnableTrace().
+		// 	SetBody(payload).
+		// 	SetCookies(cookies).
+		// 	SetHeader("Content-Type", writer.FormDataContentType()).
+		// 	Post("/api/v1/admin/quizzes/demo/upload")
+
 		// if err != nil {
 		// 	fmt.Println(err)
 		// 	return
 		// }
+		// fmt.Println("response *************", res)
 
-		// client := &http.Client{}
-		// req, err := http.NewRequest(method, url, payload)
-
-		// if err != nil {
-		// 	fmt.Println(err)
-		// 	return
-		// }
-		// req.Header.Add("Cookie", "user=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MTQ3NDQ3NDAsImlzcyI6InF1aXouZXhhbXBsZS5jb20iLCJzdWIiOiJjb3E1a202YmNidnZnYmdmdWVrMCJ9.IUCKg4-4bdlYNRM5zXX2kTdaRYoMUImztWlKe8Ww9fI")
-
-		// req.Header.Set("Content-Type", writer.FormDataContentType())
-		// res, err := client.Do(req)
-		// if err != nil {
-		// 	fmt.Println(err)
-		// 	return
-		// }
-		// defer res.Body.Close()
-
-		// body, err := ioutil.ReadAll(res.Body)
-		// if err != nil {
-		// 	fmt.Println(err)
-		// 	return
-		// }
 	})
 
 }

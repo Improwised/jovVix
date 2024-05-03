@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/Improwised/quizz-app/api/constants"
@@ -25,11 +26,13 @@ func (m *Middleware) Authenticated(c *fiber.Ctx) error {
 
 	token := c.Cookies(constants.CookieUser, "")
 	if token == "" {
+		fmt.Println("no token***********************")
 		return utils.JSONFail(c, http.StatusUnauthorized, constants.Unauthenticated)
 	}
 
 	claims, err := jwt.ParseToken(m.Config, token)
 	if err != nil {
+		fmt.Println("no parser token********************")
 		if errors.Is(err, j.ErrInvalidJWT()) || errors.Is(err, j.ErrTokenExpired()) {
 			return utils.JSONFail(c, http.StatusUnauthorized, constants.Unauthenticated)
 		}
