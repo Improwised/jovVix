@@ -9,6 +9,7 @@ import (
 
 	"github.com/Improwised/quizz-app/api/config"
 	"github.com/Improwised/quizz-app/api/constants"
+	quizUtilsHelper "github.com/Improwised/quizz-app/api/helpers/utils"
 	"github.com/Improwised/quizz-app/api/models"
 	jwt "github.com/Improwised/quizz-app/api/pkg/jwt"
 	"github.com/Improwised/quizz-app/api/pkg/structs"
@@ -112,13 +113,12 @@ func (ctrl *AuthController) DoAuth(c *fiber.Ctx) error {
 //	      400: GenericResFailBadRequest
 //		  500: GenericResError
 func (ctrl *AuthController) DoKratosAuth(c *fiber.Ctx) error {
-	kratosID := c.Locals(constants.KratosID)
-
-	if kratosID.(string) == "" {
+	kratosId := quizUtilsHelper.GetString(constants.KratosID)
+	if kratosId == "" {
 		return utils.JSONError(c, http.StatusBadRequest, constants.ErrKratosIDEmpty)
 	}
 
-	kratosClient := resty.New().SetBaseURL(ctrl.config.Kratos.BaseUrl+"/sessions").SetHeader("Cookie", fmt.Sprintf("%v=%v", constants.KratosCookie, kratosID)).SetHeader("accept", "application/json")
+	kratosClient := resty.New().SetBaseURL(ctrl.config.Kratos.BaseUrl+"/sessions").SetHeader("Cookie", fmt.Sprintf("%v=%v", constants.KratosCookie, kratosId)).SetHeader("accept", "application/json")
 
 	kratosUser := config.KratosUserDetails{}
 	res, err := kratosClient.R().SetResult(&kratosUser).Get("/whoami")
@@ -146,7 +146,7 @@ func (ctrl *AuthController) DoKratosAuth(c *fiber.Ctx) error {
 
 	userCookie := &fiber.Cookie{
 		Name:    constants.KratosCookie,
-		Value:   kratosID.(string),
+		Value:   kratosId,
 		Expires: time.Now().Add(cookieExpirationTime),
 	}
 

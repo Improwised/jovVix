@@ -10,4 +10,3 @@ DROP CONSTRAINT users_username_ukey;
 -- drop column
 ALTER TABLE users
 DROP COLUMN username;
-

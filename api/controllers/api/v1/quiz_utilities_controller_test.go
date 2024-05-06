@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/Improwised/quizz-app/api/pkg/structs"
+	goqu "github.com/doug-martin/goqu/v9"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -57,7 +58,11 @@ func TestCreateQuizByCSV(t *testing.T) {
 			fmt.Println(errFile1)
 			return
 		}
-		_ = writer.WriteField("description", "test description")
+		err = writer.WriteField("description", "test description")
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
 		err = writer.Close()
 		if err != nil {
 			fmt.Println(err)
@@ -74,5 +79,16 @@ func TestCreateQuizByCSV(t *testing.T) {
 			fmt.Println(err)
 			return
 		}
+	})
+
+	t.Cleanup(func() {
+		_, err = db.Delete("quiz_questions").Executor().Exec()
+		assert.Nil(t, err)
+
+		_, err := db.Delete("quizzes").Where(goqu.Ex{"creator_id": "coq5km6bcbvvgbgfuek0"}).Executor().Exec()
+		assert.Nil(t, err)
+
+		_, err = db.Delete("users").Where(goqu.Ex{"id": "coq5km6bcbvvgbgfuek0"}).Executor().Exec()
+		assert.Nil(t, err)
 	})
 }
