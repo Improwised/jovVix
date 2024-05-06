@@ -18,7 +18,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func validateCSVFileFormat(fileName string) error {
+func ValidateCSVFileFormat(fileName string) error {
 	// Open the CSV file
 	file, err := os.Open(fileName)
 	if err != nil {
@@ -63,7 +63,7 @@ func validateCSVFileFormat(fileName string) error {
 	return nil
 }
 
-func extractQuestionsFromCSV(fileName string) ([]models.Question, error) {
+func ExtractQuestionsFromCSV(fileName string) ([]models.Question, error) {
 	questions := []models.Question{}
 
 	// Open the CSV file
@@ -199,13 +199,13 @@ func (ctrl *QuizController) CreateQuizByCsv(c *fiber.Ctx) error {
 		}
 	}()
 
-	err := validateCSVFileFormat(filePath)
+	err := ValidateCSVFileFormat(filePath)
 	if err != nil {
 		ctrl.logger.Error("file validation failed", zap.Error(err))
 		return utils.JSONFail(c, http.StatusBadRequest, err.Error())
 	}
 
-	questions, err := extractQuestionsFromCSV(filePath)
+	questions, err := ExtractQuestionsFromCSV(filePath)
 
 	if err != nil {
 		if err.Error() == constants.ErrRowsReachesToMaxCount {

@@ -5,16 +5,19 @@ import (
 	"fmt"
 	"io"
 	"mime/multipart"
+	"net/http"
 	"net/textproto"
 	"os"
 	"testing"
 
+	v1 "github.com/Improwised/quizz-app/api/controllers/api/v1"
 	"github.com/Improwised/quizz-app/api/pkg/structs"
-	goqu "github.com/doug-martin/goqu/v9"
+	"github.com/doug-martin/goqu/v9"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestCreateQuizByCSV(t *testing.T) {
+	filepath := ".././././app/public/files/demo.csv"
 
 	req := structs.ReqLoginUser{
 		Email:    "adminxyz@gmail.com",
@@ -33,7 +36,7 @@ func TestCreateQuizByCSV(t *testing.T) {
 
 	t.Run("Upload CSV file for question", func(t *testing.T) {
 		url := "http://127.0.0.1:3500/api/v1/admin/quizzes/title/upload"
-		file, err := os.Open(".././././app/public/files/demo.csv")
+		file, err := os.Open(filepath)
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -44,7 +47,7 @@ func TestCreateQuizByCSV(t *testing.T) {
 		writer := multipart.NewWriter(payload)
 
 		part, errFile1 := writer.CreatePart(textproto.MIMEHeader{
-			"Content-Disposition": []string{`form-data; name="attachment"; filename=".././././app/public/files/demo.csv"`},
+			"Content-Disposition": []string{`form-data; name="attachment"; filename=filepath`},
 			"Content-Type":        []string{"text/csv"},
 		})
 		if errFile1 != nil {
@@ -68,21 +71,40 @@ func TestCreateQuizByCSV(t *testing.T) {
 			fmt.Println(err)
 			return
 		}
+		var result struct {
+			Status string `json:"status"`
+			Data   string `json:"data"`
+		}
 
-		_, err = client.R().
+		res, err = client.R().
 			SetBody(payload).
 			SetHeader("Content-Type", writer.FormDataContentType()).
 			SetCookie(cookies[0]).
+			SetResult(&result).
 			Post(url)
 
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
+		assert.Nil(t, err)
+		assert.Equal(t, http.StatusAccepted, res.StatusCode())
+		assert.NotNil(t, result.Data)
+	})
+
+	t.Run("check if csv is validate or not", func(t *testing.T) {
+		err := v1.ValidateCSVFileFormat(filepath)
+
+		assert.Nil(t, err)
+	})
+
+	t.Run("extract questions from csv", func(t *testing.T) {
+		questions, err := v1.ExtractQuestionsFromCSV(filepath)
+		assert.NotEmpty(t, questions)
+		assert.Nil(t, err)
 	})
 
 	t.Cleanup(func() {
 		_, err = db.Delete("quiz_questions").Executor().Exec()
+		assert.Nil(t, err)
+
+		_, err = db.Delete("questions").Executor().Exec()
 		assert.Nil(t, err)
 
 		_, err := db.Delete("quizzes").Where(goqu.Ex{"creator_id": "coq5km6bcbvvgbgfuek0"}).Executor().Exec()
