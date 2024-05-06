@@ -20,7 +20,7 @@ func TestDoAuth(t *testing.T) {
 	db, err := database.Connect(cfg.DB)
 	assert.Nil(t, err)
 
-	t.Run("Do authentication when userr logged in", func(t *testing.T) {
+	t.Run("Do authentication when user logged in", func(t *testing.T) {
 		var actual utils.ResponseAuthnUser
 		_, err := db.Insert("users").Rows(
 			goqu.Record{
