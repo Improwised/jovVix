@@ -59,24 +59,20 @@ func TestCreateQuizByCSV(t *testing.T) {
 			"Content-Type":        []string{"text/csv"},
 		})
 		if errFile1 != nil {
-			fmt.Println(errFile1)
 			return
 		}
 
 		_, errFile1 = io.Copy(part, file)
 
 		if errFile1 != nil {
-			fmt.Println(errFile1)
 			return
 		}
 		err = writer.WriteField("description", "test description")
 		if err != nil {
-			fmt.Println(err)
 			return
 		}
 		err = writer.Close()
 		if err != nil {
-			fmt.Println(err)
 			return
 		}
 
@@ -148,6 +144,26 @@ func TestGenerateDemoSession(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Equal(t, http.StatusAccepted, res.StatusCode())
 		assert.NotEmpty(t, result.Data)
+	})
+
+	t.Cleanup(func() {
+		_, err = db.Exec("delete from active_quiz_questions")
+		assert.Nil(t, err)
+
+		_, err = db.Exec("delete from active_quizzes")
+		assert.Nil(t, err)
+
+		_, err = db.Exec("delete from quiz_questions")
+		assert.Nil(t, err)
+
+		_, err = db.Exec("delete from questions")
+		assert.Nil(t, err)
+
+		_, err = db.Exec("delete from quizzes")
+		assert.Nil(t, err)
+
+		_, err = db.Exec("delete from users")
+		assert.Nil(t, err)
 	})
 
 }
