@@ -10,15 +10,24 @@ import (
 	"os"
 	"testing"
 
+	"github.com/Improwised/quizz-app/api/config"
 	v1 "github.com/Improwised/quizz-app/api/controllers/api/v1"
+	"github.com/Improwised/quizz-app/api/database"
 	"github.com/Improwised/quizz-app/api/pkg/structs"
-	"github.com/doug-martin/goqu/v9"
+	goqu "github.com/doug-martin/goqu/v9"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
+
+var result struct {
+	Status string `json:"status"`
+	Data   string `json:"data"`
+}
 
 func TestCreateQuizByCSV(t *testing.T) {
 	filepath := ".././././app/public/files/demo.csv"
 
+	// login admin
 	req := structs.ReqLoginUser{
 		Email:    "adminxyz@gmail.com",
 		Password: "RZo5(uXD<3#aH0",
@@ -35,7 +44,6 @@ func TestCreateQuizByCSV(t *testing.T) {
 	assert.NotEqual(t, len(cookies), 0)
 
 	t.Run("Upload CSV file for question", func(t *testing.T) {
-		url := "http://127.0.0.1:3500/api/v1/admin/quizzes/title/upload"
 		file, err := os.Open(filepath)
 		if err != nil {
 			fmt.Println(err)
@@ -71,17 +79,16 @@ func TestCreateQuizByCSV(t *testing.T) {
 			fmt.Println(err)
 			return
 		}
-		var result struct {
-			Status string `json:"status"`
-			Data   string `json:"data"`
-		}
+
+		title := "Demo Quiz"
 
 		res, err = client.R().
 			SetBody(payload).
 			SetHeader("Content-Type", writer.FormDataContentType()).
 			SetCookie(cookies[0]).
 			SetResult(&result).
-			Post(url)
+			SetPathParam("title", title).
+			Post("api/v1/admin/quizzes/{title}/upload")
 
 		assert.Nil(t, err)
 		assert.Equal(t, http.StatusAccepted, res.StatusCode())
@@ -99,18 +106,48 @@ func TestCreateQuizByCSV(t *testing.T) {
 		assert.NotEmpty(t, questions)
 		assert.Nil(t, err)
 	})
+}
 
-	t.Cleanup(func() {
-		_, err = db.Delete("quiz_questions").Executor().Exec()
-		assert.Nil(t, err)
+func TestGenerateDemoSession(t *testing.T) {
 
-		_, err = db.Delete("questions").Executor().Exec()
-		assert.Nil(t, err)
+	cfg := config.LoadTestEnv()
 
-		_, err := db.Delete("quizzes").Where(goqu.Ex{"creator_id": "coq5km6bcbvvgbgfuek0"}).Executor().Exec()
-		assert.Nil(t, err)
+	db, err := database.Connect(cfg.DB)
+	assert.Nil(t, err)
+	req := structs.ReqLoginUser{
+		Email:    "adminxyz@gmail.com",
+		Password: "RZo5(uXD<3#aH0",
+	}
 
-		_, err = db.Delete("users").Where(goqu.Ex{"id": "coq5km6bcbvvgbgfuek0"}).Executor().Exec()
+	// login admin to get cookie
+	res, err := client.
+		R().
+		EnableTrace().
+		SetBody(req).
+		Post("/api/v1/login")
+
+	assert.Nil(t, err)
+	cookies := res.Cookies()
+	assert.NotEqual(t, len(cookies), 0)
+
+	// get quizId
+	var quizId *uuid.UUID
+
+	subquery := db.Select("id").From("users").Limit(1)
+	ok, err := db.Select("id").From("quizzes").Where(goqu.C("creator_id").In(subquery)).ScanVal(&quizId)
+	assert.Nil(t, err)
+	assert.Equal(t, true, ok)
+
+	t.Run("Generate demo session", func(t *testing.T) {
+		res, err = client.R().
+			SetCookie(cookies[0]).
+			SetResult(&result).
+			SetPathParam("quizId", quizId.String()).
+			Post("/api/v1/admin/quizzes/{quizId}/demo_session")
+
 		assert.Nil(t, err)
+		assert.Equal(t, http.StatusAccepted, res.StatusCode())
+		assert.NotEmpty(t, result.Data)
 	})
+
 }
