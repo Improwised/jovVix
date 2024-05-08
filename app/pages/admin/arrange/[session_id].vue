@@ -105,7 +105,8 @@ const handleQuizEvents = async (message) => {
 
     if (
       currentComponent.value == "Waiting" &&
-      invitationCode.value != undefined
+      invitationCode.value != undefined &&
+      message.data != "no player found"
     ) {
       addUser(message.data);
     }
@@ -192,7 +193,7 @@ definePageMeta({
       :is-admin="true"
       @ask-skip-timer="askSkipTimer"
     ></QuizScoreSpace>
-    <!-- <ListJoinUser v-if="currentComponent == 'Waiting'"></ListJoinUser> -->
-    <ListJoinUser></ListJoinUser>
+    <ListJoinUser v-if="currentComponent == 'Waiting'"></ListJoinUser>
+    <!-- <ListJoinUser></ListJoinUser> -->
   </Playground>
 </template>
