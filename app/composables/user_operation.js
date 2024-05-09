@@ -38,4 +38,8 @@ export default class UserOperation extends QuizHandler {
 
     return { error };
   }
+
+  endQuiz() {
+    this.sendMessage("", "websocket_close", "");
+  }
 }

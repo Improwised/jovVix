@@ -130,13 +130,14 @@ const (
 	ActionCurrentUserIsAdmin = "current user is admin"
 
 	// Event 4. Active session <admin>
-	EventActivateSession      = "session_activation"
-	EventSendInvitationCode   = "send_invitation_code" // use by web
-	ActionSessionActivation   = "activate demanded session and sent invitation code"
-	QuizSessionInvitationCode = "invitationCode"
-	SessionIDParam            = "session_id"
-	ActiveQuizObj             = "current active quiz obj"
-	NoPlayerFound             = "no player found"
+	EventActivateSession          = "session_activation"
+	EventSendInvitationCode       = "send_invitation_code" // use by web
+	ActionSessionActivation       = "activate demanded session and sent invitation code"
+	QuizSessionInvitationCode     = "invitationCode"
+	SessionIDParam                = "session_id"
+	ActiveQuizObj                 = "current active quiz obj"
+	NoPlayerFound                 = "no player found"
+	StartQuizByAdminNoPlayerFound = "start quiz by admin but no player found"
 
 	// Event 5. Join quiz <User>
 	EventJoinQuiz                  = "invitation_code_validation"
@@ -153,7 +154,9 @@ const (
 	ErrUsernameExists = "username already exists"
 
 	// Event 6. Start quiz <admin>
-	EventStartQuiz = "start_quiz" // use by web
+	EventUserJoined       = "user joined"
+	EventStartQuiz        = "start_quiz"       // use by web
+	EventStartQuizByAdmin = "startQuizByAdmin" // use by admin for start quiz
 
 	// Event 7. Get Questions
 	EventSendQuestion         = "send_question"

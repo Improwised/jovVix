@@ -20,6 +20,8 @@ const data = ref({});
 const currentComponent = ref("Loading");
 const userOperationHandler = ref();
 
+const monitorTerminateQuiz = ref(false);
+
 // event handlers
 const handleCustomChange = (isFullScreenEvent) => {
   if (!isFullScreenEvent && myRef.value) {
@@ -51,6 +53,7 @@ const handleQuizEvents = async (message) => {
       "/error?status=" + message.status + "&error=" + message.data
     );
   } else if (message.event == app.$TerminateQuiz) {
+    monitorTerminateQuiz.value = true;
     return await router.push("/join/scoreboard");
   } else if (message.event == app.$RedirectToAdmin) {
     return await router.push("/admin/arrange/" + message.data.sessionId);
@@ -106,6 +109,13 @@ definePageMeta({
   layout: "empty",
 });
 
+// Listen for beforeunload event to close WebSocket connection
+onBeforeUnmount(() => {
+  if (!monitorTerminateQuiz.value) {
+    userOperationHandler.value.endQuiz();
+  }
+});
+
 // custom class to bind component with
 </script>
 
@@ -117,7 +127,8 @@ definePageMeta({
       :data="data"
       :is-admin="false"
       @start-quiz="startQuiz"
-    ></QuizWaitingSpace>
+    >
+    </QuizWaitingSpace>
     <QuizQuestionSpace
       v-else-if="currentComponent == 'Question'"
       :data="data"

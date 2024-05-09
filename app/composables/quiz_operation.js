@@ -165,7 +165,7 @@ export default class QuizHandler {
       } else if (message.state == "Receive") {
         console.warn(message);
       } else if (message.state == "Init") {
-        console.log(message);
+        console.warn(message);
       } else {
         console.error(message);
       }

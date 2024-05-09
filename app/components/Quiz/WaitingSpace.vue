@@ -7,6 +7,12 @@ import { useToast } from "vue-toastification";
 const app = useNuxtApp();
 const toast = useToast();
 
+import { useInvitationCodeStore } from "~/store/invitationcode.js";
+import { storeToRefs } from "pinia";
+
+const invitationCodeStore = useInvitationCodeStore();
+const { invitationCode } = storeToRefs(invitationCodeStore);
+
 // define props and emits
 const props = defineProps({
   data: {
@@ -25,7 +31,7 @@ const props = defineProps({
 const emits = defineEmits(["startQuiz"]);
 
 // custom refs
-const code = ref(app.$InvitationCode);
+const code = ref(invitationCode.value);
 
 // watchers
 watch(
@@ -48,7 +54,7 @@ function start_quiz(e) {
 // main function
 function handleEvent(message) {
   if (message.event == app.$SentInvitaionCode) {
-    code.value = message.data.code;
+    code.value = invitationCode.value;
   }
 }
 </script>

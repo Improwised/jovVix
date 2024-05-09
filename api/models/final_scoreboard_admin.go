@@ -1,8 +1,6 @@
 package models
 
 import (
-	"fmt"
-
 	"github.com/doug-martin/goqu/v9"
 )
 
@@ -53,7 +51,6 @@ func (model *FinalScoreBoardAdminModel) GetScoreForAdmin(activeQuizId string) ([
 		ScanStructs(&finalScoreBoardData)
 
 	if err != nil {
-		fmt.Println("Error:", err)
 		return nil, err
 	}
 

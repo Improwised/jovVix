@@ -1,9 +1,4 @@
-<script setup>
-/* if want to include pinia*/
-// import { useUsersStore } from "~/store/users";
-// const UsersStore = useUsersStore();
-// //console.log(UsersStore);
-</script>
+<script setup></script>
 <template>
   <div class="container">
     <div>
