@@ -9,5 +9,5 @@ ALTER TABLE users
 ADD CONSTRAINT users_username_ukey UNIQUE (username);
 
 -- add hash index
-CREATE INDEX users_username_hash_idx 
+CREATE INDEX users_username_hash_idx
 ON users USING hash (username);
