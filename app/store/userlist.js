@@ -6,11 +6,6 @@ export const useListUserstore = defineStore("listusers-store", () => {
   const addUser = (users) => {
     listUsers.value = [...users];
   };
-  // const removeUser = (user) => {
-  //   listUsers.value = listUsers.value.filter(
-  //     (currentUser) => currentUser !== user
-  //   );
-  // };
 
   const removeAllUsers = () => {
     listUsers.value = [];

@@ -474,7 +474,7 @@ func questionAndScoreHandler(c *websocket.Conn, qc *quizSocketController, respon
 	// termination of quiz
 	if session.ActivatedFrom.Valid && *isConnected {
 		terminateQuiz(c, qc, response, session)
-		isQuizEnd = false
+		// isQuizEnd = false
 	}
 }
 
@@ -827,7 +827,6 @@ func removeUser(qc *quizSocketController, topic string, userName string) {
 	if err != nil {
 		qc.logger.Error("error while unmarshaling data inside removeuser ", zap.Error(err))
 	}
-	// usersData = append(usersData, userName)
 	found := lo.IndexOf(usersData, userName)
 	if len(usersData) == 1 {
 		usersData = []string{}

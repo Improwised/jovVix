@@ -54,7 +54,6 @@ function start_quiz(e) {
 // main function
 function handleEvent(message) {
   if (message.event == app.$SentInvitaionCode) {
-    // code.value = message.data.code;
     code.value = invitationCode.value;
   }
 }

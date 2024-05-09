@@ -103,19 +103,16 @@ const handleQuizEvents = async (message) => {
       show: false,
     };
 
-    if (
-      currentComponent.value == "Waiting" &&
-      invitationCode.value != undefined &&
-      message.data != "no player found"
-    ) {
-      addUser(message.data);
-    }
-
-    if (
-      currentComponent.value == "Waiting" &&
-      invitationCode.value == undefined
-    ) {
-      invitationCode.value = message.data.code;
+    if (currentComponent.value == "Waiting") {
+      if (
+        invitationCode.value != undefined &&
+        message.data != "no player found"
+      ) {
+        addUser(message.data);
+      }
+      if (invitationCode.value == undefined) {
+        invitationCode.value = message.data.code;
+      }
     }
   }
 };
@@ -194,6 +191,5 @@ definePageMeta({
       @ask-skip-timer="askSkipTimer"
     ></QuizScoreSpace>
     <ListJoinUser v-if="currentComponent == 'Waiting'"></ListJoinUser>
-    <!-- <ListJoinUser></ListJoinUser> -->
   </Playground>
 </template>
