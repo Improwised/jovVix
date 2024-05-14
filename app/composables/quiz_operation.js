@@ -72,6 +72,13 @@ export default class QuizHandler {
   // onmessage handler ans setup self object
   onMessage(event) {
     const message = this.destructureMessage(event);
+    if (
+      this.currentEvent == constants.GetQuestion &&
+      message.event == constants.AdminDisconnected
+    ) {
+      this.componentHandler(message);
+      return;
+    }
     this.currentComponent = message.component;
     this.currentEvent = message.event;
     this.log.push({
