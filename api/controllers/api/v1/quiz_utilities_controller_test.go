@@ -2,7 +2,6 @@ package v1_test
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -46,7 +45,6 @@ func TestCreateQuizByCSV(t *testing.T) {
 	t.Run("Upload CSV file for question", func(t *testing.T) {
 		file, err := os.Open(filepath)
 		if err != nil {
-			fmt.Println(err)
 			return
 		}
 		defer file.Close()

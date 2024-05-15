@@ -219,9 +219,9 @@ func publishUserOnJoin(c *websocket.Conn, qc *quizSocketController, quizResponse
 		if err != nil {
 			qc.logger.Error(fmt.Sprintf("socket error publishing event: %s event, %s action", constants.EventUserJoined, response.Action), zap.Error(err))
 		}
+		usersData = lo.Reverse(usersData)
 		usersData = append(usersData, userName)
 		usersData = lo.Reverse(usersData)
-
 		jsonData, err = json.Marshal(usersData)
 		if err != nil {
 			qc.logger.Error(fmt.Sprintf("socket error publishing event: %s event, %s action", constants.EventUserJoined, response.Action), zap.Error(err))
