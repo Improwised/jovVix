@@ -23,6 +23,7 @@ type UserQuizResponse struct {
 	UserPlayedQuizId uuid.UUID `json:"user_played_quiz_id" db:"user_played_quiz_id"`
 	CreatedAt        time.Time `json:"created_at,omitempty" db:"created_at,omitempty"`
 	UpdatedAt        time.Time `json:"updated_at,omitempty" db:"updated_at,omitempty"`
+	CalculatedPoints int       `json:"calculated_points,omitempty" db:"calculated_points"`
 }
 
 // QuestionModel implements question related database operations
@@ -83,7 +84,7 @@ func (model *UserQuizResponseModel) GetQuestionsCopy(userPlayedQuizId uuid.UUID,
 	return nil
 }
 
-func (model *UserQuizResponseModel) SubmitAnswer(userPlayedQuizId uuid.UUID, answerStruct structs.ReqAnswerSubmit, score sql.NullInt16) error {
+func (model *UserQuizResponseModel) SubmitAnswer(userPlayedQuizId uuid.UUID, answerStruct structs.ReqAnswerSubmit, points sql.NullInt16, score int) error {
 
 	answerArray, err := json.Marshal(answerStruct.AnswerKeys)
 
@@ -93,11 +94,12 @@ func (model *UserQuizResponseModel) SubmitAnswer(userPlayedQuizId uuid.UUID, ans
 
 	result, err := model.db.Update(UserQuizResponsesTable).Set(
 		goqu.Record{
-			"answers":          string(answerArray),
-			"calculated_score": score,
-			"is_attend":        score.Valid,
-			"response_time":    answerStruct.ResponseTime,
-			"updated_at":       goqu.L("now()"),
+			"answers":           string(answerArray),
+			"calculated_points": points,
+			"is_attend":         points.Valid,
+			"response_time":     answerStruct.ResponseTime,
+			"calculated_score":  score,
+			"updated_at":        goqu.L("now()"),
 		},
 	).Where(
 		goqu.I("user_played_quiz_id").Eq(userPlayedQuizId),

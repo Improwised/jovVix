@@ -197,7 +197,7 @@ func (model *QuizModel) GetSharedQuestions(invitationCode int) ([]Question, sql.
 			question,
 			options,
 			answers,
-			score,
+			points,
 			duration_in_seconds,
 			created_at,
 			updated_at
@@ -233,7 +233,7 @@ func (model *QuizModel) GetSharedQuestions(invitationCode int) ([]Question, sql.
 		question := Question{}
 		var options []byte
 		var answers []byte
-		err := rows.Scan(&question.ID, &question.OrderNumber, &QuestionDeliveryTime, &question.Question, &options, &answers, &question.Score, &question.DurationInSeconds, &question.CreatedAt, &question.UpdatedAt)
+		err := rows.Scan(&question.ID, &question.OrderNumber, &QuestionDeliveryTime, &question.Question, &options, &answers, &question.Points, &question.DurationInSeconds, &question.CreatedAt, &question.UpdatedAt)
 		if err != nil {
 
 			return nil, QuestionDeliveryTime, err

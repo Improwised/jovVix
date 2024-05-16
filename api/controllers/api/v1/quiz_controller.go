@@ -101,9 +101,8 @@ func (ctrl *QuizController) SetAnswer(c *fiber.Ctx) error {
 		return utils.JSONFail(c, http.StatusBadRequest, constants.ErrQuestionNotActive)
 	}
 
-	// calculate score
-	score, err := ctrl.helper.QuestionModel.CalculateScore(answer)
-
+	// calculate points
+	points, score, err := ctrl.helper.QuestionModel.CalculatePointsAndScore(answer)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			ctrl.logger.Error("error during answer submit", zap.Any("answers", answer), zap.Any("current_quiz_id", currentQuizId))
@@ -116,7 +115,7 @@ func (ctrl *QuizController) SetAnswer(c *fiber.Ctx) error {
 	}
 
 	// core logic
-	err = ctrl.helper.UserQuizResponseModel.SubmitAnswer(currentQuizId, answer, score)
+	err = ctrl.helper.UserQuizResponseModel.SubmitAnswer(currentQuizId, answer, points, score)
 
 	if err != nil {
 		if err == sql.ErrNoRows {

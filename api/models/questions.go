@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql"
 	"encoding/json"
+	"math"
 	"time"
 
 	"github.com/Improwised/quizz-app/api/pkg/structs"
@@ -30,7 +31,7 @@ type Question struct {
 	Question          string            `json:"question" db:"question"`
 	Options           map[string]string `json:"options" db:"options"`
 	Answers           []int             `json:"answers" db:"answers"`
-	Score             int16             `json:"score,omitempty" db:"score"`
+	Points            int16             `json:"points,omitempty" db:"points"`
 	DurationInSeconds int               `json:"duration" db:"duration_in_seconds"`
 	CreatedAt         time.Time         `json:"created_at" db:"created_at"`
 	UpdatedAt         time.Time         `json:"updated_at" db:"updated_at"`
@@ -68,7 +69,7 @@ func (model *QuestionModel) CreateQuestions(quizId uuid.UUID, questions []Questi
 			"question":            question.Question,
 			"options":             string(options),
 			"answers":             string(answers),
-			"score":               question.Score,
+			"points":              question.Points,
 			"duration_in_seconds": question.DurationInSeconds,
 		})
 	}
@@ -176,7 +177,7 @@ func registerQuestions(transaction *goqu.TxDatabase, quizId uuid.UUID, questions
 			"question":            question.Question,
 			"options":             string(options),
 			"answers":             string(answers),
-			"score":               question.Score,
+			"points":              question.Points,
 			"duration_in_seconds": question.DurationInSeconds,
 		})
 	}
@@ -239,29 +240,35 @@ func registerQuestionToQuizzes(transaction *goqu.TxDatabase, quizId uuid.UUID, q
 	return nil
 }
 
-func (model *QuestionModel) CalculateScore(userAnswer structs.ReqAnswerSubmit) (sql.NullInt16, error) {
+func (model *QuestionModel) CalculatePointsAndScore(userAnswer structs.ReqAnswerSubmit) (sql.NullInt16, int, error) {
 	var answers []int = []int{}
-	var answerScore int16
+	var answerPoints int16
 	var answerBytes []byte = []byte{}
-	var score sql.NullInt16 = sql.NullInt16{}
+	var points sql.NullInt16 = sql.NullInt16{}
+	var answerDurationInSeconds int
+	var remainingTime int
+	var remainingTimeFloat float64
+	var timePoints int
+	var basePoint int = 500
+	var finalScore int = 0
 
-	rows, err := model.db.Select(goqu.I("answers"), goqu.I("score")).From(QuestionTable).Where(goqu.I("id").Eq(userAnswer.QuestionId.String())).Executor().Query()
+	rows, err := model.db.Select(goqu.I("answers"), goqu.I("points"), goqu.I("duration_in_seconds")).From(QuestionTable).Where(goqu.I("id").Eq(userAnswer.QuestionId.String())).Executor().Query()
 
 	if err != nil {
-		return score, err
+		return points, finalScore, err
 	}
 	defer rows.Close()
 
 	if rows.Next() {
-		err = rows.Scan(&answerBytes, &answerScore)
+		err = rows.Scan(&answerBytes, &answerPoints, &answerDurationInSeconds)
 		if err != nil {
-			return score, err
+			return points, finalScore, err
 		}
 	}
 
 	err = json.Unmarshal(answerBytes, &answers)
 	if err != nil {
-		return score, err
+		return points, finalScore, err
 	}
 
 	// check type of the question
@@ -270,17 +277,21 @@ func (model *QuestionModel) CalculateScore(userAnswer structs.ReqAnswerSubmit) (
 
 	// if not attempted
 	if userAnswerLen == 0 {
-		return score, nil
+		return points, finalScore, nil
 	}
 
-	score.Valid = true
+	points.Valid = true
 	// for mcq type question
 	if actualAnswerLen == 1 {
 		if answers[0] == userAnswer.AnswerKeys[0] {
-			score.Int16 = answerScore
-			return score, nil
+			points.Int16 = answerPoints
+			remainingTime = (answerDurationInSeconds * 1000) - userAnswer.ResponseTime
+			remainingTimeFloat = math.Round(float64(remainingTime) / 1000)
+			timePoints = int(math.Round((remainingTimeFloat * 400) / float64(answerDurationInSeconds)))
+			finalScore = timePoints + basePoint + int(points.Int16*100)
+			return points, finalScore, nil
 		}
-		return score, nil
+		return points, finalScore, nil
 	}
 
 	var noOfMatches int = 0
@@ -294,6 +305,7 @@ func (model *QuestionModel) CalculateScore(userAnswer structs.ReqAnswerSubmit) (
 			}
 		}
 	}
-	score.Int16 = int16(noOfMatches) * answerScore
-	return score, nil
+
+	points.Int16 = int16(noOfMatches) * answerPoints
+	return points, finalScore, nil
 }

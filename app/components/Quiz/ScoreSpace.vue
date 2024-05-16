@@ -1,6 +1,4 @@
 <script setup>
-import useMillisToMinutesAndSeconds from "~/composables/scoreboard_operation.js";
-
 const props = defineProps({
   data: {
     default: () => {
@@ -86,8 +84,7 @@ function handleSkipTimer(e) {
           <tr>
             <th>Rank</th>
             <th>User</th>
-            <th>Points</th>
-            <th>Time</th>
+            <th>Score</th>
           </tr>
         </thead>
         <tbody class="table-group-divider">
@@ -99,7 +96,6 @@ function handleSkipTimer(e) {
             <td scope="row">{{ user.rank }}</td>
             <td>{{ user.username }}</td>
             <td>{{ user.score }}</td>
-            <td>{{ useMillisToMinutesAndSeconds(user.response_time, 2) }}</td>
           </tr>
         </tbody>
         <tfoot></tfoot>

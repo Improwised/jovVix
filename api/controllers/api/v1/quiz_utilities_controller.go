@@ -40,7 +40,7 @@ func ValidateCSVFileFormat(fileName string) error {
 		"Question Text",
 		"Question Type",
 		"Time in seconds",
-		"Score",
+		"Points",
 		"Option 1",
 		"Option 2",
 		"Option 3",
@@ -99,7 +99,7 @@ func ExtractQuestionsFromCSV(fileName string) ([]models.Question, error) {
 			0:  "Question Text",
 			1:  "Question Type",
 			2:  "Time in seconds",
-			3:  "Score",
+			3:  "Points",
 			4:  "Option 1",
 			5:  "Option 2",
 			6:  "Option 3",
@@ -138,17 +138,17 @@ func ExtractQuestionsFromCSV(fileName string) ([]models.Question, error) {
 		}
 
 		// extract score
-		var score int16
+		var points int16
 		if row[3] == "" {
-			score = 1
+			points = 1
 		} else {
-			scoreInt, err := strconv.Atoi(row[3])
+			pointsInt, err := strconv.Atoi(row[3])
 
 			if err != nil {
 				return questions, fmt.Errorf(fmt.Sprintf("score string to int fail score: %s", row[3]))
 			}
 
-			score = int16(scoreInt)
+			points = int16(pointsInt)
 		}
 
 		// extract duration
@@ -169,7 +169,7 @@ func ExtractQuestionsFromCSV(fileName string) ([]models.Question, error) {
 				Question:          row[0],
 				Options:           options,
 				Answers:           answers,
-				Score:             score,
+				Points:            points,
 				DurationInSeconds: duration,
 				OrderNumber:       rowNumber + 1,
 			},

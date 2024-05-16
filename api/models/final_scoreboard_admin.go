@@ -5,6 +5,7 @@ import (
 )
 
 type FinalScoreBoardAdmin struct {
+	Rank         int    `db:"rank" json:"rank"`
 	UserName     string `db:"username" json:"username"`
 	Score        int    `db:"score,omitempty" json:"score"`
 	ResponseTime int    `db:"response_time,omitempty" json:"response_time"`
@@ -33,8 +34,8 @@ func (model *FinalScoreBoardAdminModel) GetScoreForAdmin(activeQuizId string) ([
 		Select(
 			"users.username",
 			goqu.SUM("user_quiz_responses.calculated_score").As("score"),
-			goqu.Func("coalesce", goqu.SUM(goqu.Case().
-				When(goqu.I("user_quiz_responses.calculated_score").Gt(0), goqu.I("user_quiz_responses.response_time")).Else(0)), 0).As("response_time"),
+			goqu.SUM("user_quiz_responses.response_time").As("response_time"),
+			goqu.DENSE_RANK().Over(goqu.W().OrderBy(goqu.SUM("user_quiz_responses.calculated_score").Desc())).As("rank"),
 		).
 		InnerJoin(goqu.T("user_played_quizzes"), goqu.On(goqu.I("users.id").Eq(goqu.I("user_played_quizzes.user_id")))).
 		InnerJoin(goqu.T("active_quizzes"), goqu.On(goqu.I("user_played_quizzes.active_quiz_id").Eq(goqu.I("active_quizzes.id")))).
@@ -46,8 +47,7 @@ func (model *FinalScoreBoardAdminModel) GetScoreForAdmin(activeQuizId string) ([
 			UserQuizResponseTable + ".user_played_quiz_id": goqu.I(UserPlayedQuizTable + ".id"),
 			UserPlayedQuizTable + ".active_quiz_id":        activeQuizId,
 		}).
-		GroupBy(goqu.I("users.username")).
-		Order(goqu.I("score").Desc(), goqu.I("response_time").Desc()).
+		GroupBy(goqu.I("users.id")).
 		ScanStructs(&finalScoreBoardData)
 
 	if err != nil {
