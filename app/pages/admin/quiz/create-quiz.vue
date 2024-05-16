@@ -100,7 +100,9 @@ async function submit(e) {
           Required
         </div>
       </div>
-      <button type="submit" class="btn btn-primary me-2">Submit</button>
+      <button type="submit" class="btn text-white btn-primary me-2">
+        Create Quiz
+      </button>
       <a class="btn btn-primary me-2" href="/files/demo.csv" download="demo.csv"
         >Download sample</a
       >

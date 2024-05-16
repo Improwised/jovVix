@@ -88,8 +88,10 @@ async function login_user(e) {
           ?
         </div>
       </div>
-      <button type="submit" class="btn btn-primary">Submit</button>
-      <button type="reset" class="btn btn-primary ms-2">Clear</button>
+      <button type="submit" class="btn text-white btn-primary">Submit</button>
+      <button type="reset" class="btn text-white btn-primary ms-2">
+        Clear
+      </button>
     </form>
   </Frame>
 </template>

@@ -32,7 +32,11 @@ async function handleStartDemo() {
 }
 </script>
 <template>
-  <button type="button" class="btn btn-primary me-0" @click="handleStartDemo">
+  <button
+    type="button"
+    class="btn text-white btn-primary me-0"
+    @click="handleStartDemo"
+  >
     Start Quiz
   </button>
 </template>

@@ -54,7 +54,7 @@ const handleQuizEvents = async (message) => {
     );
   } else if (message.event == app.$TerminateQuiz) {
     monitorTerminateQuiz.value = true;
-    return await router.push("/join/scoreboard");
+    return await router.push(`/join/${route.query.username}/scoreboard`);
   } else if (message.event == app.$RedirectToAdmin) {
     return await router.push("/admin/arrange/" + message.data.sessionId);
   } else if (
@@ -65,7 +65,7 @@ const handleQuizEvents = async (message) => {
       "/join?status=" + message.status + "&error=" + message.data
     );
   } else if (message.data == app.$AdminDisconnected) {
-    return toast.warning(app.$AdminDisconnectedMessage);
+    toast.warning(app.$AdminDisconnectedMessage);
   } else {
     if (
       message.status == app.$Fail &&
