@@ -134,18 +134,26 @@ function handleSkip(e) {
         :key="key"
         class="flex-grow-1 border m-1 rounded p-1"
       >
-        <div class="form-check form-check-inline">
-          <input
-            v-if="!isAdmin"
-            v-model="answer"
-            class="form-check-input"
-            type="radio"
-            name="answer"
-            :value="{ key }"
-            :disabled="isSubmitted"
-          />
-          <label class="form-check-label">{{ value }}</label>
-        </div>
+        <label
+          class="form-check-label d-flex align-items-center"
+          :class="{
+            'justify-content-between': !isAdmin,
+            'justify-content-center': isAdmin,
+          }"
+        >
+          <div v-if="!isAdmin" class="form-check form-check-inline me-0">
+            <input
+              :id="`${key}`"
+              v-model="answer"
+              class="form-check-input"
+              type="radio"
+              name="answer"
+              :value="{ key }"
+              :disabled="isSubmitted"
+            />
+          </div>
+          <p class="mb-0" :for="`${key}`">{{ value }}</p>
+        </label>
       </div>
     </div>
     <button

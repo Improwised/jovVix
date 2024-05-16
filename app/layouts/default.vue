@@ -7,17 +7,22 @@
         <div class="container-fluid p-2">
           <!-- Title on the left -->
           <NuxtLink class="navbar-brand" to="/">Quiz App</NuxtLink>
-          <button
-            class="navbar-toggler"
-            type="button"
-            data-bs-toggle="collapse"
-            data-bs-target="#navbarNavAltMarkup"
-            aria-controls="navbarNavAltMarkup"
-            aria-expanded="false"
-            aria-label="Toggle navigation"
-          >
-            <span class="navbar-toggler-icon"></span>
-          </button>
+          <div>
+            <NuxtLink class="navbar-brand align-items-end d-md-none" to="/join"
+              >Join Quiz</NuxtLink
+            >
+            <button
+              class="navbar-toggler"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#navbarNavAltMarkup"
+              aria-controls="navbarNavAltMarkup"
+              aria-expanded="false"
+              aria-label="Toggle navigation"
+            >
+              <span class="navbar-toggler-icon"></span>
+            </button>
+          </div>
 
           <!-- Profile/Login on the right -->
           <div
@@ -31,7 +36,7 @@
                 >
               </li>
               <li>
-                <NuxtLink class="nav-link" to="/join">Join</NuxtLink>
+                <NuxtLink class="nav-link" to="/join">Join Quiz</NuxtLink>
               </li>
               <li>
                 <NuxtLink class="nav-link" to="/admin/quiz/list-quiz"

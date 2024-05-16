@@ -117,7 +117,7 @@ func (model *QuizModel) GetQuizzesByAdmin(creator_id string) ([]QuizWithQuestion
 		Select(goqu.COUNT("question_id")).
 		Where(goqu.C("quiz_id").Eq(goqu.I("quizzes.id")))
 
-	rows, err := model.db.From("quizzes").Select(goqu.L("*"), questionsCountSubquery.As("total_questions")).Where(goqu.I("creator_id").Eq(creator_id)).Executor().Query()
+	rows, err := model.db.From("quizzes").Select(goqu.L("*"), questionsCountSubquery.As("total_questions")).Order(goqu.I("created_at").Desc()).Where(goqu.I("creator_id").Eq(creator_id)).Executor().Query()
 
 	if err != nil {
 		return nil, err

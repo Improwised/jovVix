@@ -110,6 +110,7 @@ const handleQuizEvents = async (message) => {
         invitationCode.value != undefined &&
         message.data != "no player found"
       ) {
+        console.log("calling adduser");
         addUser(message.data);
       }
       if (invitationCode.value == undefined) {
@@ -158,7 +159,6 @@ const handleModal = (confirm) => {
 definePageMeta({
   layout: "empty",
 });
-
 // custom class to bind component with
 </script>
 
