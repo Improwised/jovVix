@@ -67,7 +67,7 @@ function handleSkipTimer(e) {
     <button
       v-if="isAdmin"
       type="button"
-      class="btn btn-primary mt-3"
+      class="btn text-white btn-primary mt-3"
       @click="handleSkipTimer"
     >
       Skip
