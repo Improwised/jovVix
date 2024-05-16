@@ -77,16 +77,16 @@ export default class QuizHandler {
       message.event == constants.AdminDisconnected
     ) {
       this.componentHandler(message);
-      return;
+    } else {
+      this.currentComponent = message.component;
+      this.currentEvent = message.event;
+      this.log.push({
+        state: "Receive",
+        message,
+        time: new Date().toLocaleString(),
+      });
+      this.handler(message, event);
     }
-    this.currentComponent = message.component;
-    this.currentEvent = message.event;
-    this.log.push({
-      state: "Receive",
-      message,
-      time: new Date().toLocaleString(),
-    });
-    this.handler(message, event);
   }
 
   // pre-process message if needed and assign to outside function
