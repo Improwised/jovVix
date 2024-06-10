@@ -148,6 +148,26 @@ func ExtractQuestionsFromCSV(fileName string) ([]models.Question, error) {
 				return questions, fmt.Errorf(fmt.Sprintf("score string to int fail score: %s", row[3]))
 			}
 
+			maximumPoints := os.Getenv("MAXIMUM_POINTS_PER_QUESTION")
+			maximumPointsInt, err := strconv.Atoi(maximumPoints)
+			if err != nil {
+				return questions, fmt.Errorf(constants.ErrorTypeConversion)
+			}
+
+			minimumPoints := os.Getenv("MINIMUM_POINTS_PER_QUESTION")
+			minimumPointsInt, err := strconv.Atoi(minimumPoints)
+			if err != nil {
+				return questions, fmt.Errorf(constants.ErrorTypeConversion)
+			}
+
+			if pointsInt > maximumPointsInt {
+				return questions, fmt.Errorf(fmt.Sprintf("the points per question should be less than or equal to %s", maximumPoints))
+			}
+
+			if pointsInt < minimumPointsInt {
+				return questions, fmt.Errorf(fmt.Sprintf("the points per question should be greater than or equal to %s", minimumPoints))
+			}
+
 			points = int16(pointsInt)
 		}
 
@@ -209,6 +229,16 @@ func (ctrl *QuizController) CreateQuizByCsv(c *fiber.Ctx) error {
 
 	if err != nil {
 		if err.Error() == constants.ErrRowsReachesToMaxCount {
+			ctrl.logger.Error("file validation failed", zap.Error(err))
+			return utils.JSONFail(c, http.StatusBadRequest, err.Error())
+		}
+
+		if err.Error() == fmt.Sprintf("the points per question should be less than or equal to %s", os.Getenv("MAXIMUM_POINTS_PER_QUESTION")) {
+			ctrl.logger.Error("file validation failed", zap.Error(err))
+			return utils.JSONFail(c, http.StatusBadRequest, err.Error())
+		}
+
+		if err.Error() == fmt.Sprintf("the points per question should be greater than or equal to %s", os.Getenv("MINIMUM_POINTS_PER_QUESTION")) {
 			ctrl.logger.Error("file validation failed", zap.Error(err))
 			return utils.JSONFail(c, http.StatusBadRequest, err.Error())
 		}
