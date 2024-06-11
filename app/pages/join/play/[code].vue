@@ -22,6 +22,12 @@ const userOperationHandler = ref();
 
 const monitorTerminateQuiz = ref(false);
 
+//for username
+const headers = useRequestHeaders(["cookie"]);
+const url = useState("urls");
+const endpoint = "/user/who";
+const userName = ref("");
+
 // event handlers
 const handleCustomChange = (isFullScreenEvent) => {
   if (!isFullScreenEvent && myRef.value) {
@@ -116,11 +122,31 @@ onBeforeUnmount(() => {
   }
 });
 
+// get username of currently playing user
+async function getUsername() {
+  const { data, error } = await useFetch(() => url.value.api_url + endpoint, {
+    method: "GET",
+    headers: headers,
+    credentials: "include",
+    mode: "cors",
+  });
+
+  if (error.value) {
+    toast.error(app.$Unauthorized);
+  } else {
+    userName.value = data._rawValue.data.username;
+  }
+}
+
+getUsername();
+
 // custom class to bind component with
 </script>
 
 <template>
   <Playground :full-screen-enabled="myRef" @is-full-screen="handleCustomChange">
+    <UserName :user-name="userName"></UserName>
+
     <QuizLoadingSpace v-if="currentComponent == 'Loading'"></QuizLoadingSpace>
     <QuizWaitingSpace
       v-else-if="currentComponent == 'Waiting'"
