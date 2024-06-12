@@ -39,7 +39,6 @@ func ValidateCSVFileFormat(fileName string) error {
 	requiredHeaders := []string{
 		"Question Text",
 		"Question Type",
-		"Time in seconds",
 		"Points",
 		"Option 1",
 		"Option 2",
@@ -63,7 +62,7 @@ func ValidateCSVFileFormat(fileName string) error {
 	return nil
 }
 
-func ExtractQuestionsFromCSV(fileName string) ([]models.Question, error) {
+func ExtractQuestionsFromCSV(fileName string, logger *zap.Logger) ([]models.Question, error) {
 	questions := []models.Question{}
 
 	// Open the CSV file
@@ -98,14 +97,13 @@ func ExtractQuestionsFromCSV(fileName string) ([]models.Question, error) {
 			Index: column
 			0:  "Question Text",
 			1:  "Question Type",
-			2:  "Time in seconds",
-			3:  "Points",
-			4:  "Option 1",
-			5:  "Option 2",
-			6:  "Option 3",
-			7:  "Option 4",
-			8:  "Option 5",
-			9:  "Correct Answer",
+			2:  "Points",
+			3:  "Option 1",
+			4:  "Option 2",
+			5:  "Option 3",
+			6:  "Option 4",
+			7:  "Option 5",
+			8:  "Correct Answer",
 
 		*/
 
@@ -113,7 +111,7 @@ func ExtractQuestionsFromCSV(fileName string) ([]models.Question, error) {
 		var optionKey = 1
 
 		// extract options
-		for _, option := range []string{row[4], row[5], row[6], row[7], row[8]} {
+		for _, option := range []string{row[3], row[4], row[5], row[6], row[7]} {
 			if option != "" {
 				options[quizUtilsHelper.GetString(optionKey)] = option
 				optionKey += 1
@@ -123,15 +121,15 @@ func ExtractQuestionsFromCSV(fileName string) ([]models.Question, error) {
 		var answers []int
 
 		// extract answers
-		for _, answer := range strings.Split(row[9], "|") {
+		for _, answer := range strings.Split(row[8], "|") {
 			if _, ok := options[answer]; !ok {
-				return questions, fmt.Errorf(fmt.Sprintf("answer not in option list options: %s, answers: %s", options, row[9]))
+				return questions, fmt.Errorf(fmt.Sprintf("answer not in option list options: %s, answers: %s", options, row[8]))
 			}
 
 			answerInt, err := strconv.Atoi(answer)
 
 			if err != nil {
-				return questions, fmt.Errorf(fmt.Sprintf("answer string to int fail options: %s, answers: %s", options, row[9]))
+				return questions, fmt.Errorf(fmt.Sprintf("answer string to int fail options: %s, answers: %s", options, row[8]))
 			}
 
 			answers = append(answers, answerInt)
@@ -139,13 +137,13 @@ func ExtractQuestionsFromCSV(fileName string) ([]models.Question, error) {
 
 		// extract score
 		var points int16
-		if row[3] == "" {
+		if row[2] == "" {
 			points = 1
 		} else {
-			pointsInt, err := strconv.Atoi(row[3])
+			pointsInt, err := strconv.Atoi(row[2])
 
 			if err != nil {
-				return questions, fmt.Errorf(fmt.Sprintf("score string to int fail score: %s", row[3]))
+				return questions, fmt.Errorf(fmt.Sprintf("score string to int fail score: %s", row[2]))
 			}
 
 			maximumPoints := os.Getenv("MAXIMUM_POINTS_PER_QUESTION")
@@ -171,15 +169,16 @@ func ExtractQuestionsFromCSV(fileName string) ([]models.Question, error) {
 			points = int16(pointsInt)
 		}
 
-		// extract duration
+		// provide duration
 		var duration int
-		if row[2] == "" {
+		durationFromEnv := os.Getenv("QUESTION_TIME_LIMIT")
+		if durationFromEnv == "" {
 			duration = 30
 		} else {
-			duration, err = strconv.Atoi(row[2])
-
+			duration, err = strconv.Atoi(durationFromEnv)
 			if err != nil {
-				return questions, fmt.Errorf(fmt.Sprintf("duration string to int fail score: %s", row[2]))
+				duration = 30
+				logger.Error("Took default time of 30 seconds per question as convertion error from env", zap.Error(err))
 			}
 		}
 
@@ -225,7 +224,7 @@ func (ctrl *QuizController) CreateQuizByCsv(c *fiber.Ctx) error {
 		return utils.JSONFail(c, http.StatusBadRequest, err.Error())
 	}
 
-	questions, err := ExtractQuestionsFromCSV(filePath)
+	questions, err := ExtractQuestionsFromCSV(filePath, ctrl.logger)
 
 	if err != nil {
 		if err.Error() == constants.ErrRowsReachesToMaxCount {
