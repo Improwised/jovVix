@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/Improwised/quizz-app/api/config"
@@ -172,7 +173,11 @@ func CreateStrictCookie(key, value string) *fiber.Cookie {
 	cookie.Value = value
 	cookie.HTTPOnly = true
 	cookie.SessionOnly = true
-	cookie.Secure = true
+	if os.Getenv("IS_DEVELOPMENT") == "true" {
+		cookie.Secure = false
+	} else {
+		cookie.Secure = true
+	}
 	cookie.SameSite = "Strict"
 	return cookie
 }

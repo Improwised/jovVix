@@ -2,4 +2,5 @@
 venv
 Makefile
 *.out*
+/api/pkg/mod/*
 **\.vscode
