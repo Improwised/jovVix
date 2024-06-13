@@ -16,14 +16,16 @@ const username = ref();
 function join_quiz(e) {
   e.preventDefault();
 
+  username.value = username.value.trim();
+
   if (!code.value || code.value.length != 6) {
     toast.error("please enter quiz code");
     return;
   } else if (!username.value) {
     toast.error("please add username");
     return;
-  } else if (username.value.length > 12 || username.value.length < 6) {
-    toast.error("username must be 6 to 12 char long");
+  } else if (username.value.length > 12) {
+    toast.error("username must be a maximum of 12 characters long");
   } else {
     router.push(`/join/play/${code.value}?username=${username.value}`);
   }
