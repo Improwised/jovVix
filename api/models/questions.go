@@ -114,7 +114,7 @@ func (model *QuestionModel) RegisterQuestions(userId string, title string, descr
 		return quizId, err
 	}
 
-	ids, err := registerQuestions(transaction, quizId, questions)
+	ids, err := registerQuestions(transaction, questions)
 
 	if err != nil {
 		return quizId, err
@@ -157,7 +157,7 @@ func registerQuiz(transaction *goqu.TxDatabase, title, description, userId strin
 	return quizId, nil
 }
 
-func registerQuestions(transaction *goqu.TxDatabase, quizId uuid.UUID, questions []Question) ([]uuid.UUID, error) {
+func registerQuestions(transaction *goqu.TxDatabase, questions []Question) ([]uuid.UUID, error) {
 	ids := []uuid.UUID{}
 	records := []goqu.Record{}
 

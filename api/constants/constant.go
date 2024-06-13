@@ -199,3 +199,15 @@ const (
 // final scoreboard cookie for user
 const UserPlayedQuiz = "user_played_quiz"
 const ActiveQuizId = "active_quiz_id"
+
+// database table names
+const (
+	UserQuizResponsesTable   = "user_quiz_responses"
+	UserPlayedQuizzesTable   = "user_played_quizzes"
+	QuestionsTable           = "questions"
+	UsersTable               = "users"
+	ActiveQuizzesTable       = "active_quizzes"
+	QuizQuestionsTable       = "quiz_questions"
+	ActiveQuizQuestionsTable = "active_quiz_questions"
+	QuizzesTable             = "quizzes"
+)

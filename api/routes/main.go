@@ -88,6 +88,10 @@ func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config confi
 	if err != nil {
 		return err
 	}
+	err = setUpAnalyticsBoardController(v1, goqu, logger, middleware, events, pub)
+	if err != nil {
+		return err
+	}
 
 	err = setupAuthController(v1, goqu, logger, middleware, config)
 	if err != nil {
@@ -261,6 +265,29 @@ func setUpFinalScoreBoardController(v1 fiber.Router, goqu *goqu.Database, logger
 	finalScore := v1.Group("/final_score")
 	finalScore.Get("/user", finalScoreBoardController.GetScore)
 	finalScore.Get("/admin", middlewares.Authenticated, userController.IsAdmin, finalScoreBoardControllerAdmin.GetScoreForAdmin)
+
+	return nil
+}
+
+func setUpAnalyticsBoardController(v1 fiber.Router, goqu *goqu.Database, logger *zap.Logger, middlewares middlewares.Middleware, events *events.Events, pub *watermill.WatermillPublisher) error {
+	userController, err := controller.NewUserController(goqu, logger, events, pub)
+	if err != nil {
+		return err
+	}
+
+	analyticsBoardUserController, err := controller.NewAnalyticsBoardUserController(goqu, logger, events)
+	if err != nil {
+		return err
+	}
+
+	analyticsBoardAdminController, err := controller.NewAnalyticsBoardAdminController(goqu, logger, events)
+	if err != nil {
+		return err
+	}
+
+	analyticsBoard := v1.Group("/analytics_board")
+	analyticsBoard.Get("/user", analyticsBoardUserController.GetAnalyticsForUser)
+	analyticsBoard.Get("/admin", middlewares.Authenticated, userController.IsAdmin, analyticsBoardAdminController.GetAnalyticsForAdmin)
 
 	return nil
 }

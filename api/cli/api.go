@@ -32,7 +32,7 @@ func GetAPICommandDef(cfg config.AppConfig, logger *zap.Logger) cobra.Command {
 
 			app.Use(cors.New(cors.Config{
 				AllowHeaders:     "Origin,Content-Type,Accept,Content-Length,Accept-Language,Accept-Encoding,Connection,Access-Control-Allow-Origin,Authorization,Options",
-				AllowOrigins:     "http://*:5000, ws://*:3300, wss://*:3300, ws://*:3000, wss://*:3000, http://0.0.0.0:5000, http://127.0.0.1:5000",
+				AllowOrigins:     "http://*:5000, ws://*:3300, wss://*:3300, ws://*:3000, wss://*:3000, http://0.0.0.0:5000, http://127.0.0.1:5000, http://127.0.0.1:3000, "+ cfg.WebUrl,
 				AllowCredentials: true,
 				AllowMethods:     "GET,POST,HEAD,PUT,DELETE,PATCH,OPTIONS",
 			}))
@@ -59,6 +59,7 @@ func GetAPICommandDef(cfg config.AppConfig, logger *zap.Logger) cobra.Command {
 			// setup routes
 			err = routes.Setup(app, db, logger, cfg, events, promMetrics, pub)
 			if err != nil {
+				logger.Error(err.Error())
 				return err
 			}
 
