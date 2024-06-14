@@ -10,6 +10,14 @@ const app = useNuxtApp();
 const headers = useRequestHeaders(["cookie"]);
 useSystemEnv();
 
+const analysisData = reactive([]);
+const userAnalysisEndpoint = "/analytics_board/user";
+
+const userAccuracy = ref();
+const userAnswerAnalysis = ref([]);
+const userCorrectAnswer = ref(0);
+const userTotalScore = ref(0);
+
 const props = defineProps({
   userURL: {
     default: "",
@@ -54,6 +62,58 @@ if (props.isAdmin) {
 } else {
   getFinalScoreboardDetails(props.userURL);
 }
+
+if (!props.isAdmin) {
+  async function getAnalysisDetails() {
+    const { data, error } = await useFetch(
+      () => url.value.api_url + userAnalysisEndpoint,
+      {
+        method: "GET",
+        headers: headers,
+        credentials: "include",
+        mode: "cors",
+      }
+    );
+
+    watch(
+      [data, error],
+      () => {
+        if (data.value) {
+          analysisData.push(...data.value.data);
+          userAnalysis();
+        }
+        if (error.value) {
+          toast.error(app.$$Unauthorized);
+        }
+      },
+      { immediate: true, deep: true }
+    );
+  }
+
+  getAnalysisDetails();
+
+  const userAnalysis = () => {
+    analysisData.filter((item) => {
+      //for correct/incorrect answer (question-wise) and count of correct answer for accuracy
+      if (item.selected_answer.String == item.correct_answer) {
+        userAnswerAnalysis.value.push(true);
+        userCorrectAnswer.value++;
+      } else {
+        userAnswerAnalysis.value.push(false);
+      }
+
+      //for counting total score
+      userTotalScore.value += item.calculated_score;
+    });
+
+    console.log(userAnswerAnalysis);
+
+    userAccuracy.value =
+      (userCorrectAnswer.value / userAnswerAnalysis.value.length) * 100;
+    console.log("Accuracy: " + userAccuracy.value);
+    console.log("Total Score: " + userTotalScore.value);
+  };
+}
 </script>
 <template>
   <ClientOnly>
@@ -85,8 +145,35 @@ if (props.isAdmin) {
               <td>{{ user.username }}</td>
               <td>{{ user.score }}</td>
             </tr>
+            <!-- <tr>
+              <td v-for="(index,item) in analysisData" :key="index">{{ index }}</td>
+            </tr> -->
           </tbody>
         </table>
+      </div>
+      <hr v-if="!props.isAdmin" />
+      <div v-if="!props.isAdmin">
+        <h3 class="text-center">Accuracy: {{ userAccuracy }}%</h3>
+        <h3 class="text-center">Total Score: {{ userTotalScore }}</h3>
+        <Frame
+          v-for="(item, index) in analysisData"
+          :key="index"
+          :page-title="'Q' + (index + 1) + '. ' + item.question"
+        >
+          <ul style="list-style-type: none">
+            <li v-for="(option, key) in item.options" :key="key">
+              <span v-if="item.correct_answer.includes(key)">&#10004;</span>
+              <span
+                v-if="
+                  item.selected_answer.String.includes(key) &&
+                  !item.correct_answer.includes(key)
+                "
+                >&#10006;</span
+              >
+              {{ key }}: {{ option }}
+            </li>
+          </ul>
+        </Frame>
       </div>
     </div>
   </ClientOnly>
