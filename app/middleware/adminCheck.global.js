@@ -8,16 +8,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
     if (!is_admin.ok) {
       const app = useNuxtApp();
-      return callWithNuxt(app, () =>
-        navigateTo(
-          "/account/login?error=" +
-            is_admin.err +
-            "&t=" +
-            new Date().valueOf() +
-            "&url=" +
-            to.fullPath
-        )
-      );
+      return callWithNuxt(app, () => navigateTo("/account/login"));
     }
   }
 });
