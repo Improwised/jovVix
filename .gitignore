@@ -4,3 +4,4 @@ Makefile
 *.out*
 /api/pkg/mod/
 **\.vscode
+api-logs.json

@@ -106,12 +106,8 @@ if (!props.isAdmin) {
       userTotalScore.value += item.calculated_score;
     });
 
-    console.log(userAnswerAnalysis);
-
     userAccuracy.value =
       (userCorrectAnswer.value / userAnswerAnalysis.value.length) * 100;
-    console.log("Accuracy: " + userAccuracy.value);
-    console.log("Total Score: " + userTotalScore.value);
   };
 }
 </script>

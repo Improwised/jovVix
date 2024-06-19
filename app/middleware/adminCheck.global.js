@@ -8,7 +8,11 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
     if (!is_admin.ok) {
       const app = useNuxtApp();
-      return callWithNuxt(app, () => navigateTo("/account/login"));
+      return callWithNuxt(app, () =>
+        navigateTo(
+          "/account/login?t=" + new Date().valueOf() + "&url=" + to.fullPath
+        )
+      );
     }
   }
 });
