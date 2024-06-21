@@ -14,7 +14,7 @@ const { listUsers } = storeToRefs(listUserStore);
           class="d-flex border border-1 justify-content-center align-items-center px-3 py-2 py-md-4 gap-3 border-radius"
         >
           <font-awesome-icon icon="fa-solid fa-users" size="xl" />
-          <h5 class="text-center mb-0">Waiting for participants..</h5>
+          <h5 class="text-center mb-0">Waiting for Participants..</h5>
         </div>
       </div>
 
@@ -24,7 +24,7 @@ const { listUsers } = storeToRefs(listUserStore);
         >
           <font-awesome-icon icon="fa-solid fa-users" size="xl" />
           <h5 class="text-center text-sm fs-5 mb-0">
-            {{ listUsers.length }} participants
+            {{ listUsers.length }} Participants
           </h5>
         </div>
       </div>

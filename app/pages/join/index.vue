@@ -33,10 +33,10 @@ function join_quiz(e) {
 </script>
 
 <template>
-  <Frame page-title="Join page" page-message="Let's play together">
+  <Frame page-title="Join Page" page-message="Let's Play Together">
     <form method="POST" @submit="join_quiz">
       <div class="mb-3 pe-3">
-        <label for="code" class="form-label">Invitation code</label>
+        <label for="code" class="form-label">Invitation Code</label>
         <v-otp-input
           v-model="code"
           max-width="500"
@@ -46,7 +46,7 @@ function join_quiz(e) {
         ></v-otp-input>
       </div>
       <div class="mb-3">
-        <label for="username" class="form-label">User name</label>
+        <label for="username" class="form-label">User Name</label>
         <input
           id="username"
           v-model="username"
@@ -57,8 +57,8 @@ function join_quiz(e) {
       </div>
       <div class="p-2">
         <div v-if="!user" class="text-center">
-          Want to save your progress?
-          <NuxtLink to="/account/login"><b>Login</b></NuxtLink> now.
+          Want To Save Your Progress?
+          <NuxtLink to="/account/login"><b>Login</b></NuxtLink> Now.
         </div>
       </div>
       <button type="submit" class="btn btn-primary btn-lg bg-primary">

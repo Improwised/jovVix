@@ -1,6 +1,6 @@
 <template>
   <Frame
     page-title="Register"
-    page-message="we are happy to join you..."
+    page-message="We would be Happy To Have You..."
   ></Frame>
 </template>
