@@ -51,13 +51,13 @@ async function submit(e) {
 
 <template>
   <Frame
-    page-title="Create quiz"
-    page-message="create new quiz by uploading csv"
+    page-title="Create Quiz"
+    page-message="Create New Quiz By Uploading CSV"
   >
     <form @submit="submit">
       <div class="mb-3">
         <div class="mb-3">
-          <label for="title" class="form-label">Quiz title</label>
+          <label for="title" class="form-label">Quiz Title</label>
           <input
             id="title"
             v-model="title"
@@ -73,7 +73,7 @@ async function submit(e) {
           >
         </div>
         <div class="mb-3">
-          <label for="description" class="form-label">Quiz description</label>
+          <label for="description" class="form-label">Quiz Description</label>
           <input
             id="description"
             type="text"
@@ -85,7 +85,7 @@ async function submit(e) {
           <!-- <small id="helpId" class="form-text text-muted">Help text</small> -->
         </div>
 
-        <label for="attachment" class="form-label">Choose file</label>
+        <label for="attachment" class="form-label">Choose File</label>
         <input
           id="attachment"
           type="file"
@@ -104,8 +104,7 @@ async function submit(e) {
         Create Quiz
       </button>
       <a class="btn btn-primary me-2" href="/files/demo.csv" download="demo.csv"
-        >Download sample</a
-      >
+        >Download Sample</a>
       <UtilsStartQuiz v-if="quizId" :quiz-id="quizId" />
     </form>
   </Frame>

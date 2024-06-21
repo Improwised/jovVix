@@ -110,7 +110,7 @@ function handleSkip(e) {
   <Frame
     v-if="question != null"
     page-title="Question"
-    page-message="let's play"
+    page-message="Let's Play"
   >
     <template #sub-title>
       <v-progress-circular

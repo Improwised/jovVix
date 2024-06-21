@@ -38,7 +38,7 @@ function handleSkipTimer(e) {
 </script>
 
 <template>
-  <Frame page-title="Score page" page-message="rank-board">
+  <Frame page-title="Score Page" page-message="Rank Board">
     <v-progress-linear
       :striped="true"
       color="blue"

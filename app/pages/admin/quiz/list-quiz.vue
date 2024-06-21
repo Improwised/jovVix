@@ -54,7 +54,7 @@ onBeforeMount(() => {
           class="no-quiz-list d-flex flex-column align-items-center"
         >
           <h1>No Quiz Created By You !</h1>
-          <p class="font-italic">Create your first quiz</p>
+          <p class="font-italic">Create Your First Quiz</p>
           <UtilsCreateQuiz />
         </div>
 

@@ -57,7 +57,7 @@ async function login_user(e) {
 </script>
 
 <template>
-  <Frame page-title="Login page" page-message="Welcome to the quizz world...">
+  <Frame page-title="Login Page" page-message="Welcome To The Quizz World...">
     <form method="POST" @submit="login_user">
       <div class="mb-3">
         <label for="email" class="form-label">Email</label>
@@ -83,8 +83,8 @@ async function login_user(e) {
       </div>
       <div class="p-2">
         <div class="text-end">
-          don't have an
-          <NuxtLink to="/account/register"><b>account</b></NuxtLink>
+          Don't Have An
+          <NuxtLink to="/account/register"><b>Account</b></NuxtLink>
           ?
         </div>
       </div>

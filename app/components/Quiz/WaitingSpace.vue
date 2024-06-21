@@ -84,12 +84,12 @@ function copyToClipboard(text) {
 <template>
   <Frame
     v-if="isAdmin"
-    page-title="ready steady go"
-    :page-message="'You can start quiz by pressing Start Quiz button'"
+    page-title="Ready Steady Go"
+    :page-message="'You Can Start Quiz By Pressing Start Quiz button'"
   >
     <form @submit="start_quiz">
       <div class="mb-3 pe-3">
-        <label for="code" class="form-label">Invitation code</label>
+        <label for="code" class="form-label">Invitation Code</label>
         <div
           class="d-flex justify-content-start justify-content-md-center align-items-center position-relative"
         >
@@ -114,7 +114,7 @@ function copyToClipboard(text) {
       </button>
     </form>
   </Frame>
-  <Frame v-else page-title="ready steady go" :page-message="data.data">
+  <Frame v-else page-title="Ready Steady Go" :page-message="data.data">
     <div class="text-center homepage">{{ data.data }}</div>
   </Frame>
 </template>
