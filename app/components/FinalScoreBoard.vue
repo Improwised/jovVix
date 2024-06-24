@@ -63,7 +63,6 @@ if (props.isAdmin) {
   getFinalScoreboardDetails(props.userURL);
 }
 
-<<<<<<< HEAD
 if (!props.isAdmin) {
   async function getAnalysisDetails() {
     const { data, error } = await useFetch(
@@ -111,14 +110,14 @@ if (!props.isAdmin) {
       (userCorrectAnswer.value / userAnswerAnalysis.value.length) * 100;
   };
 }
-=======
+
 const showAnalysis = () => {
   router.push({
     path: "/admin/analysis",
     query: { active_quiz_id: activeQuizId.value },
   });
 };
->>>>>>> f27c1ef (Add button in scorebaord for admin to redirect to the analysis page)
+
 </script>
 <template>
   <ClientOnly>
