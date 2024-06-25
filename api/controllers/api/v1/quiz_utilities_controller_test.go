@@ -12,6 +12,7 @@ import (
 	"github.com/Improwised/quizz-app/api/config"
 	v1 "github.com/Improwised/quizz-app/api/controllers/api/v1"
 	"github.com/Improwised/quizz-app/api/database"
+	"github.com/Improwised/quizz-app/api/logger"
 	"github.com/Improwised/quizz-app/api/pkg/structs"
 	goqu "github.com/doug-martin/goqu/v9"
 	"github.com/google/uuid"
@@ -26,6 +27,8 @@ var result struct {
 func TestCreateQuizByCSV(t *testing.T) {
 	filepath := ".././././app/public/files/demo.csv"
 
+	logger, err:= logger.NewRootLogger(true, true)
+	assert.Nil(t, err)
 	// login admin
 	req := structs.ReqLoginUser{
 		Email:    "adminxyz@gmail.com",
@@ -96,7 +99,7 @@ func TestCreateQuizByCSV(t *testing.T) {
 	})
 
 	t.Run("extract questions from csv", func(t *testing.T) {
-		questions, err := v1.ExtractQuestionsFromCSV(filepath)
+		questions, err := v1.ExtractQuestionsFromCSV(filepath, logger)
 		assert.NotEmpty(t, questions)
 		assert.Nil(t, err)
 	})
@@ -164,4 +167,37 @@ func TestGenerateDemoSession(t *testing.T) {
 		assert.Nil(t, err)
 	})
 
+}
+
+func TestExtractQuestionsFromCSV(t *testing.T) {
+	emptyCSV := "/home/aditya.b/quizz-app/api/controllers/api/v1/dummyCSVForTesting/EmptyFile.csv"
+	invalidCSVWithMoreThanMaximumPoints := "/home/aditya.b/quizz-app/api/controllers/api/v1/dummyCSVForTesting/CSVWithInvalidPointsWithMoreThanMaximumPoints.csv"
+	invalidCSVWithNegativePoints := "/home/aditya.b/quizz-app/api/controllers/api/v1/dummyCSVForTesting/CSVWithInvalidPointsWithNegativePoints.csv"
+	validCSV := "/home/aditya.b/quizz-app/api/controllers/api/v1/dummyCSVForTesting/CSVWithValidPoints.csv"
+
+	logger, err := logger.NewRootLogger(true, true)
+	assert.Nil(t, err)
+
+	t.Run("test for empty file", func(t *testing.T) {
+		assert.Panics(t, assert.PanicTestFunc(func() {
+			questions, err := v1.ExtractQuestionsFromCSV(emptyCSV, logger)
+			assert.Empty(t, questions)
+			assert.Error(t, err)
+		}))
+	})
+	t.Run("test for invalid file for more than maximum points", func(t *testing.T) {
+		questions, err := v1.ExtractQuestionsFromCSV(invalidCSVWithMoreThanMaximumPoints, logger)
+		assert.Empty(t, questions)
+		assert.Error(t, err)
+	})
+	t.Run("test for invalid file for negative points", func(t *testing.T) {
+		questions, err := v1.ExtractQuestionsFromCSV(invalidCSVWithNegativePoints, logger)
+		assert.Empty(t, questions)
+		assert.Error(t, err)
+	})
+	t.Run("test for valid file ", func(t *testing.T) {
+		questions, err := v1.ExtractQuestionsFromCSV(validCSV, logger)
+		assert.NotEmpty(t, questions)
+		assert.Nil(t, err)
+	})
 }

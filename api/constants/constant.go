@@ -66,6 +66,8 @@ const (
 	FileName                    = "file_name"
 	MaxRows                     = 500
 	FileSize                    = 100000 // TODO: change file size, ~1mb
+	MaximumPoints               = 20
+	MinimumPoints               = 0
 	SheetName                   = "demo"
 	QuizTitle                   = "quiz_title"
 	QuizTitleRequired           = "quiz-title is required"

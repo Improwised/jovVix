@@ -90,7 +90,7 @@ func ExtractQuestionsFromCSV(fileName string, logger *zap.Logger) ([]models.Ques
 		id, err := uuid.NewUUID()
 
 		if err != nil {
-			return questions, nil
+			return questions, err
 		}
 
 		/*
@@ -146,24 +146,36 @@ func ExtractQuestionsFromCSV(fileName string, logger *zap.Logger) ([]models.Ques
 				return questions, fmt.Errorf(fmt.Sprintf("score string to int fail score: %s", row[2]))
 			}
 
-			maximumPoints := os.Getenv("MAXIMUM_POINTS_PER_QUESTION")
-			maximumPointsInt, err := strconv.Atoi(maximumPoints)
+			maximumPointsFromENV := os.Getenv("MAXIMUM_POINTS_PER_QUESTION")
+			var maximumPoints int
+			if maximumPointsFromENV == "" {
+				logger.Debug("MAXIMUM_POINTS_PER_QUESTION env variable is not set, hence taking it from the constants")
+				maximumPoints = constants.MaximumPoints
+			} else {
+				maximumPoints, err = strconv.Atoi(maximumPointsFromENV)
+			}
 			if err != nil {
 				return questions, fmt.Errorf(constants.ErrorTypeConversion)
 			}
 
-			minimumPoints := os.Getenv("MINIMUM_POINTS_PER_QUESTION")
-			minimumPointsInt, err := strconv.Atoi(minimumPoints)
+			minimumPointsFromENV := os.Getenv("MINIMUM_POINTS_PER_QUESTION")
+			var minimumPoints int
+			if minimumPointsFromENV == "" {
+				logger.Debug("MINIMUM_POINTS_PER_QUESTION env variable is not set, hence taking it from the constants")
+				minimumPoints = constants.MinimumPoints
+			} else {
+				minimumPoints, err = strconv.Atoi(minimumPointsFromENV)
+			}
 			if err != nil {
 				return questions, fmt.Errorf(constants.ErrorTypeConversion)
 			}
 
-			if pointsInt > maximumPointsInt {
-				return questions, fmt.Errorf(fmt.Sprintf("the points per question should be less than or equal to %s", maximumPoints))
+			if pointsInt > maximumPoints {
+				return questions, fmt.Errorf(fmt.Sprintf("the points per question should be less than or equal to %d", maximumPoints))
 			}
 
-			if pointsInt < minimumPointsInt {
-				return questions, fmt.Errorf(fmt.Sprintf("the points per question should be greater than or equal to %s", minimumPoints))
+			if pointsInt < minimumPoints {
+				return questions, fmt.Errorf(fmt.Sprintf("the points per question should be greater than or equal to %d", minimumPoints))
 			}
 
 			points = int16(pointsInt)
@@ -228,6 +240,16 @@ func (ctrl *QuizController) CreateQuizByCsv(c *fiber.Ctx) error {
 
 	if err != nil {
 		if err.Error() == constants.ErrRowsReachesToMaxCount {
+			ctrl.logger.Error("file validation failed", zap.Error(err))
+			return utils.JSONFail(c, http.StatusBadRequest, err.Error())
+		}
+
+		if os.Getenv("MAXIMUM_POINTS_PER_QUESTION") == "" && err.Error() == fmt.Sprintf("the points per question should be less than or equal to %d", constants.MaximumPoints) {
+			ctrl.logger.Error("file validation failed", zap.Error(err))
+			return utils.JSONFail(c, http.StatusBadRequest, err.Error())
+		}
+
+		if os.Getenv("MINIMUM_POINTS_PER_QUESTION") == "" && err.Error() == fmt.Sprintf("the points per question should be greater than or equal to %d", constants.MinimumPoints) {
 			ctrl.logger.Error("file validation failed", zap.Error(err))
 			return utils.JSONFail(c, http.StatusBadRequest, err.Error())
 		}
