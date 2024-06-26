@@ -46,10 +46,10 @@ function handleSkipTimer(e) {
       rounded="true"
       :model-value="(time * 100) / props.data.data.duration"
     ></v-progress-linear>
-    <div class="card border-secondary">
+    <div class="card border-secondary mt-3">
       <div class="card-body">
         <h4 class="card-title">{{ props.data.data.question }}</h4>
-        <div class="d-flex">
+        <div class="d-flex flex-column flex-md-row">
           <div
             v-for="(answer, key) in props.data.data.options"
             :key="key"
@@ -77,10 +77,10 @@ function handleSkipTimer(e) {
       <table
         class="table table-striped table-hover table-borderless table-light align-middle"
       >
+        <caption class="caption-top">
+          Rankings
+        </caption>
         <thead class="table-light">
-          <caption>
-            Rankings
-          </caption>
           <tr>
             <th>Rank</th>
             <th>User</th>

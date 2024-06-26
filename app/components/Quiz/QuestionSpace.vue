@@ -128,11 +128,11 @@ function handleSkip(e) {
       <span>{{ question.no }}. </span>
       <span>{{ question.question }}</span>
     </div>
-    <div class="d-flex">
+    <div class="d-flex flex-column flex-md-row">
       <div
         v-for="(value, key) in question.options"
         :key="key"
-        class="flex-grow-1 border m-1 rounded p-1"
+        class="border m-1 rounded p-1 w-100"
       >
         <label
           class="form-check-label d-flex align-items-center"
@@ -152,7 +152,7 @@ function handleSkip(e) {
               :disabled="isSubmitted"
             />
           </div>
-          <p class="mb-0" :for="`${key}`">{{ value }}</p>
+          <p class="mb-0 ms-2" :for="`${key}`">{{ value }}</p>
         </label>
       </div>
     </div>
@@ -184,3 +184,20 @@ function handleSkip(e) {
     </div>
   </div>
 </template>
+
+<style scoped>
+@media (max-width: 768px) {
+  .d-flex.flex-column.flex-md-row {
+    flex-direction: column !important;
+  }
+  .d-flex.flex-column.flex-md-row .border {
+    width: 100% !important;
+  }
+  .form-check-label {
+    justify-content: flex-start !important;
+  }
+  .form-check-input + .mb-0 {
+    margin-left: 0.5rem; /* Adjust the spacing between the radio button and the text */
+  }
+}
+</style>
