@@ -119,6 +119,17 @@ const popup = ref(false);
 const userJson = ref({});
 const questionJson = ref({});
 
+import { useUserScoreboardData } from "~/store/userScoreboardData";
+const userScoreboardDataStore = useUserScoreboardData();
+const { getUserScoreboardData } = userScoreboardDataStore;
+
+let storedData = {};
+
+const fetchData = () => {
+  storedData = getUserScoreboardData();
+  console.log("Stored Data:", storedData);
+};
+
 const getAnalysisJson = async (activeQuizId) => {
   try {
     const response = await fetch(
@@ -136,6 +147,30 @@ const getAnalysisJson = async (activeQuizId) => {
     if (response.ok) {
       analysisJson.value = result.data;
       userJson.value = lodash.groupBy(analysisJson.value, "username");
+
+      // Iterate through each item in storedData
+      storedData.forEach((data) => {
+        let key = data.username; // Get the username (key)
+
+        // Check if the key exists in userJson.value
+        if (userJson.value.hasOwnProperty(key)) {
+          let totalScore = data.score; // Calculate total_score as score
+
+          // Update userJson.value[key] with rank, total_score, and response_time
+          userJson.value[key].push({
+            rank: data.rank,
+            total_score: totalScore,
+            response_time: data.response_time,
+          });
+        } else {
+          console.error(`Key '${key}' not found in userJson.value.`);
+        }
+      });
+
+      console.log(userJson.value);
+
+      console.log(JSON.stringify(userJson.value));
+
       questionJson.value = lodash.groupBy(analysisJson.value, "question");
     } else {
       console.error(result);
@@ -148,6 +183,7 @@ const getAnalysisJson = async (activeQuizId) => {
 onMounted(() => {
   activeQuizId.value = route.query.active_quiz_id || "";
   getAnalysisJson(activeQuizId.value);
+  fetchData();
 });
 
 function openPopup() {

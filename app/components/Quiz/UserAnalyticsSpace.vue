@@ -9,18 +9,26 @@ const props = defineProps({
 let totalScore = 0;
 let accuracyArr = [];
 let accuracy = 0;
+let rank = 0;
+let response_time = 0;
 
 props.data.forEach(function (arrayItem) {
-  totalScore += arrayItem.calculated_score;
-  if (arrayItem.is_attend) {
-    accuracyArr.push(
-      isCorrectAnswer(
-        arrayItem.selected_answer.String,
-        arrayItem.correct_answer
-      )
-    );
+  if (!arrayItem.rank) {
+    // totalScore += arrayItem.calculated_score;
+    if (arrayItem.is_attend) {
+      accuracyArr.push(
+        isCorrectAnswer(
+          arrayItem.selected_answer.String,
+          arrayItem.correct_answer
+        )
+      );
+    } else {
+      accuracyArr.push(0);
+    }
   } else {
-    accuracyArr.push(0);
+    totalScore = arrayItem.total_score;
+    rank = arrayItem.rank;
+    response_time = arrayItem.response_time;
   }
 });
 console.log(accuracyArr);
@@ -82,7 +90,7 @@ const handleMouseLeave = (event) => {
         </div>
         <div class="stats">
           <div class="stat-item">
-            <span class="value">1</span>
+            <span class="value">{{ rank }}</span>
             <span class="label">Rank</span>
           </div>
           <div class="stat-item">
@@ -92,6 +100,13 @@ const handleMouseLeave = (event) => {
           <div class="stat-item">
             <span class="value">{{ totalScore }}</span>
             <span class="label">Score</span>
+          </div>
+          <div class="stat-item">
+            <span v-if="response_time > 0" class="value">{{
+              response_time
+            }}</span>
+            <span v-else class="value">-</span>
+            <span class="label">Response Time</span>
           </div>
         </div>
       </div>

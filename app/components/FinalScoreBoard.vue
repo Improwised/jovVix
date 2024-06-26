@@ -18,6 +18,10 @@ const userAnswerAnalysis = ref([]);
 const userCorrectAnswer = ref(0);
 const userTotalScore = ref(0);
 
+import { useUserScoreboardData } from "~/store/userScoreboardData";
+const userScoreboardData = useUserScoreboardData();
+const { addData, resetStore } = userScoreboardData;
+
 const props = defineProps({
   userURL: {
     default: "",
@@ -44,6 +48,9 @@ async function getFinalScoreboardDetails(endpoint) {
     () => {
       if (data.value) {
         scoreboardData.push(...data.value.data);
+        console.log(scoreboardData);
+        resetStore();
+        addData(scoreboardData);
       }
       if (error.value) {
         toast.error(app.$Unauthorized);
@@ -117,7 +124,6 @@ const showAnalysis = () => {
     query: { active_quiz_id: activeQuizId.value },
   });
 };
-
 </script>
 <template>
   <ClientOnly>
