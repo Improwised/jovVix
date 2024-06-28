@@ -6,6 +6,7 @@ import (
 	"math"
 	"time"
 
+	"github.com/Improwised/quizz-app/api/constants"
 	"github.com/Improwised/quizz-app/api/pkg/structs"
 	"github.com/doug-martin/goqu/v9"
 	"github.com/google/uuid"
@@ -30,12 +31,21 @@ type Question struct {
 	ID                uuid.UUID         `json:"id" db:"id"`
 	Question          string            `json:"question" db:"question"`
 	Options           map[string]string `json:"options" db:"options"`
-	Answers           []int             `json:"answers" db:"answers"`
-	Points            int16             `json:"points,omitempty" db:"points"`
+	Answers           []int             `json:"answers" db:"answers,omitempty"`
+	Points            int16             `json:"points,omitempty" db:"points,omitempty"`
 	DurationInSeconds int               `json:"duration" db:"duration_in_seconds"`
-	CreatedAt         time.Time         `json:"created_at" db:"created_at"`
-	UpdatedAt         time.Time         `json:"updated_at" db:"updated_at"`
-	OrderNumber       int               `json:"order"`
+	CreatedAt         time.Time         `json:"created_at" db:"created_at,omitempty"`
+	UpdatedAt         time.Time         `json:"updated_at" db:"updated_at,omitempty"`
+	OrderNumber       int               `json:"order" db:"order_no"`
+}
+
+type QuestionForUser struct {
+	ID                uuid.UUID         `json:"id" db:"id"`
+	Question          string            `json:"question" db:"question"`
+	RawOptions        []byte            `json:"omitempty" db:"options"`
+	Options           map[string]string `json:"options" db:"omitempty"`
+	DurationInSeconds int               `json:"duration" db:"duration_in_seconds"`
+	OrderNumber       int               `json:"order" db:"order_no"`
 }
 
 // QuizModel implements quiz related database operations
@@ -308,4 +318,33 @@ func (model *QuestionModel) CalculatePointsAndScore(userAnswer structs.ReqAnswer
 
 	points.Int16 = int16(noOfMatches) * answerPoints
 	return points, finalScore, nil
+}
+
+func (model *QuestionModel) GetCurrentQuestion(id uuid.UUID) (QuestionForUser, error) {
+	var question QuestionForUser
+
+	ok, err := model.db.From(constants.QuestionsTable).
+		Select(
+			goqu.I(constants.QuestionsTable+".id"),
+			"order_no",
+			"duration_in_seconds",
+			"question",
+			"options",
+		).InnerJoin(
+		goqu.T(constants.ActiveQuizQuestionsTable), goqu.On(goqu.I(constants.QuestionsTable+".id").Eq(goqu.I(constants.ActiveQuizQuestionsTable+".question_id")))).
+		Where(goqu.Ex{
+			constants.QuestionsTable + ".id": id.String(),
+		}).Limit(1).ScanStruct(&question)
+	
+	if !ok && err == nil {
+		return question, sql.ErrNoRows
+	} else if !ok || err != nil {
+		return question, err
+	} else {
+		err = json.Unmarshal(question.RawOptions, &question.Options)
+		if err != nil {
+			return QuestionForUser{}, err
+		}
+		return question, nil
+	}
 }

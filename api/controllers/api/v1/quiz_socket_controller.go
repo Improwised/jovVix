@@ -9,6 +9,7 @@ import (
 
 	"github.com/Improwised/quizz-app/api/config"
 	"github.com/Improwised/quizz-app/api/constants"
+	"github.com/Improwised/quizz-app/api/database"
 	quizHelper "github.com/Improwised/quizz-app/api/helpers/quiz"
 	quizUtilsHelper "github.com/Improwised/quizz-app/api/helpers/utils"
 	"github.com/Improwised/quizz-app/api/models"
@@ -171,25 +172,17 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 	}
 
 	// when user join at that time publish userName to admin
-	publishUserOnJoin(c, qc, response, userName, session.ID.String())
+	publishUserOnJoin(qc, response, userName, session.ID.String())
 
 	response.Action = constants.QuizQuestionStatus
-	if session.CurrentQuestion.Valid {
-		response.Data = constants.NextQuestionWillServeSoon
-	} else {
-		response.Data = constants.QuizStartsSoon
-	}
 
-	err := utils.JSONSuccessWs(c, constants.EventJoinQuiz, response)
-	if err != nil {
-		qc.logger.Error(fmt.Sprintf("socket error send waiting message: %s event, %s action", constants.EventJoinQuiz, response.Action), zap.Error(err))
-	}
+	onConnectHandleUser(c, qc, &response, session)
 
 	// userPlayedQuizId := quizUtilsHelper.GetString(c.Locals(constants.CurrentUserQuiz))
 	handleQuestion(c, qc, session, response)
 }
 
-func publishUserOnJoin(c *websocket.Conn, qc *quizSocketController, quizResponse QuizSendResponse, userName string, sessionId string) {
+func publishUserOnJoin(qc *quizSocketController, quizResponse QuizSendResponse, userName string, sessionId string) {
 	// store data to redis in form of slice
 	usersData := []string{}
 	var jsonData []byte
@@ -797,13 +790,13 @@ func handleConnectedUser(c *websocket.Conn, qc *quizSocketController) {
 
 		err := json.Unmarshal([]byte(msg.Payload), &userData)
 		if err != nil {
-			qc.logger.Error("error while unmarshaling data inside handleconnect user ", zap.Error(err))
+			qc.logger.Error("error while unmarshaling data inside handleconnectedUser ", zap.Error(err))
 
 			break
 		}
 
 		response.Data = userData
-		err = utils.JSONSuccessWs(c, constants.EventSendInvitationCode, response)
+		err = utils.JSONSuccessWs(c, constants.EventSendInvitationCode, response) // sending the user data to the admin
 		if err != nil {
 			qc.logger.Error("error while sending user data ", zap.Error(err))
 		}
@@ -864,6 +857,51 @@ func onRefreshHandleConnectedUser(qc *quizSocketController, topic string) {
 	err = qc.helpers.PubSubModel.Client.Publish(qc.helpers.PubSubModel.Ctx, constants.EventUserJoined, usersData).Err()
 
 	if err != nil {
-		qc.logger.Error("error while publishig data to redis  inside removeuser ", zap.Error(err))
+		qc.logger.Error("error while publishig data to redis  inside onRefreshHandleConnectedUser ", zap.Error(err))
+	}
+}
+
+func onConnectHandleUser(c *websocket.Conn, qc *quizSocketController, response *QuizSendResponse, session models.ActiveQuiz) {
+	if session.CurrentQuestion.Valid {
+
+		db, err := database.Connect(qc.appConfig.DB)
+		if err != nil {
+			qc.logger.Error("unable to connect with the database", zap.Error(err))
+		}
+		
+		questionModel := models.InitQuestionModel(db, qc.logger)
+
+		questionID, err := uuid.Parse(session.CurrentQuestion.String)
+		if err != nil {
+			qc.logger.Error(fmt.Sprintf("\nquestionID is not being parsed from the current question id of this session and that current question id is - %v\n", session.CurrentQuestion), zap.Error(err))
+		}
+		
+		currentQuestion, err := questionModel.GetCurrentQuestion(questionID)
+		if err != nil {
+			qc.logger.Error("unable to get the current question and the question id was "+session.CurrentQuestion.String, zap.Error(err))
+		}
+
+		response.Action = constants.ActionSendQuestion
+		responseData := map[string]any{
+			"id":            currentQuestion.ID,
+			"no":            currentQuestion.OrderNumber,
+			"duration":      currentQuestion.DurationInSeconds - int(time.Since(session.QuestionDeliveryTime.Time).Seconds()),
+			"question_time": session.QuestionDeliveryTime.Time,
+			"question":      currentQuestion.Question,
+			"options":       currentQuestion.Options,
+		}
+		response.Data = responseData
+		response.Component = constants.Question
+		
+		err = utils.JSONSuccessWs(c, constants.EventSendQuestion, response)
+		if err != nil {
+			qc.logger.Error(fmt.Sprintf("socket error send current question on connect: %s event, %s action", constants.EventSendQuestion, response.Action), zap.Error(err))
+		}
+	} else {
+		response.Data = constants.QuizStartsSoon
+		err := utils.JSONSuccessWs(c, constants.EventJoinQuiz, response)
+		if err != nil {
+			qc.logger.Error(fmt.Sprintf("socket error send waiting message: %s event, %s action", constants.EventJoinQuiz, response.Action), zap.Error(err))
+		}
 	}
 }
