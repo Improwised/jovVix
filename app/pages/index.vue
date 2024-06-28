@@ -27,11 +27,6 @@
         />
         <!-- Purple Half Circle -->
         <img
-          src="../assets/images/shapes/180.svg"
-          alt=""
-          class="shapes shape-two absolute z--1 left-20% top-9%"
-        />
-        <img
           src="../assets/images/shapes/2.svg"
           alt=""
           class="shapes shape-three absolute z--1 left-11% top-35%"
