@@ -48,7 +48,6 @@ async function getFinalScoreboardDetails(endpoint) {
     () => {
       if (data.value) {
         scoreboardData.push(...data.value.data);
-        console.log(scoreboardData);
         resetStore();
         addData(scoreboardData);
       }

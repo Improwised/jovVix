@@ -1,10 +1,11 @@
 <template>
   <div class="container-fluid quiz-container">
     <header class="text-center py-4">
-      <h1>Class Accuracy</h1>
+      <h1>Quiz Analysis Report</h1>
     </header>
 
-    <div class="quiz-header mb-4">
+    <!-- Class Accuracy Bar -->
+    <!-- <div class="quiz-header mb-4">
       <div class="quiz-accuracy position-relative w-100">
         <div class="progress">
           <div
@@ -38,7 +39,7 @@
           71% accuracy
         </div>
       </div>
-    </div>
+    </div> -->
 
     <div class="quiz-content">
       <ul class="nav nav-tabs justify-content-center mb-4">
@@ -101,9 +102,9 @@ const url = useState("urls");
 const headers = useRequestHeaders(["cookie"]);
 
 const analysisJson = ref([]);
-const correctWidth = ref(70); // percentage of correct answers
-const incorrectWidth = ref(20); // percentage of incorrect answers
-const unattemptedWidth = ref(10); // percentage of unattempted answers
+// const correctWidth = ref(70); // percentage of correct answers
+// const incorrectWidth = ref(20); // percentage of incorrect answers
+// const unattemptedWidth = ref(10); // percentage of unattempted answers
 
 const selectedTab = ref("overview");
 
@@ -127,7 +128,6 @@ let storedData = {};
 
 const fetchData = () => {
   storedData = getUserScoreboardData();
-  console.log("Stored Data:", storedData);
 };
 
 const getAnalysisJson = async (activeQuizId) => {
@@ -166,10 +166,6 @@ const getAnalysisJson = async (activeQuizId) => {
           console.error(`Key '${key}' not found in userJson.value.`);
         }
       });
-
-      console.log(userJson.value);
-
-      console.log(JSON.stringify(userJson.value));
 
       questionJson.value = lodash.groupBy(analysisJson.value, "question");
     } else {

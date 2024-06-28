@@ -104,7 +104,8 @@ async function submit(e) {
         Create Quiz
       </button>
       <a class="btn btn-primary me-2" href="/files/demo.csv" download="demo.csv"
-        >Download Sample</a>
+        >Download Sample</a
+      >
       <UtilsStartQuiz v-if="quizId" :quiz-id="quizId" />
     </form>
   </Frame>

@@ -10,7 +10,6 @@ let totalScore = 0;
 let accuracyArr = [];
 let accuracy = 0;
 let rank = 0;
-let response_time = 0;
 
 props.data.forEach(function (arrayItem) {
   if (!arrayItem.rank) {
@@ -28,14 +27,27 @@ props.data.forEach(function (arrayItem) {
   } else {
     totalScore = arrayItem.total_score;
     rank = arrayItem.rank;
-    response_time = arrayItem.response_time;
   }
 });
-console.log(accuracyArr);
+
+// temporary function to remove the false for survey question (as it is counting it as wrong answer)
+function removeFirstFalse(arr) {
+  // Find the index of the first false
+  const index = arr.indexOf(false);
+
+  // If a false is found, remove it
+  if (index !== -1) {
+    arr.splice(index, 1);
+  }
+
+  return arr;
+}
+
+accuracyArr = removeFirstFalse(accuracyArr);
 const countTrue = accuracyArr.filter(Boolean).length;
 const notAttempted = accuracyArr.filter((value) => value === 0).length;
 const countFalse = accuracyArr.length - countTrue - notAttempted;
-accuracy = (countTrue / accuracyArr.length) * 100;
+accuracy = ((countTrue / accuracyArr.length) * 100).toFixed(2);
 
 //function to check if answer provided by user in all questions are correct or not
 function isCorrectAnswer(selectedAnswer, correctAnswer) {
@@ -100,13 +112,6 @@ const handleMouseLeave = (event) => {
           <div class="stat-item">
             <span class="value">{{ totalScore }}</span>
             <span class="label">Score</span>
-          </div>
-          <div class="stat-item">
-            <span v-if="response_time > 0" class="value">{{
-              response_time
-            }}</span>
-            <span v-else class="value">-</span>
-            <span class="label">Response Time</span>
           </div>
         </div>
       </div>
