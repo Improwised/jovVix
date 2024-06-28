@@ -43,7 +43,8 @@
     "pinia": "^2.1.7",
     "vitest": "^0.27.0",
     "vue-toastification": "^2.0.0-rc.5",
-    "yarn": "^1.22.21"
+    "yarn": "^1.22.21",
+    "@lottiefiles/lottie-player": "^2.0.4"
   },
   "lint-staged": {
     "**/*.{js,ts,vue,html,css}": [
