@@ -2,17 +2,28 @@
   <div
     class="container-fluid d-flex align-items-center min-vh-100 position-relative"
   >
-    <header class="d-flex bg-dark header position-fixed start-0 end-0 top-0">
+    <header class="d-flex header position-fixed start-0 end-0 top-0">
       <nav class="navbar navbar-expand-md navbar-dark w-100">
         <div class="container-fluid p-2">
           <!-- Title on the left -->
-          <NuxtLink class="navbar-brand" to="/">Quiz App</NuxtLink>
+          <NuxtLink
+            class="navbar-brand navbar-logo"
+            style="color: black"
+            to="/"
+          >
+            Quiz App
+          </NuxtLink>
           <div>
-            <NuxtLink class="navbar-brand align-items-end d-md-none" to="/join"
-              >Join Quiz</NuxtLink
-            >
+            <!-- Join Quiz button (visible on mobile) -->
             <button
-              class="navbar-toggler"
+              class="navbar-brand align-items-center d-md-none btn btn-link custom-btn rounded-pill"
+              @click="navigate('/join')"
+            >
+              Join Quiz
+            </button>
+            <!-- Navbar toggler for mobile -->
+            <button
+              class="navbar-toggler bg-dark"
               type="button"
               data-bs-toggle="collapse"
               data-bs-target="#navbarNavAltMarkup"
@@ -20,28 +31,39 @@
               aria-expanded="false"
               aria-label="Toggle navigation"
             >
-              <span class="navbar-toggler-icon"></span>
+              <span class="navbar-toggler-icon text-dark"></span>
             </button>
           </div>
 
-          <!-- Profile/Login on the right -->
+          <!-- Profile/Login and Admin buttons -->
           <div
             id="navbarNavAltMarkup"
             class="collapse navbar-collapse justify-content-end"
           >
             <ul class="navbar-nav">
-              <li class="nav-item">
-                <NuxtLink class="nav-link" to="/account/login"
-                  >Profile/Login</NuxtLink
+              <li class="nav-item mb-1">
+                <button
+                  class="btn custom-btn nav-link btn-link rounded-pill"
+                  @click="navigate('/account/login')"
                 >
+                  Profile/Login
+                </button>
               </li>
-              <li>
-                <NuxtLink class="nav-link" to="/join">Join Quiz</NuxtLink>
-              </li>
-              <li>
-                <NuxtLink class="nav-link" to="/admin/quiz/list-quiz"
-                  >Admin</NuxtLink
+              <li class="nav-item mb-1">
+                <button
+                  class="btn custom-btn nav-link btn-link rounded-pill"
+                  @click="navigate('/join')"
                 >
+                  Join Quiz
+                </button>
+              </li>
+              <li class="nav-item mb-1">
+                <button
+                  class="btn custom-btn nav-link btn-link rounded-pill"
+                  @click="navigate('/admin/quiz/list-quiz')"
+                >
+                  Admin
+                </button>
               </li>
             </ul>
           </div>
@@ -63,13 +85,56 @@
     </footer>
   </div>
 </template>
+
+<script>
+export default {
+  methods: {
+    navigate(url) {
+      this.$router.push(url); // Navigate using Vue Router
+    },
+  },
+};
+</script>
+
 <style scoped>
 header,
 footer {
   z-index: 10;
 }
+
 .pageContainer {
   padding-top: 100px;
   padding-bottom: 100px;
+}
+
+.custom-btn {
+  color: #fff;
+  background: linear-gradient(270deg, #5a66ef 0, #8042e4);
+  border-color: #007bff;
+  margin-right: 10px; /* Space between buttons */
+  padding: 8px 16px; /* Adjust padding as needed */
+  border-radius: 20px; /* Increase border-radius for a pill shape */
+  text-align: center; /* Center text */
+}
+
+.custom-btn:hover {
+  color: #fff;
+  background-color: #007bff;
+  border-color: #007bff;
+}
+
+/* Mobile view adjustments */
+@media (max-width: 767px) {
+  .navbar-brand {
+    color: black;
+  }
+
+  .custom-btn {
+    color: white !important; /* Ensure components are black on mobile */
+  }
+
+  .navbar-toggler-icon {
+    color: black; /* Set navbar toggler icon color to black */
+  }
 }
 </style>
