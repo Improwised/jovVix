@@ -66,9 +66,9 @@
       <div class="tab-content">
         <div v-if="selectedTab === 'overview'" class="text-center">
           <QuizUserAnalyticsSpace
-            v-for="(oData, index) in userJson"
+            v-for="(oData, index) in rankData"
             :key="index"
-            :data="oData"
+            :data="userJson[oData]"
             class="user-analytics-item"
             @click="openPopup"
           ></QuizUserAnalyticsSpace>
@@ -119,6 +119,7 @@ const popup = ref(false);
 
 const userJson = ref({});
 const questionJson = ref({});
+const rankData = ref([]);
 
 import { useUserScoreboardData } from "~/store/userScoreboardData";
 const userScoreboardDataStore = useUserScoreboardData();
@@ -150,6 +151,7 @@ const getAnalysisJson = async (activeQuizId) => {
 
       // Iterate through each item in storedData
       storedData.forEach((data) => {
+        rankData.value.push(data.username); //to get usernames rank wise, to pass data from userJson in sorted manner
         let key = data.username; // Get the username (key)
 
         // Check if the key exists in userJson.value
@@ -166,7 +168,6 @@ const getAnalysisJson = async (activeQuizId) => {
           console.error(`Key '${key}' not found in userJson.value.`);
         }
       });
-
       questionJson.value = lodash.groupBy(analysisJson.value, "question");
     } else {
       console.error(result);

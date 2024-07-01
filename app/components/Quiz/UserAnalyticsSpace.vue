@@ -30,20 +30,6 @@ props.data.forEach(function (arrayItem) {
   }
 });
 
-// temporary function to remove the false for survey question (as it is counting it as wrong answer)
-function removeFirstFalse(arr) {
-  // Find the index of the first false
-  const index = arr.indexOf(false);
-
-  // If a false is found, remove it
-  if (index !== -1) {
-    arr.splice(index, 1);
-  }
-
-  return arr;
-}
-
-accuracyArr = removeFirstFalse(accuracyArr);
 const countTrue = accuracyArr.filter(Boolean).length;
 const notAttempted = accuracyArr.filter((value) => value === 0).length;
 const countFalse = accuracyArr.length - countTrue - notAttempted;
