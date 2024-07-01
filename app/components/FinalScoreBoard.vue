@@ -112,8 +112,10 @@ if (!props.isAdmin) {
       userTotalScore.value += item.calculated_score;
     });
 
-    userAccuracy.value =
-      (userCorrectAnswer.value / userAnswerAnalysis.value.length) * 100;
+    userAccuracy.value = (
+      (userCorrectAnswer.value / userAnswerAnalysis.value.length) *
+      100
+    ).toFixed(2);
   };
 }
 
@@ -197,8 +199,18 @@ const showAnalysis = () => {
               border-top: 1px solid #ccc;
             "
           >
-            <div style="flex: 1; padding: 10px; border-right: 1px solid #ccc">
-              Response Time: {{ item.response_time / 1000 }} seconds
+            <div
+              v-if="item.response_time > 0"
+              style="flex: 1; padding: 10px; border-right: 1px solid #ccc"
+            >
+              Response Time:
+              {{ (item.response_time / 1000).toFixed(2) }} seconds
+            </div>
+            <div
+              v-else
+              style="flex: 1; padding: 10px; border-right: 1px solid #ccc"
+            >
+              Response Time: -
             </div>
             <div style="flex: 1; padding: 10px">
               {{ item.is_attend ? "Attempted" : "Not Attempted" }}
