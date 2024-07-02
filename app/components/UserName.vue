@@ -2,7 +2,8 @@
 const props = defineProps({
   userName: {
     type: String,
-    required: true,
+    required: false,
+    default: "",
   },
 });
 </script>

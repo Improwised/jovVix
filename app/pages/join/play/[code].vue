@@ -122,23 +122,19 @@ onBeforeUnmount(() => {
   }
 });
 
-// get username of currently playing user
-async function getUsername() {
-  const { data, error } = await useFetch(() => url.value.api_url + endpoint, {
+async function getUserNameData() {
+  const response = await $fetch(url.value.api_url + endpoint, {
     method: "GET",
-    headers: headers,
+    headers,
     credentials: "include",
     mode: "cors",
   });
-
-  if (error.value) {
-    toast.error(app.$Unauthorized);
-  } else {
-    userName.value = data._rawValue.data.username;
-  }
+  userName.value = response.data.username;
 }
 
-getUsername();
+setTimeout(async () => {
+  await getUserNameData();
+}, 1000);
 
 // custom class to bind component with
 </script>
