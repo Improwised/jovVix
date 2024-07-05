@@ -44,30 +44,30 @@ func (m *PlayedQuizValidationMiddleware) PlayedQuizValidation(c *fiber.Ctx) erro
 		if err != nil {
 			if err == sql.ErrNoRows {
 				c.Cookie(RemoveCookie(constants.CurrentUserQuiz))
-				c.Locals(constants.MiddlewareError, constants.ErrUserQuizSessionValidation)
-				return c.Next()
 			} else if err.Error() == constants.ErrInvitationCodeNotFound {
 				c.Cookie(RemoveCookie(constants.CurrentUserQuiz))
 				c.Locals(constants.MiddlewareError, constants.ErrInvitationCodeNotFound)
+				m.Logger.Error(constants.ErrInvitationCodeNotFound)
+				return c.Next()
+			} else {
+				c.Locals(constants.MiddlewareError, constants.UnknownError)
+				m.Logger.Error("error in invitation code", zap.Error(err))
 				return c.Next()
 			}
-
-			c.Locals(constants.MiddlewareError, constants.UnknownError)
-			m.Logger.Error("error in invitation code", zap.Error(err))
+		} else {
+			c.Locals(constants.ActiveQuizObj, session)
+			c.Locals(constants.CurrentUserQuiz, cookieUserPlayedQuizId)
 			return c.Next()
 		}
-
-		c.Locals(constants.ActiveQuizObj, session)
-		c.Locals(constants.CurrentUserQuiz, cookieUserPlayedQuizId)
-		return c.Next()
 	}
-
+	
 	session, err := m.helpers.ActiveQuizModel.GetSessionByCode(invitationCode)
-
+	
 	if err != nil {
-
+		
 		if err == sql.ErrNoRows {
 			c.Locals(constants.MiddlewareError, constants.ErrInvitationCodeNotFound)
+			m.Logger.Error("invitation code not found by the invitation code", zap.Error(err))
 			return c.Next()
 		}
 

@@ -27,6 +27,7 @@ function join_quiz(e) {
   } else if (username.value.length > 12) {
     toast.error("username must be a maximum of 12 characters long");
   } else {
+    console.log("redirecting to the quiz");
     router.push(`/join/play/${code.value}?username=${username.value}`);
   }
 }

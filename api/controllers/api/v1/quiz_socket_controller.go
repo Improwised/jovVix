@@ -125,6 +125,7 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 
 	if !ok {
 		response.Action = constants.ActionSessionValidation
+		qc.logger.Debug(fmt.Sprintf("unknown error was triggered from join method while converting active quiz object and the response is - %v and active quiz object is - %v", response, c.Locals(constants.ActiveQuizObj)))
 		err := utils.JSONErrorWs(c, constants.UnknownError, response)
 
 		if err != nil {
@@ -241,6 +242,7 @@ func handleMiddleWareError(c *websocket.Conn, qc *quizSocketController, response
 	errorInfo, ok := quizUtilsHelper.ConvertType[error](c.Locals(constants.MiddlewareError))
 	if ok {
 		response.Data = errorInfo.Error()
+		qc.logger.Debug("authentication error was triggered from handleMiddleWareError while converting middleware error locals and the error is - " + errorInfo.Error())
 		err := utils.JSONErrorWs(c, constants.EventAuthentication, response)
 		if err != nil {
 			qc.logger.Error(fmt.Sprintf("socket error in middleware: %s event, %s action", constants.EventAuthentication, response.Action), zap.Error(err))
@@ -252,6 +254,7 @@ func handleMiddleWareError(c *websocket.Conn, qc *quizSocketController, response
 	errorString := quizUtilsHelper.GetString(c.Locals(constants.MiddlewareError))
 	if errorString != "<nil>" {
 		response.Data = errorString
+		qc.logger.Debug("authentication error was failed from handleMiddleWareError while converting middleware error locals to the string and the error is - " + errorInfo.Error())
 		err := utils.JSONFailWs(c, constants.EventAuthentication, response)
 		if err != nil {
 			qc.logger.Error(fmt.Sprintf("socket error in middleware: %s event, %s action", constants.EventAuthentication, response.Action), zap.Error(err))
@@ -308,6 +311,7 @@ func (qc *quizSocketController) Arrange(c *websocket.Conn) {
 	// checks for any middleware errors
 	if c.Locals(constants.MiddlewareError) != nil {
 		response.Data = quizUtilsHelper.GetString(c.Locals(constants.MiddlewareError))
+		qc.logger.Debug("authendication error was triggered from Arrange method and the error is - " + quizUtilsHelper.GetString(c.Locals(constants.MiddlewareError)))
 		err := utils.JSONErrorWs(c, constants.EventAuthentication, response)
 		if err != nil {
 			qc.logger.Error(fmt.Sprintf("socket error middleware: %s event, %s action", constants.EventAuthentication, response.Action), zap.Error(err))
@@ -667,6 +671,7 @@ func ActivateAndGetSession(c *websocket.Conn, helpers *quizHelper.HelperGroup, l
 
 		response.Action = constants.ActionSessionActivation
 		response.Data = constants.UnknownError
+		logger.Debug("unknown error was triggered from ActivateAndGetSession")
 		err = utils.JSONErrorWs(c, constants.EventActivateSession, response)
 		if err != nil {
 			logger.Error(fmt.Sprintf("socket error get or activate session: %s event, %s action", constants.EventActivateSession, response.Action), zap.Error(err))

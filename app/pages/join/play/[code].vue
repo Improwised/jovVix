@@ -49,12 +49,14 @@ onMounted(() => {
       );
     } catch (err) {
       toast.info(app.$ReloadRequired);
+      console.error(err);
     }
   }
 });
 
 const handleQuizEvents = async (message) => {
   if (message.status == app.$Error) {
+    console.error(message);
     return await router.push(
       "/error?status=" + message.status + "&error=" + message.data
     );
@@ -67,27 +69,33 @@ const handleQuizEvents = async (message) => {
     message.data == app.$InvitationCodeNotFound ||
     message.data == app.$QuizSessionValidationFailed
   ) {
+    console.log(message);
     return await router.push(
       "/join?status=" + message.status + "&error=" + message.data
     );
   } else if (message.data == app.$AdminDisconnected) {
     toast.warning(app.$AdminDisconnectedMessage);
+  } else if (
+    message.status == app.$Fail &&
+    message.event == app.$InvitationCodeValidation
+  ) {
+    console.error(message);
+    return await router.push(
+      "/join?status=" + message.status + "&error=" + message.data
+    );
+  }
+  // unauthorized ? -> redirect to login page
+  else if (message.status == app.$Fail && message.data == app.$Unauthorized) {
+    console.error(message);
+    router.push(
+      "/account/login?error=" + message.data + "&url=" + route.fullPath
+    );
+    return;
+  } else if (message.data === app.$Unauthorized) {
+    toast.error(
+      "You are unauthorized to access the resource or Your JWT token is expired"
+    );
   } else {
-    if (
-      message.status == app.$Fail &&
-      message.event == app.$InvitationCodeValidation
-    ) {
-      return await router.push(
-        "/join?status=" + message.status + "&error=" + message.data
-      );
-    }
-    // unauthorized ? -> redirect to login page
-    if (message.status == app.$Fail && message.data == app.$Unauthorized) {
-      router.push(
-        "/account/login?error=" + message.data + "&url=" + route.fullPath
-      );
-      return;
-    }
     data.value = message;
     currentComponent.value = message.component;
   }
@@ -95,6 +103,7 @@ const handleQuizEvents = async (message) => {
 
 function handleNetworkEvent(message) {
   toast.warning(message + ", please reload the page");
+  console.error(message);
 }
 
 const startQuiz = () => {
