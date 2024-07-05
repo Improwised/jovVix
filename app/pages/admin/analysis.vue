@@ -69,6 +69,7 @@
             v-for="(oData, index) in rankData"
             :key="index"
             :data="userJson[oData]"
+            :survey-questions="surveyQuestions"
             class="user-analytics-item"
             @click="openPopup"
           ></QuizUserAnalyticsSpace>
@@ -126,6 +127,7 @@ const userScoreboardDataStore = useUserScoreboardData();
 const { getUserScoreboardData } = userScoreboardDataStore;
 
 let storedData = {};
+const surveyQuestions = ref([]);
 
 const fetchData = () => {
   storedData = getUserScoreboardData();
@@ -169,6 +171,22 @@ const getAnalysisJson = async (activeQuizId) => {
         }
       });
       questionJson.value = lodash.groupBy(analysisJson.value, "question");
+
+      let questionNumber = 0;
+
+      for (const key in questionJson.value) {
+        questionJson.value[key].forEach((question) => {
+          questionNumber++;
+          const optionsCount = Object.keys(question.options).length;
+          const correctAnswersCount = JSON.parse(
+            question.correct_answer
+          ).length;
+
+          if (optionsCount === correctAnswersCount) {
+            surveyQuestions.value.push(questionNumber);
+          }
+        });
+      }
     } else {
       console.error(result);
     }

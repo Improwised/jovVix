@@ -46,6 +46,7 @@ type QuestionForUser struct {
 	Options           map[string]string `json:"options" db:"omitempty"`
 	DurationInSeconds int               `json:"duration" db:"duration_in_seconds"`
 	OrderNumber       int               `json:"order" db:"order_no"`
+	Points            int               `json:"points" db:"points"`
 }
 
 // QuizModel implements quiz related database operations
@@ -255,6 +256,8 @@ func (model *QuestionModel) CalculatePointsAndScore(userAnswer structs.ReqAnswer
 	var answerPoints int16
 	var answerBytes []byte = []byte{}
 	var points sql.NullInt16 = sql.NullInt16{}
+	var options map[string]string
+	var optionsBytes []byte
 	var answerDurationInSeconds int
 	var remainingTime int
 	var remainingTimeFloat float64
@@ -262,7 +265,7 @@ func (model *QuestionModel) CalculatePointsAndScore(userAnswer structs.ReqAnswer
 	var basePoint int = 500
 	var finalScore int = 0
 
-	rows, err := model.db.Select(goqu.I("answers"), goqu.I("points"), goqu.I("duration_in_seconds")).From(QuestionTable).Where(goqu.I("id").Eq(userAnswer.QuestionId.String())).Executor().Query()
+	rows, err := model.db.Select(goqu.I("answers"), goqu.I("points"), goqu.I("duration_in_seconds"), goqu.I("options")).From(QuestionTable).Where(goqu.I("id").Eq(userAnswer.QuestionId.String())).Executor().Query()
 
 	if err != nil {
 		return points, finalScore, err
@@ -270,13 +273,18 @@ func (model *QuestionModel) CalculatePointsAndScore(userAnswer structs.ReqAnswer
 	defer rows.Close()
 
 	if rows.Next() {
-		err = rows.Scan(&answerBytes, &answerPoints, &answerDurationInSeconds)
+		err = rows.Scan(&answerBytes, &answerPoints, &answerDurationInSeconds, &optionsBytes)
 		if err != nil {
 			return points, finalScore, err
 		}
 	}
 
 	err = json.Unmarshal(answerBytes, &answers)
+	if err != nil {
+		return points, finalScore, err
+	}
+
+	err = json.Unmarshal(optionsBytes, &options)
 	if err != nil {
 		return points, finalScore, err
 	}
@@ -302,6 +310,21 @@ func (model *QuestionModel) CalculatePointsAndScore(userAnswer structs.ReqAnswer
 			return points, finalScore, nil
 		}
 		return points, finalScore, nil
+	} else if actualAnswerLen != len(options) {
+		// if there are more than 1 correct answers
+		for i := 0; i < actualAnswerLen; i++ {
+			if answers[i] != userAnswer.AnswerKeys[0] {
+				continue
+			} else {
+				// if answer selected by the user matches with any one of the correct answer (Partial evaluation)
+				points.Int16 = answerPoints
+				remainingTime = (answerDurationInSeconds * 1000) - userAnswer.ResponseTime
+				remainingTimeFloat = math.Round(float64(remainingTime) / 1000)
+				timePoints = int(math.Round((remainingTimeFloat * 400) / float64(answerDurationInSeconds)))
+				finalScore = timePoints + basePoint + int(points.Int16*100)
+				return points, finalScore, nil
+			}
+		}
 	}
 
 	var noOfMatches int = 0
@@ -330,12 +353,13 @@ func (model *QuestionModel) GetCurrentQuestion(id uuid.UUID) (QuestionForUser, e
 			"duration_in_seconds",
 			"question",
 			"options",
+			"points",
 		).InnerJoin(
 		goqu.T(constants.ActiveQuizQuestionsTable), goqu.On(goqu.I(constants.QuestionsTable+".id").Eq(goqu.I(constants.ActiveQuizQuestionsTable+".question_id")))).
 		Where(goqu.Ex{
 			constants.QuestionsTable + ".id": id.String(),
 		}).Limit(1).ScanStruct(&question)
-	
+
 	if !ok && err == nil {
 		return question, sql.ErrNoRows
 	} else if !ok || err != nil {

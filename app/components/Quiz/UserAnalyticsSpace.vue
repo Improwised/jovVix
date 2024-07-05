@@ -4,6 +4,10 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  surveyQuestions: {
+    type: Array,
+    required: true,
+  },
 });
 
 let totalScore = 0;
@@ -11,23 +15,41 @@ let accuracyArr = [];
 let accuracy = 0;
 let rank = 0;
 
+const totalSurveyQuestions = props.surveyQuestions.length;
+
+const answeredSurvey = ref(0); // count of the surveys user attempted
+let questionCount = 1; // to get the question number
+
 props.data.forEach(function (arrayItem) {
-  if (!arrayItem.rank) {
-    // totalScore += arrayItem.calculated_score;
+  // if it is the survey question then apply this block's logic
+  if (props.surveyQuestions.includes(questionCount)) {
     if (arrayItem.is_attend) {
-      accuracyArr.push(
-        isCorrectAnswer(
-          arrayItem.selected_answer.String,
-          arrayItem.correct_answer
-        )
-      );
-    } else {
-      accuracyArr.push(0);
+      answeredSurvey.value++;
     }
   } else {
-    totalScore = arrayItem.total_score;
-    rank = arrayItem.rank;
+    // if it is not the survey question then apply this block's logic
+
+    //if it is not the last object which includes the rank, response time and score information then procced to checking if it is attempted or not
+    if (!arrayItem.rank) {
+      // check if it is attempted or not, if attempted then check correct or incorrect and push accordingly, correct - true, incorrect - false
+      if (arrayItem.is_attend) {
+        accuracyArr.push(
+          isCorrectAnswer(
+            arrayItem.selected_answer.String,
+            arrayItem.correct_answer
+          )
+        );
+      } else {
+        // if it is unattempted then push 0
+        accuracyArr.push(0);
+      }
+    } else {
+      //it it is the last object of rank, fetch rank and total score from it
+      totalScore = arrayItem.total_score;
+      rank = arrayItem.rank;
+    }
   }
+  questionCount++; // increase the count to use it as question number
 });
 
 const countTrue = accuracyArr.filter(Boolean).length;
@@ -52,8 +74,11 @@ function isCorrectAnswer(selectedAnswer, correctAnswer) {
   const selectedArray = parseAndSort(selectedAnswer);
   const correctArray = parseAndSort(correctAnswer);
 
-  // Compare the arrays
-  return JSON.stringify(selectedArray) === JSON.stringify(correctArray);
+  // Check if selectedArray is not empty and every element in selectedArray is in correctArray
+  return (
+    selectedArray.length > 0 &&
+    selectedArray.every((value) => correctArray.includes(value))
+  );
 }
 
 const correctWidth = (countTrue / accuracyArr.length) * 100; // percentage of correct answers
@@ -133,7 +158,10 @@ const handleMouseLeave = (event) => {
       </div>
       <div>
         &#9989; {{ countTrue }} &ensp; &#10060; {{ countFalse }} &ensp; &#x25CC;
-        {{ notAttempted }}
+        {{ notAttempted }} &ensp;
+        <span v-if="totalSurveyQuestions > 0"
+          >&#128203; {{ answeredSurvey }} / {{ totalSurveyQuestions }}</span
+        >
       </div>
       <div class="progress-bar">
         <div
