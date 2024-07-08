@@ -98,19 +98,47 @@ if (!props.isAdmin) {
 
   getAnalysisDetails();
 
+  //function to check if answer provided by user in all questions are correct or not
+  function isCorrectAnswer(selectedAnswer, correctAnswer) {
+    // Function to parse and sort the answer string into an array
+    function parseAndSort(answer) {
+      return answer.length <= 2
+        ? []
+        : answer
+            .slice(1, -1)
+            .split(",")
+            .map(Number)
+            .sort((a, b) => a - b);
+    }
+
+    // Parse and sort both answers
+    const selectedArray = parseAndSort(selectedAnswer);
+    const correctArray = parseAndSort(correctAnswer);
+
+    // Check if selectedArray is not empty and every element in selectedArray is in correctArray
+    return (
+      selectedArray.length > 0 &&
+      selectedArray.every((value) => correctArray.includes(value))
+    );
+  }
+
   const userAnalysis = () => {
     analysisData.filter((item) => {
-      //for correct/incorrect answer (question-wise) and count of correct answer for accuracy
-      if (item.selected_answer.String == item.correct_answer) {
-        userAnswerAnalysis.value.push(true);
-        userCorrectAnswer.value++;
-      } else {
-        userAnswerAnalysis.value.push(false);
-      }
+      const correctAnswersCount = JSON.parse(item.correct_answer).length;
 
-      //for counting total score
-      userTotalScore.value += item.calculated_score;
+      // to not to consider the survey questions
+      if (correctAnswersCount != Object.keys(item.options).length) {
+        //for correct/incorrect answer (question-wise) and count of correct answer for accuracy
+        userAnswerAnalysis.value.push(
+          isCorrectAnswer(item.selected_answer.String, item.correct_answer)
+        );
+
+        //for counting total score
+        userTotalScore.value += item.calculated_score;
+      }
     });
+    // get the count of correct answers
+    userCorrectAnswer.value = userAnswerAnalysis.value.filter(Boolean).length;
 
     userAccuracy.value = (
       (userCorrectAnswer.value / userAnswerAnalysis.value.length) *

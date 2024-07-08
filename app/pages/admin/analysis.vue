@@ -174,18 +174,22 @@ const getAnalysisJson = async (activeQuizId) => {
 
       let questionNumber = 0;
 
-      for (const key in questionJson.value) {
-        questionJson.value[key].forEach((question) => {
-          questionNumber++;
-          const optionsCount = Object.keys(question.options).length;
-          const correctAnswersCount = JSON.parse(
-            question.correct_answer
-          ).length;
+      // from userJson, take the first user's all questions and get the question number of survey questions from that
+      for (const key in userJson.value) {
+        userJson.value[key].forEach((question) => {
+          if (!question.rank) {
+            questionNumber++;
+            const optionsCount = Object.keys(question.options).length;
+            const correctAnswersCount = JSON.parse(
+              question.correct_answer
+            ).length;
 
-          if (optionsCount === correctAnswersCount) {
-            surveyQuestions.value.push(questionNumber);
+            if (optionsCount === correctAnswersCount) {
+              surveyQuestions.value.push(questionNumber);
+            }
           }
         });
+        break;
       }
     } else {
       console.error(result);
