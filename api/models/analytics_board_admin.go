@@ -19,6 +19,7 @@ type AnalyticsBoardAdmin struct {
 	Question         string            `db:"question,omitempty" json:"question"`
 	RawOptions       []byte            `db:"options,omitempty" json:"raw_options"`
 	Options          map[string]string `db:"omitempty" json:"options"`
+	Points           int               `db:"points,omitempty" json:"points"`
 }
 
 type AnalyticsBoardAdminModel struct {
@@ -48,6 +49,7 @@ func (model *AnalyticsBoardAdminModel) GetAnalyticsForAdmin(activeQuizId string)
 			"calculated_points",
 			"question",
 			"options",
+			"points",
 		).
 		InnerJoin(goqu.T(constants.QuestionsTable), goqu.On(goqu.I(constants.UserQuizResponsesTable+".question_id").Eq(goqu.I(constants.QuestionsTable+".id")))).
 		InnerJoin(goqu.T(constants.UserPlayedQuizzesTable), goqu.On(goqu.I(constants.UserPlayedQuizzesTable+".id").Eq(goqu.I(constants.UserQuizResponsesTable+".user_played_quiz_id")))).
