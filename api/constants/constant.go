@@ -196,6 +196,7 @@ const (
 
 	// Event . unhandled event
 	UnknownError = "unknown_error"
+	ErrJWTExpired = "JWT token expired, Please try again"
 )
 
 // final scoreboard cookie for user

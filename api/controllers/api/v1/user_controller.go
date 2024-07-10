@@ -162,7 +162,8 @@ func (ctrl *UserController) GetUserMeta(c *fiber.Ctx) error {
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			RemoveUserToken(constants.ContextUid)
+			c.Cookie(RemoveUserToken(constants.ContextUid))
+			ctrl.logger.Error("Cannot be able to get the user details from database")
 			return utils.JSONFail(c, http.StatusNotFound, constants.Unauthenticated)
 		}
 		return utils.JSONError(c, http.StatusBadRequest, constants.UnknownError)

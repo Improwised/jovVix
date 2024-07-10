@@ -105,7 +105,7 @@ func AuthHavingTokenHandler(m *Middleware, c *fiber.Ctx, token string) {
 	if err != nil {
 		if errors.Is(err, j.ErrInvalidJWT()) || errors.Is(err, j.ErrTokenExpired()) {
 			c.Cookie(RemoveCookie(constants.CookieUser))
-			c.Locals(constants.MiddlewareError, constants.Unauthenticated)
+			c.Locals(constants.MiddlewareError, constants.ErrJWTExpired)
 			m.Logger.Error("JWT error during authentication in join", zap.Error(err))
 			return
 		}
