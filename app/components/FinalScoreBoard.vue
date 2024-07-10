@@ -1,5 +1,7 @@
 <script setup>
+import { isCorrectAnswer } from "~/composables/check_is_correct.js/";
 import { useToast } from "vue-toastification";
+
 const url = useState("urls");
 const scoreboardData = reactive([]);
 const route = useRoute();
@@ -97,30 +99,6 @@ if (!props.isAdmin) {
   }
 
   getAnalysisDetails();
-
-  //function to check if answer provided by user in all questions are correct or not
-  function isCorrectAnswer(selectedAnswer, correctAnswer) {
-    // Function to parse and sort the answer string into an array
-    function parseAndSort(answer) {
-      return answer.length <= 2
-        ? []
-        : answer
-            .slice(1, -1)
-            .split(",")
-            .map(Number)
-            .sort((a, b) => a - b);
-    }
-
-    // Parse and sort both answers
-    const selectedArray = parseAndSort(selectedAnswer);
-    const correctArray = parseAndSort(correctAnswer);
-
-    // Check if selectedArray is not empty and every element in selectedArray is in correctArray
-    return (
-      selectedArray.length > 0 &&
-      selectedArray.every((value) => correctArray.includes(value))
-    );
-  }
 
   const userAnalysis = () => {
     analysisData.filter((item) => {

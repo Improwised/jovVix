@@ -1,45 +1,42 @@
 <template>
   <div class="container-fluid quiz-container">
     <header class="text-center py-4">
-      <h1>Quiz Analysis Report</h1>
+      <h1>Class Accuracy</h1>
     </header>
 
-    <!-- Class Accuracy Bar -->
-    <!-- <div class="quiz-header mb-4">
-      <div class="quiz-accuracy position-relative w-100">
-        <div class="progress">
-          <div
-            class="progress-bar bg-success"
-            role="progressbar"
-            :style="{ width: correctWidth + '%' }"
-            aria-valuenow="correctWidth"
-            aria-valuemin="0"
-            aria-valuemax="100"
-          ></div>
-          <div
-            class="progress-bar bg-danger"
-            role="progressbar"
-            :style="{ width: incorrectWidth + '%' }"
-            aria-valuenow="incorrectWidth"
-            aria-valuemin="0"
-            aria-valuemax="100"
-          ></div>
-          <div
-            class="progress-bar bg-secondary"
-            role="progressbar"
-            :style="{ width: unattemptedWidth + '%' }"
-            aria-valuenow="unattemptedWidth"
-            aria-valuemin="0"
-            aria-valuemax="100"
-          ></div>
+    <!-- Accuracy bar -->
+    <div
+      class="quiz-accuracy mx-auto mt-4"
+      style="width: 100%; position: relative"
+    >
+      <div class="progress">
+        <div
+          v-for="marker in markers"
+          :key="marker.value"
+          class="progress-marker"
+          :style="{ left: marker.left + '%' }"
+        >
+          {{ marker.value }}%
         </div>
         <div
-          class="accuracy-label position-absolute top-50 start-50 translate-middle"
-        >
-          71% accuracy
-        </div>
+          class="progress-bar correct"
+          role="progressbar"
+          :style="{ width: correctWidth + '%' }"
+        ></div>
+        <div
+          class="progress-bar incorrect"
+          role="progressbar"
+          :style="{ width: incorrectWidth + '%' }"
+        ></div>
+        <!-- Circle element -->
       </div>
-    </div> -->
+      <div
+        class="progress-circle"
+        :style="{ left: `calc(${correctWidth}% - 20px)` }"
+      >
+        {{ correctWidth }}%
+      </div>
+    </div>
 
     <div class="quiz-content">
       <ul class="nav nav-tabs justify-content-center mb-4">
@@ -99,13 +96,13 @@ import { ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import lodash from "lodash";
 
+const correctWidth = ref(0);
+const incorrectWidth = ref(0);
+
 const url = useState("urls");
 const headers = useRequestHeaders(["cookie"]);
 
 const analysisJson = ref([]);
-// const correctWidth = ref(70); // percentage of correct answers
-// const incorrectWidth = ref(20); // percentage of incorrect answers
-// const unattemptedWidth = ref(10); // percentage of unattempted answers
 
 const selectedTab = ref("overview");
 
@@ -123,11 +120,16 @@ const questionJson = ref({});
 const rankData = ref([]);
 
 import { useUserScoreboardData } from "~/store/userScoreboardData";
+import { isCorrectAnswer } from "~/composables/check_is_correct.js/";
 const userScoreboardDataStore = useUserScoreboardData();
 const { getUserScoreboardData } = userScoreboardDataStore;
 
 let storedData = {};
 const surveyQuestions = ref([]);
+const classAccuracy = ref(0);
+const totalUsers = ref(0);
+const totalPointsGainedByUsers = ref(0);
+const totalQuizPoints = ref(0);
 
 const fetchData = () => {
   storedData = getUserScoreboardData();
@@ -151,13 +153,25 @@ const getAnalysisJson = async (activeQuizId) => {
       analysisJson.value = result.data;
       userJson.value = lodash.groupBy(analysisJson.value, "username");
 
-      // Iterate through each item in storedData
+      // Iterate through each item in storedData (storedData - data for scoreboard - rank and all)
       storedData.forEach((data) => {
         rankData.value.push(data.username); //to get usernames rank wise, to pass data from userJson in sorted manner
         let key = data.username; // Get the username (key)
+        totalUsers.value++; // count number of total users in order to use in class accuracy
 
         // Check if the key exists in userJson.value
         if (userJson.value.hasOwnProperty(key)) {
+          userJson.value[key].forEach((element) => {
+            if (
+              isCorrectAnswer(
+                element.selected_answer.String,
+                element.correct_answer
+              )
+            ) {
+              totalPointsGainedByUsers.value += parseInt(element.points);
+            }
+          });
+
           let totalScore = data.score; // Calculate total_score as score
 
           // Update userJson.value[key] with rank, total_score, and response_time
@@ -170,6 +184,7 @@ const getAnalysisJson = async (activeQuizId) => {
           console.error(`Key '${key}' not found in userJson.value.`);
         }
       });
+
       questionJson.value = lodash.groupBy(analysisJson.value, "question");
 
       let questionNumber = 0;
@@ -179,6 +194,7 @@ const getAnalysisJson = async (activeQuizId) => {
         userJson.value[key].forEach((question) => {
           if (!question.rank) {
             questionNumber++;
+            totalQuizPoints.value += parseInt(question.points);
             const optionsCount = Object.keys(question.options).length;
             const correctAnswersCount = JSON.parse(
               question.correct_answer
@@ -201,7 +217,14 @@ const getAnalysisJson = async (activeQuizId) => {
 
 onMounted(() => {
   activeQuizId.value = route.query.active_quiz_id || "";
-  getAnalysisJson(activeQuizId.value);
+  getAnalysisJson(activeQuizId.value).then(() => {
+    classAccuracy.value =
+      (totalPointsGainedByUsers.value /
+        (totalQuizPoints.value * totalUsers.value)) *
+      100;
+    correctWidth.value = parseInt(classAccuracy.value.toFixed()); // percentage of correct answers
+    incorrectWidth.value = 100 - correctWidth.value; // percentage of incorrect answers
+  });
   fetchData();
 });
 
@@ -223,6 +246,7 @@ body,
 
 .quiz-container {
   font-family: Arial, sans-serif;
+  padding: 20px;
 }
 
 header {
@@ -238,12 +262,13 @@ header {
 
 .quiz-accuracy {
   position: relative;
-  width: 60%;
+  width: 80%;
+  margin-bottom: 30px; /* Adds space between the bar and the tabs */
 }
 
 .progress {
-  height: 30px;
-  border-radius: 15px;
+  height: 35px;
+  border-radius: 20px;
   overflow: hidden;
 }
 
@@ -251,6 +276,10 @@ header {
   font-size: 1.25em;
   font-weight: bold;
   color: white;
+}
+
+.nav-tabs {
+  margin-top: 20px; /* Ensures there's space above the tabs */
 }
 
 .nav-tabs .nav-link {
@@ -269,5 +298,72 @@ header {
 
 .user-analytics-item {
   margin-bottom: 20px; /* Adjust spacing between each user analytics item */
+}
+
+.progress-bar {
+  display: flex;
+  height: 30px;
+  border-radius: 20px;
+  overflow: hidden;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: white;
+}
+.correct {
+  background-color: #4caf50;
+}
+.incorrect {
+  background-color: #f44336;
+}
+
+.quiz-accuracy {
+  position: relative;
+  width: 80%;
+  margin-bottom: 30px; /* Adds space between the bar and the tabs */
+}
+
+.progress {
+  height: 40px;
+  border-radius: 20px;
+  overflow: hidden;
+  position: relative; /* Ensure the circle is positioned relative to the progress bar */
+}
+
+.progress-bar {
+  display: flex;
+  height: 40px;
+  border-radius: 20px;
+  overflow: hidden;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: white;
+}
+
+.correct {
+  background-color: #4caf50;
+}
+
+.incorrect {
+  background-color: #f44336;
+}
+
+.progress-circle {
+  position: absolute;
+  top: -15px; /* Adjust this value to move the circle vertically */
+  width: 70px;
+  height: 70px;
+  background-color: #fff;
+  border: 2px solid #4caf50;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+  transition: left 1s ease-in-out; /* Animation for the left property */
 }
 </style>
