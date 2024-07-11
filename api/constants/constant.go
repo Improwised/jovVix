@@ -168,11 +168,13 @@ const (
 	NextQuestionWillServeSoon = "Next question will coming soon"
 	ErrInGettingQuestion      = "error during getting question"
 
-	EventPublishQuestion   = "publish_question"
-	EventStartCount5       = "5_sec_counter" // use by web
-	ActionCounter          = "5 second counter"
-	EventNextQuestionAsked = "next_question"         // use by web
-	AdminDisconnected      = "admin_is_disconnected" // use by web
+	EventPublishQuestion       = "publish_question"
+	EventStartCount5           = "5_sec_counter" // use by web
+	ActionCounter              = "5 second counter"
+	EventNextQuestionAsked     = "next_question"         // use by web
+	AdminDisconnected          = "admin_is_disconnected" // use by web
+	EventAnswerSubmittedByUser = "answer submitted by user"
+	ActionAnserSubmittedByUser = "answer submitted by user"
 
 	// Event 8. Submit answer
 	ErrQuizNotFound           = "error current quiz not found"

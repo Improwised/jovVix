@@ -36,6 +36,10 @@ export default {
   ShowScore: "show_score",
   AdminDisconnectedMessage: "admin is disconnected, please wait...",
   SkipTimer: "skip_timer",
+  EventAnswerSubmittedByUser: "answer submitted by user",
+
+  // Actions
+  ActionAnserSubmittedByUser: "answer submitted by user",
 
   // Errors
   Unauthorized: "unauthorized to access resource",

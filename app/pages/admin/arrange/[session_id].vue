@@ -9,6 +9,7 @@ import AdminOperations from "~~/composables/admin_operation";
 
 import { useInvitationCodeStore } from "~/store/invitationcode";
 import { useListUserstore } from "~/store/userlist";
+import { useUserThatSubmittedAnswer } from "~/store/userSubmittedAnswer";
 import { storeToRefs } from "pinia";
 
 const invitationCodeStore = useInvitationCodeStore();
@@ -16,6 +17,10 @@ const { invitationCode } = storeToRefs(invitationCodeStore);
 
 const listUserStore = useListUserstore();
 const { addUser, removeAllUsers } = listUserStore;
+
+const usersThatSubmittedAnswer = useUserThatSubmittedAnswer();
+const { addUserSubmittedAnswer, resetUsersSubmittedAnswers } =
+  usersThatSubmittedAnswer;
 
 // define nuxt configs
 const route = useRoute();
@@ -83,7 +88,15 @@ const handleQuizEvents = async (message) => {
     return await router.push(
       "/admin/arrange?status=" + message.status + "&error=" + message.data
     );
+  } else if (
+    message.event === app.$EventAnswerSubmittedByUser &&
+    message.action === app.$ActionAnserSubmittedByUser
+  ) {
+    addUserSubmittedAnswer(message.data);
   } else {
+    if (message.component != "Question") {
+      resetUsersSubmittedAnswers();
+    }
     if (
       message.status == app.$Fail &&
       message.event == app.$InvitationCodeValidation
@@ -192,5 +205,8 @@ definePageMeta({
       @ask-skip-timer="askSkipTimer"
     ></QuizScoreSpace>
     <ListJoinUser v-if="currentComponent == 'Waiting'"></ListJoinUser>
+    <QuizListUserAnswered
+      v-if="currentComponent == 'Question'"
+    ></QuizListUserAnswered>
   </Playground>
 </template>

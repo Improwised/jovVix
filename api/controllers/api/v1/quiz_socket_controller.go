@@ -94,14 +94,15 @@ func CreateQuickUser(db *goqu.Database, logger *zap.Logger, userObj models.User,
 }
 
 type quizSocketController struct {
-	db        *models.QuizModel
-	appConfig *config.AppConfig
-	logger    *zap.Logger
-	helpers   *quizHelper.HelperGroup
+	db                      *models.QuizModel
+	appConfig               *config.AppConfig
+	logger                  *zap.Logger
+	helpers                 *quizHelper.HelperGroup
+	answersSubmittedByUsers chan models.User
 }
 
-func InitQuizConfig(db *goqu.Database, appConfig *config.AppConfig, logger *zap.Logger, helpers *quizHelper.HelperGroup) *quizSocketController {
-	return &quizSocketController{models.InitQuizModel(db), appConfig, logger, helpers}
+func InitQuizConfig(db *goqu.Database, appConfig *config.AppConfig, logger *zap.Logger, helpers *quizHelper.HelperGroup, answersSubmittedByUsers chan models.User) *quizSocketController {
+	return &quizSocketController{models.InitQuizModel(db), appConfig, logger, helpers, answersSubmittedByUsers}
 }
 
 func (qc *quizSocketController) Join(c *websocket.Conn) {
@@ -632,6 +633,13 @@ func handleAnswerSubmission(c *websocket.Conn, qc *quizSocketController, session
 					response.Data = constants.WarnSkip
 					shareEvenWithUser(c, qc, response, constants.EventSkipAsked, session.ID.String(), int(session.InvitationCode.Int32), constants.ToAdmin)
 				}
+			}
+		case user := <- qc.answersSubmittedByUsers:
+			response.Data = user
+			response.Action = constants.ActionAnserSubmittedByUser
+			err := utils.JSONSuccessWs(c, constants.EventAnswerSubmittedByUser, response)
+			if err != nil {
+				qc.logger.Error(fmt.Sprintf("socket error sending event: %s event, %s action, %v user", constants.EventSendQuestion, response.Action, user), zap.Error(err))
 			}
 		}
 	}

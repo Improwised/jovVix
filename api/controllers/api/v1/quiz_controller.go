@@ -3,11 +3,14 @@ package v1
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/Improwised/quizz-app/api/constants"
 	quiz_helper "github.com/Improwised/quizz-app/api/helpers/quiz"
 	quizUtilsHelper "github.com/Improwised/quizz-app/api/helpers/utils"
+	"github.com/Improwised/quizz-app/api/models"
 	"github.com/Improwised/quizz-app/api/pkg/events"
 	"github.com/Improwised/quizz-app/api/pkg/structs"
 	"github.com/Improwised/quizz-app/api/pkg/watermill"
@@ -19,9 +22,10 @@ import (
 )
 
 type QuizController struct {
-	helper *quiz_helper.HelperGroup
-	logger *zap.Logger
-	event  *events.Events
+	helper                  *quiz_helper.HelperGroup
+	logger                  *zap.Logger
+	event                   *events.Events
+	answersSubmittedByUsers chan models.User
 }
 
 func InitQuizController(
@@ -29,11 +33,13 @@ func InitQuizController(
 	event *events.Events,
 	pub *watermill.WatermillPublisher,
 	helper *quiz_helper.HelperGroup,
+	answersSubmittedByUsers chan models.User,
 ) *QuizController {
 	return &QuizController{
 		helper: helper,
 		logger: logger,
 		event:  event,
+		answersSubmittedByUsers: answersSubmittedByUsers,
 	}
 }
 
@@ -70,6 +76,29 @@ func (ctrl *QuizController) SetAnswer(c *fiber.Ctx) error {
 		return utils.JSONFail(c, http.StatusBadRequest, constants.ErrQuizNotFound)
 	}
 	currentQuizId := uuid.MustParse(currentQuiz)
+
+	// checks for any middleware errors
+	if c.Locals(constants.MiddlewareError) != nil {
+		MiddlewareError := quizUtilsHelper.GetString(c.Locals(constants.MiddlewareError))
+		ctrl.logger.Debug("authendication error was triggered from Arrange method and the error is - " + quizUtilsHelper.GetString(c.Locals(constants.MiddlewareError)))
+		err := utils.JSONFail(c, http.StatusBadRequest, MiddlewareError)
+		if err != nil {
+			ctrl.logger.Error(fmt.Sprintf("middleware error while submitting the answer: %s event", constants.EventAuthentication), zap.Error(err))
+		}
+		time.Sleep(1 * time.Second)
+		return err
+	}
+
+	user, ok := quizUtilsHelper.ConvertType[models.User](c.Locals(constants.ContextUser))
+
+	if !ok {
+		ctrl.logger.Error("Unable to convert to user-model type from locals")
+		err := utils.JSONFail(c, http.StatusBadRequest, constants.UnknownError)
+		if err != nil {
+			ctrl.logger.Error("Unable to send the fail response to the client while converting user from locals")
+		}
+		return fmt.Errorf("unable to convert to user-model type from locals")
+	}
 
 	var answer structs.ReqAnswerSubmit
 
@@ -124,6 +153,8 @@ func (ctrl *QuizController) SetAnswer(c *fiber.Ctx) error {
 		ctrl.logger.Error("error during answer submit", zap.Error(err))
 		return utils.JSONFail(c, http.StatusBadRequest, constants.UnknownError)
 	}
+
+	ctrl.answersSubmittedByUsers <- user
 
 	return utils.JSONSuccess(c, http.StatusAccepted, nil)
 }

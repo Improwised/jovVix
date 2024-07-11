@@ -13,6 +13,7 @@ import (
 	controller "github.com/Improwised/quizz-app/api/controllers/api/v1"
 	quizHelper "github.com/Improwised/quizz-app/api/helpers/quiz"
 	"github.com/Improwised/quizz-app/api/middlewares"
+	"github.com/Improwised/quizz-app/api/models"
 	"github.com/Improwised/quizz-app/api/pkg/events"
 	pMetrics "github.com/Improwised/quizz-app/api/pkg/prometheus"
 	"github.com/Improwised/quizz-app/api/pkg/watermill"
@@ -211,15 +212,17 @@ func quizController(
 	pub *watermill.WatermillPublisher,
 	config config.AppConfig,
 	helper *quizHelper.HelperGroup) error {
+		
+	AnswersSubmittedByUsers := make(chan models.User, 50)
 
-	quizSocketController := controller.InitQuizConfig(db, &config, logger, helper)
-	quizController := controller.InitQuizController(logger, events, pub, helper)
+	quizSocketController := controller.InitQuizConfig(db, &config, logger, helper, AnswersSubmittedByUsers)
+	quizController := controller.InitQuizController(logger, events, pub, helper, AnswersSubmittedByUsers)
 
 	// middleware format := param-check/pass... , authentication... , authorization..., controller(API/SOCKET)...
 
 	v1.Get(fmt.Sprintf("/socket/join/:%s", constants.QuizSessionInvitationCode), middleware.CheckSessionCode, middleware.CustomAuthenticated, sessionMiddle.PlayedQuizValidation, websocket.New(quizSocketController.Join))
 
-	v1.Post("/quiz/answer", middleware.Authenticated, quizController.SetAnswer)
+	v1.Post("/quiz/answer", middleware.Authenticated, middleware.CustomAuthenticated, quizController.SetAnswer)
 
 	v1.Get("/quiz/terminate", middleware.Authenticated, quizController.Terminate)
 
