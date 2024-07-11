@@ -107,6 +107,16 @@ func ExtractQuestionsFromCSV(fileName string, logger *zap.Logger) ([]models.Ques
 
 		*/
 
+		// extract type
+		var questionType int
+
+		typeInt, err := quizUtilsHelper.CheckQuestionType(strings.ToLower(row[1]))
+		if err != nil {
+			return questions, err
+		} else {
+			questionType = typeInt
+		}
+
 		var options map[string]string = map[string]string{}
 		var optionKey = 1
 
@@ -135,10 +145,24 @@ func ExtractQuestionsFromCSV(fileName string, logger *zap.Logger) ([]models.Ques
 			answers = append(answers, answerInt)
 		}
 
+		// survey question should have all the options as correct answers
+		if questionType == constants.Survey && len(options) != len(answers) {
+			return questions, fmt.Errorf(constants.ErrSurveyAnswerLength)
+		}
+
+		// single answer question should have single option correct only
+		if questionType == constants.SingleAnswer && len(answers) > 1 {
+			return questions, fmt.Errorf(constants.ErrSingleAnswerLength)
+		}
+
 		// extract score
 		var points int16
 		if row[2] == "" {
-			points = 1
+			if questionType == constants.Survey {
+				points = 0
+			} else {
+				points = 1
+			}
 		} else {
 			pointsInt, err := strconv.Atoi(row[2])
 
@@ -198,6 +222,7 @@ func ExtractQuestionsFromCSV(fileName string, logger *zap.Logger) ([]models.Ques
 			models.Question{
 				ID:                id,
 				Question:          row[0],
+				Type:              questionType,
 				Options:           options,
 				Answers:           answers,
 				Points:            points,
@@ -261,6 +286,21 @@ func (ctrl *QuizController) CreateQuizByCsv(c *fiber.Ctx) error {
 
 		if err.Error() == fmt.Sprintf("the points per question should be greater than or equal to %s", os.Getenv("MINIMUM_POINTS_PER_QUESTION")) {
 			ctrl.logger.Error("file validation failed", zap.Error(err))
+			return utils.JSONFail(c, http.StatusBadRequest, err.Error())
+		}
+
+		if err.Error() == constants.ErrSurveyAnswerLength {
+			ctrl.logger.Error("correct answers are lesser than the number of options in survey question")
+			return utils.JSONFail(c, http.StatusBadRequest, err.Error())
+		}
+
+		if err.Error() == constants.ErrSingleAnswerLength {
+			ctrl.logger.Error(("there are multiple correct answers in single answer type question"))
+			return utils.JSONFail(c, http.StatusBadRequest, err.Error())
+		}
+
+		if err.Error() == constants.ErrQuestionType {
+			ctrl.logger.Error("incorrect question type found in the CSV, upload terminated")
 			return utils.JSONFail(c, http.StatusBadRequest, err.Error())
 		}
 

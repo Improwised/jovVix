@@ -78,6 +78,9 @@ const (
 	ErrValidatingColumns        = "file columns not in proper format"
 	ErrParsingFile              = "error in parsing file"
 	ErrRowsReachesToMaxCount    = "rows limit exceed"
+	ErrSurveyAnswerLength       = "in survey correct answer should contain all the options as correct"
+	ErrSingleAnswerLength       = "in single answer there should be only one correct answer"
+	ErrQuestionType             = "please provide a proper question type"
 
 	// quiz-id
 	QuizId = "quiz_id"
@@ -197,7 +200,7 @@ const (
 	ActionTerminateQuiz = "terminate quiz after completing"
 
 	// Event . unhandled event
-	UnknownError = "unknown_error"
+	UnknownError  = "unknown_error"
 	ErrJWTExpired = "JWT token expired, Please try again"
 )
 
@@ -215,4 +218,13 @@ const (
 	QuizQuestionsTable       = "quiz_questions"
 	ActiveQuizQuestionsTable = "active_quiz_questions"
 	QuizzesTable             = "quizzes"
+)
+
+// Question Types
+const (
+	SingleAnswerString = "single answer"
+	SurveyString       = "survey"
+
+	SingleAnswer = 1
+	Survey       = 2
 )

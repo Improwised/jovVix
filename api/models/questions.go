@@ -30,6 +30,7 @@ const QuestionTable = "questions"
 type Question struct {
 	ID                uuid.UUID         `json:"id" db:"id"`
 	Question          string            `json:"question" db:"question"`
+	Type 			  int 				`json:"type" db:"type"`
 	Options           map[string]string `json:"options" db:"options"`
 	Answers           []int             `json:"answers" db:"answers,omitempty"`
 	Points            int16             `json:"points,omitempty" db:"points,omitempty"`
@@ -78,6 +79,7 @@ func (model *QuestionModel) CreateQuestions(quizId uuid.UUID, questions []Questi
 		records = append(records, goqu.Record{
 			"id":                  question.ID,
 			"question":            question.Question,
+			"type": 			   question.Type,
 			"options":             string(options),
 			"answers":             string(answers),
 			"points":              question.Points,
@@ -186,6 +188,7 @@ func registerQuestions(transaction *goqu.TxDatabase, questions []Question) ([]uu
 		records = append(records, goqu.Record{
 			"id":                  question.ID,
 			"question":            question.Question,
+			"type": 			   question.Type,
 			"options":             string(options),
 			"answers":             string(answers),
 			"points":              question.Points,
