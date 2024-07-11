@@ -38,11 +38,11 @@ watch(
 </script>
 
 <template>
-  <div class="d-flex justify-content-center container p-0">
-    <div class="border p-2 m-0 m-sm-5 p-sm-5 max-width rounded">
+  <div class="d-flex justify-content-center container p-0 bg-transparent">
+    <div class="border p-2 m-0 m-sm-5 p-sm-5 max-width rounded bg-white shadow">
       <div class="d-flex flex-row">
         <div class="flex-grow-1">
-          <h1>{{ pageTitle }}</h1>
+          <h1 class="join-page-title">{{ pageTitle }}</h1>
           <h6 v-if="props.pageMessage">{{ pageMessage }}</h6>
         </div>
         <div>
@@ -58,6 +58,24 @@ watch(
 
 <style scoped>
 .max-width {
-  width: 700px;
+  width: 800px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.join-page-title {
+  color: #663399;
+}
+
+@media (max-width: 576px) {
+  .max-width {
+    width: 100%;
+    padding: 1rem;
+    margin: 0.5rem;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+  }
+}
+
+.shadow {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 </style>

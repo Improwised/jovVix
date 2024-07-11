@@ -2,7 +2,7 @@
   <div
     class="container-fluid d-flex align-items-center min-vh-100 position-relative"
   >
-    <header class="d-flex header position-fixed start-0 end-0 top-0">
+    <header class="d-flex header bg-light position-fixed start-0 end-0 top-0">
       <nav class="navbar navbar-expand-md navbar-dark w-100">
         <div class="container-fluid p-2">
           <!-- Title on the left -->
@@ -76,9 +76,9 @@
       <slot />
     </main>
     <footer
-      class="d-flex justify-content-center bg-dark position-absolute start-0 end-0 bottom-0"
+      class="d-flex justify-content-center position-absolute start-0 end-0 bottom-0"
     >
-      <div class="text-center text-capitalize p-3 text-light w-100">
+      <div class="text-center text-capitalize p-3 text-white w-100">
         © {{ new Date().getFullYear() }} Copyright:
         <NuxtLink class="text-light" to="/">Quizz_app</NuxtLink>
       </div>
@@ -99,7 +99,8 @@ export default {
 <style scoped>
 header,
 footer {
-  z-index: 10;
+  z-index: 0;
+  background: #290f5a;
 }
 
 .pageContainer {
