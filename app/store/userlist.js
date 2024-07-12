@@ -12,4 +12,11 @@ export const useListUserstore = defineStore("listusers-store", () => {
   };
 
   return { listUsers, addUser, removeAllUsers };
-});
+},
+{
+  persist: {
+    storage: persistedState.localStorage,
+  },
+}
+
+);

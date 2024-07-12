@@ -4,5 +4,11 @@ export const useInvitationCodeStore = defineStore(
   () => {
     const invitationCode = ref();
     return { invitationCode };
+  },
+
+  {
+    persist: {
+      storage: persistedState.localStorage,
+    },
   }
 );

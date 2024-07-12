@@ -35,7 +35,9 @@
     "@fortawesome/free-brands-svg-icons": "^6.4.2",
     "@fortawesome/free-solid-svg-icons": "^6.4.2",
     "@fortawesome/vue-fontawesome": "^3.0.3",
+    "@lottiefiles/lottie-player": "^2.0.4",
     "@mdi/font": "^7.4.47",
+    "@pinia-plugin-persistedstate/nuxt": "^1.2.1",
     "@pinia/nuxt": "^0.5.1",
     "@popperjs/core": "^2.11.8",
     "@vitejs/plugin-vue": "^4.0.0",
@@ -43,8 +45,7 @@
     "pinia": "^2.1.7",
     "vitest": "^0.27.0",
     "vue-toastification": "^2.0.0-rc.5",
-    "yarn": "^1.22.21",
-    "@lottiefiles/lottie-player": "^2.0.4"
+    "yarn": "^1.22.21"
   },
   "lint-staged": {
     "**/*.{js,ts,vue,html,css}": [

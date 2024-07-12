@@ -16,4 +16,10 @@ export const useUserScoreboardData = defineStore("userscoreboard-store", () => {
   };
 
   return { userScoreboardData, addData, getUserScoreboardData, resetStore };
-});
+},
+{
+  persist: {
+    storage: persistedState.localStorage,
+  },
+}
+);

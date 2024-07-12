@@ -22,5 +22,10 @@ export const useUserThatSubmittedAnswer = defineStore(
       addUserSubmittedAnswer,
       resetUsersSubmittedAnswers,
     };
+  },
+  {
+    persist: {
+      storage: persistedState.localStorage,
+    },
   }
 );
