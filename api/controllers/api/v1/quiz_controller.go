@@ -7,10 +7,13 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Improwised/quizz-app/api/config"
 	"github.com/Improwised/quizz-app/api/constants"
+	"github.com/Improwised/quizz-app/api/database"
 	quiz_helper "github.com/Improwised/quizz-app/api/helpers/quiz"
 	quizUtilsHelper "github.com/Improwised/quizz-app/api/helpers/utils"
 	"github.com/Improwised/quizz-app/api/models"
+	"github.com/Improwised/quizz-app/api/helpers/calculations"
 	"github.com/Improwised/quizz-app/api/pkg/events"
 	"github.com/Improwised/quizz-app/api/pkg/structs"
 	"github.com/Improwised/quizz-app/api/pkg/watermill"
@@ -130,8 +133,14 @@ func (ctrl *QuizController) SetAnswer(c *fiber.Ctx) error {
 		return utils.JSONFail(c, http.StatusBadRequest, constants.ErrQuestionNotActive)
 	}
 
+	appConfigs := config.GetConfig()
+	db, err := database.Connect(appConfigs.DB)
+	if err != nil {
+		ctrl.logger.Error("unable to connect with the database", zap.Error(err))
+	}
+
 	// calculate points
-	points, score, err := ctrl.helper.QuestionModel.CalculatePointsAndScore(answer)
+	points, score, err := calculations.CalculatePointsAndScore(answer, db, ctrl.logger)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			ctrl.logger.Error("error during answer submit", zap.Any("answers", answer), zap.Any("current_quiz_id", currentQuizId))
