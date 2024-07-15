@@ -2,4 +2,4 @@
 
 -- remove column type
 ALTER TABLE  questions
-DROP COLUMN type;
+DROP COLUMN IF EXISTS type;
