@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 
 	"github.com/Improwised/quizz-app/api/constants"
+	quizUtilsHelper "github.com/Improwised/quizz-app/api/helpers/utils"
 	"github.com/doug-martin/goqu/v9"
 )
 
@@ -19,6 +20,9 @@ type AnalyticsBoardUser struct {
 	Question         string            `db:"question,omitempty" json:"question"`
 	RawOptions       []byte            `db:"options,omitempty" json:"raw_options"`
 	Options          map[string]string `db:"omitempty" json:"options"`
+	Points           int               `db:"points,omitempty" json:"points"`
+	QuestionTypeID   int               `db:"type,omitempty" json:"question_type_id"`
+	QuestionType     string            `db:"omitempty" json:"question_type"`
 }
 
 type AnalyticsBoardUserModel struct {
@@ -48,6 +52,8 @@ func (model *AnalyticsBoardUserModel) GetAnalyticsForUser(userPlayedQuizId strin
 			"calculated_points",
 			"question",
 			"options",
+			"points",
+			"type",
 		).
 		InnerJoin(goqu.T(constants.QuestionsTable), goqu.On(goqu.I(constants.UserQuizResponsesTable+".question_id").Eq(goqu.I(constants.QuestionsTable+".id")))).
 		InnerJoin(goqu.T(constants.UserPlayedQuizzesTable), goqu.On(goqu.I(constants.UserPlayedQuizzesTable+".id").Eq(goqu.I(constants.UserQuizResponsesTable+".user_played_quiz_id")))).
@@ -62,6 +68,11 @@ func (model *AnalyticsBoardUserModel) GetAnalyticsForUser(userPlayedQuizId strin
 	}
 	for index := 0; index < len(analyticsBoardData); index++ {
 		json.Unmarshal(analyticsBoardData[index].RawOptions, &analyticsBoardData[index].Options)
+
+		analyticsBoardData[index].QuestionType, err = quizUtilsHelper.GetQuestionType(analyticsBoardData[index].QuestionTypeID)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return analyticsBoardData, nil

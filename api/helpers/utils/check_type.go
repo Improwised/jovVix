@@ -24,3 +24,13 @@ func CheckQuestionType(questionType string) (int, error) {
 	}
 	return 0, errors.New(constants.ErrQuestionType)
 }
+
+// function to get the string when number is provided
+func GetQuestionType(typeNumber int) (string, error) {
+	for questionType, id := range questionTypeIDs {
+		if id == typeNumber {
+			return questionType, nil
+		}
+	}
+	return "", errors.New(constants.ErrQuestionId)
+}

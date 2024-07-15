@@ -81,6 +81,7 @@ const (
 	ErrSurveyAnswerLength       = "in survey correct answer should contain all the options as correct"
 	ErrSingleAnswerLength       = "in single answer there should be only one correct answer"
 	ErrQuestionType             = "please provide a proper question type"
+	ErrQuestionId               = "question type id not exist"
 
 	// quiz-id
 	QuizId = "quiz_id"
