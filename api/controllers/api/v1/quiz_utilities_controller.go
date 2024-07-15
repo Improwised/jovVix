@@ -158,11 +158,7 @@ func ExtractQuestionsFromCSV(fileName string, logger *zap.Logger) ([]models.Ques
 		// extract score
 		var points int16
 		if row[2] == "" {
-			if questionType == constants.Survey {
-				points = 0
-			} else {
-				points = 1
-			}
+			points = 0
 		} else {
 			pointsInt, err := strconv.Atoi(row[2])
 

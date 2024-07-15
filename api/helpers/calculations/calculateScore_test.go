@@ -49,6 +49,7 @@ func TestCalculatePointsAndScore(t *testing.T) {
 			Question:          "A dummy question",
 			Points:            int16(20),
 			DurationInSeconds: 20,
+			Type:              1,
 		}
 		options := map[string]string{
 			"1": "1",
@@ -71,6 +72,7 @@ func TestCalculatePointsAndScore(t *testing.T) {
 				"answers":             string(jsonAnswers),
 				"points":              question.Points,
 				"duration_in_seconds": question.DurationInSeconds,
+				"type":                question.Type,
 			},
 		).Executor().Exec()
 		assert.Nil(t, err)
@@ -91,65 +93,16 @@ func TestCalculatePointsAndScore(t *testing.T) {
 
 		assert.Equal(t, expectedScore, finalScore)
 	})
-	
-	// t.Run("check for the survey questions", func(t *testing.T) {
-	// 	answers := make([]int, 0)
-	// 	answers = append(answers, 1, 2, 3, 4)
-	// 	question := models.Question{
-	// 		ID:                uuid.New(),
-	// 		Question:          "A dummy question",
-	// 		Points:            int16(20),
-	// 		DurationInSeconds: 20,
-	// 	}
-	// 	options := map[string]string{
-	// 		"1": "1",
-	// 		"2": "2",
-	// 		"3": "3",
-	// 		"4": "4",
-	// 	}
-	
-	// 	jsonAnswers, err := json.Marshal(answers)
-	// 	assert.Nil(t, err)
-	
-	// 	jsonOptions, err := json.Marshal(options)
-	// 	assert.Nil(t, err)
-	
-	// 	_, err = db.Insert(constants.QuestionsTable).Rows(
-	// 		goqu.Record{
-	// 			"id":                  question.ID,
-	// 			"question":            question.Question,
-	// 			"options":             string(jsonOptions),
-	// 			"answers":             string(jsonAnswers),
-	// 			"points":              question.Points,
-	// 			"duration_in_seconds": question.DurationInSeconds,
-	// 		},
-	// 	).Executor().Exec()
-	// 	assert.Nil(t, err)
-	
-	// 	answerKey := make([]int, 1)
-	// 	answerKey[0] = 1
-	// 	userAnswer := structs.ReqAnswerSubmit{
-	// 		QuestionId:   question.ID,
-	// 		AnswerKeys:   answerKey,
-	// 		ResponseTime: 2000,
-	// 	}
-	// 	points, finalScore, err := calculations.CalculatePointsAndScore(userAnswer, db, logger)
-	
-	// 	assert.Nil(t, err)
-	// 	assert.NotEmpty(t, points)
-	
-	// 	expectedScore := (int(question.Points) * 100) + 500 + ((question.DurationInSeconds - int(userAnswer.ResponseTime/1000)) * int(math.Round(400/float64(question.DurationInSeconds))))
-	
-	// 	assert.Equal(t, expectedScore, finalScore)
-	// })
-	
-	t.Run("check if no answer is submitted", func(t *testing.T) {
+
+	t.Run("check for the survey questions", func(t *testing.T) {
 		answers := make([]int, 0)
+		answers = append(answers, 1, 2, 3, 4)
 		question := models.Question{
 			ID:                uuid.New(),
 			Question:          "A dummy question",
 			Points:            int16(20),
 			DurationInSeconds: 20,
+			Type:              2,
 		}
 		options := map[string]string{
 			"1": "1",
@@ -157,13 +110,13 @@ func TestCalculatePointsAndScore(t *testing.T) {
 			"3": "3",
 			"4": "4",
 		}
-	
+
 		jsonAnswers, err := json.Marshal(answers)
 		assert.Nil(t, err)
-	
+
 		jsonOptions, err := json.Marshal(options)
 		assert.Nil(t, err)
-	
+
 		_, err = db.Insert(constants.QuestionsTable).Rows(
 			goqu.Record{
 				"id":                  question.ID,
@@ -172,10 +125,11 @@ func TestCalculatePointsAndScore(t *testing.T) {
 				"answers":             string(jsonAnswers),
 				"points":              question.Points,
 				"duration_in_seconds": question.DurationInSeconds,
+				"type":                question.Type,
 			},
 		).Executor().Exec()
 		assert.Nil(t, err)
-	
+
 		answerKey := make([]int, 1)
 		answerKey[0] = 1
 		userAnswer := structs.ReqAnswerSubmit{
@@ -184,11 +138,63 @@ func TestCalculatePointsAndScore(t *testing.T) {
 			ResponseTime: 2000,
 		}
 		points, finalScore, err := calculations.CalculatePointsAndScore(userAnswer, db, logger)
-	
+
+		assert.Nil(t, err)
+		assert.NotEmpty(t, points)
+
+		expectedScore := (int(question.Points) * 100) + 500 + ((question.DurationInSeconds - int(userAnswer.ResponseTime/1000)) * int(math.Round(400/float64(question.DurationInSeconds))))
+
+		assert.Equal(t, expectedScore, finalScore)
+	})
+
+	t.Run("check if no answer is submitted", func(t *testing.T) {
+		answers := make([]int, 0)
+		question := models.Question{
+			ID:                uuid.New(),
+			Question:          "A dummy question",
+			Points:            int16(20),
+			DurationInSeconds: 20,
+			Type:              1,
+		}
+		options := map[string]string{
+			"1": "1",
+			"2": "2",
+			"3": "3",
+			"4": "4",
+		}
+
+		jsonAnswers, err := json.Marshal(answers)
+		assert.Nil(t, err)
+
+		jsonOptions, err := json.Marshal(options)
+		assert.Nil(t, err)
+
+		_, err = db.Insert(constants.QuestionsTable).Rows(
+			goqu.Record{
+				"id":                  question.ID,
+				"question":            question.Question,
+				"options":             string(jsonOptions),
+				"answers":             string(jsonAnswers),
+				"points":              question.Points,
+				"duration_in_seconds": question.DurationInSeconds,
+				"type":                question.Type,
+			},
+		).Executor().Exec()
+		assert.Nil(t, err)
+
+		answerKey := make([]int, 1)
+		answerKey[0] = 1
+		userAnswer := structs.ReqAnswerSubmit{
+			QuestionId:   question.ID,
+			AnswerKeys:   answerKey,
+			ResponseTime: 2000,
+		}
+		points, finalScore, err := calculations.CalculatePointsAndScore(userAnswer, db, logger)
+
 		assert.Nil(t, err)
 		assert.NotEmpty(t, points)
 		fmt.Println(points)
-	
+
 		assert.Equal(t, 0, finalScore)
 	})
 

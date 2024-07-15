@@ -28,7 +28,7 @@ const QuestionTable = "questions"
 type Question struct {
 	ID                uuid.UUID         `json:"id" db:"id"`
 	Question          string            `json:"question" db:"question"`
-	Type 			  int 				`json:"type" db:"type"`
+	Type              int               `json:"type" db:"type"`
 	Options           map[string]string `json:"options" db:"options"`
 	Answers           []int             `json:"answers" db:"answers,omitempty"`
 	Points            int16             `json:"points,omitempty" db:"points,omitempty"`
@@ -77,7 +77,7 @@ func (model *QuestionModel) CreateQuestions(quizId uuid.UUID, questions []Questi
 		records = append(records, goqu.Record{
 			"id":                  question.ID,
 			"question":            question.Question,
-			"type": 			   question.Type,
+			"type":                question.Type,
 			"options":             string(options),
 			"answers":             string(answers),
 			"points":              question.Points,
@@ -186,7 +186,7 @@ func registerQuestions(transaction *goqu.TxDatabase, questions []Question) ([]uu
 		records = append(records, goqu.Record{
 			"id":                  question.ID,
 			"question":            question.Question,
-			"type": 			   question.Type,
+			"type":                question.Type,
 			"options":             string(options),
 			"answers":             string(answers),
 			"points":              question.Points,
@@ -252,40 +252,44 @@ func registerQuestionToQuizzes(transaction *goqu.TxDatabase, quizId uuid.UUID, q
 	return nil
 }
 
-func (model *QuestionModel) GetAnswersPointsDurationOptions(QuestionID string) ([]int, int16, int, map[string]string, error) {
+func (model *QuestionModel) GetAnswersPointsDurationType(QuestionID string) ([]int, int16, int, int, error) {
 
 	var answers []int = []int{}
-	var options map[string]string
+	// var options map[string]string
 	var answerDurationInSeconds int
 	var answerBytes []byte = []byte{}
 	var answerPoints int16
-	var optionsBytes []byte
+	// var optionsBytes []byte
+	var questionType int
 
-	rows, err := model.db.Select(goqu.I("answers"), goqu.I("points"), goqu.I("duration_in_seconds"), goqu.I("options")).From(QuestionTable).Where(goqu.I("id").Eq(QuestionID)).Executor().Query()
+	rows, err := model.db.Select(goqu.I("answers"), goqu.I("points"), goqu.I("duration_in_seconds"), goqu.I("type")).From(QuestionTable).Where(goqu.I("id").Eq(QuestionID)).Executor().Query()
 
 	if err != nil {
-		return answers, answerPoints, answerDurationInSeconds, options, err
+		return answers, answerPoints, answerDurationInSeconds, 0, err
 	}
 	defer rows.Close()
 
 	if rows.Next() {
-		err = rows.Scan(&answerBytes, &answerPoints, &answerDurationInSeconds, &optionsBytes)
+		// err = rows.Scan(&answerBytes, &answerPoints, &answerDurationInSeconds, &optionsBytes, &questionType)
+		err = rows.Scan(&answerBytes, &answerPoints, &answerDurationInSeconds, &questionType)
 		if err != nil {
-			return answers, answerPoints, answerDurationInSeconds, options, err
+			return answers, answerPoints, answerDurationInSeconds, 0, err
 		}
 	}
 
 	err = json.Unmarshal(answerBytes, &answers)
 	if err != nil {
-		return answers, answerPoints, answerDurationInSeconds, options, err
+		// return answers, answerPoints, answerDurationInSeconds, options, 0, err
+		return answers, answerPoints, answerDurationInSeconds, 0, err
 	}
 
-	err = json.Unmarshal(optionsBytes, &options)
-	if err != nil {
-		return answers, answerPoints, answerDurationInSeconds, options, err
-	}
+	// err = json.Unmarshal(optionsBytes, &options)
+	// if err != nil {
+	// 	return answers, answerPoints, answerDurationInSeconds, options, 0, err
+	// }
 
-	return answers, answerPoints, answerDurationInSeconds, options, nil
+	// return answers, answerPoints, answerDurationInSeconds, options, questionType, nil
+	return answers, answerPoints, answerDurationInSeconds, questionType, nil
 }
 
 func (model *QuestionModel) GetCurrentQuestion(id uuid.UUID) (QuestionForUser, error) {
