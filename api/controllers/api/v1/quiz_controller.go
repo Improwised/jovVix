@@ -52,6 +52,7 @@ func (ctrl *QuizController) GetQuizByUser(c *fiber.Ctx) error {
 	quizzes, err := ctrl.helper.QuizModel.GetAllQuizzesActivity(userID)
 
 	if err != nil {
+		ctrl.logger.Error("error occured while getting all quiz activity", zap.Error(err))
 		return utils.JSONError(c, http.StatusInternalServerError, err.Error())
 	}
 
@@ -65,6 +66,7 @@ func (ctrl *QuizController) CreateQuizSession(c *fiber.Ctx) error {
 	quizzes, err := ctrl.helper.QuizModel.GetAllQuizzesActivity(userID)
 
 	if err != nil {
+		ctrl.logger.Error("error occured while getting all quiz activity", zap.Error(err))
 		return utils.JSONError(c, http.StatusInternalServerError, err.Error())
 	}
 
@@ -189,6 +191,7 @@ func (ctrl *QuizController) GetAdminUploadedQuizzes(c *fiber.Ctx) error {
 	quizzes, err := ctrl.helper.QuizModel.GetQuizzesByAdmin(userID)
 
 	if err != nil {
+		ctrl.logger.Error("error occured while getting quizzes by admin", zap.Error(err))
 		return utils.JSONError(c, http.StatusInternalServerError, err.Error())
 	}
 

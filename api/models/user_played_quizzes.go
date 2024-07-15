@@ -190,6 +190,7 @@ type UserRank struct {
 	Score        int    `json:"score" db:"calculated_score"`
 	ResponseTime int    `json:"response_time" db:"response_time"`
 	UserName     string `json:"username" db:"username"`
+	FirstName    string `json:"firstname" db:"first_name"`
 }
 
 func (model *UserPlayedQuizModel) GetRank(sessionId uuid.UUID, questionId uuid.UUID) ([]UserRank, error) {
@@ -230,6 +231,7 @@ func (model *UserPlayedQuizModel) GetRank(sessionId uuid.UUID, questionId uuid.U
 		goqu.I("gs.total_points"),
 		goqu.I("gqi.response_time"),
 		goqu.I("u.username"),
+		goqu.I("u.first_name"),
 	)
 
 	// Define the main query to filter by rank
@@ -243,7 +245,7 @@ func (model *UserPlayedQuizModel) GetRank(sessionId uuid.UUID, questionId uuid.U
 	userRanks := []UserRank{}
 	for rows.Next() {
 		var userRank UserRank
-		err := rows.Scan(&userRank.Rank, &userRank.Score, &userRank.Points, &userRank.ResponseTime, &userRank.UserName)
+		err := rows.Scan(&userRank.Rank, &userRank.Score, &userRank.Points, &userRank.ResponseTime, &userRank.UserName, &userRank.FirstName)
 		if err != nil {
 			return userRanks, err
 		}

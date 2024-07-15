@@ -147,8 +147,9 @@ func AuthHavingNoTokenHandler(m *Middleware, c *fiber.Ctx) {
 	}
 
 	userObj := models.User{
-		Username: userName,
-		Roles:    "user",
+		Username:  userName,
+		Roles:     "user",
+		FirstName: userName,
 	}
 
 	userObj, err := quizController.CreateQuickUser(m.Db, m.Logger, userObj, true, false)

@@ -35,6 +35,11 @@ const props = defineProps({
     type: Boolean,
     required: false,
   },
+  userName: {
+    type: String,
+    required: false,
+    default: "",
+  },
 });
 
 async function getFinalScoreboardDetails(endpoint) {
@@ -158,9 +163,17 @@ const showAnalysis = () => {
           </thead>
           <tbody class="table-group-divider">
             <tr v-for="(user, index) in scoreboardData" :key="index">
-              <td>{{ user.rank }}</td>
-              <td>{{ user.username }}</td>
-              <td>{{ user.score }}</td>
+              <td :class="{ 'user-row': user.username === props.userName && !props.isAdmin }">{{ user.rank }}</td>
+              <td v-if="props.isAdmin">
+                {{ user.firstname }} <span>({{ user.username }})</span>
+              </td>
+              <td v-else :class="{ 'user-row': user.username === props.userName }">
+                {{ user.firstname }}
+                <span v-if="props?.userName === user.username">
+                  &nbsp;({{ user.username }})
+                </span>
+              </td>
+              <td :class="{ 'user-row': user.username === props.userName && !props.isAdmin }">{{ user.score }}</td>
             </tr>
           </tbody>
         </table>
@@ -230,3 +243,10 @@ const showAnalysis = () => {
     </button>
   </ClientOnly>
 </template>
+
+<style scoped>
+.user-row {
+  background-color: #8968CD !important;
+  box-shadow: none;
+}
+</style>

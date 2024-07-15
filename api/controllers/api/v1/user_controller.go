@@ -66,6 +66,7 @@ func (ctrl *UserController) GetUser(c *fiber.Ctx) error {
 	user, err := ctrl.userService.GetUser(userID)
 	if err != nil {
 		if err == sql.ErrNoRows {
+			ctrl.logger.Debug("No user found", zap.Error(err))
 			return utils.JSONFail(c, http.StatusNotFound, constants.UserNotExist)
 		}
 		ctrl.logger.Error("error while get user by id", zap.Any("id", userID), zap.Error(err))
@@ -170,8 +171,9 @@ func (ctrl *UserController) GetUserMeta(c *fiber.Ctx) error {
 	}
 
 	return utils.JSONSuccess(c, http.StatusOK, map[string]string{
-		"username": user.Username,
-		"email":    user.Email,
+		"username":  user.Username,
+		"firstname": user.FirstName,
+		"email":     user.Email,
 	})
 }
 

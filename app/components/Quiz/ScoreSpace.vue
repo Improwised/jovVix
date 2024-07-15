@@ -12,6 +12,11 @@ const props = defineProps({
     type: Boolean,
     required: false,
   },
+  userName: {
+    required: false,
+    type: String,
+    default: "",
+  },
 });
 const emits = defineEmits(["askSkipTimer"]);
 const timer = ref(null);
@@ -73,7 +78,7 @@ function handleSkipTimer(e) {
       Skip
     </button>
 
-    <div class="table-responsive mt-5">
+    <div v-if="isAdmin" class="table-responsive mt-5">
       <table
         class="table table-striped table-hover table-borderless table-light align-middle"
       >
@@ -94,8 +99,33 @@ function handleSkipTimer(e) {
             class="table-light"
           >
             <td scope="row">{{ user.rank }}</td>
-            <td>{{ user.username }}</td>
+            <td>
+              {{ user.firstname }}
+              <span>&nbsp; ({{ user.username }})</span>
+            </td>
             <td>{{ user.score }}</td>
+          </tr>
+        </tbody>
+        <tfoot></tfoot>
+      </table>
+    </div>
+    <div v-else>
+      <table class="table table-striped table-hover table-borderless align-middle">
+        <caption class="caption-top">Rankings</caption>
+        <thead class="table-light">
+          <tr>
+            <th>Rank</th>
+            <th>User</th>
+            <th>Score</th>
+          </tr>
+        </thead>
+        <tbody class="table-group-divider">
+          <tr v-for="(user, index) in props.data.data.rankList" :key="index">
+            <td scope="row" :class="{ 'user-row': user.username === props.userName }">{{ user.rank }}</td>
+            <td :class="{ 'user-row': user.username === props.userName }">
+              {{ user.firstname }} <span v-if="user.username === props.userName">&nbsp; ({{ user.username }})</span>
+            </td>
+            <td :class="{ 'user-row': user.username === props.userName }">{{ user.score }}</td>
           </tr>
         </tbody>
         <tfoot></tfoot>
@@ -103,3 +133,9 @@ function handleSkipTimer(e) {
     </div>
   </Frame>
 </template>
+
+<style scoped>
+.user-row {
+  background-color: #8968CD !important;
+}
+</style>

@@ -26,7 +26,7 @@ const monitorTerminateQuiz = ref(false);
 const headers = useRequestHeaders(["cookie"]);
 const url = useState("urls");
 const endpoint = "/user/who";
-const userName = ref("");
+const userMeta = ref({});
 
 // event handlers
 const handleCustomChange = (isFullScreenEvent) => {
@@ -138,7 +138,7 @@ async function getUserNameData() {
     credentials: "include",
     mode: "cors",
   });
-  userName.value = response.data.username;
+  userMeta.value = response.data;
 }
 
 setTimeout(async () => {
@@ -150,7 +150,7 @@ setTimeout(async () => {
 
 <template>
   <Playground :full-screen-enabled="myRef" @is-full-screen="handleCustomChange">
-    <UserName :user-name="userName"></UserName>
+    <UserName :user-name="userMeta.firstname"></UserName>
 
     <QuizLoadingSpace v-if="currentComponent == 'Loading'"></QuizLoadingSpace>
     <QuizWaitingSpace
@@ -169,6 +169,7 @@ setTimeout(async () => {
     <QuizScoreSpace
       v-else-if="currentComponent == 'Score'"
       :data="data"
+      :user-name="userMeta.username"
       :is-admin="false"
     ></QuizScoreSpace>
   </Playground>

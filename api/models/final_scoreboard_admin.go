@@ -1,12 +1,14 @@
 package models
 
 import (
+	"github.com/Improwised/quizz-app/api/constants"
 	"github.com/doug-martin/goqu/v9"
 )
 
 type FinalScoreBoardAdmin struct {
 	Rank         int    `db:"rank" json:"rank"`
 	UserName     string `db:"username" json:"username"`
+	FirstName    string `db:"first_name" json:"firstname"`
 	Score        int    `db:"score,omitempty" json:"score"`
 	ResponseTime int    `db:"response_time,omitempty" json:"response_time"`
 }
@@ -32,7 +34,8 @@ func (model *FinalScoreBoardAdminModel) GetScoreForAdmin(activeQuizId string) ([
 	err := model.db.
 		From(goqu.T("users")).
 		Select(
-			"users.username",
+			goqu.I(constants.UsersTable+".username"),
+			goqu.I(constants.UsersTable+".first_name"),
 			goqu.SUM("user_quiz_responses.calculated_score").As("score"),
 			goqu.SUM("user_quiz_responses.response_time").As("response_time"),
 			goqu.DENSE_RANK().Over(goqu.W().OrderBy(goqu.SUM("user_quiz_responses.calculated_score").Desc())).As("rank"),

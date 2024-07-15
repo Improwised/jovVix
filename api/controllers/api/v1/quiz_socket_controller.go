@@ -65,7 +65,7 @@ func CreateQuickUser(db *goqu.Database, logger *zap.Logger, userObj models.User,
 		pqErr, ok := quizUtilsHelper.ConvertType[*pq.Error](err)
 
 		if !ok {
-			return userObj, fmt.Errorf("SomeError during register admin with new username %s", userObj.Username)
+			return userObj, fmt.Errorf("SomeError during register admin/user with new username %s", userObj.Username)
 		}
 
 		if pqErr.Code == "23505" {
@@ -74,22 +74,30 @@ func CreateQuickUser(db *goqu.Database, logger *zap.Logger, userObj models.User,
 				return userObj, fmt.Errorf("username (%s) already registered", userObj.Username)
 			}
 
-			copyUserObj.Password = userObj.Password
-
-			copyUserObj.Username = quizUtilsHelper.GenerateNewStringHavingSuffixName(userObj.Username, 5, 12)
-
-			copyUserObj, err = userSvc.RegisterUser(copyUserObj, events.NewEventBus(logger))
-
+			for {
+				if !retrying {
+					break
+				} else {
+					copyUserObj.Password = userObj.Password
+					copyUserObj.FirstName = userObj.FirstName
+					copyUserObj.Username = quizUtilsHelper.GenerateNewStringHavingSuffixName(userObj.Username, 5, 12)
+					copyUserObj, err = userSvc.RegisterUser(copyUserObj, events.NewEventBus(logger))
+					if err == nil {
+						retrying = false
+					}
+				}
+			}
 		}
 
 		if err != nil {
-			return userObj, fmt.Errorf("SomeError during register admin with new username %s", userObj.Username)
+			return userObj, fmt.Errorf("SomeError during register admin/user with new username %s", userObj.Username)
 		}
 
 	}
 
 	userObj.ID = copyUserObj.ID
 	userObj.Username = copyUserObj.Username
+	userObj.FirstName = copyUserObj.FirstName
 
 	return userObj, err
 }

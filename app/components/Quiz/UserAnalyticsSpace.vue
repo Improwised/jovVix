@@ -87,7 +87,10 @@ const handleMouseLeave = (event) => {
             src="../../assets/images/avatar.png"
             alt="Avatar"
           />
-          <div class="name">{{ props.data[0].username }}</div>
+          <div class="name">
+            {{ props.data[0].firstname }}
+            <span>({{ props.data[0].username }})</span>
+          </div>
         </div>
         <div class="stats">
           <div class="stat-item">

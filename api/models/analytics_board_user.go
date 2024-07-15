@@ -11,6 +11,7 @@ import (
 
 type AnalyticsBoardUser struct {
 	UserName         string            `db:"username" json:"username"`
+	FirstName        string            `db:"first_name" json:"firstname"`
 	SelectedAnswer   sql.NullString    `db:"selected_answer,omitempty" json:"selected_answer"`
 	CorrectAnswer    string            `db:"correct_answer,omitempty" json:"correct_answer"`
 	CalculatedScore  int               `db:"calculated_score,omitempty" json:"calculated_score"`
@@ -44,6 +45,7 @@ func (model *AnalyticsBoardUserModel) GetAnalyticsForUser(userPlayedQuizId strin
 		From(goqu.T(constants.UserQuizResponsesTable)).
 		Select(
 			"username",
+			"first_name",
 			goqu.I(constants.UserQuizResponsesTable+".answers").As("selected_answer"),
 			goqu.I(constants.QuestionsTable+".answers").As("correct_answer"),
 			"calculated_score",
