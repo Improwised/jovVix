@@ -79,6 +79,7 @@ func (m *PlayedQuizValidationMiddleware) PlayedQuizValidation(c *fiber.Ctx) erro
 
 	// if current user is admin of the quiz then no need to create user-played-quiz record
 	if userId == session.AdminID {
+		c.Locals(constants.MiddlewareError, constants.ErrAdminCannotBeUser)
 		return c.Next()
 	}
 

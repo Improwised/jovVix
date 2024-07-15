@@ -20,6 +20,7 @@ import (
 	"github.com/gofiber/contrib/websocket"
 	"github.com/google/uuid"
 	"github.com/lib/pq"
+	"github.com/redis/go-redis/v9"
 	"github.com/samber/lo"
 	"go.uber.org/zap"
 )
@@ -118,6 +119,7 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 	// check for middleware error
 	if c.Locals(constants.MiddlewareError) != nil {
 		handleMiddleWareError(c, qc, response)
+		return
 	}
 
 	invitationCode := quizUtilsHelper.GetString(c.Locals(constants.QuizSessionInvitationCode))
@@ -154,6 +156,7 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 			}
 
 			if quizResponse.Event == "websocket_close" {
+				qc.logger.Debug("connection close request is send by the user - " + userName)
 				break
 			}
 		}
@@ -254,13 +257,23 @@ func handleMiddleWareError(c *websocket.Conn, qc *quizSocketController, response
 	// handle string type
 	errorString := quizUtilsHelper.GetString(c.Locals(constants.MiddlewareError))
 	if errorString != "<nil>" {
-		response.Data = errorString
-		qc.logger.Debug("authentication error was failed from handleMiddleWareError while converting middleware error locals to the string and the error is - " + errorInfo.Error())
-		err := utils.JSONFailWs(c, constants.EventAuthentication, response)
-		if err != nil {
-			qc.logger.Error(fmt.Sprintf("socket error in middleware: %s event, %s action", constants.EventAuthentication, response.Action), zap.Error(err))
+		if errorString == constants.ErrAdminCannotBeUser {
+			response.Data = errorString
+			qc.logger.Debug("admin wants to joins as a user, hence returning failed request" + errorString)
+			err := utils.JSONFailWs(c, constants.ErrAdminCannotBeUser, response)
+			if err != nil {
+				qc.logger.Error(fmt.Sprintf("socket error in handling middleware error: %s event, %s action", constants.ErrAdminCannotBeUser, response.Action), zap.Error(err))
+			}
+			return
+		} else {
+			response.Data = errorString
+			qc.logger.Debug("authentication error was failed from handleMiddleWareError while converting middleware error locals to the string and the error is - " + errorInfo.Error())
+			err := utils.JSONFailWs(c, constants.EventAuthentication, response)
+			if err != nil {
+				qc.logger.Error(fmt.Sprintf("socket error in middleware: %s event, %s action", constants.EventAuthentication, response.Action), zap.Error(err))
+			}
+			return
 		}
-		return
 	}
 }
 
@@ -634,7 +647,7 @@ func handleAnswerSubmission(c *websocket.Conn, qc *quizSocketController, session
 					shareEvenWithUser(c, qc, response, constants.EventSkipAsked, session.ID.String(), int(session.InvitationCode.Int32), constants.ToAdmin)
 				}
 			}
-		case user := <- qc.answersSubmittedByUsers:
+		case user := <-qc.answersSubmittedByUsers:
 			response.Data = user
 			response.Action = constants.ActionAnserSubmittedByUser
 			err := utils.JSONSuccessWs(c, constants.EventAnswerSubmittedByUser, response)
@@ -826,7 +839,12 @@ func removeUser(qc *quizSocketController, topic string, userName string) {
 	usersData := []string{}
 	result, err := qc.helpers.PubSubModel.Client.Get(qc.helpers.PubSubModel.Ctx, topic).Result()
 	if err != nil {
-		qc.logger.Error(fmt.Sprintf("socket error %s", constants.EventSendInvitationCode), zap.Error(err))
+		if err == redis.Nil {
+			qc.logger.Error("redis doesn't have the data for the key - "+topic, zap.Error(err))
+			return
+		} else {
+			qc.logger.Error(fmt.Sprintf("socket error %s", constants.EventSendInvitationCode), zap.Error(err))
+		}
 	}
 
 	err = json.Unmarshal([]byte(result), &usersData)
@@ -836,23 +854,29 @@ func removeUser(qc *quizSocketController, topic string, userName string) {
 	found := lo.IndexOf(usersData, userName)
 	if len(usersData) == 1 {
 		usersData = []string{}
+	} else if found == -1 {
+		qc.logger.Error("no user data found in redis for the user - " + userName)
+		return
 	} else {
 		usersData = append(usersData[:found], usersData[found+1:]...)
 	}
 	jsonData, err := json.Marshal(usersData)
 	if err != nil {
 		qc.logger.Error("error while marshling data inside removeuser ", zap.Error(err))
+		return
 	}
 
 	err = qc.helpers.PubSubModel.Client.Set(qc.helpers.PubSubModel.Ctx, topic, jsonData, time.Minute*100).Err()
 	if err != nil {
 		qc.logger.Error("error while seting data to redis  inside removeuser ", zap.Error(err))
+		return
 	}
 
 	err = qc.helpers.PubSubModel.Client.Publish(qc.helpers.PubSubModel.Ctx, constants.EventUserJoined, jsonData).Err()
 
 	if err != nil {
 		qc.logger.Error("error while publishig data to redis  inside removeuser ", zap.Error(err))
+		return
 	}
 
 }
@@ -881,14 +905,14 @@ func onConnectHandleUser(c *websocket.Conn, qc *quizSocketController, response *
 		if err != nil {
 			qc.logger.Error("unable to connect with the database", zap.Error(err))
 		}
-		
+
 		questionModel := models.InitQuestionModel(db, qc.logger)
 
 		questionID, err := uuid.Parse(session.CurrentQuestion.String)
 		if err != nil {
 			qc.logger.Error(fmt.Sprintf("\nquestionID is not being parsed from the current question id of this session and that current question id is - %v\n", session.CurrentQuestion), zap.Error(err))
 		}
-		
+
 		currentQuestion, err := questionModel.GetCurrentQuestion(questionID)
 		if err != nil {
 			qc.logger.Error("unable to get the current question and the question id was "+session.CurrentQuestion.String, zap.Error(err))
@@ -905,7 +929,7 @@ func onConnectHandleUser(c *websocket.Conn, qc *quizSocketController, response *
 		}
 		response.Data = responseData
 		response.Component = constants.Question
-		
+
 		err = utils.JSONSuccessWs(c, constants.EventSendQuestion, response)
 		if err != nil {
 			qc.logger.Error(fmt.Sprintf("socket error send current question on connect: %s event, %s action", constants.EventSendQuestion, response.Action), zap.Error(err))

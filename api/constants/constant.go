@@ -131,6 +131,7 @@ const (
 	ActionUserSessionValidation  = "user session get or create"
 	CurrentUserQuiz              = "user_played_quiz"               // use by web
 	ErrUserQuizSessionValidation = "quiz-session-validation-failed" // use by web
+	ErrAdminCannotBeUser         = "host cannot be a player in their own quiz"
 
 	EventRedirectToAdmin     = "redirect_to_admin"
 	ActionCurrentUserIsAdmin = "current user is admin"
