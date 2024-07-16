@@ -8,10 +8,14 @@ const app = useNuxtApp();
 const toast = useToast();
 
 import { useInvitationCodeStore } from "~/store/invitationcode.js";
+import { useListUserstore } from "~/store/userlist";
 import { storeToRefs } from "pinia";
 
 const invitationCodeStore = useInvitationCodeStore();
 const { invitationCode } = storeToRefs(invitationCodeStore);
+
+const listUserStore = useListUserstore();
+const { removeAllUsers } = listUserStore;
 
 // define props and emits
 const props = defineProps({
@@ -66,6 +70,13 @@ onMounted(() => {
     copyBtn.addEventListener("click", () => {
       copyToClipboard(code.value);
     });
+  }
+});
+
+onUnmounted(() => {
+  if (props.isAdmin) {
+    invitationCode.value = null
+    removeAllUsers()
   }
 });
 
