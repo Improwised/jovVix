@@ -110,8 +110,12 @@ function handleSkipTimer(e) {
       </table>
     </div>
     <div v-else>
-      <table class="table table-striped table-hover table-borderless align-middle">
-        <caption class="caption-top">Rankings</caption>
+      <table
+        class="table table-striped table-hover table-borderless align-middle"
+      >
+        <caption class="caption-top">
+          Rankings
+        </caption>
         <thead class="table-light">
           <tr>
             <th>Rank</th>
@@ -121,11 +125,21 @@ function handleSkipTimer(e) {
         </thead>
         <tbody class="table-group-divider">
           <tr v-for="(user, index) in props.data.data.rankList" :key="index">
-            <td scope="row" :class="{ 'user-row': user.username === props.userName }">{{ user.rank }}</td>
-            <td :class="{ 'user-row': user.username === props.userName }">
-              {{ user.firstname }} <span v-if="user.username === props.userName">&nbsp; ({{ user.username }})</span>
+            <td
+              scope="row"
+              :class="{ 'user-row': user.username === props.userName }"
+            >
+              {{ user.rank }}
             </td>
-            <td :class="{ 'user-row': user.username === props.userName }">{{ user.score }}</td>
+            <td :class="{ 'user-row': user.username === props.userName }">
+              {{ user.firstname }}
+              <span v-if="user.username === props.userName"
+                >&nbsp; ({{ user.username }})</span
+              >
+            </td>
+            <td :class="{ 'user-row': user.username === props.userName }">
+              {{ user.score }}
+            </td>
           </tr>
         </tbody>
         <tfoot></tfoot>
@@ -136,6 +150,6 @@ function handleSkipTimer(e) {
 
 <style scoped>
 .user-row {
-  background-color: #8968CD !important;
+  background-color: #8968cd !important;
 }
 </style>

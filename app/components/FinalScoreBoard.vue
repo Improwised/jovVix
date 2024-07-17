@@ -15,7 +15,7 @@ useSystemEnv();
 const analysisData = reactive([]);
 const userAnalysisEndpoint = "/analytics_board/user";
 
-const userAccuracy = ref();
+const userAccuracy = ref(0);
 const userAnswerAnalysis = ref([]);
 const userCorrectAnswer = ref(0);
 const userTotalScore = ref(0);
@@ -67,6 +67,7 @@ async function getFinalScoreboardDetails(endpoint) {
   );
 }
 
+// for admin
 if (props.isAdmin) {
   activeQuizId.value = props.isAdmin ? route.query.aqi : "";
   getFinalScoreboardDetails(
@@ -76,6 +77,7 @@ if (props.isAdmin) {
   getFinalScoreboardDetails(props.userURL);
 }
 
+//for users
 if (!props.isAdmin) {
   async function getAnalysisDetails() {
     const { data, error } = await useFetch(
@@ -105,18 +107,32 @@ if (!props.isAdmin) {
 
   getAnalysisDetails();
 
+  const userGainedPoints = ref(0);
+  const totalPoints = ref(0);
+
   const userAnalysis = () => {
     analysisData.filter((item) => {
-      const correctAnswersCount = JSON.parse(item.correct_answer).length;
+      let correctIncorrectFlag = false;
+      totalPoints.value += item.points;
 
-      // to not to consider the survey questions
-      if (correctAnswersCount != Object.keys(item.options).length) {
-        //for correct/incorrect answer (question-wise) and count of correct answer for accuracy
-        userAnswerAnalysis.value.push(
-          isCorrectAnswer(item.selected_answer.String, item.correct_answer)
+      // if the question is not survey and attempted
+      if (item.question_type != "survey" && item.is_attend) {
+        //check if the answer is correct or not
+        correctIncorrectFlag = isCorrectAnswer(
+          item.selected_answer.String,
+          item.correct_answer
         );
+        userAnswerAnalysis.value.push(correctIncorrectFlag); // if answer is correct then push true, if incorrect then push false
 
-        //for counting total score
+        // if answer is correct then add that question's points into gained points
+        if (correctIncorrectFlag) {
+          userGainedPoints.value += item.points;
+        }
+
+        // add that question's score into total score (calculated_score will be 0 if it is incorrect)
+        userTotalScore.value += item.calculated_score;
+      } else if (item.is_attend) {
+        userGainedPoints.value += item.points;
         userTotalScore.value += item.calculated_score;
       }
     });
@@ -124,7 +140,7 @@ if (!props.isAdmin) {
     userCorrectAnswer.value = userAnswerAnalysis.value.filter(Boolean).length;
 
     userAccuracy.value = (
-      (userCorrectAnswer.value / userAnswerAnalysis.value.length) *
+      (userGainedPoints.value / totalPoints.value) *
       100
     ).toFixed(2);
   };
@@ -163,17 +179,34 @@ const showAnalysis = () => {
           </thead>
           <tbody class="table-group-divider">
             <tr v-for="(user, index) in scoreboardData" :key="index">
-              <td :class="{ 'user-row': user.username === props.userName && !props.isAdmin }">{{ user.rank }}</td>
+              <td
+                :class="{
+                  'user-row':
+                    user.username === props.userName && !props.isAdmin,
+                }"
+              >
+                {{ user.rank }}
+              </td>
               <td v-if="props.isAdmin">
                 {{ user.firstname }} <span>({{ user.username }})</span>
               </td>
-              <td v-else :class="{ 'user-row': user.username === props.userName }">
+              <td
+                v-else
+                :class="{ 'user-row': user.username === props.userName }"
+              >
                 {{ user.firstname }}
                 <span v-if="props?.userName === user.username">
                   &nbsp;({{ user.username }})
                 </span>
               </td>
-              <td :class="{ 'user-row': user.username === props.userName && !props.isAdmin }">{{ user.score }}</td>
+              <td
+                :class="{
+                  'user-row':
+                    user.username === props.userName && !props.isAdmin,
+                }"
+              >
+                {{ user.score }}
+              </td>
             </tr>
           </tbody>
         </table>
@@ -246,7 +279,7 @@ const showAnalysis = () => {
 
 <style scoped>
 .user-row {
-  background-color: #8968CD !important;
+  background-color: #8968cd !important;
   box-shadow: none;
 }
 </style>

@@ -1,42 +1,8 @@
 <template>
   <div class="container-fluid quiz-container">
     <header class="text-center py-4">
-      <h1>Class Accuracy</h1>
+      <h1>Quiz Analysis</h1>
     </header>
-
-    <!-- Accuracy bar -->
-    <div
-      class="quiz-accuracy mx-auto mt-4"
-      style="width: 100%; position: relative"
-    >
-      <div class="progress">
-        <div
-          v-for="marker in markers"
-          :key="marker.value"
-          class="progress-marker"
-          :style="{ left: marker.left + '%' }"
-        >
-          {{ marker.value }}%
-        </div>
-        <div
-          class="progress-bar correct"
-          role="progressbar"
-          :style="{ width: correctWidth + '%' }"
-        ></div>
-        <div
-          class="progress-bar incorrect"
-          role="progressbar"
-          :style="{ width: incorrectWidth + '%' }"
-        ></div>
-        <!-- Circle element -->
-      </div>
-      <div
-        class="progress-circle"
-        :style="{ left: `calc(${correctWidth}% - 20px)` }"
-      >
-        {{ correctWidth }}%
-      </div>
-    </div>
 
     <div class="quiz-content">
       <ul class="nav nav-tabs justify-content-center mb-4">
@@ -67,6 +33,7 @@
             :key="index"
             :data="userJson[oData]"
             :survey-questions="surveyQuestions"
+            :total-quiz-points="totalQuizPoints"
             class="user-analytics-item"
             @click="openPopup"
           ></QuizUserAnalyticsSpace>
@@ -96,9 +63,6 @@ import { ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import lodash from "lodash";
 
-const correctWidth = ref(0);
-const incorrectWidth = ref(0);
-
 const url = useState("urls");
 const headers = useRequestHeaders(["cookie"]);
 
@@ -120,15 +84,11 @@ const questionJson = ref({});
 const rankData = ref([]);
 
 import { useUserScoreboardData } from "~/store/userScoreboardData";
-import { isCorrectAnswer } from "~/composables/check_is_correct.js/";
 const userScoreboardDataStore = useUserScoreboardData();
 const { getUserScoreboardData } = userScoreboardDataStore;
 
 let storedData = {};
-const surveyQuestions = ref([]);
-const classAccuracy = ref(0);
-const totalUsers = ref(0);
-const totalPointsGainedByUsers = ref(0);
+const surveyQuestions = ref(0);
 const totalQuizPoints = ref(0);
 
 const fetchData = () => {
@@ -157,21 +117,9 @@ const getAnalysisJson = async (activeQuizId) => {
       storedData.forEach((data) => {
         rankData.value.push(data.username); //to get usernames rank wise, to pass data from userJson in sorted manner
         let key = data.username; // Get the username (key)
-        totalUsers.value++; // count number of total users in order to use in class accuracy
 
         // Check if the key exists in userJson.value
         if (userJson.value.hasOwnProperty(key)) {
-          userJson.value[key].forEach((element) => {
-            if (
-              isCorrectAnswer(
-                element.selected_answer.String,
-                element.correct_answer
-              )
-            ) {
-              totalPointsGainedByUsers.value += parseInt(element.points);
-            }
-          });
-
           let totalScore = data.score; // Calculate total_score as score
 
           // Update userJson.value[key] with rank, total_score, and response_time
@@ -187,21 +135,13 @@ const getAnalysisJson = async (activeQuizId) => {
 
       questionJson.value = lodash.groupBy(analysisJson.value, "question");
 
-      let questionNumber = 0;
-
-      // from userJson, take the first user's all questions and get the question number of survey questions from that
+      // from userJson, count total points of all questions and count of total survey questions
       for (const key in userJson.value) {
         userJson.value[key].forEach((question) => {
           if (!question.rank) {
-            questionNumber++;
             totalQuizPoints.value += parseInt(question.points);
-            const optionsCount = Object.keys(question.options).length;
-            const correctAnswersCount = JSON.parse(
-              question.correct_answer
-            ).length;
-
-            if (optionsCount === correctAnswersCount) {
-              surveyQuestions.value.push(questionNumber);
+            if (question.question_type == "survey") {
+              surveyQuestions.value++;
             }
           }
         });
@@ -217,14 +157,7 @@ const getAnalysisJson = async (activeQuizId) => {
 
 onMounted(() => {
   activeQuizId.value = route.query.active_quiz_id || "";
-  getAnalysisJson(activeQuizId.value).then(() => {
-    classAccuracy.value =
-      (totalPointsGainedByUsers.value /
-        (totalQuizPoints.value * totalUsers.value)) *
-      100;
-    correctWidth.value = parseInt(classAccuracy.value.toFixed()); // percentage of correct answers
-    incorrectWidth.value = 100 - correctWidth.value; // percentage of incorrect answers
-  });
+  getAnalysisJson(activeQuizId.value);
   fetchData();
 });
 
