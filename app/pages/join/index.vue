@@ -38,7 +38,7 @@
                     type="number"
                     placeholder="0"
                     class="purple-text"
-                  ></v-otp-input>
+                  />
                 </div>
                 <div class="mb-3">
                   <label for="username" class="form-label purple-text"
