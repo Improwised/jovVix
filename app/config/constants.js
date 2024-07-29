@@ -19,6 +19,7 @@ export default {
   // Components
   Question: "Question",
   Score: "Score",
+  Waiting: "Waiting",
 
   // Events
   StartQuiz: "start_quiz",

@@ -36,6 +36,7 @@ export default class AdminOperations extends QuizHandler {
 
   handleConnectionProblem() {
     this.errorHandler("problem in connecting with server");
+    this.connect();
   }
 
   async handler(message) {
@@ -46,5 +47,18 @@ export default class AdminOperations extends QuizHandler {
     }
 
     super.handler(message, preventAssignment);
+  }
+
+  onClose(event) {
+    // Check the close event code to determine if it was an error or proper closure
+    if (event.code !== 1000 && this.currentEvent != constants.TerminateQuiz) {
+      // 1000 indicates a normal closure
+      console.log("Closed due to error, retrying...");
+      this.connect();
+    } else {
+      console.log("Closed Properly");
+    }
+
+    super.onClose(event);
   }
 }

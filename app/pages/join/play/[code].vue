@@ -28,6 +28,10 @@ const url = useState("urls");
 const endpoint = "/user/who";
 const userMeta = ref({});
 
+// for notification bars
+const showConnectingBar = ref(false);
+const showReconnectedBar = ref(false);
+
 // event handlers
 const handleCustomChange = (isFullScreenEvent) => {
   if (!isFullScreenEvent && myRef.value) {
@@ -45,7 +49,8 @@ onMounted(() => {
         route.params.code,
         route.query?.username,
         handleQuizEvents,
-        handleNetworkEvent
+        handleNetworkEvent,
+        handleNetworkEstablished
       );
     } catch (err) {
       toast.info(app.$ReloadRequired);
@@ -101,9 +106,21 @@ const handleQuizEvents = async (message) => {
   }
 };
 
-function handleNetworkEvent(message) {
-  toast.warning(message + ", please reload the page");
-  console.error(message);
+function handleNetworkEvent() {
+  showConnectingBar.value = true;
+}
+
+function hideConnectingBar() {
+  showConnectingBar.value = false;
+}
+
+function handleNetworkEstablished() {
+  showConnectingBar.value = false;
+  showReconnectedBar.value = true;
+
+  setTimeout(() => {
+    showReconnectedBar.value = false;
+  }, 2000);
 }
 
 const startQuiz = () => {
@@ -124,7 +141,6 @@ definePageMeta({
   layout: "empty",
 });
 
-// Listen for beforeunload event to close WebSocket connection
 onBeforeUnmount(() => {
   if (!monitorTerminateQuiz.value) {
     userOperationHandler.value.endQuiz();
@@ -149,28 +165,99 @@ setTimeout(async () => {
 </script>
 
 <template>
-  <Playground :full-screen-enabled="myRef" @is-full-screen="handleCustomChange">
-    <UserName :user-name="userMeta.firstname"></UserName>
+  <div>
+    <div v-if="showConnectingBar" class="top-bar-red">
+      <div class="doodle">&#128641;</div>
+      <div class="text-inside-bar">
+        Problem connecting with server, reconnecting...
+      </div>
+      <button class="close-button" @click="hideConnectingBar">×</button>
+    </div>
 
-    <QuizLoadingSpace v-if="currentComponent == 'Loading'"></QuizLoadingSpace>
-    <QuizWaitingSpace
-      v-else-if="currentComponent == 'Waiting'"
-      :data="data"
-      :is-admin="false"
-      @start-quiz="startQuiz"
+    <div v-if="showReconnectedBar" class="top-bar-green">
+      <div class="text-inside-bar">Reconnected &#128515;</div>
+    </div>
+
+    <Playground
+      :full-screen-enabled="myRef"
+      @is-full-screen="handleCustomChange"
     >
-    </QuizWaitingSpace>
-    <QuizQuestionSpace
-      v-else-if="currentComponent == 'Question'"
-      :data="data"
-      :is-admin="false"
-      @send-answer="sendAnswer"
-    ></QuizQuestionSpace>
-    <QuizScoreSpace
-      v-else-if="currentComponent == 'Score'"
-      :data="data"
-      :user-name="userMeta.username"
-      :is-admin="false"
-    ></QuizScoreSpace>
-  </Playground>
+      <UserName :user-name="userMeta.firstname"></UserName>
+
+      <QuizLoadingSpace
+        v-if="currentComponent === 'Loading'"
+      ></QuizLoadingSpace>
+      <QuizWaitingSpace
+        v-else-if="currentComponent === 'Waiting'"
+        :data="data"
+        :is-admin="false"
+        @start-quiz="startQuiz"
+      >
+      </QuizWaitingSpace>
+      <QuizQuestionSpace
+        v-else-if="currentComponent === 'Question'"
+        :data="data"
+        :is-admin="false"
+        @send-answer="sendAnswer"
+      ></QuizQuestionSpace>
+      <QuizScoreSpace
+        v-else-if="currentComponent === 'Score'"
+        :data="data"
+        :user-name="userMeta.username"
+        :is-admin="false"
+      ></QuizScoreSpace>
+    </Playground>
+  </div>
 </template>
+
+<style scoped>
+.top-bar-red,
+.top-bar-green {
+  background-color: #e41d3b;
+  color: #000000;
+  padding: 10px 0;
+  text-align: center;
+  opacity: 1;
+  transition: opacity 0.3s ease-in-out;
+  position: relative;
+}
+
+.top-bar-green {
+  background-color: green;
+}
+
+.text-inside-bar {
+  display: inline-block;
+  font-size: 18px;
+}
+
+@keyframes doodle-animation {
+  0% {
+    left: calc(100% + 50px);
+  }
+  100% {
+    left: -50px;
+  }
+}
+
+.doodle {
+  position: absolute;
+  animation: doodle-animation 5s linear infinite;
+  font-size: 24px;
+}
+
+.close-button {
+  position: absolute;
+  top: 5px;
+  right: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: white;
+  font-size: 20px;
+}
+
+.close-button:hover {
+  color: #ccc;
+}
+</style>
