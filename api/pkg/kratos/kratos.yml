@@ -1,24 +1,36 @@
-version: v1.0.0
-
-dsn: postgres://quiz-app:quiz-app@postgresdb:5432/kratos-db?sslmode=disable
+dsn: postgres://quiz-app:quiz-app@db:5432/quiz-app?sslmode=disable&search_path=kratos
 
 serve:
   public:
     base_url: http://127.0.0.1:4433/
-    # host: 0.0.0.0
     port: 4433
-
     cors:
       enabled: true
+      allowed_origins:
+        - http://127.0.0.1:3001
+        - http://localhost:3001
+      allowed_methods:
+        - POST
+        - GET
+        - PUT
+        - PATCH
+        - DELETE
+      allowed_headers:
+        - Authorization
+        - Cookie
+        - Content-Type
+      exposed_headers:
+        - Content-Type
+        - Set-Cookie
+      allow_credentials: true # Ensure this line is included and set to true
   admin:
     base_url: http://127.0.0.1:4434/
-    # host: 0.0.0.0
     port: 4434
 
 selfservice:
-  default_browser_return_url: http://127.0.0.1:4455
+  default_browser_return_url: http://127.0.0.1:3001
   allowed_return_urls:
-    - http://127.0.0.1:4455
+    - http://127.0.0.1:3001
 
   methods:
     password:
@@ -26,7 +38,7 @@ selfservice:
     oidc:
       enabled: true
       config:
-        base_redirect_uri: http://127.0.0.1:4439/
+        base_redirect_uri: http://127.0.0.1:4433
         providers:
           - id: google
             provider: google
@@ -53,38 +65,39 @@ selfservice:
 
   flows:
     error:
-      ui_url: http://127.0.0.1:4455/error
+      ui_url: http://127.0.0.1:3001/error
 
     settings:
-      ui_url: http://127.0.0.1:4455/settings
+      ui_url: http://127.0.0.1:3001/settings
       privileged_session_max_age: 15m
       required_aal: highest_available
 
     recovery:
       enabled: true
-      ui_url: http://127.0.0.1:4455/recovery
+      ui_url: http://127.0.0.1:3001/recovery
       use: code
 
     verification:
       enabled: true
-      ui_url: http://127.0.0.1:4455/verification
+      ui_url: http://127.0.0.1:3001/verification
       use: code
       after:
-        default_browser_return_url: http://127.0.0.1:4455
+        default_browser_return_url: http://127.0.0.1:3001
 
     logout:
       after:
-        default_browser_return_url: http://127.0.0.1:4455/login
+        default_browser_return_url: http://127.0.0.1:3001/login
 
     login:
-      ui_url: http://127.0.0.1:4455/login
+      ui_url: http://127.0.0.1:3001/login
+      # http://127.0.0.1:4433/self-service/login/browser?aal=&refresh=&return_to=
       after:
         default_browser_return_url: http://127.0.0.1:3000/api/v1/kratos/auth
       lifespan: 10m
 
     registration:
       lifespan: 10m
-      ui_url: http://127.0.0.1:4455/registration
+      ui_url: http://127.0.0.1:3001/account/register
       after:
         default_browser_return_url: http://127.0.0.1:3000/api/v1/kratos/auth
         password:
@@ -119,7 +132,12 @@ identity:
   schemas:
     - id: default
       url: file:///etc/config/kratos/identity.schema.json
-courier:
 
+courier:
   smtp:
     connection_uri: smtps://test:test@mailslurper:1025/?skip_ssl_verify=true
+
+cookies:
+  domain: 127.0.0.1
+  path: /
+  same_site: Lax

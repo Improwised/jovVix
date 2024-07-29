@@ -110,7 +110,19 @@ func (ctrl *UserController) CreateUser(c *fiber.Ctx) error {
 
 	role := "user"
 
-	user, err := ctrl.userService.RegisterUser(models.User{FirstName: userReq.FirstName, LastName: userReq.LastName, Email: userReq.Email, Password: userReq.Password, Roles: role, Username: userReq.UserName}, ctrl.event)
+	if userReq.Password == "" {
+		return utils.JSONFail(c, http.StatusBadRequest, "password must not be empty")
+	}
+	user, err := ctrl.userService.RegisterUser(models.User{
+		FirstName: userReq.FirstName,
+		LastName: userReq.LastName,
+		Email: userReq.Email,
+		Password: sql.NullString{
+			String: userReq.Password,
+			Valid: true,
+		},
+		Roles: role,
+		Username: userReq.UserName}, ctrl.event)
 	if err != nil {
 
 		if err.(*pq.Error).Constraint == constants.UserUkey {

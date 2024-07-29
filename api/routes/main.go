@@ -85,16 +85,16 @@ func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config confi
 	})
 
 	// FinalScoreboard
-	err = setUpFinalScoreBoardController(v1, goqu, logger, middleware, events, pub)
+	err = setUpFinalScoreBoardController(v1, goqu, logger, middleware, events)
 	if err != nil {
 		return err
 	}
-	err = setUpAnalyticsBoardController(v1, goqu, logger, middleware, events, pub)
+	err = setUpAnalyticsBoardController(v1, goqu, logger, middleware, events)
 	if err != nil {
 		return err
 	}
 
-	err = setupAuthController(v1, goqu, logger, middleware, config)
+	err = setupAuthController(v1, goqu, logger, config)
 	if err != nil {
 		return err
 	}
@@ -148,16 +148,16 @@ func newSwagger(file_name, new_file, port string) error {
 	return err
 }
 
-func setupAuthController(v1 fiber.Router, goqu *goqu.Database, logger *zap.Logger, middlewares middlewares.Middleware, config config.AppConfig) error {
+func setupAuthController(v1 fiber.Router, goqu *goqu.Database, logger *zap.Logger, config config.AppConfig) error {
 	authController, err := controller.NewAuthController(goqu, logger, config)
 	if err != nil {
 		return err
 	}
-	v1.Post("/login", authController.DoAuth)
+	v1.Post("/login", authController.IsRegisteredUser)
 
 	if config.Kratos.IsEnabled {
 		kratos := v1.Group("/kratos")
-		kratos.Get("/auth", middlewares.Authenticated, authController.DoKratosAuth)
+		kratos.Get("/auth", authController.DoKratosAuth)
 	}
 	return nil
 }
@@ -167,10 +167,14 @@ func setupUserController(v1 fiber.Router, goqu *goqu.Database, logger *zap.Logge
 	if err != nil {
 		return err
 	}
+	authController, err := controller.NewAuthController(goqu, logger, middlewares.Config)
+	if err != nil {
+		return err
+	}
 
 	// user route
 	userRouter := v1.Group("/user")
-	userRouter.Get("/is_admin", middlewares.Authenticated, userController.IsAdmin)
+	userRouter.Get("/is_admin", authController.IsRegisteredUser)
 	userRouter.Get("/who", middlewares.Authenticated, userController.GetUserMeta)
 
 	// users route
@@ -224,7 +228,7 @@ func quizController(
 
 	v1.Post("/quiz/answer", middleware.Authenticated, middleware.CustomAuthenticated, quizController.SetAnswer)
 
-	v1.Get("/quiz/terminate", middleware.Authenticated, quizController.Terminate)
+	v1.Get("/quiz/terminate", middleware.KratosAuthenticated, quizController.Terminate)
 
 	// admin endpoints
 	allowRoles, err := helper.RoleModel.NewAllowedRoles("admin")
@@ -234,27 +238,22 @@ func quizController(
 	rbObj := middlewares.NewRolePermissionMiddleware(middleware, allowRoles)
 
 	admin := v1.Group("/admin")
-	admin.Use(middleware.Authenticated, rbObj.IsAllowed)
+	admin.Use(middleware.KratosAuthenticated, rbObj.IsAllowed)
 
 	quizzes := admin.Group("/quizzes")
 
 	quizzes.Get("/", quizController.GetQuizByUser)
 	quizzes.Post(fmt.Sprintf("/:%s/demo_session", constants.QuizId), quizController.GenerateDemoSession)
-	quizzes.Post(fmt.Sprintf("/:%s/upload", constants.QuizTitle), middleware.ValidateCsv, quizController.CreateQuizByCsv)
+	quizzes.Post(fmt.Sprintf("/:%s/upload", constants.QuizTitle), middleware.ValidateCsv, middleware.KratosAuthenticated, quizController.CreateQuizByCsv)
 	quizzes.Get("/list", quizController.GetAdminUploadedQuizzes)
 
-	v1.Get(fmt.Sprintf("/socket/admin/arrange/:%s", constants.SessionIDParam), middleware.CheckSessionId, middleware.CustomAdminAuthenticated, websocket.New(quizSocketController.Arrange))
+	v1.Get(fmt.Sprintf("/socket/admin/arrange/:%s", constants.SessionIDParam), middleware.CheckSessionId, middleware.KratosAuthenticated, websocket.New(quizSocketController.Arrange))
 
 	return nil
 }
 
 // final score board controller setup
-func setUpFinalScoreBoardController(v1 fiber.Router, goqu *goqu.Database, logger *zap.Logger, middlewares middlewares.Middleware, events *events.Events, pub *watermill.WatermillPublisher) error {
-	userController, err := controller.NewUserController(goqu, logger, events, pub)
-	if err != nil {
-		return err
-	}
-
+func setUpFinalScoreBoardController(v1 fiber.Router, goqu *goqu.Database, logger *zap.Logger, middlewares middlewares.Middleware, events *events.Events) error {
 	finalScoreBoardController, err := controller.NewFinalScoreBoardController(goqu, logger, events)
 	if err != nil {
 		return err
@@ -267,17 +266,12 @@ func setUpFinalScoreBoardController(v1 fiber.Router, goqu *goqu.Database, logger
 
 	finalScore := v1.Group("/final_score")
 	finalScore.Get("/user", finalScoreBoardController.GetScore)
-	finalScore.Get("/admin", middlewares.Authenticated, userController.IsAdmin, finalScoreBoardControllerAdmin.GetScoreForAdmin)
+	finalScore.Get("/admin", middlewares.KratosAuthenticated, finalScoreBoardControllerAdmin.GetScoreForAdmin)
 
 	return nil
 }
 
-func setUpAnalyticsBoardController(v1 fiber.Router, goqu *goqu.Database, logger *zap.Logger, middlewares middlewares.Middleware, events *events.Events, pub *watermill.WatermillPublisher) error {
-	userController, err := controller.NewUserController(goqu, logger, events, pub)
-	if err != nil {
-		return err
-	}
-
+func setUpAnalyticsBoardController(v1 fiber.Router, goqu *goqu.Database, logger *zap.Logger, middlewares middlewares.Middleware, events *events.Events) error {
 	analyticsBoardUserController, err := controller.NewAnalyticsBoardUserController(goqu, logger, events)
 	if err != nil {
 		return err
@@ -290,7 +284,7 @@ func setUpAnalyticsBoardController(v1 fiber.Router, goqu *goqu.Database, logger 
 
 	analyticsBoard := v1.Group("/analytics_board")
 	analyticsBoard.Get("/user", analyticsBoardUserController.GetAnalyticsForUser)
-	analyticsBoard.Get("/admin", middlewares.Authenticated, userController.IsAdmin, analyticsBoardAdminController.GetAnalyticsForAdmin)
+	analyticsBoard.Get("/admin", middlewares.KratosAuthenticated, analyticsBoardAdminController.GetAnalyticsForAdmin)
 
 	return nil
 }

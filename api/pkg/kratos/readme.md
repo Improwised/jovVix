@@ -1,6 +1,6 @@
 # Golang Boilerplate with Ory Kratos Integration
 
-For setting up the Ory Kratos service with other services, you have to execute ```docker-compose --profile kratos up```.
+For setting up the Ory Kratos service with other services, you have to execute ```docker-compose --profile kratos up``` also change the dsn in kratos.yml like ```dsn: postgres://quiz-app:quiz-app@db:5432/kratos-db?sslmode=disable```.
 
 This will start the Ory Kratos service with other Database and adminer services.
 

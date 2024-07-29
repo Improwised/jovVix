@@ -69,10 +69,11 @@ func AdminCmd(cfg config.AppConfig, logger *zap.Logger) *cobra.Command {
 				return fmt.Errorf("%s is not a valid email", adminObj.Email)
 			}
 
-			adminObj.Password, err = password.Generate(14, 3, 3, false, false)
+			adminObj.Password.String, err = password.Generate(14, 3, 3, false, false)
 			if err != nil {
 				return err
 			}
+			adminObj.Password.Valid = true
 
 			adminObj, err = quizController.CreateQuickUser(db, logger, adminObj, force, true)
 
@@ -91,7 +92,7 @@ func AdminCmd(cfg config.AppConfig, logger *zap.Logger) *cobra.Command {
 				- Please store and change it as early as possible!!!`,
 				adminObj.Email,
 				adminObj.Username,
-				adminObj.Password,
+				adminObj.Password.String,
 				adminObj.FirstName,
 				adminObj.LastName)
 

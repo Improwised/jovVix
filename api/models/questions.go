@@ -122,6 +122,7 @@ func (model *QuestionModel) RegisterQuestions(userId string, title string, descr
 	quizId, err := registerQuiz(transaction, title, description, userId)
 
 	if err != nil {
+		model.logger.Debug("error in registerQuiz", zap.Error(err))
 		return quizId, err
 	}
 
@@ -157,14 +158,13 @@ func registerQuiz(transaction *goqu.TxDatabase, title, description, userId strin
 		},
 	).Returning("id").Executor().ScanVal(&quizId)
 
-	if !ok {
-		return quizId, sql.ErrNoRows
-	}
-
 	if err != nil {
 		return quizId, err
 	}
-
+	
+	if !ok {
+		return quizId, sql.ErrNoRows
+	}
 	return quizId, nil
 }
 

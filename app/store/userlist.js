@@ -1,22 +1,23 @@
 import { defineStore } from "pinia";
-export const useListUserstore = defineStore("listusers-store", () => {
-  const listUsers = ref([]);
+export const useListUserstore = defineStore(
+  "listusers-store",
+  () => {
+    const listUsers = ref([]);
 
-  //actions
-  const addUser = (users) => {
-    listUsers.value = [...users];
-  };
+    //actions
+    const addUser = (users) => {
+      listUsers.value = [...users];
+    };
 
-  const removeAllUsers = () => {
-    listUsers.value = [];
-  };
+    const removeAllUsers = () => {
+      listUsers.value = [];
+    };
 
-  return { listUsers, addUser, removeAllUsers };
-},
-{
-  persist: {
-    storage: persistedState.localStorage,
+    return { listUsers, addUser, removeAllUsers };
   },
-}
-
+  {
+    persist: {
+      storage: persistedState.localStorage,
+    },
+  }
 );

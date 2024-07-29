@@ -14,16 +14,16 @@ const UserTable = "users"
 
 // User model
 type User struct {
-	ID        string `json:"id"`
-	KratosID  string `json:"kratos_id" db:"kratos_id"`
-	FirstName string `json:"first_name" db:"first_name" validate:"required"`
-	LastName  string `json:"last_name" db:"last_name" validate:"required"`
-	Email     string `json:"email" db:"email" validate:"required"`
-	Username  string `json:"username" db:"username" validate:"required"`
-	Password  string `json:"-" db:"password"`
-	Roles     string `json:"roles,omitempty" db:"roles" validate:"required"`
-	CreatedAt string `json:"created_at,omitempty" db:"created_at,omitempty"`
-	UpdatedAt string `json:"updated_at,omitempty" db:"updated_at,omitempty"`
+	ID        string         `json:"id"`
+	KratosID  string         `json:"kratos_id" db:"kratos_id"`
+	FirstName string         `json:"first_name" db:"first_name" validate:"required"`
+	LastName  string         `json:"last_name" db:"last_name" validate:"required"`
+	Email     string         `json:"email" db:"email" validate:"required"`
+	Username  string         `json:"username" db:"username" validate:"required"`
+	Password  sql.NullString `json:"-" db:"password"`
+	Roles     string         `json:"roles,omitempty" db:"roles" validate:"required"`
+	CreatedAt string         `json:"created_at,omitempty" db:"created_at,omitempty"`
+	UpdatedAt string         `json:"updated_at,omitempty" db:"updated_at,omitempty"`
 }
 
 // UserModel implements user related database operations
@@ -120,6 +120,8 @@ func (model *UserModel) InsertKratosUser(user User) error {
 				"email":      user.Email,
 				"created_at": user.CreatedAt,
 				"updated_at": user.UpdatedAt,
+				"username":   user.Username,
+				"roles":      user.Roles,
 			},
 		).Executor().Exec()
 		if err != nil {
@@ -188,4 +190,22 @@ func (model *UserModel) GetUserRole(userID string) (string, error) {
 	}
 
 	return role, err
+}
+
+func (model *UserModel) GetUserByKratosID(kratosID string) (User, error) {
+	user := User{}
+
+	ok, err := model.db.From(UserTable).Where(goqu.Ex{
+		"kratos_id": kratosID,
+	}).ScanStruct(&user)
+
+	if err != nil {
+		return User{}, err
+	}
+
+	if !ok {
+		return User{}, sql.ErrNoRows
+	} else {
+		return user, nil
+	}
 }
