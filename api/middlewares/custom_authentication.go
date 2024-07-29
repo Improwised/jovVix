@@ -40,11 +40,15 @@ func (m *Middleware) CustomAuthenticated(c *fiber.Ctx) error {
 	}
 
 	token := c.Cookies(constants.CookieUser, "cookie not available")
-
-	if token == "cookie not available" {
-		AuthHavingNoTokenHandler(m, c)
+	kratosToken := c.Cookies(constants.KratosCookie, "cookie not available")
+	if kratosToken == "cookie not available" {
+		if token == "cookie not available" {
+			AuthHavingNoTokenHandler(m, c)
+		} else {
+			AuthHavingTokenHandler(m, c, token)
+		}
 	} else {
-		AuthHavingTokenHandler(m, c, token)
+		return m.KratosAuthenticated(c)
 	}
 
 	return c.Next()

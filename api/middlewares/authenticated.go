@@ -18,9 +18,15 @@ import (
 
 func (m *Middleware) Authenticated(c *fiber.Ctx) error {
 	token := c.Cookies(constants.CookieUser, "")
-	if token == "" {
-		m.Logger.Debug("returning unauthorized after found empty token")
-		return utils.JSONFail(c, http.StatusUnauthorized, constants.Unauthenticated)
+	kratosToken := c.Cookies(constants.KratosCookie, "")
+
+	if kratosToken == "" {
+		if token == "" {
+			m.Logger.Debug("returning unauthorized after found empty token")
+			return utils.JSONFail(c, http.StatusUnauthorized, constants.Unauthenticated)
+		}
+	} else {
+		return m.KratosAuthenticated(c)
 	}
 
 	claims, err := jwt.ParseToken(m.Config, token)

@@ -40,8 +40,8 @@
                     class="purple-text"
                   />
                 </div>
-                <div class="mb-3">
-                  <label for="username" class="form-label purple-text"
+                <div  class="mb-3">
+                  <label for="username" class="form-label purple-text" v-if="!isUserLoggedIn"
                     >User Name</label
                   >
                   <input
@@ -50,10 +50,12 @@
                     type="text"
                     name="username"
                     class="purple-text form-control"
+                    v-if="!isUserLoggedIn"
                   />
+                  <div v-if="isUserLoggedIn">Welcome <span class="font-weight-bold">{{ user?.name?.first }}</span></div>
                 </div>
                 <div class="p-2">
-                  <div v-if="!user" class="text-center">
+                  <div v-if="!isUserLoggedIn" class="text-center">
                     Want To Save Your Progress?
                     <NuxtLink to="/account/login"><b>Login</b></NuxtLink> Now.
                   </div>
@@ -81,8 +83,9 @@ import { useToast } from "vue-toastification";
 // Assuming these are imported from external libraries or mixins
 const code = ref("");
 const username = ref("");
-const user = ref(null);
-
+const user = ref({});
+const isUserLoggedIn = ref(false)
+const kratosURL = useRuntimeConfig().public.kratos_url
 const router = useRouter();
 const toast = useToast();
 
@@ -94,21 +97,40 @@ function join_quiz() {
     return;
   }
 
-  if (!username.value) {
+  if (!username.value && !isUserLoggedIn.value) {
     toast.error("Please add your username");
     return;
   }
 
-  if (username.value.length > 12) {
+  if (username.value.length > 12 && !isUserLoggedIn.value) {
     toast.error("Username must be a maximum of 12 characters long");
     return;
   }
 
-  console.log("Redirecting to the quiz");
   router.push(
     `/join/play/${code.value}?username=${encodeURIComponent(username.value)}`
   );
 }
+
+(async () => {
+  try {
+    await $fetch(kratosURL+"/sessions/whoami", {
+      method: "GET",
+      credentials: "include",
+      headers: {
+        Accept: "application/json",
+      },
+      onResponse({ response }) {
+        if (response.status >= 200 && response.status < 300) {
+          isUserLoggedIn.value = true;
+          user.value = response?._data?.identity?.traits
+        }
+      },
+    })
+  } catch (error) {
+    
+  }
+})();
 </script>
 
 <style scoped>

@@ -1,6 +1,6 @@
 <script setup>
 const quizList = ref();
-const url = useState("urls");
+const url = useRuntimeConfig().public
 const headers = useRequestHeaders(["cookie"]);
 const isLoading = ref(true);
 
@@ -13,7 +13,7 @@ setTimeout(() => {
 
 async function getQuizList() {
   const { data, error } = await useFetch(
-    url.value.api_url + "/admin/quizzes/list",
+    url.api_url + "/admin/quizzes/list",
     {
       method: "GET",
       headers: headers,

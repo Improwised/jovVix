@@ -126,7 +126,10 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 		Data:      "",
 	}
 
-	userName := c.Query(constants.UserName, "")
+	user, ok := quizUtilsHelper.ConvertType[models.User](c.Locals(constants.ContextUser))
+	if !ok {
+		qc.logger.Error("error while fetching user context from connection")
+	}
 	var quizResponse QuizReceiveResponse
 
 	// check for middleware error
@@ -178,7 +181,7 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 
 			if quizResponse.Event == "websocket_close" {
 				updateUserData(qc, userId, session.ID.String(), false, false)
-				qc.logger.Debug("connection close request is send by the user - " + userName)
+				qc.logger.Debug("connection close request is send by the user - " + user.Username)
 				break
 			}
 
@@ -202,7 +205,7 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 	}
 
 	// when user join at that time publish userName to admin
-	publishUserOnJoin(qc, response, userName, userId, session.ID.String())
+	publishUserOnJoin(qc, response, user.FirstName, userId, session.ID.String())
 
 	response.Action = constants.QuizQuestionStatus
 

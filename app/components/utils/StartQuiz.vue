@@ -1,6 +1,8 @@
 <script setup>
-let urls = useState("urls");
+import { useToast } from "vue-toastification";
+let urls = useRuntimeConfig().public;
 const router = useRouter();
+const toast = useToast();
 const props = defineProps({
   quizId: {
     default: () => {
@@ -10,25 +12,31 @@ const props = defineProps({
     required: true,
   },
 });
+console.log()
 
 async function handleStartDemo() {
-  const { data, error } = await useFetch(
-    encodeURI(
-      urls.value.api_url + "/admin/quizzes/" + props.quizId + "/demo_session"
-    ),
-    {
-      method: "POST",
-      mode: "cors",
-      credentials: "include",
+  try {
+    const { data, error } = await useFetch(
+      encodeURI(
+        urls.api_url + "/admin/quizzes/" + props.quizId + "/demo_session"
+      ),
+      {
+        method: "POST",
+        mode: "cors",
+        credentials: "include",
+      }
+    );
+  
+    if (error.value?.data) {
+      console.log(urls.value.api_url)
+      toast.error(error.value.data.data);
+      return;
     }
-  );
-
-  if (error.value?.data) {
-    toast.error(error.value.data.data);
-    return;
+  
+    router.push("/admin/arrange/" + data.value.data);
+  } catch (error) {
+    console.error(error)
   }
-
-  router.push("/admin/arrange/" + data.value.data);
 }
 </script>
 <template>

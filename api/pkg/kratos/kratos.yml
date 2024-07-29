@@ -89,10 +89,10 @@ selfservice:
         default_browser_return_url: http://127.0.0.1:3001/login
 
     login:
-      ui_url: http://127.0.0.1:3001/login
+      ui_url: http://127.0.0.1:3001/account/login
       # http://127.0.0.1:4433/self-service/login/browser?aal=&refresh=&return_to=
       after:
-        default_browser_return_url: http://127.0.0.1:3000/api/v1/kratos/auth
+        default_browser_return_url: http://127.0.0.1:3001
       lifespan: 10m
 
     registration:

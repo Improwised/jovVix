@@ -201,7 +201,7 @@ func (ctrl *AuthController) IsRegisteredUser(c *fiber.Ctx) error {
 
 	res, err := kratosClient.R().SetResult(&kratosUser).Get("/whoami")
 	if err != nil || res.StatusCode() != http.StatusOK {
-		ctrl.logger.Debug("unauthenticated registration", zap.Any("response from kratos", res.RawResponse))
+		ctrl.logger.Debug("unauthenticated registration", zap.Any("response from kratos", res.RawResponse), zap.Error(err), zap.Any("kratos response", res))
 		return utils.JSONError(c, res.StatusCode(), constants.ErrKratosAuth)
 	} else {
 		return utils.JSONSuccess(c, http.StatusOK, true)

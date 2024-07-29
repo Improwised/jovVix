@@ -19,6 +19,7 @@ const errors = ref({
 });
 const registerURLWithFlowQuery = ref("");
 const kratos_url = urls.kratos_url;
+console.log(urls) // remove this after checking in production
 console.log(); // this console.log is required because without this, nuxt will give 5xx error as async function is called afterwards
 
 (async () => {
