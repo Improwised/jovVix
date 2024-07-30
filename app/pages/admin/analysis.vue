@@ -33,7 +33,6 @@
             :key="index"
             :data="userJson[oData]"
             :survey-questions="surveyQuestions"
-            :total-quiz-points="totalQuizPoints"
             class="user-analytics-item"
             @click="openPopup"
           ></QuizUserAnalyticsSpace>
@@ -89,7 +88,6 @@ const { getUserScoreboardData } = userScoreboardDataStore;
 
 let storedData = {};
 const surveyQuestions = ref(0);
-const totalQuizPoints = ref(0);
 
 const fetchData = () => {
   storedData = getUserScoreboardData();
@@ -139,7 +137,6 @@ const getAnalysisJson = async (activeQuizId) => {
       for (const key in userJson.value) {
         userJson.value[key].forEach((question) => {
           if (!question.rank) {
-            totalQuizPoints.value += parseInt(question.points);
             if (question.question_type == "survey") {
               surveyQuestions.value++;
             }

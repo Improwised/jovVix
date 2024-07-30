@@ -140,7 +140,7 @@ if (!props.isAdmin) {
     userCorrectAnswer.value = userAnswerAnalysis.value.filter(Boolean).length;
 
     userAccuracy.value = (
-      (userGainedPoints.value / totalPoints.value) *
+      (userCorrectAnswer.value / userAnswerAnalysis.value.length) *
       100
     ).toFixed(2);
   };

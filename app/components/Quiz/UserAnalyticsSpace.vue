@@ -10,23 +10,16 @@ const props = defineProps({
     type: Number,
     required: true,
   },
-  totalQuizPoints: {
-    type: Number,
-    required: true,
-  },
 });
 
 let totalScore = 0; // user total score
 let accuracyArr = []; // get array of correct, incorrect and unattempted questions
-let accuracy = 0; // user wise accuracy based on gainedPoints/divided by totalPoints
+let accuracy = 0; // user wise accuracy based on correctAnwers/totalQuestions where survey questions are not included in both
 let rank = 0; // user rank
 
 const totalSurveyQuestions = props.surveyQuestions; // count of total number of survey questions
 
 const answeredSurvey = ref(0); // count of the surveys user has attempted
-
-const gainedPoints = ref(0); // total gained points by user by providing correct answer and gaining bonus survey points
-let correctIncorrectFlag = false; // boolean returned from isCorrectAnswer function to use in condition for counting total gained points by user
 
 props.data.forEach(function (arrayItem) {
   // if it is the survey question then apply this block's logic
@@ -34,7 +27,6 @@ props.data.forEach(function (arrayItem) {
     totalSurveyQuestions;
     if (arrayItem.is_attend) {
       answeredSurvey.value++;
-      gainedPoints.value += arrayItem.points;
     }
   } else {
     // if it is not the survey question then apply this block's logic
@@ -43,16 +35,12 @@ props.data.forEach(function (arrayItem) {
     if (!arrayItem.rank) {
       // check if it is attempted or not, if attempted then check correct or incorrect and push accordingly, correct - true, incorrect - false
       if (arrayItem.is_attend) {
-        correctIncorrectFlag = isCorrectAnswer(
-          arrayItem.selected_answer.String,
-          arrayItem.correct_answer
+        accuracyArr.push(
+          isCorrectAnswer(
+            arrayItem.selected_answer.String,
+            arrayItem.correct_answer
+          )
         );
-        accuracyArr.push(correctIncorrectFlag);
-
-        // if correct then add points to gained points
-        if (correctIncorrectFlag) {
-          gainedPoints.value += arrayItem.points;
-        }
       } else {
         // if it is unattempted then push 0
         accuracyArr.push(0);
@@ -65,8 +53,6 @@ props.data.forEach(function (arrayItem) {
   }
 });
 
-accuracy = ((gainedPoints.value / props.totalQuizPoints) * 100).toFixed(2);
-
 const countTrue = accuracyArr.filter(Boolean).length;
 const notAttempted = accuracyArr.filter((value) => value === 0).length;
 const countFalse = accuracyArr.length - countTrue - notAttempted;
@@ -74,6 +60,8 @@ const countFalse = accuracyArr.length - countTrue - notAttempted;
 const correctWidth = (countTrue / accuracyArr.length) * 100; // percentage of correct answers
 const unattemptedWidth = (notAttempted / accuracyArr.length) * 100; // percentage of unattempted answers
 const incorrectWidth = 100 - correctWidth - unattemptedWidth; // percentage of incorrect answers
+
+accuracy = ((countTrue / accuracyArr.length) * 100).toFixed(2);
 
 const handleMouseEnter = (event) => {
   event.target.style.transform = "scale(1.05)"; // Scale up on hover
