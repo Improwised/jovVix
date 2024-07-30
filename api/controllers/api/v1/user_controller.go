@@ -115,13 +115,13 @@ func (ctrl *UserController) CreateUser(c *fiber.Ctx) error {
 	}
 	user, err := ctrl.userService.RegisterUser(models.User{
 		FirstName: userReq.FirstName,
-		LastName: userReq.LastName,
-		Email: userReq.Email,
+		LastName:  userReq.LastName,
+		Email:     userReq.Email,
 		Password: sql.NullString{
 			String: userReq.Password,
-			Valid: true,
+			Valid:  true,
 		},
-		Roles: role,
+		Roles:    role,
 		Username: userReq.UserName}, ctrl.event)
 	if err != nil {
 
@@ -170,22 +170,34 @@ func (ctrl *UserController) IsAdmin(c *fiber.Ctx) error {
 
 func (ctrl *UserController) GetUserMeta(c *fiber.Ctx) error {
 	userID := quizUtilsHelper.GetString(c.Locals(constants.ContextUid))
+	var userMeta = models.User{}
+	var err error
+	var ok bool
 
-	user, err := ctrl.userService.GetUser(userID)
+	if kratosToken := c.Cookies(constants.KratosCookie); kratosToken == "" {
+		userMeta, err = ctrl.userService.GetUser(userID)
 
-	if err != nil {
-		if err == sql.ErrNoRows {
-			c.Cookie(RemoveUserToken(constants.ContextUid))
-			ctrl.logger.Error("Cannot be able to get the user details from database")
+		if err != nil {
+			if err == sql.ErrNoRows {
+				c.Cookie(RemoveUserToken(constants.ContextUid))
+				ctrl.logger.Error("Cannot be able to get the userMeta details from database")
+				return utils.JSONFail(c, http.StatusNotFound, constants.Unauthenticated)
+			}
+			return utils.JSONError(c, http.StatusBadRequest, constants.UnknownError)
+		}
+	} else {
+		userMeta, ok = quizUtilsHelper.ConvertType[models.User](c.Locals(constants.ContextUser))
+
+		if !ok {
+			ctrl.logger.Error("Cannot be able to get the userMeta details from database")
 			return utils.JSONFail(c, http.StatusNotFound, constants.Unauthenticated)
 		}
-		return utils.JSONError(c, http.StatusBadRequest, constants.UnknownError)
 	}
 
 	return utils.JSONSuccess(c, http.StatusOK, map[string]string{
-		"username":  user.Username,
-		"firstname": user.FirstName,
-		"email":     user.Email,
+		"username":  userMeta.Username,
+		"firstname": userMeta.FirstName,
+		"email":     userMeta.Email,
 	})
 }
 

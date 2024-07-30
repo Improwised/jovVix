@@ -67,7 +67,8 @@ const handleQuizEvents = async (message) => {
     );
   } else if (message.event == app.$TerminateQuiz) {
     monitorTerminateQuiz.value = true;
-    return await router.push(`/join/${route.query.username}/scoreboard`);
+    console.log(userMeta);
+    return await router.push(`/join/${userMeta.value.username}/scoreboard`);
   } else if (message.event == app.$RedirectToAdmin) {
     return await router.push("/admin/arrange/" + message.data.sessionId);
   } else if (

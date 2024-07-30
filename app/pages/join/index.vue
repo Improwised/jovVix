@@ -124,6 +124,7 @@ function join_quiz() {
         if (response.status >= 200 && response.status < 300) {
           isUserLoggedIn.value = true;
           user.value = response?._data?.identity?.traits
+          username.value = user?.value?.name?.first
         }
       },
     })
