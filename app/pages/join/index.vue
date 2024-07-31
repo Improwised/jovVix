@@ -40,19 +40,24 @@
                     class="purple-text"
                   />
                 </div>
-                <div  class="mb-3">
-                  <label for="username" class="form-label purple-text" v-if="!isUserLoggedIn"
+                <div class="mb-3">
+                  <label
+                    v-if="!isUserLoggedIn"
+                    for="username"
+                    class="form-label purple-text"
                     >User Name</label
                   >
                   <input
+                    v-if="!isUserLoggedIn"
                     id="username"
                     v-model.trim="username"
                     type="text"
                     name="username"
                     class="purple-text form-control"
-                    v-if="!isUserLoggedIn"
                   />
-                  <div v-if="isUserLoggedIn">Welcome <span class="font-weight-bold">{{ user?.name?.first }}</span></div>
+                  <div v-if="isUserLoggedIn">
+                    Welcome <span class="font-weight-bold">{{ user }}</span>
+                  </div>
                 </div>
                 <div class="p-2">
                   <div v-if="!isUserLoggedIn" class="text-center">
@@ -84,8 +89,8 @@ import { useToast } from "vue-toastification";
 const code = ref("");
 const username = ref("");
 const user = ref({});
-const isUserLoggedIn = ref(false)
-const kratosURL = useRuntimeConfig().public.kratos_url
+const isUserLoggedIn = ref(false);
+const { kratos_url } = useRuntimeConfig().public;
 const router = useRouter();
 const toast = useToast();
 
@@ -112,9 +117,10 @@ function join_quiz() {
   );
 }
 
+// get user from kratos
 (async () => {
   try {
-    await $fetch(kratosURL+"/sessions/whoami", {
+    await $fetch(kratos_url + "/sessions/whoami", {
       method: "GET",
       credentials: "include",
       headers: {
@@ -123,15 +129,28 @@ function join_quiz() {
       onResponse({ response }) {
         if (response.status >= 200 && response.status < 300) {
           isUserLoggedIn.value = true;
-          user.value = response?._data?.identity?.traits
-          username.value = user?.value?.name?.first
+          user.value = response?._data?.identity?.traits.name.first;
+          username.value = user.value;
+        } else {
+          // check for session storage if user is not available in kratos
+          getGuestUser();
+          user.value = response?._data?.identity?.traits;
+          username.value = user?.value?.name?.first;
         }
       },
-    })
-  } catch (error) {
-    
-  }
+    });
+  } catch (error) {}
 })();
+
+// get user from seesion storage
+const getGuestUser = async () => {
+  const guestUser = await useGetUser();
+  if (guestUser.value.ok) {
+    isUserLoggedIn.value = true;
+    user.value = guestUser.value.data.firstname;
+    username.value = user.value;
+  }
+};
 </script>
 
 <style scoped>
@@ -261,6 +280,7 @@ body {
     opacity: 1;
     border-radius: 0;
   }
+
   100% {
     transform: translateY(-1000px) rotate(720deg);
     opacity: 0;
@@ -270,7 +290,8 @@ body {
 
 .join-page-container {
   position: relative;
-  overflow-x: hidden; /* Prevent horizontal scrolling */
+  overflow-x: hidden;
+  /* Prevent horizontal scrolling */
 }
 
 .content-container {
@@ -288,6 +309,7 @@ body {
 }
 
 .join-button:hover {
-  background: #6f4eb8; /* Slightly darker shade */
+  background: #6f4eb8;
+  /* Slightly darker shade */
 }
 </style>

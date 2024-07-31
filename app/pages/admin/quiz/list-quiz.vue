@@ -1,6 +1,6 @@
 <script setup>
 const quizList = ref();
-const url = useRuntimeConfig().public
+const url = useRuntimeConfig().public;
 const headers = useRequestHeaders(["cookie"]);
 const isLoading = ref(true);
 
@@ -12,15 +12,12 @@ setTimeout(() => {
 }, 1000);
 
 async function getQuizList() {
-  const { data, error } = await useFetch(
-    url.api_url + "/admin/quizzes/list",
-    {
-      method: "GET",
-      headers: headers,
-      mode: "cors",
-      credentials: "include",
-    }
-  );
+  const { data, error } = await useFetch(url.api_url + "/admin/quizzes/list", {
+    method: "GET",
+    headers: headers,
+    mode: "cors",
+    credentials: "include",
+  });
 
   watch(
     [data],

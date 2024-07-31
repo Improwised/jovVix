@@ -6,7 +6,7 @@ const router = useRouter();
 const toast = useToast();
 const csrfToken = ref();
 const component = ref("waiting");
-const loginURLWithFlowQuery = ref("")
+const loginURLWithFlowQuery = ref("");
 const urls = useRuntimeConfig().public;
 const errors = ref({
   email: "",
@@ -60,7 +60,8 @@ console.log();
           },
           onResponse({ response }) {
             if (response?._data?.ui?.messages[0]?.type === "error") {
-              errors.value.password = "The provided credentials are invalid, check for spelling mistakes in your password or email"
+              errors.value.password =
+                "The provided credentials are invalid, check for spelling mistakes in your password or email";
             }
           },
         });
@@ -135,8 +136,8 @@ async function setFlowIDAndCSRFToken() {
         />
       </div>
       <div v-if="errors.password" class="text-danger">
-          {{ errors.password }}
-        </div>
+        {{ errors.password }}
+      </div>
       <div>
         <input type="hidden" name="csrf_token" :value="csrfToken" />
       </div>

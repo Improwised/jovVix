@@ -7,7 +7,7 @@ export default defineNuxtConfig({
       base_url: process.env.BASE_URL,
       api_url: process.env.API_URL,
       socket_url: process.env.API_SOCKET_URL,
-      kratos_url: process.env.KRATOS_URL
+      kratos_url: process.env.KRATOS_URL,
     },
   },
   app: {

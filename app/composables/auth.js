@@ -24,7 +24,7 @@ export async function useIsAdmin() {
 export async function useGetUser() {
   const cfg = useSystemEnv();
   const headers = useRequestHeaders(["cookie"]);
-  const isLogin = useState("user", () => {
+  const isLogin = useState("guestUser", () => {
     return { ok: false, data: "" };
   });
 
@@ -46,4 +46,31 @@ export async function useGetUser() {
   isLogin.value.ok = true;
   isLogin.value.data = data?.value.data;
   return isLogin;
+}
+
+export async function useGetKratosUser() {
+  const cfg = useSystemEnv();
+  const headers = useRequestHeaders(["cookie"]);
+  const isKratosUser = useState("kratosUser", () => {
+    return { ok: false, data: "" };
+  });
+
+  const { error: err, data: data } = await useFetch(
+    cfg.value.kratos_url + "/sessions/whoami",
+    {
+      method: "GET",
+      credentials: "include",
+      headers: headers,
+      mode: "cors",
+    }
+  );
+
+  if (err?.value) {
+    isKratosUser.value.ok = false;
+    return isKratosUser;
+  }
+
+  isKratosUser.value.ok = true;
+  isKratosUser.value.data = data?.value.data;
+  return isKratosUser;
 }

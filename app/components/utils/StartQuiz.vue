@@ -12,7 +12,7 @@ const props = defineProps({
     required: true,
   },
 });
-console.log()
+console.log();
 
 async function handleStartDemo() {
   try {
@@ -26,16 +26,16 @@ async function handleStartDemo() {
         credentials: "include",
       }
     );
-  
+
     if (error.value?.data) {
-      console.log(urls.value.api_url)
+      console.log(urls.value.api_url);
       toast.error(error.value.data.data);
       return;
     }
-  
+
     router.push("/admin/arrange/" + data.value.data);
   } catch (error) {
-    console.error(error)
+    console.error(error);
   }
 }
 </script>
