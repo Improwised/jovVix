@@ -1,6 +1,6 @@
 Question Text,Question Type,Points,Option 1,Option 2,Option 3,Option 4,Option 5,Correct Answer
-What is the name of the artificial intelligence framework developed by Facebook?,type,20,TensorFlow,Theano,PyTorch,Caffe,,1
-Which technology uses neural networks to enable machines to understand and generate human language?,type,20,Robotics,Natural Language Processing(NLP),Blockchain,Computer vision,,2
-Which of the following landmarks are located in Paris?,,10,Eiffel tower,Big Ben,Notre-dame-cathedral,Collosseum,,1|2
-Which cities are known for their iconic carnival celebrations?,,20,Rio de Janeiro,Italy,USA,UK,,1|3
-What is the name of the open-source platform for building and training machine learning models developed by Google?,type,15,TensorFlow,SciKit,Pytorch,Keras,,1
+Which city is known as the Eternal City?,single answer,1,Paris,Rome,Athens,Cairo,,2
+What features of a travel destination are most important to you when planning a vacation?,survey,1,Scenic landscapes,Cultural experiences,Local cuisine,Historical sites,Adventure activities,1|2|3|4|5
+Which mountain is the tallest in the world?,single answer,1,Mount Kilimanjaro,Mount Everest,Mount Fuji,Denali,,2
+Which of the following landmarks is located in Paris?,single answer,1,The Colosseum,The Eiffel Tower,The Statue of Liberty,Big Ben,,2
+What motivates you to participate in online quiz games?,survey,1,Competition with others,Learning new information,Earning rewards or badges,Fun and entertainment,Social interaction,1|2|3|4|5
