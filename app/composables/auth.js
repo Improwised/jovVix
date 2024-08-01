@@ -49,28 +49,70 @@ export async function useGetUser() {
 }
 
 export async function useGetKratosUser() {
-  const cfg = useSystemEnv();
-  const headers = useRequestHeaders(["cookie"]);
+  const { kratos_url } = useRuntimeConfig().public;
   const isKratosUser = useState("kratosUser", () => {
     return { ok: false, data: "" };
   });
-
-  const { error: err, data: data } = await useFetch(
-    cfg.value.kratos_url + "/sessions/whoami",
-    {
+  try {
+    await $fetch(kratos_url + "/sessions/whoami", {
       method: "GET",
       credentials: "include",
-      headers: headers,
-      mode: "cors",
-    }
-  );
+      headers: {
+        Accept: "application/json",
+      },
+      onResponse({ response }) {
+        if (response.status >= 200 && response.status < 300) {
+          isKratosUser.value.ok = true;
+          isKratosUser.value.data = response;
+        }
+      },
+    });
+  } catch (error) {}
 
-  if (err?.value) {
-    isKratosUser.value.ok = false;
-    return isKratosUser;
-  }
-
-  isKratosUser.value.ok = true;
-  isKratosUser.value.data = data?.value.data;
   return isKratosUser;
 }
+
+export const handleLogout = async () => {
+  const { kratos_url } = useRuntimeConfig().public;
+
+  try {
+    // Step 1: Fetch logout URL and token from the first API endpoint
+    const response = await fetch(`${kratos_url}/self-service/logout/browser`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch logout URL and token");
+    }
+
+    const { logout_url } = await response.json();
+
+    // Step 2: Use the fetched URL and token to make another API call
+    const secondApiResponse = await fetch(`${logout_url}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      credentials: "include",
+    });
+
+    if (!secondApiResponse.ok) {
+      throw new Error(
+        "Failed to perform logout with the provided URL and token"
+      );
+    }
+    console.log("Logged out successfully");
+    const user = useState("kratosUser");
+    navigateTo("/");
+    user.value.ok = false;
+    user.value.data = null;
+  } catch (error) {
+    console.error("Error during logout:", error);
+  }
+};

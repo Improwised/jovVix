@@ -23,7 +23,7 @@
             </button>
             <!-- Navbar toggler for mobile -->
             <button
-              class="navbar-toggler bg-dark"
+              class="navbar-toggler bg-dark" 
               type="button"
               data-bs-toggle="collapse"
               data-bs-target="#navbarNavAltMarkup"
@@ -41,14 +41,44 @@
             class="collapse navbar-collapse justify-content-end"
           >
             <ul class="navbar-nav">
+             
+                <!-- Register button -->
+               <li class="nav-item mb-1">
+               <button
+                 v-if="!isKratosUser.ok"
+                 class="btn custom-btn nav-link btn-link rounded-pill"
+                  @click="navigate('/account/register')"
+                >
+                  Register
+               </button>
+               </li>
+              <!-- Login button -->
               <li class="nav-item mb-1">
                 <button
+                  v-if="!isKratosUser.ok"
                   class="btn custom-btn nav-link btn-link rounded-pill"
                   @click="navigate('/account/login')"
                 >
-                  Profile/Login
+                  Login
+                </button>
+                <button
+                  v-else
+                  class="btn custom-btn nav-link btn-link rounded-pill"
+                  @click="navigate('/account/')"
+                >
+                  My Profile
                 </button>
               </li>
+              <!-- create quiz button -->
+              <li v-if="isKratosUser.ok" class="nav-item mb-1">
+                <button
+                  class="btn custom-btn nav-link btn-link rounded-pill"
+                  @click="navigate('/admin/quiz/list-quiz')"
+                >
+                  Create Quiz
+                </button>
+              </li>
+              <!-- join quiz button -->
               <li class="nav-item mb-1">
                 <button
                   class="btn custom-btn nav-link btn-link rounded-pill"
@@ -57,12 +87,13 @@
                   Join Quiz
                 </button>
               </li>
-              <li class="nav-item mb-1">
+              <!-- Log out button -->
+              <li v-if="isKratosUser.ok" class="nav-item mb-1">
                 <button
                   class="btn custom-btn nav-link btn-link rounded-pill"
-                  @click="navigate('/admin/quiz/list-quiz')"
+                  @click="handleLogout()"
                 >
-                  Admin
+                  Log Out
                 </button>
               </li>
             </ul>
@@ -86,13 +117,13 @@
   </div>
 </template>
 
-<script>
-export default {
-  methods: {
-    navigate(url) {
-      this.$router.push(url); // Navigate using Vue Router
-    },
-  },
+<script setup>
+import { useGetKratosUser, handleLogout } from "~~/composables/auth";
+const router = useRouter();
+const isKratosUser = await useGetKratosUser();
+
+const navigate = (url) => {
+  router.push(url);
 };
 </script>
 
