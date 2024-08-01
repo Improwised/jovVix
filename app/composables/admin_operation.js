@@ -3,18 +3,13 @@ import QuizHandler from "./quiz_operation";
 
 export default class AdminOperations extends QuizHandler {
   constructor(session_id, handler, errorHandler, skipConfirmHandler) {
-    // get nuxt hooks
-    const url = useState("urls");
+    const url = useRuntimeConfig().public;
 
     // Initialize object
-    super(
-      url.value.socket_url + "/admin/arrange/" + session_id,
-      session_id,
-      handler
-    );
+    super(url.socket_url + "/admin/arrange/" + session_id, session_id, handler);
 
     // Initialize custom attribute
-    this.api_url = url.value.api_url;
+    this.api_url = url.api_url;
     this.errorHandler = errorHandler;
     this.skipHandler = skipConfirmHandler;
   }

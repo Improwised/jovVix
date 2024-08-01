@@ -24,7 +24,7 @@ const monitorTerminateQuiz = ref(false);
 
 //for username
 const headers = useRequestHeaders(["cookie"]);
-const url = useState("urls");
+const url = useRuntimeConfig().public;
 const endpoint = "/user/who";
 const userMeta = ref({});
 
@@ -149,7 +149,7 @@ onBeforeUnmount(() => {
 });
 
 async function getUserNameData() {
-  const response = await $fetch(url.value.api_url + endpoint, {
+  const response = await $fetch(url.api_url + endpoint, {
     method: "GET",
     headers,
     credentials: "include",

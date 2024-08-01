@@ -1,53 +1,31 @@
 <script setup>
-const quizList = ref();
 const url = useRuntimeConfig().public;
 const headers = useRequestHeaders(["cookie"]);
-const isLoading = ref(true);
 
-// remove quiz list loader after 1 sec
-setTimeout(() => {
-  if (quizList.value) {
-    isLoading.value = false;
-  }
-}, 1000);
-
-async function getQuizList() {
-  const { data, error } = await useFetch(url.api_url + "/admin/quizzes/list", {
-    method: "GET",
-    headers: headers,
-    mode: "cors",
-    credentials: "include",
-  });
-
-  watch(
-    [data],
-    () => {
-      if (data.value) {
-        isLoading.value = false;
-        quizList.value = data.value.data;
-      }
-      if (error.value) {
-        toast.error(error);
-      }
-    },
-    { immediate: true, deep: true }
-  );
-}
-onBeforeMount(() => {
-  getQuizList();
+const {
+  data: quizList,
+  pending: quizPending,
+  error: quizError,
+} = useFetch(url.api_url + "/admin/quizzes/list", {
+  method: "GET",
+  headers: headers,
+  mode: "cors",
+  credentials: "include",
 });
 </script>
 <template>
   <div class="container max-width p-0">
     <div class="d-flex flex-column justify-content-center">
       <!-- list loader -->
-      <UtilsQuizListWaiting v-if="isLoading" />
+      <UtilsQuizListWaiting v-if="quizPending" />
+
+      <div v-else-if="quizError">{{ quizError.message }}</div>
 
       <!-- quiz details -->
       <div v-else>
         <!-- create quiz if not exists -->
         <div
-          v-if="quizList.length < 1"
+          v-if="quizList?.data.length < 1"
           class="no-quiz-list d-flex flex-column align-items-center"
         >
           <h1>No Quiz Created By You !</h1>
@@ -65,7 +43,7 @@ onBeforeMount(() => {
             </div>
           </nav>
           <div class="d-flex flex-column gap-3">
-            <div v-for="(details, index) in quizList" :key="index">
+            <div v-for="(details, index) in quizList?.data" :key="index">
               <QuizListCard :details="details" />
             </div>
           </div>

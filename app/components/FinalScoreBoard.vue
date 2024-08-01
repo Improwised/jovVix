@@ -2,7 +2,7 @@
 import { isCorrectAnswer } from "~/composables/check_is_correct.js/";
 import { useToast } from "vue-toastification";
 
-const url = useState("urls");
+const url = useRuntimeConfig().public;
 const scoreboardData = reactive([]);
 const route = useRoute();
 const router = useRouter();
@@ -43,7 +43,7 @@ const props = defineProps({
 });
 
 async function getFinalScoreboardDetails(endpoint) {
-  const { data, error } = await useFetch(() => url.value.api_url + endpoint, {
+  const { data, error } = await useFetch(() => url.api_url + endpoint, {
     method: "GET",
     headers: headers,
     credentials: "include",
@@ -81,7 +81,7 @@ if (props.isAdmin) {
 if (!props.isAdmin) {
   async function getAnalysisDetails() {
     const { data, error } = await useFetch(
-      () => url.value.api_url + userAnalysisEndpoint,
+      () => url.api_url + userAnalysisEndpoint,
       {
         method: "GET",
         headers: headers,

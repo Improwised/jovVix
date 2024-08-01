@@ -62,7 +62,7 @@ import { ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import lodash from "lodash";
 
-const url = useState("urls");
+const url = useRuntimeConfig().public;
 const headers = useRequestHeaders(["cookie"]);
 
 const analysisJson = ref([]);
@@ -96,7 +96,7 @@ const fetchData = () => {
 const getAnalysisJson = async (activeQuizId) => {
   try {
     const response = await fetch(
-      `${url.value.api_url}/analytics_board/admin?active_quiz_id=${activeQuizId}`,
+      `${url.api_url}/analytics_board/admin?active_quiz_id=${activeQuizId}`,
       {
         method: "GET",
         headers: headers.value,

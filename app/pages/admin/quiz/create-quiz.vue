@@ -10,17 +10,11 @@ useSystemEnv();
 // define props and emits
 let file = ref(0);
 let title = ref("");
-let urls = useState("urls");
+const url = useRuntimeConfig().public;
 let quizId = ref();
-
-// if urls not found
-if (!urls.value.api_url) {
-  toast.warning("please reload the page");
-}
 
 // core
 async function submit(e) {
-  urls = useState("urls");
   e.preventDefault();
   const formData = new FormData();
 
@@ -30,7 +24,7 @@ async function submit(e) {
   formData.append(description.name, description.value);
   formData.append(attachment.name, attachment.files[0]);
   const { data, error } = await useFetch(
-    encodeURI(urls.value.api_url + "/admin/quizzes/" + title.value + "/upload"),
+    encodeURI(url.api_url + "/admin/quizzes/" + title.value + "/upload"),
     {
       method: "POST",
       body: formData,

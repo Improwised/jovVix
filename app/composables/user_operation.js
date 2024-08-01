@@ -5,15 +5,16 @@ import constants from "~~/config/constants";
 
 export default class UserOperation extends QuizHandler {
   constructor(code, username, handler, errorHandler, successHandler) {
-    const url = useState("urls");
+    const url = useRuntimeConfig().public;
+
     super(
-      url.value.socket_url + "/join/" + code + "?username=" + username,
+      url.socket_url + "/join/" + code + "?username=" + username,
       code,
       handler
     );
     this.errorHandler = errorHandler;
     this.successHandler = successHandler;
-    this.api_url = url.value.api_url;
+    this.api_url = url.api_url;
     this.pingInterval = null;
     this.isWaiting = false;
 
