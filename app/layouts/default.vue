@@ -23,7 +23,7 @@
             </button>
             <!-- Navbar toggler for mobile -->
             <button
-              class="navbar-toggler bg-dark" 
+              class="navbar-toggler bg-dark"
               type="button"
               data-bs-toggle="collapse"
               data-bs-target="#navbarNavAltMarkup"
@@ -41,17 +41,16 @@
             class="collapse navbar-collapse justify-content-end"
           >
             <ul class="navbar-nav">
-             
-                <!-- Register button -->
-               <li class="nav-item mb-1">
-               <button
-                 v-if="!isKratosUser.ok"
-                 class="btn custom-btn nav-link btn-link rounded-pill"
+              <!-- Register button -->
+              <li class="nav-item mb-1">
+                <button
+                  v-if="!isKratosUser.ok"
+                  class="btn custom-btn nav-link btn-link rounded-pill"
                   @click="navigate('/account/register')"
                 >
                   Register
-               </button>
-               </li>
+                </button>
+              </li>
               <!-- Login button -->
               <li class="nav-item mb-1">
                 <button
@@ -64,7 +63,7 @@
                 <button
                   v-else
                   class="btn custom-btn nav-link btn-link rounded-pill"
-                  @click="navigate('/account/')"
+                  @click="navigate('/admin')"
                 >
                   My Profile
                 </button>

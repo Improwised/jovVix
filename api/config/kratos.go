@@ -23,3 +23,11 @@ type KratosUserDetails struct {
 		UpdatedAt string `json:"updated_at"`
 	} `json:"identity"`
 }
+
+type KratosTraits struct {
+	Name struct {
+		Last  string `json:"last"`
+		First string `json:"first"`
+	} `json:"name"`
+	Email string `json:"email"`
+}

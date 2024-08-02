@@ -11,6 +11,7 @@ import (
 
 // UserTable represent table name
 const UserTable = "users"
+const KratosIdentityTable = "kratos.identities"
 
 // User model
 type User struct {
@@ -54,6 +55,7 @@ func (model *UserModel) GetById(id string) (User, error) {
 		"id": id,
 	}).Select(
 		"id",
+		"kratos_id",
 		"first_name",
 		"last_name",
 		"email",
@@ -208,4 +210,35 @@ func (model *UserModel) GetUserByKratosID(kratosID string) (User, error) {
 	} else {
 		return user, nil
 	}
+}
+
+func (model *UserModel) UpdateUser(user User) (User, error) {
+
+	record := goqu.Record{
+		"first_name": user.FirstName,
+		"last_name":  user.LastName,
+		"email":      user.Email,
+	}
+
+	_, err := model.db.Update(UserTable).Set(record).Where(goqu.Ex{
+		"id": user.ID,
+	}).Executor().Exec()
+	if err != nil {
+		return User{}, err
+	}
+
+	return model.GetById(user.ID)
+}
+
+func (model *UserModel) UpdateKratosUserById(Id string, data []byte) error {
+
+	record := goqu.Record{
+		"traits": data,
+	}
+
+	_, err := model.db.Update(KratosIdentityTable).Set(record).Where(goqu.Ex{
+		"id": Id,
+	}).Executor().Exec()
+
+	return err
 }

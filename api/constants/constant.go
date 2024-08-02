@@ -20,7 +20,8 @@ const (
 
 // params
 const (
-	ParamUid = "userId"
+	ParamUid         = "userId"
+	UserPlayedQuizId = "user_played_quiz_id"
 )
 
 // Success messages

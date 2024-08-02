@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/Improwised/quizz-app/api/config"
@@ -132,6 +133,9 @@ func (ctrl *AuthController) DoKratosAuth(c *fiber.Ctx) error {
 	userStruct.KratosID = kratosUser.Identity.ID
 	userStruct.CreatedAt = kratosUser.Identity.CreatedAt
 	userStruct.UpdatedAt = kratosUser.Identity.UpdatedAt
+	userStruct.FirstName = kratosUser.Identity.Traits.Name.First
+	userStruct.LastName = kratosUser.Identity.Traits.Name.Last
+	userStruct.Email = kratosUser.Identity.Traits.Email
 	userStruct.Username = kratosUser.Identity.Traits.Name.First
 	userStruct.Roles = "user"
 
@@ -147,7 +151,7 @@ func (ctrl *AuthController) DoKratosAuth(c *fiber.Ctx) error {
 
 		if pqErr.Code == "23505" {
 
-			if  pqErr.Constraint != constants.UserUkey {
+			if pqErr.Constraint != constants.UserUkey {
 				ctrl.logger.Debug("user wants to use the username which is already registered")
 				return utils.JSONError(c, http.StatusInternalServerError, fmt.Sprintf("username (%s) already registered", userStruct.Username))
 			}
@@ -165,14 +169,14 @@ func (ctrl *AuthController) DoKratosAuth(c *fiber.Ctx) error {
 					}
 				}
 			}
-		} 
-		
-		if err != nil{
+		}
+
+		if err != nil {
 			ctrl.logger.Error("unable to insert the user registered with kratos into the database and username is - "+userStruct.Username, zap.Error(err))
 			return utils.JSONError(c, http.StatusInternalServerError, constants.ErrKratosDataInsertion)
 		}
 	}
-	
+
 	cookieExpirationTime, err := time.ParseDuration(ctrl.config.Kratos.CookieExpirationTime)
 	if err != nil {
 		ctrl.logger.Debug("unable to parse the duration for the cookie expiration", zap.Error(err))
@@ -206,4 +210,70 @@ func (ctrl *AuthController) IsRegisteredUser(c *fiber.Ctx) error {
 	} else {
 		return utils.JSONSuccess(c, http.StatusOK, true)
 	}
+}
+
+func (ctrl *AuthController) GetRegisteredUser(c *fiber.Ctx) error {
+	kratosId := c.Cookies("ory_kratos_session")
+	if kratosId == "" {
+		return utils.JSONError(c, http.StatusBadRequest, constants.ErrKratosIDEmpty)
+	}
+	ctrl.logger.Debug("AuthController.GetRegisteredUser called", zap.Any("ory_kratos_session", kratosId))
+
+	kratosUser := config.KratosUserDetails{}
+	kratosClient := resty.New().SetBaseURL(ctrl.config.Kratos.BaseUrl+"/sessions").SetHeader("Cookie", fmt.Sprintf("%v=%v", constants.KratosCookie, kratosId)).SetHeader("accept", "application/json").SetHeader("withCredentials", "true").SetHeader("credentials", "include")
+
+	res, err := kratosClient.R().SetResult(&kratosUser).Get("/whoami")
+	if err != nil || res.StatusCode() != http.StatusOK {
+		ctrl.logger.Debug("unauthenticated registration", zap.Any("response from kratos", res.RawResponse), zap.Error(err), zap.Any("kratos response", res))
+		return utils.JSONError(c, res.StatusCode(), constants.ErrKratosAuth)
+	} else {
+		ctrl.logger.Debug("AuthController.GetRegisteredUser success", zap.Any("kratosUser", kratosUser))
+		return utils.JSONSuccess(c, http.StatusOK, kratosUser)
+	}
+}
+
+func (ctrl *AuthController) UpadateRegisteredUser(c *fiber.Ctx) error {
+	userId := c.Locals(constants.ContextUid).(string)
+	ctrl.logger.Debug("AuthController.UpadateRegisteredUser called", zap.Any("userId", userId))
+
+	ctrl.logger.Debug("validate req", zap.Any("Body", c.Body()))
+	var userReq structs.ReqUpdateUser
+	err := json.Unmarshal(c.Body(), &userReq)
+	if err != nil {
+		return utils.JSONFail(c, http.StatusBadRequest, err.Error())
+	}
+
+	validate := validator.New()
+	err = validate.Struct(userReq)
+	if err != nil {
+		return utils.JSONFail(c, http.StatusBadRequest, utils.ValidatorErrorString(err))
+	}
+	ctrl.logger.Debug("validate req success", zap.Any("userReq", userReq))
+
+	var kratosStruct = config.KratosTraits{}
+	kratosStruct.Name.First = userReq.FirstName
+	kratosStruct.Name.Last = userReq.LastName
+	kratosStruct.Email = userReq.Email
+
+	kratosjson, err := json.Marshal(kratosStruct)
+	if err != nil {
+		return utils.JSONFail(c, http.StatusBadRequest, err.Error())
+	}
+
+	ctrl.logger.Debug("userModel.UpdateUser called", zap.Any("userReq", userReq))
+	user, err := ctrl.userModel.UpdateUser(models.User{ID: userId, FirstName: userReq.FirstName, LastName: userReq.LastName, Email: userReq.Email})
+	if err != nil {
+		ctrl.logger.Error("error while UpdateUser", zap.Error(err))
+		return utils.JSONFail(c, http.StatusInternalServerError, err.Error())
+	}
+	ctrl.logger.Debug("userModel.UpdateUser success", zap.Any("User", user))
+
+	ctrl.logger.Debug("userModel.UpdateKratosUserById called", zap.Any("User", user))
+	if err = ctrl.userModel.UpdateKratosUserById(strings.TrimSpace(user.KratosID), kratosjson); err != nil {
+		ctrl.logger.Error("error while UpdateKratosUserById", zap.Error(err))
+		return utils.JSONFail(c, http.StatusInternalServerError, err.Error())
+	}
+	ctrl.logger.Debug("userModel.UpdateKratosUserById success", zap.Any("User", user))
+
+	return utils.JSONSuccess(c, http.StatusOK, user)
 }

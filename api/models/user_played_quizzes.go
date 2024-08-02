@@ -2,10 +2,13 @@ package models
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"time"
 
 	"github.com/Improwised/quizz-app/api/constants"
+	quizUtilsHelper "github.com/Improwised/quizz-app/api/helpers/utils"
+	"github.com/Improwised/quizz-app/api/pkg/structs"
 	"github.com/doug-martin/goqu/v9"
 	"github.com/google/uuid"
 )
@@ -253,4 +256,76 @@ func (model *UserPlayedQuizModel) GetRank(sessionId uuid.UUID, questionId uuid.U
 
 	}
 	return userRanks, nil
+}
+
+func (model *UserPlayedQuizModel) ListUserPlayedQuizes(userId string) ([]structs.ResUserPlayedQuiz, error) {
+	var userPlayedQuiz []structs.ResUserPlayedQuiz
+
+	query := model.db.From(UserPlayedQuizTable).
+		Select(
+			"quizzes.title",
+			"quizzes.description",
+			"user_played_quizzes.id",
+			"user_played_quizzes.created_at",
+			goqu.COUNT(goqu.I("quiz_questions.id")).As("total_questions"),
+		).
+		InnerJoin(goqu.T(constants.ActiveQuizzesTable), goqu.On(goqu.I(UserPlayedQuizTable+".active_quiz_id").Eq(goqu.I(constants.ActiveQuizzesTable+".id")))).
+		InnerJoin(goqu.T(constants.QuizzesTable), goqu.On(goqu.I(ActiveQuizzesTable+".quiz_id").Eq(goqu.I(constants.QuizzesTable+".id")))).
+		InnerJoin(goqu.T(constants.QuizQuestionsTable), goqu.On(goqu.I(constants.QuizzesTable+".id").Eq(goqu.I(constants.QuizQuestionsTable+".quiz_id")))).
+		Where(goqu.Ex{
+			UserPlayedQuizTable + ".user_id": userId,
+		}).GroupBy("user_played_quizzes.id", "quizzes.id")
+
+	sql, args, err := query.ToSQL()
+	if err != nil {
+		return userPlayedQuiz, err
+	}
+
+	err = model.db.ScanStructs(&userPlayedQuiz, sql, args...)
+
+	return userPlayedQuiz, err
+}
+
+func (model *UserPlayedQuizModel) ListUserPlayedQuizesWithQuestionById(UserPlayedQuizId string) ([]structs.ResUserPlayedQuizAnalyticsBoard, error) {
+	var userPlayedQuizAnalyticsBoard []structs.ResUserPlayedQuizAnalyticsBoard
+
+	query := model.db.From(UserPlayedQuizTable).
+		Select(
+			goqu.I(constants.UserQuizResponsesTable+".answers").As("selected_answer"),
+			goqu.I(constants.QuestionsTable+".answers").As("correct_answer"),
+			"calculated_score",
+			"is_attend",
+			"response_time",
+			"calculated_points",
+			"question",
+			"options",
+			"points",
+			"type",
+		).
+		InnerJoin(goqu.T(constants.UserQuizResponsesTable), goqu.On(goqu.I(UserPlayedQuizTable+".id").Eq(goqu.I(constants.UserQuizResponsesTable+".user_played_quiz_id")))).
+		InnerJoin(goqu.T(constants.QuestionsTable), goqu.On(goqu.I(constants.UserQuizResponsesTable+".question_id").Eq(goqu.I(constants.QuestionsTable+".id")))).
+		Where(goqu.Ex{
+			UserPlayedQuizTable + ".id": UserPlayedQuizId,
+		})
+
+	sql, args, err := query.ToSQL()
+	if err != nil {
+		return userPlayedQuizAnalyticsBoard, err
+	}
+
+	err = model.db.ScanStructs(&userPlayedQuizAnalyticsBoard, sql, args...)
+	if err != nil {
+		return userPlayedQuizAnalyticsBoard, err
+	}
+
+	for index := 0; index < len(userPlayedQuizAnalyticsBoard); index++ {
+		json.Unmarshal(userPlayedQuizAnalyticsBoard[index].RawOptions, &userPlayedQuizAnalyticsBoard[index].Options)
+
+		userPlayedQuizAnalyticsBoard[index].QuestionType, err = quizUtilsHelper.GetQuestionType(userPlayedQuizAnalyticsBoard[index].QuestionTypeID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return userPlayedQuizAnalyticsBoard, nil
 }
