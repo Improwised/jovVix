@@ -20,6 +20,10 @@ const userAccuracy = computed(() => {
   if (quizList.value?.data) {
     let userAnswerAnalysis = [];
     quizList.value.data.filter((item) => {
+      if (!item.is_attend) {
+        userAnswerAnalysis.push(false);
+      }
+
       if (item.question_type != "survey" && item.is_attend) {
         //check if the answer is correct or not
         let correctIncorrectFlag = isCorrectAnswer(
@@ -27,6 +31,10 @@ const userAccuracy = computed(() => {
           item.correct_answer
         );
         userAnswerAnalysis.push(correctIncorrectFlag);
+      }
+
+      if (item.question_type == "survey" && item.is_attend) {
+        userAnswerAnalysis.push(true);
       }
     });
     return (

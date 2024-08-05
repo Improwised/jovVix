@@ -115,8 +115,9 @@ if (!props.isAdmin) {
       let correctIncorrectFlag = false;
       totalPoints.value += item.points;
 
-      // if the question is not survey and attempted
-      if (item.question_type != "survey" && item.is_attend) {
+      if (!item.is_attend) {
+        userAnswerAnalysis.value.push(false);
+      } else if (item.question_type != "survey" && item.is_attend) {
         //check if the answer is correct or not
         correctIncorrectFlag = isCorrectAnswer(
           item.selected_answer.String,
@@ -128,13 +129,11 @@ if (!props.isAdmin) {
         if (correctIncorrectFlag) {
           userGainedPoints.value += item.points;
         }
-
-        // add that question's score into total score (calculated_score will be 0 if it is incorrect)
-        userTotalScore.value += item.calculated_score;
-      } else if (item.is_attend) {
+      } else if (item.question_type == "survey" && item.is_attend) {
+        userAnswerAnalysis.value.push(true);
         userGainedPoints.value += item.points;
-        userTotalScore.value += item.calculated_score;
       }
+      userTotalScore.value += item.calculated_score;
     });
     // get the count of correct answers
     userCorrectAnswer.value = userAnswerAnalysis.value.filter(Boolean).length;
