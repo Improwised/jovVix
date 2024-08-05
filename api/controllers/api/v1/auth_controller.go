@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/Improwised/quizz-app/api/config"
@@ -32,7 +31,7 @@ type AuthController struct {
 }
 
 func NewAuthController(goqu *goqu.Database, logger *zap.Logger, config config.AppConfig) (*AuthController, error) {
-	userModel, err := models.InitUserModel(goqu)
+	userModel, err := models.InitUserModel(goqu, logger)
 	if err != nil {
 		return nil, err
 	}
@@ -250,6 +249,18 @@ func (ctrl *AuthController) UpadateRegisteredUser(c *fiber.Ctx) error {
 	}
 	ctrl.logger.Debug("validate req success", zap.Any("userReq", userReq))
 
+	ctrl.logger.Debug("userModel.IsUniqueEmail called", zap.Any("Email", userReq.Email))
+	IsUniqueEmail, err := ctrl.userModel.IsUniqueEmailExceptId(userId, userReq.Email)
+	if err != nil {
+		ctrl.logger.Error("error while UpdateUser", zap.Error(err))
+		return utils.JSONFail(c, http.StatusInternalServerError, err.Error())
+	}
+	ctrl.logger.Debug("userModel.IsUniqueEmail success", zap.Any("IsUniqueEmail", IsUniqueEmail))
+
+	if !IsUniqueEmail {
+		return utils.JSONFail(c, http.StatusBadRequest, "email already exist")
+	}
+
 	var kratosStruct = config.KratosTraits{}
 	kratosStruct.Name.First = userReq.FirstName
 	kratosStruct.Name.Last = userReq.LastName
@@ -260,20 +271,20 @@ func (ctrl *AuthController) UpadateRegisteredUser(c *fiber.Ctx) error {
 		return utils.JSONFail(c, http.StatusBadRequest, err.Error())
 	}
 
-	ctrl.logger.Debug("userModel.UpdateUser called", zap.Any("userReq", userReq))
-	user, err := ctrl.userModel.UpdateUser(models.User{ID: userId, FirstName: userReq.FirstName, LastName: userReq.LastName, Email: userReq.Email})
-	if err != nil {
-		ctrl.logger.Error("error while UpdateUser", zap.Error(err))
-		return utils.JSONFail(c, http.StatusInternalServerError, err.Error())
-	}
-	ctrl.logger.Debug("userModel.UpdateUser success", zap.Any("User", user))
-
-	ctrl.logger.Debug("userModel.UpdateKratosUserById called", zap.Any("User", user))
-	if err = ctrl.userModel.UpdateKratosUserById(strings.TrimSpace(user.KratosID.String), kratosjson); err != nil {
+	ctrl.logger.Debug("userModel.UpdateKratosUserDetails called", zap.Any("userId", userId))
+	if err := ctrl.userModel.UpdateKratosUserDetails(models.User{ID: userId, FirstName: userReq.FirstName, LastName: userReq.LastName, Email: userReq.Email}, kratosjson); err != nil {
 		ctrl.logger.Error("error while UpdateKratosUserById", zap.Error(err))
 		return utils.JSONFail(c, http.StatusInternalServerError, err.Error())
 	}
-	ctrl.logger.Debug("userModel.UpdateKratosUserById success", zap.Any("User", user))
+	ctrl.logger.Debug("userModel.UpdateKratosUserDetails success", zap.Any("userId", userId))
+
+	ctrl.logger.Debug("userModel.GetById success", zap.Any("userId", userId))
+	user, err := ctrl.userModel.GetById(userId)
+	if err != nil {
+		ctrl.logger.Error("error while GetById", zap.Error(err))
+		return utils.JSONFail(c, http.StatusInternalServerError, err.Error())
+	}
+	ctrl.logger.Debug("userModel.GetById success", zap.Any("user", user))
 
 	return utils.JSONSuccess(c, http.StatusOK, user)
 }

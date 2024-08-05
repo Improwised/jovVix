@@ -43,7 +43,7 @@ type UserInfo struct {
 }
 
 func CreateQuickUser(db *goqu.Database, logger *zap.Logger, userObj models.User, retrying bool, emailValidation bool) (models.User, error) {
-	userModel, err := models.InitUserModel(db)
+	userModel, err := models.InitUserModel(db, logger)
 
 	if err != nil {
 		return userObj, err

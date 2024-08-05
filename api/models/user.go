@@ -2,9 +2,11 @@ package models
 
 import (
 	"database/sql"
+	"strings"
 
 	goqu "github.com/doug-martin/goqu/v9"
 	"github.com/rs/xid"
+	"go.uber.org/zap"
 )
 
 // This boilerplate we are storing password in plan format!
@@ -29,11 +31,12 @@ type User struct {
 
 // UserModel implements user related database operations
 type UserModel struct {
-	db *goqu.Database
+	db     *goqu.Database
+	logger *zap.Logger
 }
 
 // InitUserModel Init model
-func InitUserModel(goqu *goqu.Database) (UserModel, error) {
+func InitUserModel(goqu *goqu.Database, logger *zap.Logger) (UserModel, error) {
 	return UserModel{
 		db: goqu,
 	}, nil
@@ -174,6 +177,23 @@ func (model *UserModel) IsUniqueEmail(email string) (bool, error) {
 	return !rows.Next(), err
 }
 
+func (model *UserModel) IsUniqueEmailExceptId(userId, email string) (bool, error) {
+	query := model.db.From("users").Select(goqu.I("id")).Where(
+		goqu.Ex{"email": email},
+		goqu.C("id").Neq(userId),
+	).Limit(1)
+
+	// Execute the query
+	rows, err := query.Executor().Query()
+	if err != nil {
+		return false, err
+	}
+	defer rows.Close()
+
+	// Check if any rows were returned
+	return !rows.Next(), err
+}
+
 func (model *UserModel) GetUserRole(userID string) (string, error) {
 	var role string = "not found"
 
@@ -212,7 +232,79 @@ func (model *UserModel) GetUserByKratosID(kratosID string) (User, error) {
 	}
 }
 
-func (model *UserModel) UpdateUser(user User) (User, error) {
+func (model *UserModel) UpdateKratosUserDetails(reqUser User, userMetadata []byte) error {
+	isOk := false
+	transaction, err := model.db.Begin()
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		if isOk {
+			err := transaction.Commit()
+			if err != nil {
+				model.logger.Error("error during commit in register question", zap.Error(err))
+			}
+		} else {
+			err := transaction.Rollback()
+			if err != nil {
+				model.logger.Error("error during rollback in register question", zap.Error(err))
+			}
+		}
+	}()
+
+	user, err := model.GetById(reqUser.ID)
+	if err != nil {
+		return err
+	}
+
+	err = UpdateKratosIdentifiers(transaction, user.Email, reqUser.Email)
+	if err != nil {
+		model.logger.Debug("error in UpdateKratosIdentifiers", zap.Error(err))
+		return err
+	}
+
+	err = UpdateKratosIdentityTraits(transaction, strings.TrimSpace(user.KratosID.String), userMetadata)
+	if err != nil {
+		model.logger.Debug("error in UpdateKratosIdentityTraits", zap.Error(err))
+		return err
+	}
+
+	err = UpdateUserMetadata(transaction, reqUser)
+	if err != nil {
+		model.logger.Debug("error in UpdateKratosIdentityTraits", zap.Error(err))
+		return err
+	}
+
+	isOk = true
+	return nil
+}
+
+func UpdateKratosIdentifiers(transaction *goqu.TxDatabase, oldEmail, newEmail string) error {
+
+	_, err := transaction.Update("kratos.identity_credential_identifiers").Set(goqu.Record{
+		"identifier": newEmail,
+	}).Where(goqu.Ex{
+		"identifier": oldEmail,
+	}).Executor().Exec()
+
+	return err
+}
+
+func UpdateKratosIdentityTraits(transaction *goqu.TxDatabase, kratosId string, data []byte) error {
+
+	record := goqu.Record{
+		"traits": data,
+	}
+
+	_, err := transaction.Update(KratosIdentityTable).Set(record).Where(goqu.Ex{
+		"id": kratosId,
+	}).Executor().Exec()
+
+	return err
+}
+
+func UpdateUserMetadata(transaction *goqu.TxDatabase, user User) error {
 
 	record := goqu.Record{
 		"first_name": user.FirstName,
@@ -220,24 +312,8 @@ func (model *UserModel) UpdateUser(user User) (User, error) {
 		"email":      user.Email,
 	}
 
-	_, err := model.db.Update(UserTable).Set(record).Where(goqu.Ex{
+	_, err := transaction.Update(UserTable).Set(record).Where(goqu.Ex{
 		"id": user.ID,
-	}).Executor().Exec()
-	if err != nil {
-		return User{}, err
-	}
-
-	return model.GetById(user.ID)
-}
-
-func (model *UserModel) UpdateKratosUserById(Id string, data []byte) error {
-
-	record := goqu.Record{
-		"traits": data,
-	}
-
-	_, err := model.db.Update(KratosIdentityTable).Set(record).Where(goqu.Ex{
-		"id": Id,
 	}).Executor().Exec()
 
 	return err

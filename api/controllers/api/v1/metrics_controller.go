@@ -17,7 +17,7 @@ type MetricsController struct {
 }
 
 func InitMetricsController(db *goqu.Database, logger *zap.Logger, pMetrics *pMetrics.PrometheusMetrics) (*MetricsController, error) {
-	userModel, err := models.InitUserModel(db)
+	userModel, err := models.InitUserModel(db, logger)
 	if err != nil {
 		return nil, err
 	}

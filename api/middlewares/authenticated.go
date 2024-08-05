@@ -68,7 +68,7 @@ func (m *Middleware) KratosAuthenticated(c *fiber.Ctx) error {
 			Email:     kratosUser.Identity.Traits.Email,
 		}
 
-		userModel, err := models.InitUserModel(m.Db)
+		userModel, err := models.InitUserModel(m.Db, m.Logger)
 		if err != nil {
 			m.Logger.Debug("error while initializing user model", zap.Error(err))
 			return utils.JSONError(c, http.StatusInternalServerError, constants.ErrGetUser)

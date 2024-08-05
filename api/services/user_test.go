@@ -6,10 +6,12 @@ import (
 	"testing"
 
 	_ "github.com/lib/pq"
+	"go.uber.org/zap"
 
 	"github.com/Improwised/quizz-app/api/config"
 	"github.com/Improwised/quizz-app/api/constants"
 	"github.com/Improwised/quizz-app/api/database"
+	"github.com/Improwised/quizz-app/api/logger"
 	"github.com/Improwised/quizz-app/api/models"
 	"github.com/Improwised/quizz-app/api/pkg/events"
 	"github.com/Improwised/quizz-app/api/pkg/structs"
@@ -25,7 +27,13 @@ func TestUserService(t *testing.T) {
 	db, err := database.Connect(cfg.DB)
 	assert.Nil(t, err)
 
-	userModel, err := models.InitUserModel(db)
+	logger, err := logger.NewRootLogger(cfg.Debug, cfg.IsDevelopment)
+	if err != nil {
+		panic(err)
+	}
+	zap.ReplaceGlobals(logger)
+
+	userModel, err := models.InitUserModel(db, logger)
 	assert.Nil(t, err)
 
 	userSvc := NewUserService(&userModel)

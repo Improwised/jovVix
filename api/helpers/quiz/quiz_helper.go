@@ -20,7 +20,7 @@ type HelperGroup struct {
 }
 
 func InitHelper(db *goqu.Database, pubSubCfg config.RedisClientConfig, logger *zap.Logger) (*HelperGroup, error) {
-	userModel, err := models.InitUserModel(db)
+	userModel, err := models.InitUserModel(db, logger)
 
 	if err != nil {
 		return nil, err

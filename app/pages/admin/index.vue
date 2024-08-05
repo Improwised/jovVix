@@ -293,14 +293,15 @@ const changeUserMetaData = async () => {
 
   updateuserPending.value = false;
   if (error.value) {
-    updateuserError.value = error.value;
+    updateuserError.value = error.value.data;
     setTimeout(() => {
       updateuserError.value = false;
-    }, 1000);
+    }, 2000);
   } else {
     profile.full_name =
       data.value.data.first_name + " " + data.value.data.last_name;
     profile.email = data.value.data.email;
+    cancleButton.value = false;
   }
 };
 

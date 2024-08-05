@@ -32,7 +32,7 @@ type UserController struct {
 
 // NewUserController returns a user
 func NewUserController(goqu *goqu.Database, logger *zap.Logger, event *events.Events, pub *watermill.WatermillPublisher) (*UserController, error) {
-	userModel, err := models.InitUserModel(goqu)
+	userModel, err := models.InitUserModel(goqu, logger)
 	if err != nil {
 		return nil, err
 	}
