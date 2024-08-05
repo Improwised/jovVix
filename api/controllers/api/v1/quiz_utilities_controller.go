@@ -2,8 +2,8 @@ package v1
 
 import (
 	"database/sql"
-	"encoding/csv"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"strconv"
@@ -15,55 +15,24 @@ import (
 	"github.com/Improwised/quizz-app/api/utils"
 	fiber "github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"github.com/jszwec/csvutil"
 	"go.uber.org/zap"
 )
 
-func ValidateCSVFileFormat(fileName string) error {
-	// Open the CSV file
-	file, err := os.Open(fileName)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	// Create a new CSV reader
-	reader := csv.NewReader(file)
-
-	// Read the first row from the CSV file
-	row, err := reader.Read()
-	if err != nil {
-		return err
-	}
-
-	// Required headers
-	requiredHeaders := []string{
-		"Question Text",
-		"Question Type",
-		"Points",
-		"Option 1",
-		"Option 2",
-		"Option 3",
-		"Option 4",
-		"Option 5",
-		"Correct Answer",
-	}
-
-	// Validate the headers
-	if len(row) < len(requiredHeaders) {
-		return fmt.Errorf("CSV file has fewer columns than expected")
-	}
-
-	for index, col := range requiredHeaders {
-		if col != row[index] {
-			return fmt.Errorf("column mismatch at index %d: expected '%s', found '%s'", index, col, row[index])
-		}
-	}
-
-	return nil
+type Question struct {
+	Question      string `csv:"Question Text"`
+	Type          string `csv:"Question Type"`
+	Points        string `csv:"Points,omitempty"`
+	Option1       string `csv:"Option 1"`
+	Option2       string `csv:"Option 2"`
+	Option3       string `csv:"Option 3"`
+	Option4       string `csv:"Option 4"`
+	Option5       string `csv:"Option 5"`
+	CorrectAnswer string `csv:"Correct Answer"`
 }
 
-func ExtractQuestionsFromCSV(fileName string, logger *zap.Logger) ([]models.Question, error) {
-	questions := []models.Question{}
+func ValidateCSVFileFormat(fileName string) ([]Question, error) {
+	var questions []Question
 
 	// Open the CSV file
 	file, err := os.Open(fileName)
@@ -73,135 +42,64 @@ func ExtractQuestionsFromCSV(fileName string, logger *zap.Logger) ([]models.Ques
 	defer file.Close()
 
 	// Create a new CSV reader
-	reader := csv.NewReader(file)
-
-	// Read all the rows from the CSV file
-	rows, err := reader.ReadAll()
+	csvData, err := io.ReadAll(file)
 	if err != nil {
 		return questions, err
 	}
 
-	for rowNumber, row := range rows[1:] {
+	if err := csvutil.Unmarshal(csvData, &questions); err != nil {
+		return questions, err
+	}
 
-		if rowNumber == constants.MaxRows {
-			return questions, fmt.Errorf(constants.ErrRowsReachesToMaxCount)
-		}
+	return questions, nil
+}
+
+func ExtractQuestionsFromCSV(questions []Question) ([]models.Question, error) {
+	typeMapping := map[string]int{
+		"single answer": 1,
+		"survey":        2,
+	}
+
+	var validQuestions []models.Question
+	for i, u := range questions {
 
 		id, err := uuid.NewUUID()
-
 		if err != nil {
-			return questions, err
+			return validQuestions, err
 		}
 
-		/*
-			Index: column
-			0:  "Question Text",
-			1:  "Question Type",
-			2:  "Points",
-			3:  "Option 1",
-			4:  "Option 2",
-			5:  "Option 3",
-			6:  "Option 4",
-			7:  "Option 5",
-			8:  "Correct Answer",
-
-		*/
-
-		// extract type
-		var questionType int
-
-		typeInt, err := quizUtilsHelper.CheckQuestionType(strings.ToLower(row[1]))
-		if err != nil {
-			return questions, err
-		} else {
-			questionType = typeInt
+		options := make(map[string]string)
+		if u.Option1 != "" {
+			options["1"] = u.Option1
+		}
+		if u.Option2 != "" {
+			options["2"] = u.Option2
+		}
+		if u.Option3 != "" {
+			options["3"] = u.Option3
+		}
+		if u.Option4 != "" {
+			options["4"] = u.Option4
+		}
+		if u.Option5 != "" {
+			options["5"] = u.Option5
 		}
 
-		var options map[string]string = map[string]string{}
-		var optionKey = 1
-
-		// extract options
-		for _, option := range []string{row[3], row[4], row[5], row[6], row[7]} {
-			if option != "" {
-				options[quizUtilsHelper.GetString(optionKey)] = option
-				optionKey += 1
+		answers := []int{}
+		for _, a := range strings.Split(u.CorrectAnswer, "|") {
+			if a != "" {
+				answerInt := 0
+				fmt.Sscanf(a, "%d", &answerInt)
+				answers = append(answers, answerInt)
 			}
 		}
 
-		var answers []int
-
-		// extract answers
-		for _, answer := range strings.Split(row[8], "|") {
-			if _, ok := options[answer]; !ok {
-				return questions, fmt.Errorf(fmt.Sprintf("answer not in option list options: %s, answers: %s", options, row[8]))
-			}
-
-			answerInt, err := strconv.Atoi(answer)
-
-			if err != nil {
-				return questions, fmt.Errorf(fmt.Sprintf("answer string to int fail options: %s, answers: %s", options, row[8]))
-			}
-
-			answers = append(answers, answerInt)
+		// Determine points
+		points := 1
+		if u.Points != "" {
+			fmt.Sscanf(u.Points, "%d", &points)
 		}
 
-		// survey question should have all the options as correct answers
-		if questionType == constants.Survey && len(options) != len(answers) {
-			return questions, fmt.Errorf(constants.ErrSurveyAnswerLength)
-		}
-
-		// single answer question should have single option correct only
-		if questionType == constants.SingleAnswer && len(answers) > 1 {
-			return questions, fmt.Errorf(constants.ErrSingleAnswerLength)
-		}
-
-		// extract score
-		var points int16
-		if row[2] == "" {
-			points = 0
-		} else {
-			pointsInt, err := strconv.Atoi(row[2])
-
-			if err != nil {
-				return questions, fmt.Errorf(fmt.Sprintf("score string to int fail score: %s", row[2]))
-			}
-
-			maximumPointsFromENV := os.Getenv("MAXIMUM_POINTS_PER_QUESTION")
-			var maximumPoints int
-			if maximumPointsFromENV == "" {
-				logger.Debug("MAXIMUM_POINTS_PER_QUESTION env variable is not set, hence taking it from the constants")
-				maximumPoints = constants.MaximumPoints
-			} else {
-				maximumPoints, err = strconv.Atoi(maximumPointsFromENV)
-			}
-			if err != nil {
-				return questions, fmt.Errorf(constants.ErrorTypeConversion)
-			}
-
-			minimumPointsFromENV := os.Getenv("MINIMUM_POINTS_PER_QUESTION")
-			var minimumPoints int
-			if minimumPointsFromENV == "" {
-				logger.Debug("MINIMUM_POINTS_PER_QUESTION env variable is not set, hence taking it from the constants")
-				minimumPoints = constants.MinimumPoints
-			} else {
-				minimumPoints, err = strconv.Atoi(minimumPointsFromENV)
-			}
-			if err != nil {
-				return questions, fmt.Errorf(constants.ErrorTypeConversion)
-			}
-
-			if pointsInt > maximumPoints {
-				return questions, fmt.Errorf(fmt.Sprintf("the points per question should be less than or equal to %d", maximumPoints))
-			}
-
-			if pointsInt < minimumPoints {
-				return questions, fmt.Errorf(fmt.Sprintf("the points per question should be greater than or equal to %d", minimumPoints))
-			}
-
-			points = int16(pointsInt)
-		}
-
-		// provide duration
 		var duration int
 		durationFromEnv := os.Getenv("QUESTION_TIME_LIMIT")
 		if durationFromEnv == "" {
@@ -210,24 +108,21 @@ func ExtractQuestionsFromCSV(fileName string, logger *zap.Logger) ([]models.Ques
 			duration, err = strconv.Atoi(durationFromEnv)
 			if err != nil {
 				duration = 30
-				logger.Error("Took default time of 30 seconds per question as convertion error from env", zap.Error(err))
 			}
 		}
 
-		questions = append(questions,
-			models.Question{
-				ID:                id,
-				Question:          row[0],
-				Type:              questionType,
-				Options:           options,
-				Answers:           answers,
-				Points:            points,
-				DurationInSeconds: duration,
-				OrderNumber:       rowNumber + 1,
-			},
-		)
+		validQuestions = append(validQuestions, models.Question{
+			ID:                id,
+			Question:          u.Question,
+			Type:              typeMapping[u.Type],
+			Options:           options,
+			Answers:           answers,
+			Points:            int16(points),
+			DurationInSeconds: duration,
+			OrderNumber:       i + 1,
+		})
 	}
-	return questions, nil
+	return validQuestions, nil
 }
 
 func (ctrl *QuizController) CreateQuizByCsv(c *fiber.Ctx) error {
@@ -251,61 +146,19 @@ func (ctrl *QuizController) CreateQuizByCsv(c *fiber.Ctx) error {
 		}
 	}()
 
-	err := ValidateCSVFileFormat(filePath)
+	questions, err := ValidateCSVFileFormat(filePath)
 	if err != nil {
 		ctrl.logger.Error("file validation failed", zap.Error(err))
 		return utils.JSONFail(c, http.StatusBadRequest, err.Error())
 	}
 
-	questions, err := ExtractQuestionsFromCSV(filePath, ctrl.logger)
-
+	validQuestions, err := ExtractQuestionsFromCSV(questions)
 	if err != nil {
-		if err.Error() == constants.ErrRowsReachesToMaxCount {
-			ctrl.logger.Error("file validation failed", zap.Error(err))
-			return utils.JSONFail(c, http.StatusBadRequest, err.Error())
-		}
-
-		if os.Getenv("MAXIMUM_POINTS_PER_QUESTION") == "" && err.Error() == fmt.Sprintf("the points per question should be less than or equal to %d", constants.MaximumPoints) {
-			ctrl.logger.Error("file validation failed", zap.Error(err))
-			return utils.JSONFail(c, http.StatusBadRequest, err.Error())
-		}
-
-		if os.Getenv("MINIMUM_POINTS_PER_QUESTION") == "" && err.Error() == fmt.Sprintf("the points per question should be greater than or equal to %d", constants.MinimumPoints) {
-			ctrl.logger.Error("file validation failed", zap.Error(err))
-			return utils.JSONFail(c, http.StatusBadRequest, err.Error())
-		}
-
-		if err.Error() == fmt.Sprintf("the points per question should be less than or equal to %s", os.Getenv("MAXIMUM_POINTS_PER_QUESTION")) {
-			ctrl.logger.Error("file validation failed", zap.Error(err))
-			return utils.JSONFail(c, http.StatusBadRequest, err.Error())
-		}
-
-		if err.Error() == fmt.Sprintf("the points per question should be greater than or equal to %s", os.Getenv("MINIMUM_POINTS_PER_QUESTION")) {
-			ctrl.logger.Error("file validation failed", zap.Error(err))
-			return utils.JSONFail(c, http.StatusBadRequest, err.Error())
-		}
-
-		if err.Error() == constants.ErrSurveyAnswerLength {
-			ctrl.logger.Error("correct answers are lesser than the number of options in survey question")
-			return utils.JSONFail(c, http.StatusBadRequest, err.Error())
-		}
-
-		if err.Error() == constants.ErrSingleAnswerLength {
-			ctrl.logger.Error(("there are multiple correct answers in single answer type question"))
-			return utils.JSONFail(c, http.StatusBadRequest, err.Error())
-		}
-
-		if err.Error() == constants.ErrQuestionType {
-			ctrl.logger.Error("incorrect question type found in the CSV, upload terminated")
-			return utils.JSONFail(c, http.StatusBadRequest, err.Error())
-		}
-
 		ctrl.logger.Error("file validation failed", zap.Error(err))
 		return utils.JSONFail(c, http.StatusBadRequest, constants.ErrParsingFile)
 	}
 
-	quizId, err := ctrl.helper.QuestionModel.RegisterQuestions(userID, quizTitle, quizDescription, questions)
-
+	quizId, err := ctrl.helper.QuestionModel.RegisterQuestions(userID, quizTitle, quizDescription, validQuestions)
 	if err != nil {
 		ctrl.logger.Error("error in creating quiz", zap.Error(err))
 		return utils.JSONFail(c, http.StatusBadRequest, constants.ErrRegisterQuiz)

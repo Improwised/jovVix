@@ -87,8 +87,8 @@
             alt="..."
           />
           <div class="card-body text-center">
-            <h5 class="card-title">{{ userData.full_name }}</h5>
-            <h5 class="card-title">{{ user.data.identity.traits.email }}</h5>
+            <h5 class="card-title">{{ profile.full_name }}</h5>
+            <h5 class="card-title">{{ profile.email }}</h5>
             <div
               type="button"
               class="btn btn-primary btn-sm"
@@ -160,7 +160,7 @@
                   class="btn btn-secondary ml-2"
                   @click="hideCancleButton"
                 >
-                  Cancle
+                  Cancel
                 </div>
               </div>
             </form>
@@ -242,9 +242,13 @@ const {
 });
 
 const userData = reactive({
-  full_name: "",
   first_name: "",
   last_name: "",
+  email: "",
+});
+
+const profile = reactive({
+  full_name: "",
   email: "",
 });
 
@@ -257,13 +261,14 @@ watch(
   [user, userError],
   () => {
     if (user.value) {
-      userData.full_name =
+      profile.full_name =
         user.value.data.identity.traits.name.first +
         " " +
         user.value.data.identity.traits.name.last;
       userData.first_name = user.value.data.identity.traits.name.first;
       userData.last_name = user.value.data.identity.traits.name.last;
       userData.email = user.value.data.identity.traits.email;
+      profile.email = user.value.data.identity.traits.email;
     }
     if (userError.value) {
       console.log("error");
@@ -274,7 +279,7 @@ watch(
 
 const changeUserMetaData = async () => {
   updateuserPending.value = true;
-  const { error } = await useFetch(url.api_url + "/kratos/user", {
+  const { data, error } = await useFetch(url.api_url + "/kratos/user", {
     method: "PUT",
     headers: headers,
     mode: "cors",
@@ -292,6 +297,10 @@ const changeUserMetaData = async () => {
     setTimeout(() => {
       updateuserError.value = false;
     }, 1000);
+  } else {
+    profile.full_name =
+      data.value.data.first_name + " " + data.value.data.last_name;
+    profile.email = data.value.data.email;
   }
 };
 
