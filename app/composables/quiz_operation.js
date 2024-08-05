@@ -39,6 +39,7 @@ export default class QuizHandler {
     this.socket.onerror = (event) => this.onError(event);
     this.socket.onclose = (event) => this.onClose(event);
     this.socket.onmessage = (event) => this.onMessage(event);
+    this.close = (code) => this.socket.close(code);
   }
 
   // handle open event
@@ -123,11 +124,9 @@ export default class QuizHandler {
     } else {
       this.currentQuestionGetTime = null;
     }
-
     if (message.event == constants.TerminateQuiz) {
       await this.handleTerminate();
     }
-
     this.componentHandler(message);
   }
 

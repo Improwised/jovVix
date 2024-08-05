@@ -67,7 +67,6 @@ const handleQuizEvents = async (message) => {
     );
   } else if (message.event == app.$TerminateQuiz) {
     monitorTerminateQuiz.value = true;
-    console.log(userMeta);
     return await router.push(`/join/${userMeta.value.username}/scoreboard`);
   } else if (message.event == app.$RedirectToAdmin) {
     return await router.push("/admin/arrange/" + message.data.sessionId);
@@ -75,7 +74,6 @@ const handleQuizEvents = async (message) => {
     message.data == app.$InvitationCodeNotFound ||
     message.data == app.$QuizSessionValidationFailed
   ) {
-    console.log(message);
     return await router.push(
       "/join?status=" + message.status + "&error=" + message.data
     );

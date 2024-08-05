@@ -1,6 +1,7 @@
 package v1_test
 
 import (
+	"database/sql"
 	"net/http"
 	"testing"
 
@@ -43,7 +44,7 @@ func TestDoAuth(t *testing.T) {
 
 		expected := models.User{
 			ID:        "coq5km6bcbvvgbgfuek0",
-			KratosID:  "",
+			KratosID:  sql.NullString{String: "", Valid: true},
 			FirstName: "admin",
 			LastName:  "xyz",
 			Email:     "adminxyz@gmail.com",

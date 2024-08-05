@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"net/http"
@@ -61,10 +62,10 @@ func (m *Middleware) KratosAuthenticated(c *fiber.Ctx) error {
 		return utils.JSONError(c, res.StatusCode(), constants.ErrKratosAuth)
 	} else {
 		user := models.User{
-			KratosID: kratosUser.Identity.ID,
+			KratosID:  sql.NullString{String: kratosUser.Identity.ID, Valid: true},
 			FirstName: kratosUser.Identity.Traits.Name.First,
-			LastName: kratosUser.Identity.Traits.Name.Last,
-			Email: kratosUser.Identity.Traits.Email,
+			LastName:  kratosUser.Identity.Traits.Name.Last,
+			Email:     kratosUser.Identity.Traits.Email,
 		}
 
 		userModel, err := models.InitUserModel(m.Db)

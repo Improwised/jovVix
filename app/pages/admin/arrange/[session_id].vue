@@ -42,6 +42,8 @@ const confirmNeeded = reactive({
 const currentComponent = ref("Loading");
 const adminOperationHandler = ref();
 
+const session_id = route.params.session_id;
+
 // event handlers
 const handleCustomChange = (isFullScreenEvent) => {
   if (!isFullScreenEvent && myRef.value) {
@@ -56,7 +58,7 @@ onMounted(() => {
   if (process.client) {
     try {
       adminOperationHandler.value = new AdminOperations(
-        route.params.session_id,
+        session_id,
         handleQuizEvents,
         handleNetworkEvent,
         confirmSkip
@@ -75,9 +77,7 @@ const handleQuizEvents = async (message) => {
   } else if (message.event == app.$TerminateQuiz) {
     invitationCode.value = undefined;
     removeAllUsers();
-    return await router.push(
-      "/admin/scoreboard?aqi=" + route.params.session_id
-    );
+    return await router.push("/admin/scoreboard?aqi=" + session_id);
   } else if (message.event == app.$RedirectToAdmin) {
     return await router.push("/admin/arrange/" + message.data.sessionId);
   } else if (
@@ -125,7 +125,7 @@ const handleQuizEvents = async (message) => {
       ) {
         addUser(message.data);
       }
-      if (invitationCode.value == undefined) {
+      if (message.data.code !== undefined) {
         invitationCode.value = message.data.code;
       }
     }
@@ -168,6 +168,10 @@ const handleModal = (confirm) => {
   confirmNeeded.show = false;
 };
 
+const terminateQuizHandler = () => {
+  adminOperationHandler.value.requestTerminateQuiz();
+};
+
 definePageMeta({
   layout: "empty",
 });
@@ -189,6 +193,7 @@ definePageMeta({
       :data="data"
       :is-admin="true"
       @start-quiz="startQuiz"
+      @terminate-quiz="terminateQuizHandler"
     >
     </QuizWaitingSpace>
     <QuizQuestionSpace

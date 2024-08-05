@@ -176,7 +176,6 @@ func (ctrl *UserController) GetUserMeta(c *fiber.Ctx) error {
 
 	if kratosToken := c.Cookies(constants.KratosCookie); kratosToken == "" {
 		userMeta, err = ctrl.userService.GetUser(userID)
-
 		if err != nil {
 			if err == sql.ErrNoRows {
 				c.Cookie(RemoveUserToken(constants.ContextUid))

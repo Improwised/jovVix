@@ -44,6 +44,10 @@ export default class AdminOperations extends QuizHandler {
     super.handler(message, preventAssignment);
   }
 
+  requestTerminateQuiz() {
+    this.close(1000);
+  }
+
   onClose(event) {
     // Check the close event code to determine if it was an error or proper closure
     if (event.code !== 1000 && this.currentEvent != constants.TerminateQuiz) {

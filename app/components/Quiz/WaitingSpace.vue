@@ -17,6 +17,7 @@ const { invitationCode } = storeToRefs(invitationCodeStore);
 const listUserStore = useListUserstore();
 const { removeAllUsers } = listUserStore;
 
+const startQuiz = ref(false);
 // define props and emits
 const props = defineProps({
   data: {
@@ -32,7 +33,7 @@ const props = defineProps({
     required: false,
   },
 });
-const emits = defineEmits(["startQuiz"]);
+const emits = defineEmits(["startQuiz", "terminateQuiz"]);
 
 // custom refs
 const code = ref(invitationCode.value);
@@ -52,6 +53,7 @@ watch(
 // event handlers
 function start_quiz(e) {
   e.preventDefault();
+  startQuiz.value = true;
   emits("startQuiz");
 }
 
@@ -74,6 +76,9 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
+  if (!startQuiz.value) {
+    emits("terminateQuiz");
+  }
   if (props.isAdmin) {
     invitationCode.value = null;
     removeAllUsers();
@@ -110,6 +115,7 @@ function copyToClipboard(text) {
             min-height="90"
             type="number"
             class="large-otp-input"
+            disabled
           ></v-otp-input>
           <font-awesome-icon
             id="OTP-input-container"

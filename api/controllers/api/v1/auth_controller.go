@@ -130,7 +130,7 @@ func (ctrl *AuthController) DoKratosAuth(c *fiber.Ctx) error {
 	}
 
 	userStruct := models.User{}
-	userStruct.KratosID = kratosUser.Identity.ID
+	userStruct.KratosID = sql.NullString{String: kratosUser.Identity.ID, Valid: true}
 	userStruct.CreatedAt = kratosUser.Identity.CreatedAt
 	userStruct.UpdatedAt = kratosUser.Identity.UpdatedAt
 	userStruct.FirstName = kratosUser.Identity.Traits.Name.First
@@ -269,7 +269,7 @@ func (ctrl *AuthController) UpadateRegisteredUser(c *fiber.Ctx) error {
 	ctrl.logger.Debug("userModel.UpdateUser success", zap.Any("User", user))
 
 	ctrl.logger.Debug("userModel.UpdateKratosUserById called", zap.Any("User", user))
-	if err = ctrl.userModel.UpdateKratosUserById(strings.TrimSpace(user.KratosID), kratosjson); err != nil {
+	if err = ctrl.userModel.UpdateKratosUserById(strings.TrimSpace(user.KratosID.String), kratosjson); err != nil {
 		ctrl.logger.Error("error while UpdateKratosUserById", zap.Error(err))
 		return utils.JSONFail(c, http.StatusInternalServerError, err.Error())
 	}

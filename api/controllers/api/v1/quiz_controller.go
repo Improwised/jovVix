@@ -10,10 +10,10 @@ import (
 	"github.com/Improwised/quizz-app/api/config"
 	"github.com/Improwised/quizz-app/api/constants"
 	"github.com/Improwised/quizz-app/api/database"
+	"github.com/Improwised/quizz-app/api/helpers/calculations"
 	quiz_helper "github.com/Improwised/quizz-app/api/helpers/quiz"
 	quizUtilsHelper "github.com/Improwised/quizz-app/api/helpers/utils"
 	"github.com/Improwised/quizz-app/api/models"
-	"github.com/Improwised/quizz-app/api/helpers/calculations"
 	"github.com/Improwised/quizz-app/api/pkg/events"
 	"github.com/Improwised/quizz-app/api/pkg/structs"
 	"github.com/Improwised/quizz-app/api/pkg/watermill"
@@ -39,9 +39,9 @@ func InitQuizController(
 	answersSubmittedByUsers chan models.User,
 ) *QuizController {
 	return &QuizController{
-		helper: helper,
-		logger: logger,
-		event:  event,
+		helper:                  helper,
+		logger:                  logger,
+		event:                   event,
 		answersSubmittedByUsers: answersSubmittedByUsers,
 	}
 }

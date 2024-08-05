@@ -16,7 +16,7 @@ const KratosIdentityTable = "kratos.identities"
 // User model
 type User struct {
 	ID        string         `json:"id"`
-	KratosID  string         `json:"kratos_id" db:"kratos_id"`
+	KratosID  sql.NullString `json:"kratos_id" db:"kratos_id"`
 	FirstName string         `json:"first_name" db:"first_name" validate:"required"`
 	LastName  string         `json:"last_name" db:"last_name" validate:"required"`
 	Email     string         `json:"email" db:"email" validate:"required"`

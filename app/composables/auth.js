@@ -1,5 +1,3 @@
-import { useSystemEnv } from "./envs";
-
 export async function useIsAdmin() {
   const cfg = useRuntimeConfig().public;
   const headers = useRequestHeaders(["cookie"]);
@@ -22,21 +20,18 @@ export async function useIsAdmin() {
 }
 
 export async function useGetUser() {
-  const cfg = useSystemEnv();
+  const { api_url } = useRuntimeConfig().public;
   const headers = useRequestHeaders(["cookie"]);
   const isLogin = useState("guestUser", () => {
     return { ok: false, data: "" };
   });
 
-  const { error: err, data: data } = await useFetch(
-    cfg.value.api_url + "/user/who",
-    {
-      method: "GET",
-      credentials: "include",
-      headers: headers,
-      mode: "cors",
-    }
-  );
+  const { error: err, data: data } = await useFetch(api_url + "/user/who", {
+    method: "GET",
+    credentials: "include",
+    headers: headers,
+    mode: "cors",
+  });
 
   if (err?.value) {
     isLogin.value.ok = false;

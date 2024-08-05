@@ -6,7 +6,9 @@ export const useListUserstore = defineStore(
 
     //actions
     const addUser = (users) => {
-      listUsers.value = [...users];
+      if (Array.isArray(users)) {
+        listUsers.value = [...users];
+      }
     };
 
     const removeAllUsers = () => {
