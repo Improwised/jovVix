@@ -20,12 +20,17 @@
       >
         <div class="row w-100">
           <div class="col-12">
+            <QuizLoadingSpace v-if="pageLoading"></QuizLoadingSpace>
             <Frame
+              v-else
               page-title="Join Page"
               page-message="Let's Play Together"
               class="bg-white"
             >
-              <form method="POST" @submit.prevent="join_quiz">
+              <div v-if="userError">
+                {{ userError }}
+              </div>
+              <form v-else method="POST" @submit.prevent="join_quiz">
                 <div class="mb-3 pe-3">
                   <label for="code" class="form-label purple-text"
                     >Invitation Code</label
@@ -56,7 +61,8 @@
                     class="purple-text form-control"
                   />
                   <div v-if="isUserLoggedIn">
-                    Welcome <span class="font-weight-bold">{{ user }}</span>
+                    Welcome
+                    <span class="font-weight-bold">{{ firstname }}</span>
                   </div>
                 </div>
                 <div class="p-2">
@@ -66,6 +72,13 @@
                   </div>
                 </div>
                 <button
+                  v-if="quickUserPending"
+                  class="btn btn-primary btn-lg w-100 text-white join-button"
+                >
+                  Pending...
+                </button>
+                <button
+                  v-else
                   type="submit"
                   class="btn btn-primary btn-lg w-100 text-white join-button"
                 >
@@ -84,17 +97,23 @@
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { useToast } from "vue-toastification";
+import { useUsersStore } from "~~/store/users";
+const userData = useUsersStore();
+const { setUserData } = userData;
+const pageLoading = ref(true);
 
 // Assuming these are imported from external libraries or mixins
 const code = ref("");
 const username = ref("");
-const user = ref({});
+const firstname = ref({});
 const isUserLoggedIn = ref(false);
-const { kratos_url } = useRuntimeConfig().public;
+const { api_url } = useRuntimeConfig().public;
 const router = useRouter();
 const toast = useToast();
+const userError = ref(false);
+const quickUserPending = ref(false);
 
-function join_quiz() {
+const join_quiz = async () => {
   username.value = username.value.trim();
 
   if (!code.value || code.value.length !== 6) {
@@ -112,45 +131,68 @@ function join_quiz() {
     return;
   }
 
-  router.push(
-    `/join/play/${code.value}?username=${encodeURIComponent(username.value)}`
-  );
-}
+  // create quick user
+  if (!isUserLoggedIn.value) {
+    quickUserPending.value = true;
+    try {
+      await $fetch(`${api_url}/quick_users/${username.value}`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          Accept: "application/json",
+        },
+        onResponse({ response }) {
+          if (response.status == 200) {
+            isUserLoggedIn.value = true;
+            quickUserPending.value = false;
+            firstname.value = response._data?.data?.first_name;
+            username.value = response._data?.data?.username;
+            setUserData("guest-user");
+          }
+        },
+      });
+    } catch (error) {
+      userError.value = error.message;
+      quickUserPending.value = false;
+      return;
+    }
+  }
 
-// get user from kratos
+  router.push(
+    `/join/play/${code.value}?username=${encodeURIComponent(
+      username.value
+    )}&firstname=${firstname.value}`
+  );
+};
+
+// get user data
 (async () => {
   try {
-    await $fetch(kratos_url + "/sessions/whoami", {
+    await $fetch(api_url + "/user/who", {
       method: "GET",
       credentials: "include",
       headers: {
         Accept: "application/json",
       },
       onResponse({ response }) {
-        if (response.status >= 200 && response.status < 300) {
+        if (response.status == 200) {
           isUserLoggedIn.value = true;
-          user.value = response?._data?.identity?.traits.name.first;
-          username.value = user.value;
-        } else {
-          // check for session storage if user is not available in kratos
-          getGuestUser();
-          user.value = response?._data?.identity?.traits;
-          username.value = user?.value?.name?.first;
+          firstname.value = response._data?.data?.firstname;
+          username.value = response._data?.data?.username;
+          pageLoading.value = false;
         }
       },
     });
-  } catch (error) {}
-})();
-
-// get user from seesion storage
-const getGuestUser = async () => {
-  const guestUser = await useGetUser();
-  if (guestUser.value.ok) {
-    isUserLoggedIn.value = true;
-    user.value = guestUser.value.data.firstname;
-    username.value = user.value;
+  } catch (error) {
+    if (error.status == 401) {
+      isUserLoggedIn.value = false;
+      pageLoading.value = false;
+      return;
+    }
+    userError.value = error.message;
+    pageLoading.value = false;
   }
-};
+})();
 </script>
 
 <style scoped>

@@ -111,9 +111,42 @@
 </template>
 
 <script setup>
-useSystemEnv();
-onMounted(() => {
+import { useUsersStore } from "~~/store/users";
+const userData = useUsersStore();
+const { setUserData } = userData;
+const { api_url } = useRuntimeConfig().public;
+const headers = useRequestHeaders(["cookie"]);
+
+const setUserDataStore = async () => {
+  try {
+    const response = await fetch(api_url + "/user/who", {
+      method: "GET",
+      credentials: "include",
+      headers: headers,
+      mode: "cors",
+    });
+    console.log(response.status);
+    if (response.status != 200) {
+      throw new Error(response.status);
+    } else if (response.status == 200) {
+      const data = await response.json();
+      setUserData(data?.data?.role);
+    }
+    const data = await response.json();
+    console.log(data.data);
+  } catch (error) {
+    if (error.message == 401) {
+      console.log(error.message);
+      setUserData(null);
+      return;
+    }
+    console.log(error.message);
+  }
+};
+
+onMounted(async () => {
   import("@lottiefiles/lottie-player");
+  await setUserDataStore();
 });
 </script>
 
@@ -127,6 +160,7 @@ onMounted(() => {
   100% {
     transform: translateY(0);
   }
+
   50% {
     transform: translateY(-20px);
   }
@@ -137,6 +171,7 @@ onMounted(() => {
   100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.5;
   }
@@ -255,8 +290,10 @@ onMounted(() => {
 }
 
 .landing-vector-img {
-  max-width: 100%; /* Ensure image doesn't overflow its container */
-  height: auto; /* Maintain aspect ratio */
+  max-width: 100%;
+  /* Ensure image doesn't overflow its container */
+  height: auto;
+  /* Maintain aspect ratio */
 }
 
 .quiz-content {

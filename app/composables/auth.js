@@ -1,74 +1,9 @@
-export async function useIsAdmin() {
-  const cfg = useRuntimeConfig().public;
-  const headers = useRequestHeaders(["cookie"]);
-
-  const { error: err, data: data } = await useFetch(
-    cfg.api_url + "/user/is_admin",
-    {
-      method: "GET",
-      credentials: "include",
-      headers: headers,
-      mode: "cors",
-    }
-  );
-
-  if (err?.value) {
-    return { ok: false, err: err.value.data?.data || "unknown error" };
-  }
-
-  return { ok: data?.value.data == true, err: null };
-}
-
-export async function useGetUser() {
-  const { api_url } = useRuntimeConfig().public;
-  const headers = useRequestHeaders(["cookie"]);
-  const isLogin = useState("guestUser", () => {
-    return { ok: false, data: "" };
-  });
-
-  const { error: err, data: data } = await useFetch(api_url + "/user/who", {
-    method: "GET",
-    credentials: "include",
-    headers: headers,
-    mode: "cors",
-  });
-
-  if (err?.value) {
-    isLogin.value.ok = false;
-    return isLogin;
-  }
-
-  isLogin.value.ok = true;
-  isLogin.value.data = data?.value.data;
-  return isLogin;
-}
-
-export async function useGetKratosUser() {
-  const { kratos_url } = useRuntimeConfig().public;
-  const isKratosUser = useState("kratosUser", () => {
-    return { ok: false, data: "" };
-  });
-  try {
-    await $fetch(kratos_url + "/sessions/whoami", {
-      method: "GET",
-      credentials: "include",
-      headers: {
-        Accept: "application/json",
-      },
-      onResponse({ response }) {
-        if (response.status >= 200 && response.status < 300) {
-          isKratosUser.value.ok = true;
-          isKratosUser.value.data = response;
-        }
-      },
-    });
-  } catch (error) {}
-
-  return isKratosUser;
-}
+import { useUsersStore } from "~~/store/users";
 
 export const handleLogout = async () => {
   const { kratos_url } = useRuntimeConfig().public;
+  const userData = useUsersStore();
+  const { setUserData } = userData;
 
   try {
     // Step 1: Fetch logout URL and token from the first API endpoint
@@ -103,10 +38,8 @@ export const handleLogout = async () => {
       );
     }
     console.log("Logged out successfully");
-    const user = useState("kratosUser");
+    setUserData(null);
     navigateTo("/");
-    user.value.ok = false;
-    user.value.data = null;
   } catch (error) {
     console.error("Error during logout:", error);
   }

@@ -71,12 +71,13 @@
     <h3 class="d-flex align-item-center justify-content-center">
       Account Profile
     </h3>
+    <div v-if="userError?.data?.code == 401">
+      {{ navigateTo("/account/login") }}
+    </div>
     <div v-if="userError" class="alert alert-danger" role="alert">
       {{ userError.data }}
     </div>
-    <div v-else-if="userPending" class="form-select w-full md:w-20rem">
-      Pending...
-    </div>
+    <div v-else-if="userPending" class="text-center">Pending...</div>
     <div v-else class="row">
       <div class="col-md-5 mt-4">
         <div class="card d-flex justify-content-center align-items-center">
@@ -184,21 +185,26 @@
                 <nav class="navbar">
                   <div class="container-fluid p-0">
                     <h3 class="mb-0">Played Quiz List</h3>
-                    <UtilsCreateQuiz />
+                    <NuxtLink
+                      class="btn text-white btn-primary"
+                      to="/admin/played_quiz"
+                    >
+                      Played Quiz
+                    </NuxtLink>
                   </div>
                 </nav>
               </div>
               <div
-                v-if="quizList.data == null || quizList.data.length < 1"
+                v-if="quizList == null || quizList.length < 1"
                 class="no-quiz-list d-flex flex-column align-items-center mt-4 mb-2"
               >
                 <h2>No Quiz Played By You !</h2>
               </div>
               <div v-else class="row">
                 <div
-                  v-for="(details, index) in quizList.data"
+                  v-for="(details, index) in quizList"
                   :key="index"
-                  class="card-body col-md-4"
+                  class="card-body col-md-3"
                 >
                   <PlayedQuizListCard :details="details" />
                 </div>
@@ -239,6 +245,12 @@ const {
   headers: headers,
   mode: "cors",
   credentials: "include",
+  transform: (quizList) => {
+    if (quizList.data) {
+      return quizList.data.slice(0, 8);
+    }
+    return quizList.data;
+  },
 });
 
 const userData = reactive({

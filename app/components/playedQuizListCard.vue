@@ -11,7 +11,7 @@ const props = defineProps({
 });
 </script>
 <template>
-  <div class="card text-center">
+  <div class="card text-center" style="width: 18rem">
     <div class="card-body">
       <h5 class="card-title">{{ decodeURI(props.details?.title) }}</h5>
       <p class="card-text">{{ props.details?.description }}</p>
@@ -25,7 +25,7 @@ const props = defineProps({
       </p>
       <button
         class="btn btn-primary btn-sm"
-        @click="navigateTo(`/admin/${props.details?.id}`)"
+        @click="navigateTo(`/admin/played_quiz/${props.details?.id}`)"
       >
         Details
       </button>

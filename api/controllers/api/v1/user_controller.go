@@ -173,6 +173,7 @@ func (ctrl *UserController) GetUserMeta(c *fiber.Ctx) error {
 	var userMeta = models.User{}
 	var err error
 	var ok bool
+	role := ""
 
 	if kratosToken := c.Cookies(constants.KratosCookie); kratosToken == "" {
 		userMeta, err = ctrl.userService.GetUser(userID)
@@ -184,6 +185,7 @@ func (ctrl *UserController) GetUserMeta(c *fiber.Ctx) error {
 			}
 			return utils.JSONError(c, http.StatusBadRequest, constants.UnknownError)
 		}
+		role = "guest-user"
 	} else {
 		userMeta, ok = quizUtilsHelper.ConvertType[models.User](c.Locals(constants.ContextUser))
 
@@ -191,12 +193,14 @@ func (ctrl *UserController) GetUserMeta(c *fiber.Ctx) error {
 			ctrl.logger.Error("Cannot be able to get the userMeta details from database")
 			return utils.JSONFail(c, http.StatusNotFound, constants.Unauthenticated)
 		}
+		role = "admin-user"
 	}
 
 	return utils.JSONSuccess(c, http.StatusOK, map[string]string{
 		"username":  userMeta.Username,
 		"firstname": userMeta.FirstName,
 		"email":     userMeta.Email,
+		"role":      role,
 	})
 }
 

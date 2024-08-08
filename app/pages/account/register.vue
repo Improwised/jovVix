@@ -1,6 +1,8 @@
 <script setup>
 import { useToast } from "vue-toastification";
-
+import { useUsersStore } from "~~/store/users";
+const userData = useUsersStore();
+const { getUserData } = userData;
 const route = useRoute();
 const router = useRouter();
 const toast = useToast();
@@ -23,25 +25,11 @@ console.log(); // this console.log is required because without this, nuxt will g
 
 (async () => {
   if (process.client) {
-    try {
-      await $fetch(kratos_url + "/sessions/whoami", {
-        method: "GET",
-        credentials: "include",
-        headers: {
-          Accept: "application/json",
-        },
-        onResponse({ response }) {
-          console.log(response);
-          if (response.status >= 200 && response.status < 300) {
-            toast.success("You are already logged in");
-            navigateTo("/");
-          }
-        },
-      });
-    } catch (error) {
-      console.log(); // this error will be produced when user is not logged in so not logging anything here or not doing anything here
+    const user = getUserData();
+    if (user && user == "admin-user") {
+      navigateTo("/");
+      return;
     }
-
     if (route.query.flow) {
       try {
         await $fetch(kratos_url + "/self-service/registration/flows", {

@@ -274,7 +274,9 @@ func (model *UserPlayedQuizModel) ListUserPlayedQuizes(userId string) ([]structs
 		InnerJoin(goqu.T(constants.QuizQuestionsTable), goqu.On(goqu.I(constants.QuizzesTable+".id").Eq(goqu.I(constants.QuizQuestionsTable+".quiz_id")))).
 		Where(goqu.Ex{
 			UserPlayedQuizTable + ".user_id": userId,
-		}).GroupBy("user_played_quizzes.id", "quizzes.id")
+		}).GroupBy("user_played_quizzes.id", "quizzes.id").Order(goqu.I("user_played_quizzes.created_at").Desc())
+
+	query = query.Limit(constants.PageSize)
 
 	sql, args, err := query.ToSQL()
 	if err != nil {

@@ -22,15 +22,13 @@ const userOperationHandler = ref();
 
 const monitorTerminateQuiz = ref(false);
 
-//for username
-const headers = useRequestHeaders(["cookie"]);
-const url = useRuntimeConfig().public;
-const endpoint = "/user/who";
-const userMeta = ref({});
-
 // for notification bars
 const showConnectingBar = ref(false);
 const showReconnectedBar = ref(false);
+
+// get query params
+const username = computed(() => route.query.username);
+const firstname = computed(() => route.query.firstname);
 
 // event handlers
 const handleCustomChange = (isFullScreenEvent) => {
@@ -47,7 +45,7 @@ onMounted(() => {
     try {
       userOperationHandler.value = new UserOperation(
         route.params.code,
-        route.query?.username,
+        username.value,
         handleQuizEvents,
         handleNetworkEvent,
         handleNetworkEstablished
@@ -67,7 +65,7 @@ const handleQuizEvents = async (message) => {
     );
   } else if (message.event == app.$TerminateQuiz) {
     monitorTerminateQuiz.value = true;
-    return await router.push(`/join/${userMeta.value.username}/scoreboard`);
+    return await router.push(`/join/${username.value}/scoreboard`);
   } else if (message.event == app.$RedirectToAdmin) {
     return await router.push("/admin/arrange/" + message.data.sessionId);
   } else if (
@@ -145,22 +143,6 @@ onBeforeUnmount(() => {
     userOperationHandler.value.endQuiz();
   }
 });
-
-async function getUserNameData() {
-  const response = await $fetch(url.api_url + endpoint, {
-    method: "GET",
-    headers,
-    credentials: "include",
-    mode: "cors",
-  });
-  userMeta.value = response.data;
-}
-
-setTimeout(async () => {
-  await getUserNameData();
-}, 1000);
-
-// custom class to bind component with
 </script>
 
 <template>
@@ -181,7 +163,7 @@ setTimeout(async () => {
       :full-screen-enabled="myRef"
       @is-full-screen="handleCustomChange"
     >
-      <UserName :user-name="userMeta.firstname"></UserName>
+      <UserName :user-name="firstname"></UserName>
 
       <QuizLoadingSpace
         v-if="currentComponent === 'Loading'"
@@ -202,7 +184,7 @@ setTimeout(async () => {
       <QuizScoreSpace
         v-else-if="currentComponent === 'Score'"
         :data="data"
-        :user-name="userMeta.username"
+        :user-name="username"
         :is-admin="false"
       ></QuizScoreSpace>
     </Playground>
@@ -234,6 +216,7 @@ setTimeout(async () => {
   0% {
     left: calc(100% + 50px);
   }
+
   100% {
     left: -50px;
   }

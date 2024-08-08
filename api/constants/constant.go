@@ -22,6 +22,7 @@ const (
 const (
 	ParamUid         = "userId"
 	UserPlayedQuizId = "user_played_quiz_id"
+	Username         = "username"
 )
 
 // Success messages
@@ -106,6 +107,7 @@ const (
 	MaxInvitationCode = 999999
 	Counter           = 5
 	Count             = 3
+	PageSize          = 10
 )
 
 // Quiz Events

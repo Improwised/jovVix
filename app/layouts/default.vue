@@ -44,7 +44,7 @@
               <!-- Register button -->
               <li class="nav-item mb-1">
                 <button
-                  v-if="!isKratosUser.ok"
+                  v-if="!isKratosUser"
                   class="btn custom-btn nav-link btn-link rounded-pill"
                   @click="navigate('/account/register')"
                 >
@@ -54,7 +54,7 @@
               <!-- Login button -->
               <li class="nav-item mb-1">
                 <button
-                  v-if="!isKratosUser.ok"
+                  v-if="!isKratosUser"
                   class="btn custom-btn nav-link btn-link rounded-pill"
                   @click="navigate('/account/login')"
                 >
@@ -69,7 +69,7 @@
                 </button>
               </li>
               <!-- create quiz button -->
-              <li v-if="isKratosUser.ok" class="nav-item mb-1">
+              <li v-if="isKratosUser" class="nav-item mb-1">
                 <button
                   class="btn custom-btn nav-link btn-link rounded-pill"
                   @click="navigate('/admin/quiz/list-quiz')"
@@ -87,7 +87,7 @@
                 </button>
               </li>
               <!-- Log out button -->
-              <li v-if="isKratosUser.ok" class="nav-item mb-1">
+              <li v-if="isKratosUser" class="nav-item mb-1">
                 <button
                   class="btn custom-btn nav-link btn-link rounded-pill"
                   @click="handleLogout()"
@@ -117,13 +117,22 @@
 </template>
 
 <script setup>
-import { useGetKratosUser, handleLogout } from "~~/composables/auth";
 const router = useRouter();
-const isKratosUser = await useGetKratosUser();
+import { useUsersStore } from "~~/store/users";
+const userData = useUsersStore();
+const { getUserData } = userData;
 
 const navigate = (url) => {
   router.push(url);
 };
+
+const isKratosUser = computed(() => {
+  const user = getUserData();
+  if (user && user == "admin-user") {
+    return true;
+  }
+  return false;
+});
 </script>
 
 <style scoped>
@@ -142,10 +151,14 @@ footer {
   color: #fff;
   background: linear-gradient(270deg, #5a66ef 0, #8042e4);
   border-color: #007bff;
-  margin-right: 10px; /* Space between buttons */
-  padding: 8px 16px; /* Adjust padding as needed */
-  border-radius: 20px; /* Increase border-radius for a pill shape */
-  text-align: center; /* Center text */
+  margin-right: 10px;
+  /* Space between buttons */
+  padding: 8px 16px;
+  /* Adjust padding as needed */
+  border-radius: 20px;
+  /* Increase border-radius for a pill shape */
+  text-align: center;
+  /* Center text */
 }
 
 .custom-btn:hover {
@@ -161,11 +174,13 @@ footer {
   }
 
   .custom-btn {
-    color: white !important; /* Ensure components are black on mobile */
+    color: white !important;
+    /* Ensure components are black on mobile */
   }
 
   .navbar-toggler-icon {
-    color: black; /* Set navbar toggler icon color to black */
+    color: black;
+    /* Set navbar toggler icon color to black */
   }
 }
 </style>

@@ -109,14 +109,13 @@ function copyToClipboard(text) {
         <div
           class="d-flex justify-content-start justify-content-md-center align-items-center position-relative"
         >
-          <v-otp-input
-            v-model="code"
-            max-width="500"
-            min-height="90"
+          <div
             type="number"
             class="large-otp-input"
-            disabled
-          ></v-otp-input>
+            style="font-size: 4rem; letter-spacing: 2rem"
+          >
+            {{ code }}
+          </div>
           <font-awesome-icon
             id="OTP-input-container"
             icon="fa-solid fa-copy"
@@ -141,32 +140,47 @@ function copyToClipboard(text) {
   margin-bottom: 100px;
   font-size: 30px;
 }
+
 .copy-icon:hover {
   cursor: pointer;
 }
 
 .large-otp-input :deep(input) {
-  width: 70px; /* Adjust the width as needed */
-  height: 70px; /* Adjust the height as needed */
-  font-size: 62px; /* Adjust the font size as needed */
+  width: 70px;
+  /* Adjust the width as needed */
+  height: 70px;
+  /* Adjust the height as needed */
+  font-size: 62px;
+  /* Adjust the font size as needed */
 
   color: rgb(85, 73, 73) !important;
-  text-align: center; /* Center the text horizontally */
-  line-height: 70px; /* Vertically center the text */
-  padding: 0; /* Ensure no extra padding */
-  box-sizing: border-box; /* Ensure padding and border are included in width and height */
-  display: flex; /* Flexbox to center the content */
-  justify-content: center; /* Center the content horizontally */
-  align-items: center; /* Center the content vertically */
+  text-align: center;
+  /* Center the text horizontally */
+  line-height: 70px;
+  /* Vertically center the text */
+  padding: 0;
+  /* Ensure no extra padding */
+  box-sizing: border-box;
+  /* Ensure padding and border are included in width and height */
+  display: flex;
+  /* Flexbox to center the content */
+  justify-content: center;
+  /* Center the content horizontally */
+  align-items: center;
+  /* Center the content vertically */
   font-family: "Pacifico", cursive;
 }
 
 .large-otp-input :deep(input::placeholder) {
-  font-size: 72px; /* Match font size with input text */
+  font-size: 72px;
+  /* Match font size with input text */
   color: rgb(12, 11, 11) !important;
-  text-align: center; /* Center the placeholder text */
-  line-height: 70px; /* Vertically center the placeholder text */
-  opacity: 1; /* Ensure placeholder visibility */
+  text-align: center;
+  /* Center the placeholder text */
+  line-height: 70px;
+  /* Vertically center the placeholder text */
+  opacity: 1;
+  /* Ensure placeholder visibility */
   font-family: "Pacifico", cursive;
 }
 

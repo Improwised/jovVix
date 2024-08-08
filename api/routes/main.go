@@ -188,6 +188,10 @@ func setupUserController(v1 fiber.Router, goqu *goqu.Database, logger *zap.Logge
 	usersRouter := v1.Group("/users")
 	usersRouter.Get(fmt.Sprintf("/:%s", constants.ParamUid), middlewares.Authenticated, userController.GetUser)
 	usersRouter.Post("/", userController.CreateUser)
+
+	// quick user route
+	quickUsersRouter := v1.Group("/quick_users")
+	quickUsersRouter.Post(fmt.Sprintf("/:%s", constants.Username), authController.CreateQuickUser)
 	return nil
 }
 

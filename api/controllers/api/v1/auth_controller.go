@@ -193,10 +193,79 @@ func (ctrl *AuthController) DoKratosAuth(c *fiber.Ctx) error {
 	return c.Redirect(ctrl.config.WebUrl)
 }
 
+func (ctrl *AuthController) CreateQuickUser(c *fiber.Ctx) error {
+	username := c.Params(constants.Username)
+
+	userObj := models.User{
+		FirstName: username,
+		Username:  username,
+		Roles:     "user",
+	}
+	user, err := ctrl.userModel.InsertUser(userObj)
+	if err != nil {
+		pqErr, ok := quizUtilsHelper.ConvertType[*pq.Error](err)
+		retrying := 0
+
+		if !ok {
+			ctrl.logger.Debug("unable to convert postgres error")
+			return utils.JSONError(c, http.StatusInternalServerError, constants.ErrorTypeConversion)
+		}
+
+		if pqErr.Code == "23505" {
+
+			if pqErr.Constraint != constants.UserUkey {
+				ctrl.logger.Debug("user wants to use the username which is already registered")
+				return utils.JSONError(c, http.StatusInternalServerError, fmt.Sprintf("username (%s) already registered", user.Username))
+			}
+
+			for {
+				if retrying > 30 {
+					break
+				} else {
+					user.Username = quizUtilsHelper.GenerateNewStringHavingSuffixName(user.Username, 5, 12)
+					user, err = ctrl.userModel.InsertUser(user)
+					if err != nil {
+						retrying++
+					} else {
+						break
+					}
+				}
+			}
+		}
+
+		if err != nil {
+			ctrl.logger.Error("unable to insert the user registered with kratos into the database and username is - "+user.Username, zap.Error(err))
+			return utils.JSONError(c, http.StatusInternalServerError, constants.ErrKratosDataInsertion)
+		}
+	}
+
+	cookieExpirationTime, err := time.ParseDuration(ctrl.config.Kratos.CookieExpirationTime)
+	if err != nil {
+		ctrl.logger.Debug("unable to parse the duration for the cookie expiration", zap.Error(err))
+		return utils.JSONError(c, http.StatusInternalServerError, constants.ErrKratosCookieTime)
+	}
+
+	token, err := jwt.CreateToken(ctrl.config, user.ID, time.Now().Add(time.Hour*2))
+	if err != nil {
+		ctrl.logger.Error("error while creating token", zap.Error(err), zap.Any("id", user.ID))
+		return utils.JSONFail(c, http.StatusInternalServerError, constants.ErrLoginUser)
+	}
+
+	userCookie := &fiber.Cookie{
+		Name:    constants.CookieUser,
+		Value:   token,
+		Expires: time.Now().Add(cookieExpirationTime),
+	}
+
+	c.Cookie(userCookie)
+
+	return utils.JSONSuccess(c, http.StatusOK, user)
+}
+
 func (ctrl *AuthController) IsRegisteredUser(c *fiber.Ctx) error {
 	kratosId := c.Cookies("ory_kratos_session")
 	if kratosId == "" {
-		return utils.JSONError(c, http.StatusBadRequest, constants.ErrKratosIDEmpty)
+		return utils.JSONError(c, http.StatusUnauthorized, constants.ErrKratosIDEmpty)
 	}
 
 	kratosUser := config.KratosUserDetails{}
@@ -213,10 +282,10 @@ func (ctrl *AuthController) IsRegisteredUser(c *fiber.Ctx) error {
 
 func (ctrl *AuthController) GetRegisteredUser(c *fiber.Ctx) error {
 	kratosId := c.Cookies("ory_kratos_session")
-	if kratosId == "" {
-		return utils.JSONError(c, http.StatusBadRequest, constants.ErrKratosIDEmpty)
-	}
 	ctrl.logger.Debug("AuthController.GetRegisteredUser called", zap.Any("ory_kratos_session", kratosId))
+	if kratosId == "" {
+		return utils.JSONError(c, http.StatusUnauthorized, constants.ErrKratosIDEmpty)
+	}
 
 	kratosUser := config.KratosUserDetails{}
 	kratosClient := resty.New().SetBaseURL(ctrl.config.Kratos.BaseUrl+"/sessions").SetHeader("Cookie", fmt.Sprintf("%v=%v", constants.KratosCookie, kratosId)).SetHeader("accept", "application/json").SetHeader("withCredentials", "true").SetHeader("credentials", "include")
