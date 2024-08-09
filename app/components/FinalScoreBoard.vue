@@ -40,6 +40,11 @@ const props = defineProps({
     required: false,
     default: "",
   },
+  userPlayedQuiz: {
+    type: String,
+    required: true,
+    default: "",
+  },
 });
 
 async function getFinalScoreboardDetails(endpoint) {
@@ -74,14 +79,17 @@ if (props.isAdmin) {
     props.userURL + "?active_quiz_id=" + activeQuizId.value
   );
 } else {
-  getFinalScoreboardDetails(props.userURL);
+  getFinalScoreboardDetails(
+    `${props.userURL}?user_played_quiz=${props.userPlayedQuiz}`
+  );
 }
 
 //for users
 if (!props.isAdmin) {
   async function getAnalysisDetails() {
     const { data, error } = await useFetch(
-      () => url.api_url + userAnalysisEndpoint,
+      () =>
+        `${url.api_url}${userAnalysisEndpoint}?user_played_quiz=${props.userPlayedQuiz}`,
       {
         method: "GET",
         headers: headers,

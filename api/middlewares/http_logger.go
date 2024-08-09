@@ -48,7 +48,7 @@ func LogHandler(logger *zap.Logger, pMetrics *pMetrics.PrometheusMetrics) fiber.
 			if ctx.Response().Header.StatusCode() >= 100 && ctx.Response().Header.StatusCode() <= 399 {
 				logger.Debug("Handled successful request", zapCoreField...)
 			} else {
-				logger.Error("handled error request", zapCoreField...)
+				logger.Debug("handled error request", zapCoreField...)
 			}
 		}
 

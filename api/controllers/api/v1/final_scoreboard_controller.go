@@ -48,19 +48,22 @@ func NewFinalScoreBoardController(goqu *goqu.Database, logger *zap.Logger, event
 //	     400: GenericResFailNotFound
 //		  500: GenericResError
 func (fc *FinalScoreBoardController) GetScore(ctx *fiber.Ctx) error {
-
-	var userPlayedQuiz = ctx.Cookies(constants.UserPlayedQuiz)
+	userPlayedQuiz := ctx.Query(constants.UserPlayedQuiz)
+	fc.logger.Debug("FinalScoreBoardController.GetScore called", zap.Any("userPlayedQuiz", userPlayedQuiz))
 
 	if !(userPlayedQuiz != "" && len(userPlayedQuiz) == 36) {
 		fc.logger.Debug("user played quiz id is not valid - either empty string or it is not 36 characters long")
 		return utils.JSONFail(ctx, http.StatusBadRequest, errors.New("user play quiz should be valid string").Error())
 	}
 
+	fc.logger.Debug("finalScoreBoardModel.GetScore called", zap.Any("userPlayedQuiz", userPlayedQuiz))
 	finalScoreBoardData, err := fc.finalScoreBoardModel.GetScore(userPlayedQuiz)
 	if err != nil {
 		fc.logger.Error("Error while getting final scoreboard for user", zap.Error(err))
 		return utils.JSONFail(ctx, http.StatusInternalServerError, errors.New("internal server error").Error())
 	}
+	fc.logger.Debug("finalScoreBoardModel.GetScore success", zap.Any("finalScoreBoardData", finalScoreBoardData))
+	fc.logger.Debug("FinalScoreBoardController.GetScore success", zap.Any("finalScoreBoardData", finalScoreBoardData))
 
 	return utils.JSONSuccess(ctx, http.StatusOK, finalScoreBoardData)
 

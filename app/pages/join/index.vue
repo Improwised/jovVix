@@ -112,6 +112,7 @@ const router = useRouter();
 const toast = useToast();
 const userError = ref(false);
 const quickUserPending = ref(false);
+const userPlayedQuiz = ref("");
 
 const join_quiz = async () => {
   username.value = username.value.trim();
@@ -158,10 +159,34 @@ const join_quiz = async () => {
     }
   }
 
+  try {
+    quickUserPending.value = true;
+    await $fetch(`${api_url}/user_played_quizes/${code.value}`, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        Accept: "application/json",
+      },
+      onResponse({ response }) {
+        if (response.status == 200) {
+          userPlayedQuiz.value = response._data?.data;
+          quickUserPending.value = false;
+        }
+      },
+    });
+  } catch (error) {
+    userError.value = error.message;
+    quickUserPending.value = false;
+    if (error?.status == 400) {
+      userError.value = "invitation code not found";
+    }
+    return;
+  }
+
   router.push(
     `/join/play/${code.value}?username=${encodeURIComponent(
       username.value
-    )}&firstname=${firstname.value}`
+    )}&firstname=${firstname.value}&user_played_quiz=${userPlayedQuiz.value}`
   );
 };
 

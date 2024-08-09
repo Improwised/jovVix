@@ -25,6 +25,7 @@ import (
 // UserController for user controllers
 type UserController struct {
 	userService *services.UserService
+	userModel   *models.UserModel
 	logger      *zap.Logger
 	event       *events.Events
 	pub         *watermill.WatermillPublisher
@@ -41,6 +42,7 @@ func NewUserController(goqu *goqu.Database, logger *zap.Logger, event *events.Ev
 
 	return &UserController{
 		userService: userSvc,
+		userModel:   &userModel,
 		logger:      logger,
 		event:       event,
 		pub:         pub,
@@ -170,37 +172,48 @@ func (ctrl *UserController) IsAdmin(c *fiber.Ctx) error {
 
 func (ctrl *UserController) GetUserMeta(c *fiber.Ctx) error {
 	userID := quizUtilsHelper.GetString(c.Locals(constants.ContextUid))
-	var userMeta = models.User{}
-	var err error
-	var ok bool
-	role := ""
+	kratosID := quizUtilsHelper.GetString(c.Locals(constants.KratosID))
+	ctrl.logger.Debug("UserController.GetUserMeta called", zap.Any("userID", userID), zap.Any("kratosID", kratosID))
 
-	if kratosToken := c.Cookies(constants.KratosCookie); kratosToken == "" {
-		userMeta, err = ctrl.userService.GetUser(userID)
-		if err != nil {
-			if err == sql.ErrNoRows {
-				c.Cookie(RemoveUserToken(constants.ContextUid))
-				ctrl.logger.Error("Cannot be able to get the userMeta details from database")
-				return utils.JSONFail(c, http.StatusNotFound, constants.Unauthenticated)
-			}
-			return utils.JSONError(c, http.StatusBadRequest, constants.UnknownError)
-		}
-		role = "guest-user"
-	} else {
-		userMeta, ok = quizUtilsHelper.ConvertType[models.User](c.Locals(constants.ContextUser))
-
-		if !ok {
-			ctrl.logger.Error("Cannot be able to get the userMeta details from database")
-			return utils.JSONFail(c, http.StatusNotFound, constants.Unauthenticated)
-		}
-		role = "admin-user"
+	if kratosID == "<nil>" && userID == "<nil>" {
+		ctrl.logger.Error(constants.ErrUnauthenticated)
+		return utils.JSONError(c, http.StatusBadRequest, constants.ErrUnauthenticated)
 	}
 
+	if kratosID != "<nil>" {
+		user, ok := quizUtilsHelper.ConvertType[models.User](c.Locals(constants.ContextUser))
+		if !ok {
+			ctrl.logger.Error("Cannot be able to get the userMeta details from database")
+			return utils.JSONFail(c, http.StatusInternalServerError, constants.ErrGetUser)
+		}
+
+		ctrl.logger.Debug("UserController.GetUserMeta success", zap.Any("user", user))
+		return utils.JSONSuccess(c, http.StatusOK, map[string]string{
+			"username":  user.Username,
+			"firstname": user.FirstName,
+			"email":     user.Email,
+			"role":      "admin-user",
+		})
+	}
+
+	ctrl.logger.Debug("userModel.GetById called", zap.Any("userID", userID))
+	user, err := ctrl.userModel.GetById(userID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			ctrl.logger.Error(constants.ErrGetUser, zap.Error(err))
+			return utils.JSONError(c, http.StatusNotFound, constants.ErrGetUser)
+		}
+		ctrl.logger.Error(constants.ErrGetUser, zap.Error(err))
+		return utils.JSONError(c, http.StatusInternalServerError, constants.ErrGetUser)
+	}
+	ctrl.logger.Debug("userModel.GetById success", zap.Any("user", user))
+	ctrl.logger.Debug("UserController.GetUserMeta success", zap.Any("user", user))
+
 	return utils.JSONSuccess(c, http.StatusOK, map[string]string{
-		"username":  userMeta.Username,
-		"firstname": userMeta.FirstName,
-		"email":     userMeta.Email,
-		"role":      role,
+		"username":  user.Username,
+		"firstname": user.FirstName,
+		"email":     user.Email,
+		"role":      "guest-user",
 	})
 }
 

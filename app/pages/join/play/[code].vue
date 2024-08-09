@@ -29,6 +29,7 @@ const showReconnectedBar = ref(false);
 // get query params
 const username = computed(() => route.query.username);
 const firstname = computed(() => route.query.firstname);
+const userPlayedQuiz = computed(() => route.query.user_played_quiz);
 
 // event handlers
 const handleCustomChange = (isFullScreenEvent) => {
@@ -65,7 +66,9 @@ const handleQuizEvents = async (message) => {
     );
   } else if (message.event == app.$TerminateQuiz) {
     monitorTerminateQuiz.value = true;
-    return await router.push(`/join/${username.value}/scoreboard`);
+    return await router.push(
+      `/join/${username.value}/scoreboard?user_played_quiz=${userPlayedQuiz.value}`
+    );
   } else if (message.event == app.$RedirectToAdmin) {
     return await router.push("/admin/arrange/" + message.data.sessionId);
   } else if (
@@ -125,7 +128,10 @@ const startQuiz = () => {
 };
 
 const sendAnswer = async (answers) => {
-  const response = await userOperationHandler.value.handleSendAnswer(answers);
+  const response = await userOperationHandler.value.handleSendAnswer(
+    answers,
+    userPlayedQuiz.value
+  );
 
   if (response?.error) {
     toast.error(response.error);

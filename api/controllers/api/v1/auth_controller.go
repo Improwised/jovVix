@@ -301,7 +301,7 @@ func (ctrl *AuthController) GetRegisteredUser(c *fiber.Ctx) error {
 }
 
 func (ctrl *AuthController) UpadateRegisteredUser(c *fiber.Ctx) error {
-	userId := c.Locals(constants.ContextUid).(string)
+	userId := quizUtilsHelper.GetString(c.Locals(constants.ContextUid))
 	ctrl.logger.Debug("AuthController.UpadateRegisteredUser called", zap.Any("userId", userId))
 
 	ctrl.logger.Debug("validate req", zap.Any("Body", c.Body()))

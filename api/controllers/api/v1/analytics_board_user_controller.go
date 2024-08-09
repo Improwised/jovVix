@@ -14,9 +14,9 @@ import (
 )
 
 type AnalyticsBoardUserController struct {
-	analyticsBoardUserModel  *models.AnalyticsBoardUserModel
-	logger                    *zap.Logger
-	event                     *events.Events
+	analyticsBoardUserModel *models.AnalyticsBoardUserModel
+	logger                  *zap.Logger
+	event                   *events.Events
 }
 
 func NewAnalyticsBoardUserController(goqu *goqu.Database, logger *zap.Logger, event *events.Events) (*AnalyticsBoardUserController, error) {
@@ -27,8 +27,8 @@ func NewAnalyticsBoardUserController(goqu *goqu.Database, logger *zap.Logger, ev
 
 	return &AnalyticsBoardUserController{
 		analyticsBoardUserModel: &analyticsBoardUserModel,
-		logger:                    logger,
-		event:                     event,
+		logger:                  logger,
+		event:                   event,
 	}, nil
 
 }
@@ -48,19 +48,22 @@ func NewAnalyticsBoardUserController(goqu *goqu.Database, logger *zap.Logger, ev
 //	     400: GenericResFailNotFound
 //		  500: GenericResError
 func (fc *AnalyticsBoardUserController) GetAnalyticsForUser(ctx *fiber.Ctx) error {
-
-	var userPlayedQuizId = ctx.Cookies(constants.UserPlayedQuiz)
+	userPlayedQuizId := ctx.Query(constants.UserPlayedQuiz)
+	fc.logger.Debug("AnalyticsBoardUserController.GetAnalyticsForUser called", zap.Any("userPlayedQuizId", userPlayedQuizId))
 
 	if userPlayedQuizId == "" || !(len(userPlayedQuizId) == 36) {
 		fc.logger.Error("user played quiz is not valid")
 		return utils.JSONFail(ctx, http.StatusBadRequest, errors.New("user play quiz should be valid string").Error())
 	}
+
+	fc.logger.Debug("analyticsBoardUserModel.GetAnalyticsForUser called", zap.Any("userPlayedQuizId", userPlayedQuizId))
 	analyticsBoardData, err := fc.analyticsBoardUserModel.GetAnalyticsForUser(userPlayedQuizId)
 	if err != nil {
 		fc.logger.Error("Error while getting analytics for user", zap.Error(err))
 		return utils.JSONFail(ctx, http.StatusInternalServerError, errors.New("internal server error").Error())
 	}
+	fc.logger.Debug("analyticsBoardUserModel.GetAnalyticsForUser success", zap.Any("analyticsBoardData", analyticsBoardData))
+	fc.logger.Debug("AnalyticsBoardUserController.GetAnalyticsForUser success", zap.Any("analyticsBoardData", analyticsBoardData))
 
 	return utils.JSONSuccess(ctx, http.StatusOK, analyticsBoardData)
-
 }

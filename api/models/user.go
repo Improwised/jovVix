@@ -119,7 +119,7 @@ func (model *UserModel) InsertKratosUser(user User) error {
 		_, err := model.db.Insert(UserTable).Rows(
 			goqu.Record{
 				"id":         user.ID,
-				"kratos_id":  user.KratosID,
+				"kratos_id":  user.KratosID.String,
 				"first_name": user.FirstName,
 				"last_name":  user.LastName,
 				"email":      user.Email,

@@ -71,7 +71,6 @@ func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config confi
 
 	// middleware initialization
 	middleware := middlewares.NewMiddleware(config, logger, goqu, helperStructs.UserService)
-	playedQuizValidationMiddleware := middlewares.NewPlayedQuizValidationMiddleware(config, logger, goqu, helperStructs)
 
 	v1 := router.Group("/v1")
 
@@ -104,7 +103,7 @@ func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config confi
 		return err
 	}
 
-	err = quizController(v1, goqu, logger, middleware, playedQuizValidationMiddleware, events, pub, config, helperStructs)
+	err = quizController(v1, goqu, logger, middleware, events, pub, config, helperStructs)
 	if err != nil {
 		return err
 	}
@@ -222,7 +221,6 @@ func quizController(
 	db *goqu.Database,
 	logger *zap.Logger,
 	middleware middlewares.Middleware,
-	sessionMiddle middlewares.PlayedQuizValidationMiddleware,
 	events *events.Events,
 	pub *watermill.WatermillPublisher,
 	config config.AppConfig,
@@ -231,25 +229,18 @@ func quizController(
 	AnswersSubmittedByUsers := make(chan models.User, 50)
 
 	quizSocketController := controller.InitQuizConfig(db, &config, logger, helper, AnswersSubmittedByUsers)
-	quizController := controller.InitQuizController(logger, events, pub, helper, AnswersSubmittedByUsers)
+	quizController := controller.InitQuizController(db, logger, events, pub, helper, AnswersSubmittedByUsers)
 
 	// middleware format := param-check/pass... , authentication... , authorization..., controller(API/SOCKET)...
 
-	v1.Get(fmt.Sprintf("/socket/join/:%s", constants.QuizSessionInvitationCode), middleware.CheckSessionCode, middleware.CustomAuthenticated, sessionMiddle.PlayedQuizValidation, websocket.New(quizSocketController.Join))
+	v1.Get(fmt.Sprintf("/socket/join/:%s", constants.QuizSessionInvitationCode), middleware.CheckSessionCode, middleware.CustomAuthenticated, websocket.New(quizSocketController.Join))
 
 	v1.Post("/quiz/answer", middleware.Authenticated, middleware.CustomAuthenticated, quizController.SetAnswer)
 
-	v1.Get("/quiz/terminate", middleware.KratosAuthenticated, quizController.Terminate)
-
-	// admin endpoints
-	allowRoles, err := helper.RoleModel.NewAllowedRoles("admin")
-	if err != nil {
-		return err
-	}
-	rbObj := middlewares.NewRolePermissionMiddleware(middleware, allowRoles)
+	v1.Get("/quiz/terminate", middleware.Authenticated, quizController.Terminate)
 
 	admin := v1.Group("/admin")
-	admin.Use(middleware.KratosAuthenticated, rbObj.IsAllowed)
+	admin.Use(middleware.KratosAuthenticated)
 
 	quizzes := admin.Group("/quizzes")
 
@@ -309,5 +300,6 @@ func UserPlayedQuizeController(v1 fiber.Router, goqu *goqu.Database, logger *zap
 	userRouter := v1.Group("/user_played_quizes")
 	userRouter.Get("/", middlewares.KratosAuthenticated, userPlayedQuizeController.ListUserPlayedQuizes)
 	userRouter.Get(fmt.Sprintf("/:%s", constants.UserPlayedQuizId), userPlayedQuizeController.ListUserPlayedQuizesWithQuestionById)
+	userRouter.Post(fmt.Sprintf("/:%s", constants.QuizSessionInvitationCode), middlewares.Authenticated, userPlayedQuizeController.PlayedQuizValidation)
 	return nil
 }

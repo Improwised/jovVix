@@ -109,6 +109,7 @@ func CreateQuickUser(db *goqu.Database, logger *zap.Logger, userObj models.User,
 
 type quizSocketController struct {
 	db                      *models.QuizModel
+	activeQuizModel         *models.ActiveQuizModel
 	appConfig               *config.AppConfig
 	logger                  *zap.Logger
 	helpers                 *quizHelper.HelperGroup
@@ -116,7 +117,7 @@ type quizSocketController struct {
 }
 
 func InitQuizConfig(db *goqu.Database, appConfig *config.AppConfig, logger *zap.Logger, helpers *quizHelper.HelperGroup, answersSubmittedByUsers chan models.User) *quizSocketController {
-	return &quizSocketController{models.InitQuizModel(db), appConfig, logger, helpers, answersSubmittedByUsers}
+	return &quizSocketController{models.InitQuizModel(db), models.InitActiveQuizModel(db, logger), appConfig, logger, helpers, answersSubmittedByUsers}
 }
 
 func (qc *quizSocketController) Join(c *websocket.Conn) {
@@ -132,24 +133,17 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 	}
 	var quizResponse QuizReceiveResponse
 
-	// check for middleware error
-	if c.Locals(constants.MiddlewareError) != nil {
-		handleMiddleWareError(c, qc, response)
-		return
-	}
-
 	invitationCode := quizUtilsHelper.GetString(c.Locals(constants.QuizSessionInvitationCode))
 
-	session, ok := quizUtilsHelper.ConvertType[models.ActiveQuiz](c.Locals(constants.ActiveQuizObj))
-
-	if !ok {
-		response.Action = constants.ActionSessionValidation
-		qc.logger.Debug(fmt.Sprintf("unknown error was triggered from join method while converting active quiz object and the response is - %v and active quiz object is - %v", response, c.Locals(constants.ActiveQuizObj)))
-		err := utils.JSONErrorWs(c, constants.UnknownError, response)
-
-		if err != nil {
-			qc.logger.Error(fmt.Sprintf("socket error session type change: %s event, %s action, %s code", constants.EventSessionValidation, response.Action, invitationCode), zap.Error(err))
+	session, err := qc.activeQuizModel.GetSessionByCode(invitationCode)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			qc.logger.Error(constants.ErrInvitationCodeNotFound, zap.Error(err))
+			c.Close()
+			return
 		}
+		qc.logger.Error("error in invitation code", zap.Error(err))
+		c.Close()
 		return
 	}
 
@@ -181,7 +175,7 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 
 			if quizResponse.Event == "websocket_close" {
 				updateUserData(qc, userId, session.ID.String(), false, false)
-				qc.logger.Debug("connection close request is send by the user - " + user.Username)
+				qc.logger.Info("connection close request is send by the user - " + user.Username)
 				break
 			}
 
@@ -216,11 +210,6 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 }
 
 func publishUserOnJoin(qc *quizSocketController, quizResponse QuizSendResponse, userName string, userId string, sessionId string) {
-
-	var mutex sync.Mutex
-	defer mutex.Unlock()
-
-	mutex.Lock()
 
 	// store data to redis in form of slice
 	var usersData []UserInfo
@@ -284,42 +273,6 @@ func publishUserOnJoin(qc *quizSocketController, quizResponse QuizSendResponse, 
 	}
 }
 
-func handleMiddleWareError(c *websocket.Conn, qc *quizSocketController, response QuizSendResponse) {
-	// handle error type
-	errorInfo, ok := quizUtilsHelper.ConvertType[error](c.Locals(constants.MiddlewareError))
-	if ok {
-		response.Data = errorInfo.Error()
-		qc.logger.Debug("authentication error was triggered from handleMiddleWareError while converting middleware error locals and the error is - " + errorInfo.Error())
-		err := utils.JSONErrorWs(c, constants.EventAuthentication, response)
-		if err != nil {
-			qc.logger.Error(fmt.Sprintf("socket error in middleware: %s event, %s action", constants.EventAuthentication, response.Action), zap.Error(err))
-		}
-		return
-	}
-
-	// handle string type
-	errorString := quizUtilsHelper.GetString(c.Locals(constants.MiddlewareError))
-	if errorString != "<nil>" {
-		if errorString == constants.ErrAdminCannotBeUser {
-			response.Data = errorString
-			qc.logger.Debug("admin wants to joins as a user, hence returning failed request" + errorString)
-			err := utils.JSONFailWs(c, constants.ErrAdminCannotBeUser, response)
-			if err != nil {
-				qc.logger.Error(fmt.Sprintf("socket error in handling middleware error: %s event, %s action", constants.ErrAdminCannotBeUser, response.Action), zap.Error(err))
-			}
-			return
-		} else {
-			response.Data = errorString
-			qc.logger.Debug("authentication error was failed from handleMiddleWareError while converting middleware error locals to the string and the error is - " + errorInfo.Error())
-			err := utils.JSONFailWs(c, constants.EventAuthentication, response)
-			if err != nil {
-				qc.logger.Error(fmt.Sprintf("socket error in middleware: %s event, %s action", constants.EventAuthentication, response.Action), zap.Error(err))
-			}
-			return
-		}
-	}
-}
-
 func handleQuestion(c *websocket.Conn, qc *quizSocketController, session models.ActiveQuiz, response QuizSendResponse) {
 	pubsub := qc.helpers.PubSubModel.Client.Subscribe(qc.helpers.PubSubModel.Ctx, session.ID.String())
 	defer func() {
@@ -363,18 +316,6 @@ func (qc *quizSocketController) Arrange(c *websocket.Conn) {
 		Component: constants.Waiting,
 		Action:    constants.ActionAuthentication,
 		Data:      "",
-	}
-
-	// checks for any middleware errors
-	if c.Locals(constants.MiddlewareError) != nil {
-		response.Data = quizUtilsHelper.GetString(c.Locals(constants.MiddlewareError))
-		qc.logger.Debug("authendication error was triggered from Arrange method and the error is - " + quizUtilsHelper.GetString(c.Locals(constants.MiddlewareError)))
-		err := utils.JSONErrorWs(c, constants.EventAuthentication, response)
-		if err != nil {
-			qc.logger.Error(fmt.Sprintf("socket error middleware: %s event, %s action", constants.EventAuthentication, response.Action), zap.Error(err))
-		}
-		time.Sleep(1 * time.Second)
-		return
 	}
 
 	sessionId := quizUtilsHelper.GetString(c.Locals(constants.SessionIDParam))
@@ -839,10 +780,6 @@ func handleConnectedUser(c *websocket.Conn, qc *quizSocketController) {
 	response := QuizSendResponse{}
 	response.Action = "send user join data"
 	response.Component = constants.Waiting
-	var mutex sync.Mutex
-	defer mutex.Unlock()
-
-	mutex.Lock()
 
 	pubsub := qc.helpers.PubSubModel.Client.Subscribe(qc.helpers.PubSubModel.Ctx, constants.EventUserJoined, constants.EventTerminateQuiz, constants.EventStartQuizByAdmin, constants.StartQuizByAdminNoPlayerFound)
 	defer func() {
@@ -887,9 +824,7 @@ func handleConnectedUser(c *websocket.Conn, qc *quizSocketController) {
 
 // when admin refresh page at that time send redis conncted user data to admin
 func onRefreshHandleConnectedUser(qc *quizSocketController, topic string) {
-	var mutex sync.Mutex
-	mutex.Lock()
-	defer mutex.Unlock()
+
 	users, err := qc.helpers.PubSubModel.Client.Get(qc.helpers.PubSubModel.Ctx, topic).Result()
 	if err != nil {
 		qc.logger.Error(fmt.Sprintf("socket error %s", constants.EventSendInvitationCode), zap.Error(err))
@@ -959,9 +894,6 @@ func onConnectHandleUser(c *websocket.Conn, qc *quizSocketController, response *
 // function to update user IsAlive status
 func updateUserData(qc *quizSocketController, userId string, sessionId string, isAlive bool, wait bool) {
 
-	var mutex sync.Mutex
-	mutex.Lock()
-
 	// get datat from redis
 	users, err := qc.helpers.PubSubModel.Client.Get(qc.helpers.PubSubModel.Ctx, sessionId).Result()
 	if err != nil {
@@ -1005,8 +937,6 @@ func updateUserData(qc *quizSocketController, userId string, sessionId string, i
 			qc.logger.Debug(fmt.Sprintf("isalive status updated for the user %s(%s) from %v to %v", user.UserName, user.UserId, !user.IsAlive, user.IsAlive))
 		}
 
-		mutex.Unlock()
-
 		// wait before publishing data to redis in case the user is alive and sends a ping
 		// do not wait when closeGoingAway error (tab is closed situations)
 		if wait {
@@ -1040,10 +970,6 @@ func updateUserData(qc *quizSocketController, userId string, sessionId string, i
 
 // filter user data and publish only alive user to the channel
 func filterPublishUsers(qc *quizSocketController, usersData []UserInfo, functionName string) (publishData []byte) {
-
-	var mutex sync.Mutex
-	mutex.Lock()
-	defer mutex.Unlock()
 
 	// Filter out elements where IsAlive is false
 	var filteredData []UserInfo

@@ -125,15 +125,12 @@ const setUserDataStore = async () => {
       headers: headers,
       mode: "cors",
     });
-    console.log(response.status);
     if (response.status != 200) {
       throw new Error(response.status);
     } else if (response.status == 200) {
       const data = await response.json();
       setUserData(data?.data?.role);
     }
-    const data = await response.json();
-    console.log(data.data);
   } catch (error) {
     if (error.message == 401) {
       console.log(error.message);

@@ -57,20 +57,23 @@ export default class UserOperation extends QuizHandler {
     super.onOpen(event);
   }
 
-  async handleSendAnswer(answers) {
+  async handleSendAnswer(answers, user_played_quiz) {
     let error;
     const responseTime = this.getAnswerResponseTime();
     try {
-      const response = await fetch(this.api_url + "/quiz/answer", {
-        method: "POST",
-        body: JSON.stringify({
-          id: this.currentQuestion,
-          keys: answers || [],
-          response_time: responseTime,
-        }),
-        credentials: "include",
-        mode: "cors",
-      });
+      const response = await fetch(
+        `${this.api_url}/quiz/answer?user_played_quiz=${user_played_quiz}`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            id: this.currentQuestion,
+            keys: answers || [],
+            response_time: responseTime,
+          }),
+          credentials: "include",
+          mode: "cors",
+        }
+      );
       const responseJson = await response.json();
       error = responseJson.data;
     } catch (err) {

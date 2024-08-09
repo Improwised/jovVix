@@ -34,7 +34,6 @@ func (m *Middleware) Authenticated(c *fiber.Ctx) error {
 	if err != nil {
 		if errors.Is(err, j.ErrInvalidJWT()) || errors.Is(err, j.ErrTokenExpired()) {
 			c.Cookie(RemoveCookie(constants.CookieUser))
-			c.Locals(constants.MiddlewareError, constants.ErrJWTExpired)
 			m.Logger.Error("JWT error during authentication in join", zap.Error(err))
 			return utils.JSONFail(c, http.StatusUnauthorized, constants.Unauthenticated)
 		}
@@ -60,32 +59,29 @@ func (m *Middleware) KratosAuthenticated(c *fiber.Ctx) error {
 	if err != nil || res.StatusCode() != http.StatusOK {
 		m.Logger.Debug("unauthenticated registration", zap.Any("response from kratos", res.RawResponse))
 		return utils.JSONError(c, res.StatusCode(), constants.ErrKratosAuth)
-	} else {
-		user := models.User{
-			KratosID:  sql.NullString{String: kratosUser.Identity.ID, Valid: true},
-			FirstName: kratosUser.Identity.Traits.Name.First,
-			LastName:  kratosUser.Identity.Traits.Name.Last,
-			Email:     kratosUser.Identity.Traits.Email,
-		}
-
-		userModel, err := models.InitUserModel(m.Db, m.Logger)
-		if err != nil {
-			m.Logger.Debug("error while initializing user model", zap.Error(err))
-			return utils.JSONError(c, http.StatusInternalServerError, constants.ErrGetUser)
-		}
-
-		localUser, err := userModel.GetUserByKratosID(kratosUser.Identity.ID)
-		if err != nil {
-			m.Logger.Debug("error while getting user information from database while kratos authentication", zap.Error(err))
-			return utils.JSONError(c, http.StatusInternalServerError, constants.ErrGetUser)
-		}
-
-		user.ID = localUser.ID
-		user.Roles = localUser.Roles
-		user.Username = localUser.Username
-
-		c.Locals(constants.ContextUser, user)
-		c.Locals(constants.ContextUid, user.ID)
-		return c.Next()
 	}
+
+	userModel, err := models.InitUserModel(m.Db, m.Logger)
+	if err != nil {
+		m.Logger.Debug("error while initializing user model", zap.Error(err))
+		return utils.JSONError(c, http.StatusInternalServerError, constants.ErrGetUser)
+	}
+
+	m.Logger.Debug("userModel.GetUserByKratosID called", zap.Any("kratosID", kratosUser.Identity.ID))
+	user, err := userModel.GetUserByKratosID(kratosUser.Identity.ID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			m.Logger.Error(constants.ErrGetUser, zap.Error(err))
+			return utils.JSONError(c, http.StatusNotFound, constants.ErrGetUser)
+		}
+		m.Logger.Error(constants.ErrGetUser, zap.Error(err))
+		return utils.JSONError(c, http.StatusInternalServerError, constants.ErrGetUser)
+	}
+	m.Logger.Debug("userModel.GetUserByKratosID success", zap.Any("user", user))
+
+	c.Locals(constants.ContextUser, user)
+	c.Locals(constants.ContextUid, user.ID)
+	c.Locals(constants.KratosID, kratosUser.Identity.ID)
+	return c.Next()
+
 }
