@@ -12,10 +12,11 @@ let file = ref(0);
 let title = ref("");
 const url = useRuntimeConfig().public;
 let quizId = ref();
+const requestPending = ref(false);
 
-// core
-async function submit(e) {
+const uploadQuizAndQuestions = async (e) => {
   e.preventDefault();
+  requestPending.value = true;
   const formData = new FormData();
 
   const description = document.getElementById("description");
@@ -23,24 +24,37 @@ async function submit(e) {
 
   formData.append(description.name, description.value);
   formData.append(attachment.name, attachment.files[0]);
-  const { data, error } = await useFetch(
-    encodeURI(url.api_url + "/admin/quizzes/" + title.value + "/upload"),
-    {
-      method: "POST",
-      body: formData,
-      mode: "cors",
-      credentials: "include",
-    }
-  );
-
-  if (error.value?.data) {
-    toast.error(error.value.data.data);
+  try {
+    await $fetch(
+      encodeURI(`${url.api_url}/admin/quizzes/${title.value}/upload`),
+      {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+        },
+        body: formData,
+        mode: "cors",
+        credentials: "include",
+        onResponse({ response }) {
+          if (response.status != 202) {
+            requestPending.value = false;
+            toast.error("error while create quiz");
+            return;
+          }
+          if (response.status == 202) {
+            quizId.value = response._data?.data;
+            toast.success(app.$CsvUploadSuccess);
+            requestPending.value = false;
+          }
+        },
+      }
+    );
+  } catch (error) {
+    toast.error(error.message);
+    requestPending.value = false;
     return;
   }
-
-  quizId.value = data.value.data;
-  toast.success(app.$CsvUploadSuccess);
-}
+};
 </script>
 
 <template>
@@ -48,7 +62,7 @@ async function submit(e) {
     page-title="Create Quiz"
     page-message="Create New Quiz By Uploading CSV"
   >
-    <form @submit="submit">
+    <form @submit="uploadQuizAndQuestions">
       <div class="mb-3">
         <div class="mb-3">
           <label for="title" class="form-label">Quiz Title</label>
@@ -94,7 +108,10 @@ async function submit(e) {
           Required
         </div>
       </div>
-      <button type="submit" class="btn text-white btn-primary me-2">
+      <button v-if="requestPending" class="btn text-white btn-primary me-2">
+        Pending...
+      </button>
+      <button v-else type="submit" class="btn text-white btn-primary me-2">
         Create Quiz
       </button>
       <a class="btn btn-primary me-2" href="/files/demo.csv" download="demo.csv"
