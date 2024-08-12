@@ -18,6 +18,7 @@ const props = defineProps({
     default: "",
   },
 });
+
 const emits = defineEmits(["askSkipTimer"]);
 const timer = ref(null);
 const time = ref(0);
@@ -111,33 +112,24 @@ function handleSkipTimer(e) {
     </div>
     <div v-else>
       <table
-        class="table table-striped table-hover table-borderless align-middle"
+        class="table table-borderless align-middle"
       >
         <caption class="caption-top">
           Rankings
         </caption>
-        <thead class="table-light">
-          <tr>
-            <th>Rank</th>
-            <th>User</th>
-            <th>Score</th>
-          </tr>
-        </thead>
+        <thead class="table-light"></thead>
         <tbody class="table-group-divider">
           <tr v-for="(user, index) in props.data.data.rankList" :key="index">
-            <td
-              scope="row"
-              :class="{ 'user-row': user.username === props.userName }"
-            >
+            <td :class="{ 'bg-primary': user.username === props.userName }">
               {{ user.rank }}
             </td>
-            <td :class="{ 'user-row': user.username === props.userName }">
+            <td :class="{ 'bg-primary': user.username === props.userName }">
               {{ user.firstname }}
               <span v-if="user.username === props.userName"
                 >&nbsp; ({{ user.username }})</span
               >
             </td>
-            <td :class="{ 'user-row': user.username === props.userName }">
+            <td :class="{ 'bg-primary': user.username === props.userName }">
               {{ user.score }}
             </td>
           </tr>
@@ -147,9 +139,3 @@ function handleSkipTimer(e) {
     </div>
   </Frame>
 </template>
-
-<style scoped>
-.user-row {
-  background-color: #8968cd !important;
-}
-</style>

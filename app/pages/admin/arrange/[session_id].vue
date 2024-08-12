@@ -41,6 +41,7 @@ const confirmNeeded = reactive({
 });
 const currentComponent = ref("Loading");
 const adminOperationHandler = ref();
+const joinedParticipants = ref();
 
 const session_id = route.params.session_id;
 
@@ -136,8 +137,9 @@ function handleNetworkEvent(message) {
   toast.warning(message + ", please reload the page");
 }
 
-const startQuiz = () => {
+const startQuiz = (participants) => {
   // myRef.value = true;
+  joinedParticipants.value = participants;
   adminOperationHandler.value.quizStartRequest();
 };
 
@@ -211,6 +213,7 @@ definePageMeta({
     ></QuizScoreSpace>
     <ListJoinUser v-if="currentComponent == 'Waiting'"></ListJoinUser>
     <QuizListUserAnswered
+      :joinedParticipants="joinedParticipants"
       v-if="currentComponent == 'Question'"
     ></QuizListUserAnswered>
   </Playground>

@@ -39,6 +39,28 @@ type QuizActivity struct {
 	UserActivity string    `json:"user_activity" db:"role"`
 }
 
+type QuizAnalysis struct {
+	ID                uuid.UUID              `json:"question_id" db:"question_id"`
+	Question          string                 `json:"question" db:"question"`
+	Type              int                    `json:"type" db:"type"`
+	Options           map[string]string      `json:"options" db:"options"`
+	CorrectAnswers    []int                  `json:"correct_answer" db:"answers"`
+	SelectedAnswers   map[string]interface{} `json:"selected_answers" db:"selected_answers"`
+	DurationInSeconds int                    `json:"duration" db:"duration_in_seconds"`
+	AvgResponseTime   float32                `json:"avg_response_time" db:"avg_response_time"`
+}
+
+type QuizzesAnalysis struct {
+	ID             uuid.UUID      `json:"id" db:"id"`
+	Title          string         `json:"title" db:"title"`
+	Description    sql.NullString `json:"description,omitempty" db:"description"`
+	ActivatedTo    sql.NullTime   `json:"activated_to,omitempty" db:"activated_to"`
+	ActivatedFrom  sql.NullTime   `json:"activated_from,omitempty" db:"activated_from"`
+	Questions      int            `json:"questions" db:"questions"`
+	Participants   int            `json:"participants" db:"participants"`
+	CorrectAnswers int            `json:"correct_answers" db:"correct_answers"`
+}
+
 func (model *QuizModel) CreateQuiz(userId string, title string, description string) (uuid.UUID, error) {
 	quizId, err := uuid.NewUUID()
 
@@ -315,4 +337,129 @@ func (model *QuizModel) IsAllAnswerGathered(sessionId uuid.UUID, questionId uuid
 	}
 
 	return skippable, nil
+}
+
+func (model *QuizModel) GetQuizAnalysis(activeQuizId string) ([]QuizAnalysis, error) {
+	var quizAnalysis []QuizAnalysis
+
+	// Define the main query
+	quizResponseAnalysis := model.db.From(goqu.T(UserQuizResponsesTable).As("uqr")).
+		InnerJoin(goqu.T(UserPlayedQuizTable).As("upq"), goqu.On(goqu.Ex{"uqr.user_played_quiz_id": goqu.I("upq.id")})).
+		InnerJoin(goqu.T(UserTable).As("u"), goqu.On(goqu.Ex{"upq.user_id": goqu.I("u.id")})).
+		Select(
+			goqu.C("question_id"),
+			goqu.L("jsonb_object_agg(?, ?)", goqu.I("u.first_name"), goqu.I("uqr.answers")).As("selected_answers"),
+			goqu.L("avg(?)", goqu.I("response_time")).As("avg_response_time"),
+		).
+		Where(goqu.Ex{"upq.active_quiz_id": activeQuizId}).
+		GroupBy(goqu.C("question_id").Table("uqr"))
+
+	// Define the final query
+
+	query := model.db.From(goqu.T(QuestionTable).As("q")).
+		With("quiz_response_analysis", quizResponseAnalysis).
+		InnerJoin(goqu.T("quiz_response_analysis").As("a"), goqu.On(goqu.Ex{"q.id": goqu.I("a.question_id")})).
+		Select(
+			goqu.C("question_id").Table("a"),
+			goqu.C("question").Table("q"),
+			goqu.C("options").Table("q"),
+			goqu.C("answers").Table("q"),
+			goqu.C("selected_answers").Table("a"),
+			goqu.C("duration_in_seconds").Table("q"),
+			goqu.C("avg_response_time").Table("a"),
+			goqu.C("type").Table("q"),
+		)
+
+	rows, err := query.Executor().Query()
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return quizAnalysis, nil
+		}
+		return quizAnalysis, err
+	}
+
+	for rows.Next() {
+		quizAnalysisRow := QuizAnalysis{}
+		var options []byte
+		var answers []byte
+		var selectedAnswer []byte
+		err := rows.Scan(&quizAnalysisRow.ID, &quizAnalysisRow.Question, &options, &answers, &selectedAnswer, &quizAnalysisRow.DurationInSeconds, &quizAnalysisRow.AvgResponseTime, &quizAnalysisRow.Type)
+		if err != nil {
+
+			return nil, err
+		}
+
+		err = json.Unmarshal(options, &quizAnalysisRow.Options)
+
+		if err != nil {
+			return nil, err
+		}
+
+		err = json.Unmarshal(selectedAnswer, &quizAnalysisRow.SelectedAnswers)
+
+		if err != nil {
+			return nil, err
+		}
+
+		err = json.Unmarshal(answers, &quizAnalysisRow.CorrectAnswers)
+
+		if err != nil {
+			return nil, err
+		}
+
+		quizAnalysis = append(quizAnalysis, quizAnalysisRow)
+	}
+
+	return quizAnalysis, err
+}
+
+func (model *QuizModel) ListQuizzesAnalysis(userId string) ([]QuizzesAnalysis, error) {
+
+	var quizzesAnalysis []QuizzesAnalysis
+
+	quizzesAnalysisInfo := model.db.From(goqu.T(ActiveQuizzesTable).As("aq")).
+		InnerJoin(goqu.T(ActiveQuizQuestionsTable).As("qq"), goqu.On(goqu.Ex{"aq.id": goqu.I("qq.active_quiz_id")})).
+		InnerJoin(goqu.T(UserPlayedQuizTable).As("upq"), goqu.On(goqu.Ex{"upq.active_quiz_id": goqu.I("aq.id")})).
+		InnerJoin(goqu.T(UserQuizResponsesTable).As("uqr"), goqu.On(goqu.Ex{"uqr.question_id": goqu.I("qq.question_id"), "uqr.user_played_quiz_id": goqu.I("upq.id")})).
+		Where(goqu.Ex{"aq.admin_id": userId}).
+		GroupBy(
+			"aq.id",
+			"aq.activated_from",
+			"aq.activated_to",
+			"aq.quiz_id").
+		Select(
+			"aq.id",
+			"aq.quiz_id",
+			"aq.activated_from",
+			"aq.activated_to",
+			goqu.COUNT(goqu.DISTINCT("qq.question_id")).As("questions"),
+			goqu.COUNT(goqu.DISTINCT("uqr.user_played_quiz_id")).As("participants"),
+			goqu.SUM(goqu.Case().
+				When(goqu.I("uqr.calculated_score").Gt(0), 1).
+				When(goqu.I("uqr.calculated_score").Lte(0), 0)).
+				As("correct_answers"))
+
+	query := model.db.From(goqu.T(QuizzesTable).As("q")).
+		With("quiz_analysis_info", quizzesAnalysisInfo).
+		InnerJoin(goqu.T("quiz_analysis_info").As("qi"), goqu.On(goqu.Ex{"qi.quiz_id": goqu.I("q.id")})).
+		Select(
+			"qi.questions",
+			"qi.participants",
+			"qi.correct_answers",
+			"qi.id",
+			"qi.activated_from",
+			"qi.activated_to",
+			"q.title",
+			"q.description")
+
+	sql, args, err := query.ToSQL()
+
+	if err != nil {
+		return quizzesAnalysis, err
+	}
+
+	err = model.db.ScanStructs(&quizzesAnalysis, sql, args...)
+
+	return quizzesAnalysis, err
 }

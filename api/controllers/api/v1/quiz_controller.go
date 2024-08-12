@@ -160,6 +160,34 @@ func (ctrl *QuizController) Terminate(c *fiber.Ctx) error {
 	return utils.JSONSuccess(c, http.StatusOK, nil)
 }
 
+func (qc *QuizController) GetQuizAnalysis(c *fiber.Ctx) error {
+
+	activeQuizId := c.Params(constants.ActiveQuizId)
+
+	quizAnalysis, err := qc.quizModel.GetQuizAnalysis(activeQuizId)
+
+	if err != nil {
+		qc.logger.Error("error while get quiz analysis", zap.Error(err))
+		return utils.JSONError(c, http.StatusInternalServerError, err.Error())
+	}
+
+	return utils.JSONSuccess(c, http.StatusOK, quizAnalysis)
+}
+
+func (qc *QuizController) ListQuizzesAnalysis(c *fiber.Ctx) error {
+
+	userID := quizUtilsHelper.GetString(c.Locals(constants.ContextUid))
+
+	quizzes, err := qc.quizModel.ListQuizzesAnalysis(userID)
+
+	if err != nil {
+		qc.logger.Error("error occured while listing quizzes for analysis", zap.Error(err))
+		return utils.JSONError(c, http.StatusInternalServerError, err.Error())
+	}
+
+	return utils.JSONSuccess(c, http.StatusOK, quizzes)
+}
+
 func (ctrl *QuizController) CreateQuizByCsv(c *fiber.Ctx) error {
 
 	quizTitle := c.Params(constants.QuizTitle)

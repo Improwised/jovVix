@@ -30,7 +30,7 @@ export default defineNuxtConfig({
   },
 
   css: [
-    "assets/template/scss/theme.scss",
+    "@/assets/scss/theme.scss",
   ], // add
   modules: [
     [

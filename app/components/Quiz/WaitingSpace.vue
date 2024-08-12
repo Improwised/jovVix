@@ -18,6 +18,7 @@ const listUserStore = useListUserstore();
 const { removeAllUsers } = listUserStore;
 
 const startQuiz = ref(false);
+const joinedParticipants = ref();
 // define props and emits
 const props = defineProps({
   data: {
@@ -53,8 +54,9 @@ watch(
 // event handlers
 function start_quiz(e) {
   e.preventDefault();
+  joinedParticipants.value = listUserStore.listUsers.length;
   startQuiz.value = true;
-  emits("startQuiz");
+  emits("startQuiz", joinedParticipants.value);
 }
 
 // main function

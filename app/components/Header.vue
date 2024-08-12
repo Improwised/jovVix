@@ -61,6 +61,15 @@
             Join Quiz
           </button>
         </li>
+        <!-- Reports -->
+        <li v-if="isKratosUser" class="nav-item mb-1">
+          <button
+            class="btn custom-btn nav-link btn-link rounded-pill"
+            @click="navigate('/admin/reports')"
+          >
+            Reports
+          </button>
+        </li>
         <!-- Log out button -->
         <li v-if="isKratosUser" class="nav-item mb-1">
           <button
@@ -70,7 +79,7 @@
             Log Out
           </button>
         </li>
-      </ul>
+       </ul>
     </nav>
   </div>
 </template>

@@ -69,7 +69,7 @@ onMounted(() => {
             </h1>
             <button
               type="button"
-              class="btn-close"
+              class="btn-close text-white"
               data-bs-dismiss="modal"
               aria-label="Close"
               @click="() => handleClose(false)"
@@ -81,7 +81,7 @@ onMounted(() => {
           <div class="modal-footer">
             <button
               type="button"
-              class="btn btn-secondary"
+              class="btn btn-secondary text-white"
               data-bs-dismiss="modal"
               @click="() => handleClose(false)"
             >
@@ -89,7 +89,7 @@ onMounted(() => {
             </button>
             <button
               type="button"
-              class="btn btn-primary"
+              class="btn btn-primary text-white"
               @click="() => handleClose(true)"
             >
               {{ props.modelPositiveMessage }}

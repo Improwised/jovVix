@@ -243,6 +243,7 @@ func quizController(
 	admin.Use(middleware.KratosAuthenticated)
 
 	quizzes := admin.Group("/quizzes")
+	report := admin.Group("/reports");
 
 	quizzes.Post(fmt.Sprintf("/:%s/demo_session", constants.QuizId), quizController.GenerateDemoSession)
 	quizzes.Post(fmt.Sprintf("/:%s/upload", constants.QuizTitle), middleware.ValidateCsv, middleware.KratosAuthenticated, quizController.CreateQuizByCsv)
@@ -250,6 +251,8 @@ func quizController(
 
 	v1.Get(fmt.Sprintf("/socket/admin/arrange/:%s", constants.SessionIDParam), middleware.CheckSessionId, middleware.KratosAuthenticated, websocket.New(quizSocketController.Arrange))
 
+	report.Get("/list", quizController.ListQuizzesAnalysis)
+	report.Get(fmt.Sprintf("/:%s/analysis", constants.ActiveQuizId), quizController.GetQuizAnalysis)
 	return nil
 }
 

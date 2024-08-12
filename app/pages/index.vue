@@ -43,12 +43,6 @@
           alt=""
           class="shapes shape-five absolute z--1 left-22% top-90%"
         />
-        <!-- > sign -->
-        <img
-          src="../assets/images/shapes/5.svg"
-          alt=""
-          class="shapes shape-six absolute z--1 right-22% top-9%"
-        />
         <!-- < sign -->
         <img
           src="../assets/images/shapes/6.svg"
@@ -177,7 +171,7 @@ onMounted(async () => {
 .shape-one {
   position: absolute;
   left: 0;
-  top: 5%;
+  top: 20%;
   animation: opacitySwitch 1.5s infinite;
 }
 
@@ -206,13 +200,6 @@ onMounted(async () => {
   position: absolute;
   left: 22%;
   top: 90%;
-  animation: moveUpDown 2s infinite ease-in-out;
-}
-
-.shape-six {
-  position: absolute;
-  right: 22%;
-  top: 9%;
   animation: moveUpDown 2s infinite ease-in-out;
 }
 

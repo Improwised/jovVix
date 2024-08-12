@@ -194,47 +194,57 @@ const handleMouseLeave = (event) => {
   background-color: white;
   margin: 0 auto;
   box-sizing: border-box;
-  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1); /* Box shadow added */
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+  /* Box shadow added */
 }
+
 .header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 10px;
 }
+
 .avatar-container {
   display: flex;
   align-items: center;
 }
+
 .avatar {
   width: 50px;
   height: 50px;
   border-radius: 50%;
 }
+
 .name {
   font-size: 18px;
   font-weight: bold;
   margin-left: 10px;
 }
+
 .stats {
   display: flex;
   flex-wrap: nowrap;
   justify-content: flex-end;
 }
+
 .stat-item {
   display: flex;
   flex-direction: column;
   align-items: center;
   margin-left: 20px;
 }
+
 .label {
   font-size: 12px;
   color: #888;
 }
+
 .value {
   font-size: 14px;
   font-weight: bold;
 }
+
 .divider {
   width: 100%;
   border: none;
@@ -242,6 +252,7 @@ const handleMouseLeave = (event) => {
   background-color: #000;
   margin: 10px 0;
 }
+
 .progress-bar {
   display: flex;
   height: 10px;
@@ -249,9 +260,11 @@ const handleMouseLeave = (event) => {
   overflow: hidden;
   width: 100%;
 }
+
 .correct {
   background-color: #4caf50;
 }
+
 .incorrect {
   background-color: #f44336;
 }
@@ -261,13 +274,16 @@ const handleMouseLeave = (event) => {
     flex-wrap: wrap;
     justify-content: center;
   }
+
   .avatar-container {
     margin-bottom: 10px;
   }
+
   .stats {
     justify-content: center;
     flex-wrap: nowrap;
   }
+
   .stat-item {
     margin-left: 10px;
     margin-top: 0;
@@ -277,13 +293,16 @@ const handleMouseLeave = (event) => {
 .user-analytics-item {
   padding: 10px;
   margin-bottom: 10px;
-  border: none; /* Remove border */
+  border: none;
+  /* Remove border */
   border-radius: 5px;
   cursor: pointer;
-  transition: transform 0.3s ease; /* Add transition for scale */
+  transition: transform 0.3s ease;
+  /* Add transition for scale */
 }
 
 .user-analytics-item:hover {
-  transform: scale(1.05); /* Scale up on hover */
+  transform: scale(1.05);
+  /* Scale up on hover */
 }
 </style>

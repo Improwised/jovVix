@@ -11,7 +11,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap");
 
 // Bootstrap functions
-@import "../../../node_modules/bootstrap/scss/functions";
+@import "../../node_modules/bootstrap/scss/functions";
 
 // User Variables
 @import "user-variables";
@@ -23,7 +23,7 @@
 @import "theme/utilities";
 
 // Bootstrap
-@import "../../../node_modules/bootstrap/scss/bootstrap";
+@import "../../node_modules/bootstrap/scss/bootstrap";
 
 // Theme
 @import "theme/theme";

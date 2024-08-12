@@ -1,8 +1,11 @@
 <script setup>
 import { useUserThatSubmittedAnswer } from "~/store/userSubmittedAnswer";
+import { useListUserstore } from "~~/store/userlist";
 
 const usersThatSubmittedAnswer = useUserThatSubmittedAnswer();
 const { usersSubmittedAnswers } = usersThatSubmittedAnswer;
+
+const props = defineProps(["joinedParticipants"]);
 </script>
 
 <template>
@@ -23,7 +26,10 @@ const { usersSubmittedAnswers } = usersThatSubmittedAnswer;
         >
           <font-awesome-icon icon="fa-solid fa-users" size="xl" />
           <h5 class="text-center text-sm fs-5 mb-0">
-            {{ usersSubmittedAnswers.length }} People Answered
+            {{ usersSubmittedAnswers.length }}/{{
+              props.joinedParticipants
+            }}
+            People Answered
           </h5>
         </div>
       </div>

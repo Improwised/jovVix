@@ -11,7 +11,7 @@
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h1 id="exampleModalLabel" class="modal-title fs-5 text-center">
+            <h1 id="exampleModalLabel" class="modal-title fs-5 text-center text-white">
               Change Password
             </h1>
             <button
@@ -52,14 +52,14 @@
             <button
               id="closeModalButton"
               type="button"
-              class="btn btn-secondary"
+              class="btn btn-secondary text-white"
               data-bs-dismiss="modal"
             >
               Close
             </button>
             <button
               type="button"
-              class="btn btn-primary"
+              class="btn btn-primary text-white"
               @click="changePassword"
             >
               Change Password
@@ -92,7 +92,7 @@
             <h5 class="card-title">{{ profile.email }}</h5>
             <div
               type="button"
-              class="btn btn-primary btn-sm"
+              class="btn btn-primary btn-sm text-white"
               data-bs-toggle="modal"
               data-bs-target="#exampleModal"
             >
@@ -153,7 +153,7 @@
                 <button class="btn btn-primary">Pending...</button>
               </div>
               <div v-else class="form-group">
-                <button type="submit" class="btn btn-primary">
+                <button type="submit" class="btn btn-primary text-white">
                   Save Changes
                 </button>
                 <div
@@ -418,16 +418,6 @@ const changePassword = async () => {
 
 .card-body {
   padding: 20px;
-}
-
-.btn-primary {
-  background-color: #007bff;
-  border-color: #007bff;
-}
-
-.btn-primary:hover {
-  background-color: #0069d9;
-  border-color: #0062cc;
 }
 
 .form-group {
