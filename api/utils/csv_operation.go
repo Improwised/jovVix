@@ -1,22 +1,15 @@
-package v1
+package utils
 
 import (
-	"database/sql"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"strconv"
 	"strings"
 
-	"github.com/Improwised/quizz-app/api/constants"
-	quizUtilsHelper "github.com/Improwised/quizz-app/api/helpers/utils"
 	"github.com/Improwised/quizz-app/api/models"
-	"github.com/Improwised/quizz-app/api/utils"
-	fiber "github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/jszwec/csvutil"
-	"go.uber.org/zap"
 )
 
 type Question struct {
@@ -123,66 +116,4 @@ func ExtractQuestionsFromCSV(questions []Question) ([]models.Question, error) {
 		})
 	}
 	return validQuestions, nil
-}
-
-func (ctrl *QuizController) CreateQuizByCsv(c *fiber.Ctx) error {
-
-	quizTitle := c.Params(constants.QuizTitle)
-	quizDescription := c.FormValue("description")
-
-	if quizTitle == "" {
-		ctrl.logger.Error("quiz-title not found")
-		return utils.JSONSuccess(c, http.StatusBadRequest, constants.QuizTitleRequired)
-	}
-
-	userID := quizUtilsHelper.GetString(c.Locals(constants.ContextUid))
-	filePath := quizUtilsHelper.GetString(c.Locals(constants.FileName))
-
-	defer func() {
-		err := os.Remove(filePath)
-		if err != nil {
-			ctrl.logger.Error("error in deleting file", zap.Error(err))
-			return
-		}
-	}()
-
-	questions, err := ValidateCSVFileFormat(filePath)
-	if err != nil {
-		ctrl.logger.Error("file validation failed", zap.Error(err))
-		return utils.JSONFail(c, http.StatusBadRequest, err.Error())
-	}
-
-	validQuestions, err := ExtractQuestionsFromCSV(questions)
-	if err != nil {
-		ctrl.logger.Error("file validation failed", zap.Error(err))
-		return utils.JSONFail(c, http.StatusBadRequest, constants.ErrParsingFile)
-	}
-
-	quizId, err := ctrl.helper.QuestionModel.RegisterQuestions(userID, quizTitle, quizDescription, validQuestions)
-	if err != nil {
-		ctrl.logger.Error("error in creating quiz", zap.Error(err))
-		return utils.JSONFail(c, http.StatusBadRequest, constants.ErrRegisterQuiz)
-	}
-
-	return utils.JSONSuccess(c, http.StatusAccepted, quizId)
-}
-
-func (ctrl *QuizController) GenerateDemoSession(c *fiber.Ctx) error {
-	quizId := c.Params(constants.QuizId)
-	userId := quizUtilsHelper.GetString(c.Locals(constants.ContextUid))
-
-	sessionId, err := ctrl.helper.ActiveQuizModel.CreateActiveQuiz("demo session", quizId, userId, sql.NullTime{}, sql.NullTime{})
-
-	if err != nil {
-		ctrl.logger.Error("error in creating demo session", zap.Error(err))
-		return utils.JSONFail(c, http.StatusBadRequest, constants.ErrCreatingDemoQuiz)
-	}
-
-	err = ctrl.helper.ActiveQuizModel.GetQuestionsCopy(sessionId, quizId)
-	if err != nil {
-		ctrl.logger.Error("error in creating demo session questions", zap.Error(err))
-		return utils.JSONFail(c, http.StatusBadRequest, constants.ErrCreatingDemoQuiz)
-	}
-
-	return utils.JSONSuccess(c, http.StatusAccepted, sessionId)
 }

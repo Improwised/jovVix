@@ -11,7 +11,6 @@ func Init(cfg config.AppConfig, logger *zap.Logger) error {
 	migrationCmd := GetMigrationCommandDef(cfg)
 	apiCmd := GetAPICommandDef(cfg, logger)
 	workerCmd := GetWorkerCommandDef(cfg, logger)
-	defaultCmd := GetOrCreateDefaults(cfg, logger)
 
 	workerCmd.PersistentFlags().Int("retry-delay", 100, "time intertval for two retry in ms")
 	workerCmd.PersistentFlags().Int("retry-count", 3, "number of retry")
@@ -19,6 +18,6 @@ func Init(cfg config.AppConfig, logger *zap.Logger) error {
 
 	deadQueueCmd := GetDeadQueueCommandDef(cfg, logger)
 	rootCmd := &cobra.Command{Use: "quiz-app"}
-	rootCmd.AddCommand(&migrationCmd, &apiCmd, &workerCmd, &deadQueueCmd, &defaultCmd)
+	rootCmd.AddCommand(&migrationCmd, &apiCmd, &workerCmd, &deadQueueCmd)
 	return rootCmd.Execute()
 }

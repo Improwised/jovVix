@@ -3,6 +3,8 @@ import { useToast } from "vue-toastification";
 let urls = useRuntimeConfig().public;
 const router = useRouter();
 const toast = useToast();
+const requestPending = ref(false);
+const activeQuizId = ref(false);
 const props = defineProps({
   quizId: {
     default: () => {
@@ -12,35 +14,47 @@ const props = defineProps({
     required: true,
   },
 });
-console.log();
 
-async function handleStartDemo() {
+const handleStartDemo = async () => {
   try {
-    const { data, error } = await useFetch(
-      encodeURI(
-        urls.api_url + "/admin/quizzes/" + props.quizId + "/demo_session"
-      ),
-      {
-        method: "POST",
-        mode: "cors",
-        credentials: "include",
-      }
-    );
-
-    if (error.value?.data) {
-      console.log(urls.value.api_url);
-      toast.error(error.value.data.data);
-      return;
-    }
-
-    router.push("/admin/arrange/" + data.value.data);
+    requestPending.value = true;
+    await $fetch(`${urls.api_url}/admin/quizzes/${props.quizId}/demo_session`, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        Accept: "application/json",
+      },
+      onResponse({ response }) {
+        if (response.status != 202) {
+          requestPending.value = false;
+          toast.error("error while start quiz");
+          return;
+        }
+        if (response.status == 202) {
+          activeQuizId.value = response._data.data;
+          requestPending.value = false;
+        }
+      },
+    });
   } catch (error) {
-    console.error(error);
+    toast.error(error.message);
+    requestPending.value = false;
+    return;
   }
-}
+
+  router.push(`/admin/arrange/${activeQuizId.value}`);
+};
 </script>
 <template>
   <button
+    v-if="requestPending"
+    type="button"
+    class="btn text-white btn-primary me-0"
+  >
+    Pending...
+  </button>
+  <button
+    v-else
     type="button"
     class="btn text-white btn-primary me-0"
     @click="handleStartDemo"

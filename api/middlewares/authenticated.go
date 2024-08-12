@@ -8,7 +8,6 @@ import (
 
 	"github.com/Improwised/quizz-app/api/config"
 	"github.com/Improwised/quizz-app/api/constants"
-	"github.com/Improwised/quizz-app/api/models"
 	"github.com/Improwised/quizz-app/api/pkg/jwt"
 	"github.com/Improwised/quizz-app/api/utils"
 	resty "github.com/go-resty/resty/v2"
@@ -61,14 +60,8 @@ func (m *Middleware) KratosAuthenticated(c *fiber.Ctx) error {
 		return utils.JSONError(c, res.StatusCode(), constants.ErrKratosAuth)
 	}
 
-	userModel, err := models.InitUserModel(m.Db, m.Logger)
-	if err != nil {
-		m.Logger.Debug("error while initializing user model", zap.Error(err))
-		return utils.JSONError(c, http.StatusInternalServerError, constants.ErrGetUser)
-	}
-
 	m.Logger.Debug("userModel.GetUserByKratosID called", zap.Any("kratosID", kratosUser.Identity.ID))
-	user, err := userModel.GetUserByKratosID(kratosUser.Identity.ID)
+	user, err := m.userModel.GetUserByKratosID(kratosUser.Identity.ID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			m.Logger.Error(constants.ErrGetUser, zap.Error(err))

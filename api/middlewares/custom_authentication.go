@@ -79,7 +79,7 @@ func AuthHavingTokenHandler(m *Middleware, c *fiber.Ctx, token string) error {
 		return utils.JSONFail(c, http.StatusInternalServerError, "Error while checking user identity in join")
 	}
 
-	userObj, err := m.UserService.GetUser(claims.Subject())
+	userObj, err := m.userModel.GetById(claims.Subject())
 	if err != nil {
 		if err == sql.ErrNoRows {
 			m.Logger.Error(fmt.Sprintf("User not found, userID %s", claims.Subject()), zap.Error(err))

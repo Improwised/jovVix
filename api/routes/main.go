@@ -11,11 +11,11 @@ import (
 	"github.com/Improwised/quizz-app/api/config"
 	"github.com/Improwised/quizz-app/api/constants"
 	controller "github.com/Improwised/quizz-app/api/controllers/api/v1"
-	quizHelper "github.com/Improwised/quizz-app/api/helpers/quiz"
 	"github.com/Improwised/quizz-app/api/middlewares"
 	"github.com/Improwised/quizz-app/api/models"
 	"github.com/Improwised/quizz-app/api/pkg/events"
 	pMetrics "github.com/Improwised/quizz-app/api/pkg/prometheus"
+	"github.com/Improwised/quizz-app/api/pkg/redis"
 	"github.com/Improwised/quizz-app/api/pkg/watermill"
 	goqu "github.com/doug-martin/goqu/v9"
 	"github.com/gofiber/contrib/swagger"
@@ -63,14 +63,14 @@ func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config confi
 		return err
 	}
 
-	helperStructs, err := quizHelper.InitHelper(goqu, config.RedisClient, logger)
+	redis, err := redis.InitRedisPubSub(goqu, config.RedisClient, logger)
 
 	if err != nil {
 		return err
 	}
 
 	// middleware initialization
-	middleware := middlewares.NewMiddleware(config, logger, goqu, helperStructs.UserService)
+	middleware := middlewares.NewMiddleware(config, logger, goqu)
 
 	v1 := router.Group("/v1")
 
@@ -103,7 +103,7 @@ func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config confi
 		return err
 	}
 
-	err = quizController(v1, goqu, logger, middleware, events, pub, config, helperStructs)
+	err = quizController(v1, goqu, logger, middleware, events, pub, config, redis)
 	if err != nil {
 		return err
 	}
@@ -224,12 +224,12 @@ func quizController(
 	events *events.Events,
 	pub *watermill.WatermillPublisher,
 	config config.AppConfig,
-	helper *quizHelper.HelperGroup) error {
+	redis *redis.RedisPubSub) error {
 
 	AnswersSubmittedByUsers := make(chan models.User, 50)
 
-	quizSocketController := controller.InitQuizConfig(db, &config, logger, helper, AnswersSubmittedByUsers)
-	quizController := controller.InitQuizController(db, logger, events, pub, helper, AnswersSubmittedByUsers)
+	quizSocketController := controller.InitQuizConfig(db, &config, logger, redis, AnswersSubmittedByUsers)
+	quizController := controller.InitQuizController(db, logger, events, pub, AnswersSubmittedByUsers)
 
 	// middleware format := param-check/pass... , authentication... , authorization..., controller(API/SOCKET)...
 
@@ -244,7 +244,6 @@ func quizController(
 
 	quizzes := admin.Group("/quizzes")
 
-	quizzes.Get("/", quizController.GetQuizByUser)
 	quizzes.Post(fmt.Sprintf("/:%s/demo_session", constants.QuizId), quizController.GenerateDemoSession)
 	quizzes.Post(fmt.Sprintf("/:%s/upload", constants.QuizTitle), middleware.ValidateCsv, middleware.KratosAuthenticated, quizController.CreateQuizByCsv)
 	quizzes.Get("/list", quizController.GetAdminUploadedQuizzes)

@@ -1,17 +1,14 @@
-package calculations
+package utils
 
 import (
 	"database/sql"
 	"math"
 
 	"github.com/Improwised/quizz-app/api/constants"
-	"github.com/Improwised/quizz-app/api/models"
 	"github.com/Improwised/quizz-app/api/pkg/structs"
-	"github.com/doug-martin/goqu/v9"
-	"go.uber.org/zap"
 )
 
-func CalculatePointsAndScore(userAnswer structs.ReqAnswerSubmit, db *goqu.Database, logger *zap.Logger) (sql.NullInt16, int, error) {
+func CalculatePointsAndScore(userAnswer structs.ReqAnswerSubmit, answers []int, answerPoints int16, answerDurationInSeconds, questionType int) (sql.NullInt16, int) {
 
 	var points sql.NullInt16 = sql.NullInt16{}
 	var remainingTime int
@@ -20,23 +17,13 @@ func CalculatePointsAndScore(userAnswer structs.ReqAnswerSubmit, db *goqu.Databa
 	var basePoint int = 500
 	var finalScore int = 0
 
-	questionModel := models.InitQuestionModel(db, logger)
-
-	// options for multi correct answer (not survey)
-	// answers, answerPoints, answerDurationInSeconds, options, questionType, err := questionModel.GetAnswersPointsDurationType(userAnswer.QuestionId.String())
-
-	answers, answerPoints, answerDurationInSeconds, questionType, err := questionModel.GetAnswersPointsDurationType(userAnswer.QuestionId.String())
-	if err != nil {
-		return points, finalScore, err
-	}
-
 	// check type of the question
 	actualAnswerLen := len(answers)
 	userAnswerLen := len(userAnswer.AnswerKeys)
 
 	// if not attempted
 	if userAnswerLen == 0 {
-		return points, finalScore, nil
+		return points, finalScore
 	}
 
 	points.Valid = true
@@ -48,16 +35,16 @@ func CalculatePointsAndScore(userAnswer structs.ReqAnswerSubmit, db *goqu.Databa
 			remainingTimeFloat = math.Round(float64(remainingTime) / 1000)
 			timePoints = int(math.Round((remainingTimeFloat * 400) / float64(answerDurationInSeconds)))
 			finalScore = timePoints + basePoint + int(points.Int16*100)
-			return points, finalScore, nil
+			return points, finalScore
 		}
-		return points, finalScore, nil
+		return points, finalScore
 	} else if questionType == constants.Survey && answerPoints > 0 {
 		points.Int16 = answerPoints
 		remainingTime = (answerDurationInSeconds * 1000) - userAnswer.ResponseTime
 		remainingTimeFloat = math.Round(float64(remainingTime) / 1000)
 		timePoints = int(math.Round((remainingTimeFloat * 400) / float64(answerDurationInSeconds)))
 		finalScore = timePoints + basePoint + int(points.Int16*100)
-		return points, finalScore, nil
+		return points, finalScore
 	}
 
 	// logic for multiple correct answer to be used in future functionalities
@@ -92,5 +79,5 @@ func CalculatePointsAndScore(userAnswer structs.ReqAnswerSubmit, db *goqu.Databa
 	}
 
 	points.Int16 = int16(noOfMatches) * answerPoints
-	return points, finalScore, nil
+	return points, finalScore
 }

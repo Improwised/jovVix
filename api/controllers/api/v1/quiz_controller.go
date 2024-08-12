@@ -4,12 +4,9 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
+	"os"
 
-	"github.com/Improwised/quizz-app/api/config"
 	"github.com/Improwised/quizz-app/api/constants"
-	"github.com/Improwised/quizz-app/api/database"
-	"github.com/Improwised/quizz-app/api/helpers/calculations"
-	quiz_helper "github.com/Improwised/quizz-app/api/helpers/quiz"
 	quizUtilsHelper "github.com/Improwised/quizz-app/api/helpers/utils"
 	"github.com/Improwised/quizz-app/api/models"
 	"github.com/Improwised/quizz-app/api/pkg/events"
@@ -24,51 +21,34 @@ import (
 )
 
 type QuizController struct {
-	helper                  *quiz_helper.HelperGroup
 	userPlayedQuizModel     *models.UserPlayedQuizModel
+	questionModel           *models.QuestionModel
+	userQuizResponseModel   *models.UserQuizResponseModel
+	quizModel               *models.QuizModel
+	activeQuizModel         *models.ActiveQuizModel
 	logger                  *zap.Logger
 	event                   *events.Events
 	answersSubmittedByUsers chan models.User
 }
 
-func InitQuizController(db *goqu.Database, logger *zap.Logger, event *events.Events, pub *watermill.WatermillPublisher, helper *quiz_helper.HelperGroup, answersSubmittedByUsers chan models.User) *QuizController {
+func InitQuizController(db *goqu.Database, logger *zap.Logger, event *events.Events, pub *watermill.WatermillPublisher, answersSubmittedByUsers chan models.User) *QuizController {
 
 	userPlayedQuizModel := models.InitUserPlayedQuizModel(db)
+	questionModel := models.InitQuestionModel(db, logger)
+	quizModel := models.InitQuizModel(db)
+	userQuizResponseModel := models.InitUserQuizResponseModel(db)
+	activeQuizModel := models.InitActiveQuizModel(db, logger)
 
 	return &QuizController{
-		helper:                  helper,
 		userPlayedQuizModel:     userPlayedQuizModel,
+		questionModel:           questionModel,
+		userQuizResponseModel:   userQuizResponseModel,
+		quizModel:               quizModel,
+		activeQuizModel:         activeQuizModel,
 		logger:                  logger,
 		event:                   event,
 		answersSubmittedByUsers: answersSubmittedByUsers,
 	}
-}
-
-func (ctrl *QuizController) GetQuizByUser(c *fiber.Ctx) error {
-	userID := quizUtilsHelper.GetString(c.Locals(constants.ContextUid))
-
-	quizzes, err := ctrl.helper.QuizModel.GetAllQuizzesActivity(userID)
-
-	if err != nil {
-		ctrl.logger.Error("error occured while getting all quiz activity", zap.Error(err))
-		return utils.JSONError(c, http.StatusInternalServerError, err.Error())
-	}
-
-	return utils.JSONSuccess(c, http.StatusOK, quizzes)
-
-}
-
-func (ctrl *QuizController) CreateQuizSession(c *fiber.Ctx) error {
-	userID := quizUtilsHelper.GetString(c.Locals(constants.ContextUid))
-
-	quizzes, err := ctrl.helper.QuizModel.GetAllQuizzesActivity(userID)
-
-	if err != nil {
-		ctrl.logger.Error("error occured while getting all quiz activity", zap.Error(err))
-		return utils.JSONError(c, http.StatusInternalServerError, err.Error())
-	}
-
-	return utils.JSONSuccess(c, http.StatusOK, quizzes)
 }
 
 func (ctrl *QuizController) SetAnswer(c *fiber.Ctx) error {
@@ -124,28 +104,17 @@ func (ctrl *QuizController) SetAnswer(c *fiber.Ctx) error {
 		return utils.JSONFail(c, http.StatusBadRequest, constants.ErrQuestionNotActive)
 	}
 
-	appConfigs := config.GetConfig()
-	db, err := database.Connect(appConfigs.DB)
+	answers, answerPoints, answerDurationInSeconds, questionType, err := ctrl.questionModel.GetAnswersPointsDurationType(answer.QuestionId.String())
 	if err != nil {
-		ctrl.logger.Error("unable to connect with the database", zap.Error(err))
+		ctrl.logger.Error("error while get answer, points, duration and type")
+		return utils.JSONFail(c, http.StatusBadRequest, "error while get answer, points, duration and type")
 	}
 
 	// calculate points
-	points, score, err := calculations.CalculatePointsAndScore(answer, db, ctrl.logger)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			ctrl.logger.Error("error during answer submit", zap.Any("answers", answer), zap.Any("current_quiz_id", currentQuizId))
-			return utils.JSONFail(c, http.StatusBadRequest, constants.ErrAnswerSubmit)
-		}
+	points, score := utils.CalculatePointsAndScore(answer, answers, answerPoints, answerDurationInSeconds, questionType)
 
-		ctrl.logger.Error("error during answer submit", zap.Error(err))
-
-		return utils.JSONFail(c, http.StatusBadRequest, constants.UnknownError)
-	}
-
-	// core logic
-	err = ctrl.helper.UserQuizResponseModel.SubmitAnswer(currentQuizId, answer, points, score)
-
+	// submit answer
+	err = ctrl.userQuizResponseModel.SubmitAnswer(currentQuizId, answer, points, score)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return utils.JSONFail(c, http.StatusBadRequest, constants.ErrAnswerAlreadySubmitted)
@@ -177,7 +146,7 @@ func (ctrl *QuizController) SetAnswer(c *fiber.Ctx) error {
 func (ctrl *QuizController) GetAdminUploadedQuizzes(c *fiber.Ctx) error {
 	userID := quizUtilsHelper.GetString(c.Locals(constants.ContextUid))
 
-	quizzes, err := ctrl.helper.QuizModel.GetQuizzesByAdmin(userID)
+	quizzes, err := ctrl.quizModel.GetQuizzesByAdmin(userID)
 
 	if err != nil {
 		ctrl.logger.Error("error occured while getting quizzes by admin", zap.Error(err))
@@ -189,4 +158,66 @@ func (ctrl *QuizController) GetAdminUploadedQuizzes(c *fiber.Ctx) error {
 
 func (ctrl *QuizController) Terminate(c *fiber.Ctx) error {
 	return utils.JSONSuccess(c, http.StatusOK, nil)
+}
+
+func (ctrl *QuizController) CreateQuizByCsv(c *fiber.Ctx) error {
+
+	quizTitle := c.Params(constants.QuizTitle)
+	quizDescription := c.FormValue("description")
+
+	if quizTitle == "" {
+		ctrl.logger.Error("quiz-title not found")
+		return utils.JSONSuccess(c, http.StatusBadRequest, constants.QuizTitleRequired)
+	}
+
+	userID := quizUtilsHelper.GetString(c.Locals(constants.ContextUid))
+	filePath := quizUtilsHelper.GetString(c.Locals(constants.FileName))
+
+	defer func() {
+		err := os.Remove(filePath)
+		if err != nil {
+			ctrl.logger.Error("error in deleting file", zap.Error(err))
+			return
+		}
+	}()
+
+	questions, err := utils.ValidateCSVFileFormat(filePath)
+	if err != nil {
+		ctrl.logger.Error("file validation failed", zap.Error(err))
+		return utils.JSONFail(c, http.StatusBadRequest, err.Error())
+	}
+
+	validQuestions, err := utils.ExtractQuestionsFromCSV(questions)
+	if err != nil {
+		ctrl.logger.Error("file validation failed", zap.Error(err))
+		return utils.JSONFail(c, http.StatusBadRequest, constants.ErrParsingFile)
+	}
+
+	quizId, err := ctrl.questionModel.RegisterQuestions(userID, quizTitle, quizDescription, validQuestions)
+	if err != nil {
+		ctrl.logger.Error("error in creating quiz", zap.Error(err))
+		return utils.JSONFail(c, http.StatusBadRequest, constants.ErrRegisterQuiz)
+	}
+
+	return utils.JSONSuccess(c, http.StatusAccepted, quizId)
+}
+
+func (ctrl *QuizController) GenerateDemoSession(c *fiber.Ctx) error {
+	quizId := c.Params(constants.QuizId)
+	userId := quizUtilsHelper.GetString(c.Locals(constants.ContextUid))
+
+	sessionId, err := ctrl.activeQuizModel.CreateActiveQuiz("demo session", quizId, userId, sql.NullTime{}, sql.NullTime{})
+
+	if err != nil {
+		ctrl.logger.Error("error in creating demo session", zap.Error(err))
+		return utils.JSONFail(c, http.StatusBadRequest, constants.ErrCreatingDemoQuiz)
+	}
+
+	err = ctrl.activeQuizModel.GetQuestionsCopy(sessionId, quizId)
+	if err != nil {
+		ctrl.logger.Error("error in creating demo session questions", zap.Error(err))
+		return utils.JSONFail(c, http.StatusBadRequest, constants.ErrCreatingDemoQuiz)
+	}
+
+	return utils.JSONSuccess(c, http.StatusAccepted, sessionId)
 }
