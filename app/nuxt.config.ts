@@ -21,7 +21,6 @@ export default defineNuxtConfig({
         //This is just for example how to add js
         //you can  include js  by this method direact include or via import individual method as per below link
         //https://github.com/Debonex/samples/blob/master/nuxt3-bootstrap5/app.vue
-        { src: "" },
       ],
       link: [
         //This for just example how to add css
@@ -30,7 +29,9 @@ export default defineNuxtConfig({
     },
   },
 
-  css: ["bootstrap/dist/css/bootstrap.min.css", "assets/stylesheet/index.css"], // add
+  css: [
+    "assets/template/scss/theme.scss",
+  ], // add
   modules: [
     [
       "@pinia/nuxt",
