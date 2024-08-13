@@ -3,7 +3,7 @@
   <div class="quiz-content">
     <div class="tab-content">
       <QuizUserAnalyticsSpace
-      v-for="(oData, index) in rankData"
+        v-for="(oData, index) in rankData"
         :key="index"
         :data="userJson[oData]"
         :survey-questions="surveyQuestions"
@@ -65,7 +65,6 @@ const getAnalysisJson = async (activeQuizId) => {
       userJson.value = lodash.groupBy(analysisJson.value, "username");
 
       ranks.value?.data.forEach((data) => {
-        console.log(data);
         rankData.value.push(data.username); //to get usernames rank wise, to pass data from userJson in sorted manner
         let key = data.username; // Get the username (key)
 

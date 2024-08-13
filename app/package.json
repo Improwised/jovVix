@@ -42,6 +42,7 @@
     "@popperjs/core": "^2.11.8",
     "@vitejs/plugin-vue": "^4.0.0",
     "bootstrap": "^5.2.3",
+    "date-fns": "^3.6.0",
     "pinia": "^2.1.7",
     "sass": "^1.43.4",
     "vitest": "^0.27.0",

@@ -58,105 +58,93 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import lodash from "lodash";
 
 const url = useRuntimeConfig().public;
 const headers = useRequestHeaders(["cookie"]);
-
-const analysisJson = ref([]);
+const route = useRoute();
 
 const selectedTab = ref("overview");
-
-const selectTab = (tab) => {
-  selectedTab.value = tab;
-};
-
-const route = useRoute();
-const activeQuizId = ref("");
-
 const popup = ref(false);
 
 const userJson = ref({});
 const questionJson = ref({});
 const rankData = ref([]);
-
-import { useUserScoreboardData } from "~/store/userScoreboardData";
-const userScoreboardDataStore = useUserScoreboardData();
-const { getUserScoreboardData } = userScoreboardDataStore;
-
-let storedData = {};
 const surveyQuestions = ref(0);
+const activeQuizId = computed(() => route.query.active_quiz_id);
 
-const fetchData = () => {
-  storedData = getUserScoreboardData();
-};
+const {
+  data: adminFinalScore,
+  pending: adminFinalScorePending,
+  error: adminFinalScoreError,
+} = useFetch(
+  `${url.api_url}/final_score/admin?active_quiz_id=${activeQuizId.value}`,
+  {
+    headers: headers,
+    mode: "cors",
+    credentials: "include",
+  }
+);
 
-const getAnalysisJson = async (activeQuizId) => {
-  try {
-    const response = await fetch(
-      `${url.api_url}/analytics_board/admin?active_quiz_id=${activeQuizId}`,
-      {
-        method: "GET",
-        headers: headers.value,
-        mode: "cors",
-        credentials: "include",
+const {
+  data: adminAnalyticsBoard,
+  pending: adminAnalyticsBoardPending,
+  error: adminAnalyticsBoardError,
+} = useFetch(
+  `${url.api_url}/analytics_board/admin?active_quiz_id=${activeQuizId.value}`,
+  {
+    headers: headers,
+    mode: "cors",
+    credentials: "include",
+  }
+);
+
+watch(
+  [adminAnalyticsBoardPending, adminFinalScorePending],
+  () => {
+    if (adminAnalyticsBoardPending.value || adminFinalScorePending.value) {
+      return;
+    } else if (adminFinalScoreError.value || adminAnalyticsBoardError.value) {
+      toast.error("error while get analysis");
+      return;
+    }
+
+    let analysisJson = adminAnalyticsBoard.value.data;
+    userJson.value = lodash.groupBy(analysisJson, "username");
+
+    adminFinalScore.value?.data.forEach((data) => {
+      rankData.value.push(data.username);
+      let key = data.username;
+
+      if (userJson.value.hasOwnProperty(key)) {
+        let totalScore = data.score;
+
+        userJson.value[key].push({
+          rank: data.rank,
+          total_score: totalScore,
+          response_time: data.response_time,
+        });
+      } else {
+        console.error(`Key '${key}' not found in userJson.value.`);
       }
-    );
+    });
 
-    const result = await response.json();
+    questionJson.value = lodash.groupBy(analysisJson, "question");
 
-    if (response.ok) {
-      analysisJson.value = result.data;
-      userJson.value = lodash.groupBy(analysisJson.value, "username");
-
-      // Iterate through each item in storedData (storedData - data for scoreboard - rank and all)
-      storedData.forEach((data) => {
-        rankData.value.push(data.username); //to get usernames rank wise, to pass data from userJson in sorted manner
-        let key = data.username; // Get the username (key)
-
-        // Check if the key exists in userJson.value
-        if (userJson.value.hasOwnProperty(key)) {
-          let totalScore = data.score; // Calculate total_score as score
-
-          // Update userJson.value[key] with rank, total_score, and response_time
-          userJson.value[key].push({
-            rank: data.rank,
-            total_score: totalScore,
-            response_time: data.response_time,
-          });
-        } else {
-          console.error(`Key '${key}' not found in userJson.value.`);
+    // from userJson, count total points of all questions and count of total survey questions
+    for (const key in userJson.value) {
+      userJson.value[key].forEach((question) => {
+        if (!question.rank) {
+          if (question.question_type == "survey") {
+            surveyQuestions.value++;
+          }
         }
       });
-
-      questionJson.value = lodash.groupBy(analysisJson.value, "question");
-
-      // from userJson, count total points of all questions and count of total survey questions
-      for (const key in userJson.value) {
-        userJson.value[key].forEach((question) => {
-          if (!question.rank) {
-            if (question.question_type == "survey") {
-              surveyQuestions.value++;
-            }
-          }
-        });
-        break;
-      }
-    } else {
-      console.error(result);
     }
-  } catch (error) {
-    console.error("Failed to fetch data", error);
-  }
-};
-
-onMounted(() => {
-  activeQuizId.value = route.query.active_quiz_id || "";
-  getAnalysisJson(activeQuizId.value);
-  fetchData();
-});
+  },
+  { immediate: true, deep: true }
+);
 
 function openPopup() {
   popup.value = true;
@@ -165,6 +153,10 @@ function openPopup() {
 function closePopup() {
   popup.value = false;
 }
+
+const selectTab = (tab) => {
+  selectedTab.value = tab;
+};
 </script>
 
 <style scoped>
@@ -193,7 +185,8 @@ header {
 .quiz-accuracy {
   position: relative;
   width: 80%;
-  margin-bottom: 30px; /* Adds space between the bar and the tabs */
+  margin-bottom: 30px;
+  /* Adds space between the bar and the tabs */
 }
 
 .progress {
@@ -209,7 +202,8 @@ header {
 }
 
 .nav-tabs {
-  margin-top: 20px; /* Ensures there's space above the tabs */
+  margin-top: 20px;
+  /* Ensures there's space above the tabs */
 }
 
 .nav-tabs .nav-link {
@@ -227,7 +221,8 @@ header {
 }
 
 .user-analytics-item {
-  margin-bottom: 20px; /* Adjust spacing between each user analytics item */
+  margin-bottom: 20px;
+  /* Adjust spacing between each user analytics item */
 }
 
 .progress-bar {
@@ -241,9 +236,11 @@ header {
   font-size: 14px;
   color: white;
 }
+
 .correct {
   background-color: #4caf50;
 }
+
 .incorrect {
   background-color: #f44336;
 }
@@ -251,14 +248,16 @@ header {
 .quiz-accuracy {
   position: relative;
   width: 80%;
-  margin-bottom: 30px; /* Adds space between the bar and the tabs */
+  margin-bottom: 30px;
+  /* Adds space between the bar and the tabs */
 }
 
 .progress {
   height: 40px;
   border-radius: 20px;
   overflow: hidden;
-  position: relative; /* Ensure the circle is positioned relative to the progress bar */
+  position: relative;
+  /* Ensure the circle is positioned relative to the progress bar */
 }
 
 .progress-bar {
@@ -283,7 +282,8 @@ header {
 
 .progress-circle {
   position: absolute;
-  top: -15px; /* Adjust this value to move the circle vertically */
+  top: -15px;
+  /* Adjust this value to move the circle vertically */
   width: 70px;
   height: 70px;
   background-color: #fff;
@@ -294,6 +294,7 @@ header {
   justify-content: center;
   font-size: 12px;
   font-weight: bold;
-  transition: left 1s ease-in-out; /* Animation for the left property */
+  transition: left 1s ease-in-out;
+  /* Animation for the left property */
 }
 </style>

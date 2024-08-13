@@ -1,67 +1,23 @@
 <script setup>
-import { isCorrectAnswer } from "~/composables/check_is_correct.js/";
-
 const props = defineProps({
   data: {
     type: Object,
     required: true,
   },
-  surveyQuestions: {
-    type: Number,
-    required: true,
-  },
 });
 
-let totalScore = 0; // user total score
-let accuracyArr = []; // get array of correct, incorrect and unattempted questions
-let accuracy = 0; // user wise accuracy based on correctAnwers/totalQuestions where survey questions are not included in both
-let rank = 0; // user rank
+const analysis = ref({});
+const incorrectWidth = ref(0);
+const unattemptedWidth = ref(0);
 
-const totalSurveyQuestions = props.surveyQuestions; // count of total number of survey questions
-
-const answeredSurvey = ref(0); // count of the surveys user has attempted
-
-props.data.forEach(function (arrayItem) {
-  // if it is the survey question then apply this block's logic
-  if (arrayItem.question_type == "survey") {
-    totalSurveyQuestions;
-    if (arrayItem.is_attend) {
-      answeredSurvey.value++;
-    }
-  } else {
-    // if it is not the survey question then apply this block's logic
-
-    //if it is not the last object which includes the rank, response time and score information then procced to checking if it is attempted or not
-    if (!arrayItem.rank) {
-      // check if it is attempted or not, if attempted then check correct or incorrect and push accordingly, correct - true, incorrect - false
-      if (arrayItem.is_attend) {
-        accuracyArr.push(
-          isCorrectAnswer(
-            arrayItem.selected_answer.String,
-            arrayItem.correct_answer
-          )
-        );
-      } else {
-        // if it is unattempted then push 0
-        accuracyArr.push(0);
-      }
-    } else {
-      //it it is the last object of rank, fetch rank and total score from it
-      totalScore = arrayItem.total_score;
-      rank = arrayItem.rank;
-    }
-  }
+onMounted(() => {
+  analysis.value = questionsAnalysis(props.data);
+  unattemptedWidth.value =
+    (analysis.value?.unAttemptedQuestions / analysis.value?.totalQuestions) *
+    100;
+  incorrectWidth.value =
+    100 - analysis.value?.accuracy - unattemptedWidth.value;
 });
-
-const countTrue = accuracyArr.filter(Boolean).length;
-const notAttempted = accuracyArr.filter((value) => value === 0).length;
-const countFalse = accuracyArr.length - countTrue - notAttempted;
-
-const correctWidth = (countTrue / accuracyArr.length) * 100; // percentage of correct answers
-const unattemptedWidth = (notAttempted / accuracyArr.length) * 100; // percentage of unattempted answers
-const incorrectWidth = 100 - correctWidth - unattemptedWidth; // percentage of incorrect answers
-
-accuracy = ((countTrue / accuracyArr.length) * 100).toFixed(2);
 
 const handleMouseEnter = (event) => {
   event.target.style.transform = "scale(1.05)"; // Scale up on hover
@@ -94,15 +50,15 @@ const handleMouseLeave = (event) => {
         </div>
         <div class="stats">
           <div class="stat-item">
-            <span class="value">{{ rank }}</span>
+            <span class="value">{{ analysis?.rank }}</span>
             <span class="label">Rank</span>
           </div>
           <div class="stat-item">
-            <span class="value">{{ accuracy }}%</span>
+            <span class="value">{{ analysis?.accuracy }}%</span>
             <span class="label">Accuracy</span>
           </div>
           <div class="stat-item">
-            <span class="value">{{ totalScore }}</span>
+            <span class="value">{{ analysis?.totalScore }}</span>
             <span class="label">Score</span>
           </div>
         </div>
@@ -113,7 +69,7 @@ const handleMouseLeave = (event) => {
             <div
               class="progress-bar bg-success"
               role="progressbar"
-              :style="{ width: correctWidth + '%' }"
+              :style="{ width: analysis?.accuracy + '%' }"
               aria-valuenow="70"
               aria-valuemin="0"
               aria-valuemax="100"
@@ -138,47 +94,13 @@ const handleMouseLeave = (event) => {
         </div>
       </div>
       <div>
-        &#9989; {{ countTrue }} &ensp; &#10060; {{ countFalse }} &ensp; &#x25CC;
-        {{ notAttempted }} &ensp;
-        <span v-if="totalSurveyQuestions > 0"
-          >&#128203; {{ answeredSurvey }} / {{ totalSurveyQuestions }}</span
+        &#9989; {{ analysis?.correctAnwers }} &ensp; &#10060;
+        {{ analysis?.wrongAnwers }} &ensp; &#x25CC;
+        {{ analysis?.unAttemptedQuestions }} &ensp;
+        <span v-if="analysis?.totalSurveyQuestions > 0"
+          >&#128203; {{ analysis?.attemptedSurveyQuestions }} /
+          {{ analysis?.totalSurveyQuestions }}</span
         >
-      </div>
-      <div class="progress-bar">
-        <div
-          class="correct"
-          style="
-             {
-              width: correctWidth + '%';
-            }
-          "
-        ></div>
-        <div
-          class="incorrect"
-          style="
-             {
-              width: incorrectWidth + '%';
-            }
-          "
-        ></div>
-      </div>
-      <div class="progress-bar">
-        <div
-          class="correct"
-          style="
-             {
-              width: correctWidth + '%';
-            }
-          "
-        ></div>
-        <div
-          class="incorrect"
-          style="
-             {
-              width: incorrectWidth + '%';
-            }
-          "
-        ></div>
       </div>
     </div>
   </div>

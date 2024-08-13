@@ -3,7 +3,7 @@ import { isCorrectAnswer } from "~/composables/check_is_correct.js/";
 import { useToast } from "vue-toastification";
 
 const url = useRuntimeConfig().public;
-const scoreboardData = reactive([]);
+const scoreboardData = ref([]);
 const route = useRoute();
 const router = useRouter();
 const activeQuizId = ref("");
@@ -16,13 +16,8 @@ const analysisData = reactive([]);
 const userAnalysisEndpoint = "/analytics_board/user";
 
 const userAccuracy = ref(0);
-const userAnswerAnalysis = ref([]);
-const userCorrectAnswer = ref(0);
 const userTotalScore = ref(0);
-
-import { useUserScoreboardData } from "~/store/userScoreboardData";
-const userScoreboardData = useUserScoreboardData();
-const { addData, resetStore } = userScoreboardData;
+const requestPending = ref(false);
 
 const props = defineProps({
   userURL: {
@@ -47,30 +42,33 @@ const props = defineProps({
   },
 });
 
-async function getFinalScoreboardDetails(endpoint) {
-  const { data, error } = await useFetch(() => url.api_url + endpoint, {
-    method: "GET",
-    headers: headers,
-    credentials: "include",
-    mode: "cors",
-  });
-
-  watch(
-    [data, error],
-    () => {
-      if (data.value) {
-        scoreboardData.push(...data.value.data);
-        resetStore();
-        addData(scoreboardData);
-      }
-      if (error.value) {
-        toast.error(app.$Unauthorized);
-        router.push("/");
-      }
-    },
-    { immediate: true, deep: true }
-  );
-}
+const getFinalScoreboardDetails = async (endpoint) => {
+  try {
+    requestPending.value = true;
+    await $fetch(`${url.api_url}${endpoint}`, {
+      method: "GET",
+      credentials: "include",
+      headers: {
+        Accept: "application/json",
+      },
+      onResponse({ response }) {
+        if (response.status != 200) {
+          requestPending.value = false;
+          toast.error("error while get final scorcard");
+          return;
+        }
+        if (response.status == 200) {
+          scoreboardData.value = response._data?.data;
+          requestPending.value = false;
+        }
+      },
+    });
+  } catch (error) {
+    toast.error(error.message);
+    requestPending.value = false;
+    return;
+  }
+};
 
 // for admin
 if (props.isAdmin) {
@@ -103,7 +101,9 @@ if (!props.isAdmin) {
       () => {
         if (data.value) {
           analysisData.push(...data.value.data);
-          userAnalysis();
+          let analysis = questionsAnalysis(data.value?.data);
+          userAccuracy.value = analysis.accuracy;
+          userTotalScore.value = analysis.totalScore;
         }
         if (error.value) {
           toast.error(app.$$Unauthorized);
@@ -114,43 +114,6 @@ if (!props.isAdmin) {
   }
 
   getAnalysisDetails();
-
-  const userGainedPoints = ref(0);
-  const totalPoints = ref(0);
-
-  const userAnalysis = () => {
-    analysisData.filter((item) => {
-      let correctIncorrectFlag = false;
-      totalPoints.value += item.points;
-
-      if (!item.is_attend) {
-        userAnswerAnalysis.value.push(false);
-      } else if (item.question_type != "survey" && item.is_attend) {
-        //check if the answer is correct or not
-        correctIncorrectFlag = isCorrectAnswer(
-          item.selected_answer.String,
-          item.correct_answer
-        );
-        userAnswerAnalysis.value.push(correctIncorrectFlag); // if answer is correct then push true, if incorrect then push false
-
-        // if answer is correct then add that question's points into gained points
-        if (correctIncorrectFlag) {
-          userGainedPoints.value += item.points;
-        }
-      } else if (item.question_type == "survey" && item.is_attend) {
-        userAnswerAnalysis.value.push(true);
-        userGainedPoints.value += item.points;
-      }
-      userTotalScore.value += item.calculated_score;
-    });
-    // get the count of correct answers
-    userCorrectAnswer.value = userAnswerAnalysis.value.filter(Boolean).length;
-
-    userAccuracy.value = (
-      (userCorrectAnswer.value / userAnswerAnalysis.value.length) *
-      100
-    ).toFixed(2);
-  };
 }
 
 const showAnalysis = () => {
