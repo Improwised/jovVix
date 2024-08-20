@@ -1,5 +1,5 @@
 <template>
-  <div class="d-flex align-items-center">
+  <div class="d-flex align-items-center flex-wrap">
     <button
       class="btn btn-icon btn-white border border-2 rounded-circle btn-dashed ms-2"
     >

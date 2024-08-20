@@ -11,19 +11,19 @@
         </div>
       </div>
       <div
-        class="col-lg-4 col-sm-12 d-flex align-items-center justify-content-around"
+        class="col-lg-4 col-sm-12 d-flex flex-wrap align-items-center justify-content-around"
       >
-        <span class="badge bg-primary"
+        <span class="badge bg-primary m-1"
           >AVG. Response Time:
           {{ (quiz.avg_response_time / 1000).toFixed(2) }}</span
         >
-        <span class="badge bg-secondary mx-2"
+        <span class="badge bg-secondary m-1"
           >Time Duration: {{ quiz.duration }}</span
         >
-        <span v-if="quiz.type === 1" class="badge bg-light-info mx-2 text-dark"
+        <span v-if="quiz.type === 1" class="badge bg-light-info m-1 text-dark"
           >Multiple Choice Question</span
         >
-        <span v-else class="badge bg-light-info mx-2 text-dark">Survey</span>
+        <span v-else class="badge bg-light-info m-1 text-dark">Survey</span>
       </div>
     </div>
     <div class="border-bottom pb-4 mb-4"></div>
@@ -67,7 +67,7 @@
         </div>
       </div>
 
-      <div class="col-sm-12 col-lg-4 part-right">
+      <div class="col-sm-12 col-lg-4 part-right mb-3">
         <div class="fw-bold">Accuracy:</div>
         <div class="progress">
           <div
@@ -136,8 +136,8 @@ const {
 
 <style scoped>
 .option-box {
-  height: 70px;
-  /* width: 70%; */
+  min-height: 70px;
+  padding-top: 3px;
   border-radius: 30px;
 }
 .part-left {

@@ -14,10 +14,14 @@
       }
       .navbar-nav {
         @media (max-width: 576px) {
-          flex-direction: row;
+          flex-direction: column;
+          margin-top: 2rem;
+          margin-bottom: 1rem;
         }
         @media (min-width: 576px) and (max-width: 767.98px) {
-          flex-direction: row;
+          flex-direction: column;
+          margin-top: 2rem;
+          margin-bottom: 1rem;
         }
         @media (min-width: 768px) and (max-width: 991.98px) {
           flex-direction: row;
@@ -40,13 +44,11 @@
   }
 
 
-
   // Dashboard page content
 
   #page-content {
     min-height: 100vh;
     min-width: 100vw;
-    margin-left: 15.625rem;
     -webkit-transition: margin 0.25s ease-out;
     -moz-transition: margin 0.25s ease-out;
     -o-transition: margin 0.25s ease-out;
@@ -57,18 +59,6 @@
 
 
   // Dashboard navbar vertical toggled
-
-  #db-wrapper.toggled .navbar-vertical {
-    margin-left: 0;
-  }
-
-
-
-  // Dashboard page content toggled
-
-  #db-wrapper.toggled #page-content {
-    margin-left: 0;
-  }
 
   #db-wrapper.toggled #page-content .inner-wrapper-sticky {
    left:20px !important;
@@ -92,11 +82,11 @@
       margin-left: 0rem;
     }
 
-    #db-wrapper.toggled {
-      #page-content {
-        margin-left: 15.6875rem;
-      }
-    }
+    // #db-wrapper.toggled {
+    //   #page-content {
+    //     margin-left: 15.6875rem;
+    //   }
+    // }
   }
 
 
@@ -108,20 +98,12 @@
       min-width: 0rem;
       width: 100%;
     }
-    #db-wrapper.toggled .navbar-vertical {
-      margin-left: -16rem;
-    }
   }
 
 
   @media (min-width: 576px) and (max-width: 767.98px) {
     #page-content {
       margin-left: 0rem;
-    }
-    #db-wrapper.toggled {
-      #page-content {
-        margin-left: 15.6875rem;
-      }
     }
   }
 

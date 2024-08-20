@@ -20,6 +20,7 @@
             </tr>
           </thead>
           <tbody>
+            <div v-if="!quizList?.length">No quiz found....</div>
             <tr v-for="(quiz, index) in quizList" :key="index">
               <td>
                 <div class="ms-3 lh-1">
@@ -67,7 +68,7 @@ const {
   pending: quizListPending,
 } = useFetch(`${api_url}/admin/reports/list`, {
   transform: (quizList) =>
-    quizList.data.map((quiz) => {
+    quizList.data?.map((quiz) => {
       quiz.activated_from.Time = format(
         formatISO(quiz.activated_from.Time),
         "dd-MMM-yyyy HH:mm:ss"

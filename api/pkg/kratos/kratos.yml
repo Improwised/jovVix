@@ -107,7 +107,6 @@ selfservice:
         oidc:
           hooks:
             - hook: session
-
 log:
   level: debug
   format: text
@@ -135,7 +134,7 @@ identity:
 
 courier:
   smtp:
-    connection_uri: smtps://test:test@mailslurper:1025/?skip_ssl_verify=true
+    connection_uri: smtps://test:test@mailslurper:1025/?skip_ssl_verify=true&disable_starttls=true
 
 cookies:
   domain: 127.0.0.1

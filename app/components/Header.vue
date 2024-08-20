@@ -2,84 +2,91 @@
   <div class="header">
     <!-- navbar -->
     <nav class="navbar-classic navbar navbar-expand-lg">
-      <a id="nav-toggle" href="#"
-        ><i data-feather="menu" class="nav-icon me-2 icon-xs"></i
-      ></a>
       <!-- Logo -->
       <NuxtLink class="navbar-brand navbar-logo" style="color: black" to="/">
         Quiz App
       </NuxtLink>
-      <!--Navbar nav -->
-      <ul class="navbar-nav navbar-right-wrap ms-auto d-flex nav-top-wrap">
-        <button
-          class="navbar-brand align-items-center d-md-none btn btn-link custom-btn rounded-pill"
-          @click="navigate('/join')"
-        >
-          Join Quiz
-        </button>
-        <li class="nav-item mb-1">
-          <button
-            v-if="!isKratosUser"
-            class="btn custom-btn nav-link btn-link rounded-pill"
-            @click="navigate('/account/register')"
-          >
-            Register
-          </button>
-        </li>
-        <!-- Login button -->
-        <li class="nav-item mb-1">
-          <button
-            v-if="!isKratosUser"
-            class="btn custom-btn nav-link btn-link rounded-pill"
-            @click="navigate('/account/login')"
-          >
-            Login
-          </button>
-          <button
-            v-else
-            class="btn custom-btn nav-link btn-link rounded-pill"
-            @click="navigate('/admin')"
-          >
-            My Profile
-          </button>
-        </li>
-        <!-- create quiz button -->
-        <li v-if="isKratosUser" class="nav-item mb-1">
-          <button
-            class="btn custom-btn nav-link btn-link rounded-pill"
-            @click="navigate('/admin/quiz/list-quiz')"
-          >
-            Create Quiz
-          </button>
-        </li>
-        <!-- join quiz button -->
-        <li class="nav-item mb-1">
-          <button
-            class="btn custom-btn nav-link btn-link rounded-pill"
-            @click="navigate('/join')"
-          >
-            Join Quiz
-          </button>
-        </li>
-        <!-- Reports -->
-        <li v-if="isKratosUser" class="nav-item mb-1">
-          <button
-            class="btn custom-btn nav-link btn-link rounded-pill"
-            @click="navigate('/admin/reports')"
-          >
-            Reports
-          </button>
-        </li>
-        <!-- Log out button -->
-        <li v-if="isKratosUser" class="nav-item mb-1">
-          <button
-            class="btn custom-btn nav-link btn-link rounded-pill"
-            @click="handleLogout()"
-          >
-            Log Out
-          </button>
-        </li>
-       </ul>
+      <button
+        class="navbar-toggler bg-light"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#navbarNavAltMarkup"
+        aria-controls="navbarNavAltMarkup"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
+        <span class="navbar-toggler-icon text-dark"></span>
+      </button>
+      <div
+        id="navbarNavAltMarkup"
+        class="collapse navbar-collapse justify-content-end"
+      >
+        <ul class="navbar-nav">
+          <!-- Register button -->
+          <li class="nav-item mb-1">
+            <button
+              v-if="!isKratosUser"
+              class="btn custom-btn nav-link btn-link rounded-pill"
+              @click="navigate('/account/register')"
+            >
+              Register
+            </button>
+          </li>
+          <!-- Login button -->
+          <li class="nav-item mb-1">
+            <button
+              v-if="!isKratosUser"
+              class="btn custom-btn nav-link btn-link rounded-pill"
+              @click="navigate('/account/login')"
+            >
+              Login
+            </button>
+            <button
+              v-else
+              class="btn custom-btn nav-link btn-link rounded-pill"
+              @click="navigate('/admin')"
+            >
+              My Profile
+            </button>
+          </li>
+          <!-- create quiz button -->
+          <li v-if="isKratosUser" class="nav-item mb-1">
+            <button
+              class="btn custom-btn nav-link btn-link rounded-pill"
+              @click="navigate('/admin/quiz/list-quiz')"
+            >
+              Create Quiz
+            </button>
+          </li>
+          <!-- Reports -->
+          <li v-if="isKratosUser" class="nav-item mb-1">
+            <button
+              class="btn custom-btn nav-link btn-link rounded-pill"
+              @click="navigate('/admin/reports')"
+            >
+              Reports
+            </button>
+          </li>
+          <!-- join quiz button -->
+          <li class="nav-item mb-1">
+            <button
+              class="btn custom-btn nav-link btn-link rounded-pill"
+              @click="navigate('/join')"
+            >
+              Join Quiz
+            </button>
+          </li>
+          <!-- Log out button -->
+          <li v-if="isKratosUser" class="nav-item mb-1">
+            <button
+              class="btn custom-btn nav-link btn-link rounded-pill"
+              @click="handleLogout()"
+            >
+              Log Out
+            </button>
+          </li>
+        </ul>
+      </div>
     </nav>
   </div>
 </template>
