@@ -4,13 +4,11 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"log"
 	"sync"
 	"time"
 
 	"github.com/Improwised/quizz-app/api/config"
 	"github.com/Improwised/quizz-app/api/constants"
-	"github.com/Improwised/quizz-app/api/database"
 	quizUtilsHelper "github.com/Improwised/quizz-app/api/helpers/utils"
 	"github.com/Improwised/quizz-app/api/models"
 	"github.com/Improwised/quizz-app/api/pkg/redis"
@@ -43,10 +41,12 @@ type quizSocketController struct {
 	activeQuizModel         *models.ActiveQuizModel
 	quizModel               *models.QuizModel
 	userPlayedQuizModel     *models.UserPlayedQuizModel
+	questionModel           *models.QuestionModel
 	appConfig               *config.AppConfig
 	logger                  *zap.Logger
 	redis                   *redis.RedisPubSub
 	answersSubmittedByUsers chan models.User
+	mu                      sync.Mutex
 }
 
 func InitQuizConfig(db *goqu.Database, appConfig *config.AppConfig, logger *zap.Logger, redis *redis.RedisPubSub, answersSubmittedByUsers chan models.User) *quizSocketController {
@@ -54,11 +54,13 @@ func InitQuizConfig(db *goqu.Database, appConfig *config.AppConfig, logger *zap.
 	activeQuizModel := models.InitActiveQuizModel(db, logger)
 	quizModel := models.InitQuizModel(db)
 	userPlayedQuizModel := models.InitUserPlayedQuizModel(db)
+	questionModel := models.InitQuestionModel(db, logger)
 
 	return &quizSocketController{
 		activeQuizModel:         activeQuizModel,
 		quizModel:               quizModel,
 		userPlayedQuizModel:     userPlayedQuizModel,
+		questionModel:           questionModel,
 		appConfig:               appConfig,
 		logger:                  logger,
 		redis:                   redis,
@@ -66,6 +68,7 @@ func InitQuizConfig(db *goqu.Database, appConfig *config.AppConfig, logger *zap.
 	}
 }
 
+// for user Join
 func (qc *quizSocketController) Join(c *websocket.Conn) {
 	response := QuizSendResponse{
 		Component: constants.Waiting,
@@ -95,39 +98,31 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 
 	userId := quizUtilsHelper.GetString(c.Locals(constants.ContextUid))
 
+	defer func() {
+		c.Close()
+		qc.logger.Info("connection closed by user")
+	}()
+
 	// check user web socket connection is close or not
 	go func() {
-		defer func() {
-			c.Close()
-		}()
-
 		for {
 			_, p, err := c.ReadMessage()
 
 			if err != nil {
-				wait := true
-				if websocket.IsCloseError(err, websocket.CloseGoingAway) {
-					wait = false
-				}
 				// if error occurs, change the connection alive status to false
-				updateUserData(qc, userId, session.ID.String(), false, wait)
+				updateUserData(qc, userId, session.ID.String(), false)
 				break
 			}
 			err = json.Unmarshal([]byte(p), &quizResponse)
 			if err != nil {
-				updateUserData(qc, userId, session.ID.String(), false, true)
+				updateUserData(qc, userId, session.ID.String(), false)
 				break
 			}
 
 			if quizResponse.Event == "websocket_close" {
-				updateUserData(qc, userId, session.ID.String(), false, false)
+				updateUserData(qc, userId, session.ID.String(), false)
 				qc.logger.Info("connection close request is send by the user - " + user.Username)
 				break
-			}
-
-			if quizResponse.Event == "ping" {
-				// if gets ping, change the connection alive status to true
-				updateUserData(qc, userId, session.ID.String(), true, false)
 			}
 		}
 	}()
@@ -254,6 +249,146 @@ func handleQuestion(c *websocket.Conn, qc *quizSocketController, session models.
 	}
 }
 
+func onConnectHandleUser(c *websocket.Conn, qc *quizSocketController, response *QuizSendResponse, session models.ActiveQuiz) {
+	if session.CurrentQuestion.Valid {
+
+		questionID, err := uuid.Parse(session.CurrentQuestion.String)
+		if err != nil {
+			qc.logger.Error(fmt.Sprintf("\nquestionID is not being parsed from the current question id of this session and that current question id is - %v\n", session.CurrentQuestion), zap.Error(err))
+		}
+
+		currentQuestion, err := qc.questionModel.GetCurrentQuestion(questionID)
+		if err != nil {
+			qc.logger.Error("unable to get the current question and the question id was "+session.CurrentQuestion.String, zap.Error(err))
+		}
+
+		response.Action = constants.ActionSendQuestion
+		responseData := map[string]any{
+			"id":            currentQuestion.ID,
+			"no":            currentQuestion.OrderNumber,
+			"duration":      currentQuestion.DurationInSeconds - int(time.Since(session.QuestionDeliveryTime.Time).Seconds()),
+			"question_time": session.QuestionDeliveryTime.Time,
+			"question":      currentQuestion.Question,
+			"options":       currentQuestion.Options,
+		}
+		response.Data = responseData
+		response.Component = constants.Question
+
+		err = utils.JSONSuccessWs(c, constants.EventSendQuestion, response)
+		if err != nil {
+			qc.logger.Error(fmt.Sprintf("socket error send current question on connect: %s event, %s action", constants.EventSendQuestion, response.Action), zap.Error(err))
+		}
+	} else {
+		response.Data = constants.QuizStartsSoon
+		err := utils.JSONSuccessWs(c, constants.EventJoinQuiz, response)
+		if err != nil {
+			qc.logger.Error(fmt.Sprintf("socket error send waiting message: %s event, %s action", constants.EventJoinQuiz, response.Action), zap.Error(err))
+		}
+	}
+}
+
+// function to update user IsAlive status
+func updateUserData(qc *quizSocketController, userId string, sessionId string, isAlive bool) {
+
+	// get datat from redis
+	users, err := qc.redis.PubSubModel.Client.Get(qc.redis.PubSubModel.Ctx, sessionId).Result()
+	if err != nil {
+		qc.logger.Error("error while fetching data from redis inside updateUserData", zap.Error(err))
+	}
+
+	var usersData []UserInfo
+	err = json.Unmarshal([]byte(users), &usersData)
+	if err != nil {
+		qc.logger.Error("error while unmarshaling redis inside updateUserData", zap.Error(err))
+	}
+
+	var update bool
+	var user UserInfo
+
+	for i, data := range usersData {
+		if userId == data.UserId {
+			if usersData[i].IsAlive == isAlive {
+				update = false
+				break
+			}
+			usersData[i].IsAlive = isAlive
+			user = UserInfo{UserId: usersData[i].UserId, UserName: usersData[i].UserName, IsAlive: usersData[i].IsAlive}
+			update = true
+			break
+		}
+	}
+
+	var updatedUserData []UserInfo
+	for _, data := range usersData {
+		if data.IsAlive {
+			updatedUserData = append(updatedUserData, data)
+		} else {
+			update = true
+		}
+	}
+
+	// if alive state provided is different with the current alive state then change it
+	if update {
+		jsonData, err := json.Marshal(updatedUserData)
+		if err != nil {
+			qc.logger.Error("error while marshaling data into json in updateUserData", zap.Error(err))
+		}
+
+		// set new data into redis
+		err = qc.redis.PubSubModel.Client.Set(qc.redis.PubSubModel.Ctx, sessionId, jsonData, time.Minute*100).Err()
+		if err != nil {
+			qc.logger.Error("error while updating data into redis in updateUserData", zap.Error(err))
+		} else {
+			qc.logger.Debug(fmt.Sprintf("isalive status updated for the user %s(%s) from %v to %v", user.UserName, user.UserId, !user.IsAlive, user.IsAlive))
+		}
+
+		// get data from redis in case it is changed by ping
+		users, err := qc.redis.PubSubModel.Client.Get(qc.redis.PubSubModel.Ctx, sessionId).Result()
+		if err != nil {
+			qc.logger.Error("error while fetching data from redis inside updateUserData", zap.Error(err))
+		}
+
+		var usersData []UserInfo
+		err = json.Unmarshal([]byte(users), &usersData)
+		if err != nil {
+			qc.logger.Error("error while unmarshaling redis inside updateUserData", zap.Error(err))
+		}
+
+		// get only alive connection to publish to the channel
+		publishData := filterPublishUsers(qc, usersData, "updateUserData")
+
+		// publish alive connections to the channel
+		err = qc.redis.PubSubModel.Client.Publish(qc.redis.PubSubModel.Ctx, constants.EventUserJoined, publishData).Err()
+		if err != nil {
+			qc.logger.Error("error while publishing data inside updateUserData", zap.Error(err))
+		}
+	}
+}
+
+// filter user data and publish only alive user to the channel
+func filterPublishUsers(qc *quizSocketController, usersData []UserInfo, functionName string) (publishData []byte) {
+
+	qc.mu.Lock()
+	defer qc.mu.Unlock()
+
+	// Filter out elements where IsAlive is false
+	var filteredData []UserInfo
+	for _, data := range usersData {
+		if data.IsAlive {
+			filteredData = append(filteredData, data)
+		}
+	}
+
+	// store new data into publishData
+	publishData, err := json.Marshal(filteredData)
+	if err != nil {
+		qc.logger.Error(fmt.Sprintf("error while marshaling data into filterPublishUsers, called from %s", functionName), zap.Error(err))
+	}
+
+	return publishData
+}
+
+// for admin join
 func (qc *quizSocketController) Arrange(c *websocket.Conn) {
 
 	isConnected := true
@@ -298,8 +433,7 @@ func (qc *quizSocketController) Arrange(c *websocket.Conn) {
 			qc.logger.Error("error while deactivating quiz", zap.Error(err))
 		}
 		c.Close()
-		qc.logger.Debug("connection closed")
-		onRefreshHandleConnectedUser(qc, session.ID.String())
+		qc.logger.Info("connection closed by admin")
 	}()
 
 	// handle code sharing with admin
@@ -319,6 +453,50 @@ func (qc *quizSocketController) Arrange(c *websocket.Conn) {
 	questionAndScoreHandler(c, qc, &response, session, &isConnected)
 }
 
+func ActivateAndGetSession(c *websocket.Conn, activeQuizModel *models.ActiveQuizModel, logger *zap.Logger, sessionId string, userId string) (models.ActiveQuiz, error) {
+
+	response := QuizSendResponse{
+		Component: constants.Waiting,
+		Action:    constants.ActionAuthentication,
+		Data:      "",
+	}
+
+	session, err := activeQuizModel.GetOrActivateSession(sessionId, userId)
+
+	if err != nil {
+		if err.Error() == constants.Unauthenticated {
+			response.Action = constants.ActionSessionValidation
+			response.Data = constants.Unauthorized
+			err = utils.JSONFailWs(c, constants.EventAuthorization, response)
+			if err != nil {
+				logger.Error(fmt.Sprintf("socket error authentication host: %s event, %s action", constants.EventAuthorization, response.Action), zap.Error(err))
+			}
+			return session, err
+		} else if err.Error() == constants.ErrSessionWasCompleted {
+			response.Action = constants.ActionSessionActivation
+			response.Data = constants.ErrSessionWasCompleted
+			err = utils.JSONFailWs(c, constants.EventAuthorization, response)
+			if err != nil {
+				logger.Error(fmt.Sprintf("socket error authentication host: %s event, %s action", constants.EventAuthorization, response.Action), zap.Error(err))
+			}
+			return session, err
+		}
+
+		response.Action = constants.ActionSessionActivation
+		response.Data = constants.UnknownError
+		logger.Debug("unknown error was triggered from ActivateAndGetSession")
+		err = utils.JSONErrorWs(c, constants.EventActivateSession, response)
+		if err != nil {
+			logger.Error(fmt.Sprintf("socket error get or activate session: %s event, %s action", constants.EventActivateSession, response.Action), zap.Error(err))
+		}
+		return session, err
+	}
+
+	c.Locals(constants.ActiveQuizObj, session)
+
+	return session, nil
+}
+
 func handleCodeGeneration(c *websocket.Conn, qc *quizSocketController, session models.ActiveQuiz, isConnected *bool, response *QuizSendResponse) {
 	// is isQuestionActive true -> quiz started
 	isInvitationCodeSent := session.CurrentQuestion.Valid
@@ -327,7 +505,9 @@ func handleCodeGeneration(c *websocket.Conn, qc *quizSocketController, session m
 		// handle Waiting page
 		for {
 
+			qc.mu.Lock()
 			if !(*isConnected) {
+				qc.mu.Unlock()
 				break
 			}
 
@@ -337,12 +517,13 @@ func handleCodeGeneration(c *websocket.Conn, qc *quizSocketController, session m
 				handleInvitationCodeSend(c, response, qc.logger, session.InvitationCode.Int32)
 				isInvitationCodeSent = true
 			}
+			qc.mu.Unlock()
 
 			// once code sent receive start signal
 			if isInvitationCodeSent {
 				go handleConnectedUser(c, qc)
 
-				isBreak := handleStartQuiz(c, qc.logger, isConnected, response.Action)
+				isBreak := handleStartQuiz(c, qc.logger, isConnected, response.Action, &qc.mu)
 				subscriberCount := qc.redis.PubSubModel.Client.PubSubNumSub(qc.redis.PubSubModel.Ctx, session.ID.String()).Val()[session.ID.String()]
 				if subscriberCount != 0 && isBreak {
 					// quiz is start publish for admin to stop looking for user
@@ -368,6 +549,112 @@ func handleCodeGeneration(c *websocket.Conn, qc *quizSocketController, session m
 				}
 
 			}
+		}
+	}
+}
+
+// handle waiting page
+func handleInvitationCodeSend(c *websocket.Conn, response *QuizSendResponse, logger *zap.Logger, invitationCode int32) bool {
+
+	// send code to client
+	response.Action = constants.ActionSessionActivation
+	response.Data = map[string]int{"code": int(invitationCode)}
+
+	err := utils.JSONSuccessWs(c, constants.EventSendInvitationCode, response)
+
+	if err != nil {
+		logger.Error(fmt.Sprintf("socket error sent code: %s event, %s action", constants.EventSendInvitationCode, response.Action), zap.Error(err))
+	}
+
+	return true
+}
+
+// when user connect at that time send data to admin
+func handleConnectedUser(c *websocket.Conn, qc *quizSocketController) {
+	response := QuizSendResponse{}
+	response.Action = "send user join data"
+	response.Component = constants.Waiting
+
+	pubsub := qc.redis.PubSubModel.Client.Subscribe(qc.redis.PubSubModel.Ctx, constants.EventUserJoined, constants.EventTerminateQuiz, constants.EventStartQuizByAdmin, constants.StartQuizByAdminNoPlayerFound)
+	defer func() {
+		if pubsub != nil {
+			err := pubsub.Unsubscribe(qc.redis.PubSubModel.Ctx, constants.EventUserJoined, constants.EventStartQuizByAdmin, constants.StartQuizByAdminNoPlayerFound)
+			if err != nil {
+				qc.logger.Error("unsubscribe failed", zap.Error(err))
+			}
+			pubsub.Close()
+		}
+	}()
+
+	ch := pubsub.Channel()
+	usersData := []UserInfo{}
+
+	for msg := range ch {
+		response.Data = msg.Payload
+
+		if response.Data == constants.EventStartQuizByAdmin || response.Data == constants.EventTerminateQuiz || response.Data == constants.StartQuizByAdminNoPlayerFound {
+			break
+		}
+
+		err := json.Unmarshal([]byte(msg.Payload), &usersData)
+		if err != nil {
+			qc.logger.Error("error while unmarshaling data inside handleconnectedUser ", zap.Error(err))
+
+			break
+		}
+
+		usersName := []string{}
+		for _, data := range usersData {
+			usersName = append(usersName, data.UserName)
+		}
+		response.Data = usersName
+		err = utils.JSONSuccessWs(c, constants.EventSendInvitationCode, response) // sending the user data to the admin
+		if err != nil {
+			qc.logger.Error("error while sending user data ", zap.Error(err))
+		}
+	}
+}
+
+// start quiz by message event from admin
+func handleStartQuiz(c *websocket.Conn, logger *zap.Logger, isConnected *bool, action string, mu *sync.Mutex) bool {
+	message := QuizReceiveResponse{}
+	err := c.ReadJSON(&message)
+	if err != nil {
+		logger.Error(fmt.Sprintf("socket error start event handling: %s event, %s action", constants.EventStartQuiz, action), zap.Error(err))
+		mu.Lock()
+		*isConnected = false
+		mu.Unlock()
+		return true
+	}
+
+	if message.Event == constants.EventStartQuiz {
+		return true
+	}
+
+	return false
+}
+
+func shareEvenWithUser(c *websocket.Conn, qc *quizSocketController, response *QuizSendResponse, event string, sessionId string, invitationCode int, sentToWhom int) {
+	payload := map[string]any{"event": event, "response": response}
+	data, err := json.Marshal(payload)
+	if err != nil {
+		qc.logger.Error(fmt.Sprintf("socket error marshal redis payload: %s event, %s action %v code", constants.EventSendQuestion, response.Action, invitationCode), zap.Error(err))
+	}
+
+	if sentToWhom == constants.ToUser || sentToWhom == constants.ToAll {
+		// send event to user
+		err = qc.redis.PubSubModel.Client.Publish(qc.redis.PubSubModel.Ctx, sessionId, data).Err()
+
+		if err != nil {
+			qc.logger.Error(fmt.Sprintf("socket error publishing event: %s event, %s action %v code", constants.EventPublishQuestion, response.Action, invitationCode), zap.Error(err))
+		}
+	}
+
+	if sentToWhom == constants.ToAdmin || sentToWhom == constants.ToAll {
+		// send event to admin
+		err = utils.JSONSuccessWs(c, event, response)
+		if err != nil {
+			qc.logger.Error(fmt.Sprintf("socket error sending event: %s event, %s action %v code", constants.EventSendQuestion, response.Action, invitationCode), zap.Error(err))
 		}
 	}
 }
@@ -458,6 +745,11 @@ func listenAllEvents(c *websocket.Conn, qc *quizSocketController, response *Quiz
 }
 
 func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.WaitGroup, response *QuizSendResponse, session models.ActiveQuiz, question models.Question, lastQuestionTimeStamp sql.NullTime, chanSkipEvent chan bool, chanSkipTimer chan bool) {
+
+	qc.mu.Lock()
+	defer qc.mu.Unlock()
+	defer wg.Done()
+
 	// start counter if not any question running
 	if !lastQuestionTimeStamp.Valid {
 		response.Component = constants.Question
@@ -470,6 +762,7 @@ func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.Wa
 		err := qc.quizModel.UpdateCurrentQuestion(session.ID, question.ID, true)
 		if err != nil {
 			qc.logger.Error(fmt.Sprintf("socket error update current question: %s event, %s action %v code", constants.EventSendQuestion, response.Action, session.InvitationCode), zap.Error(err))
+			return
 		}
 	}
 
@@ -512,6 +805,7 @@ func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.Wa
 	err := qc.quizModel.UpdateCurrentQuestion(session.ID, question.ID, false)
 	if err != nil {
 		qc.logger.Error(fmt.Sprintf("socket error update current question: %s event, %s action %v code", constants.EventSendQuestion, response.Action, session.InvitationCode), zap.Error(err))
+		return
 	}
 
 	// score-board rendering
@@ -521,6 +815,7 @@ func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.Wa
 
 	if err != nil {
 		qc.logger.Error("error during get userRankBoard", zap.Error(err))
+		return
 	}
 
 	response.Data = map[string]any{
@@ -539,8 +834,30 @@ func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.Wa
 	// skip 20 sec timer
 	go handleSkipTimer(wgForSkipTimer, chanSkipTimer)
 	wgForSkipTimer.Wait()
+}
 
-	wg.Done()
+func terminateQuiz(c *websocket.Conn, qc *quizSocketController, response *QuizSendResponse, session models.ActiveQuiz) {
+
+	qc.mu.Lock()
+	defer qc.mu.Unlock()
+
+	response.Component = constants.Score
+	response.Data = constants.ActionTerminateQuiz
+	shareEvenWithUser(c, qc, response, constants.EventTerminateQuiz, session.ID.String(), int(session.InvitationCode.Int32), constants.ToAll)
+
+	err := qc.activeQuizModel.Deactivate(session.ID)
+	if err != nil {
+		qc.logger.Error(fmt.Sprintf("socket error get remaining questions: %s event, %s action %v code", constants.EventStartQuiz, response.Action, session.InvitationCode), zap.Error(err))
+		return
+	}
+
+	qc.logger.Info("terminateQuiz")
+	// here logic of publishing data of user to admin that terminate quiz so no need to listen for joining users
+	err = qc.redis.PubSubModel.Client.Publish(qc.redis.PubSubModel.Ctx, constants.EventTerminateQuiz, constants.EventTerminateQuiz).Err()
+	if err != nil {
+		qc.logger.Error(fmt.Sprintf("socket error while terminationg quiz %s", constants.ActionTerminateQuiz), zap.Error(err))
+		return
+	}
 }
 
 func handleSkipTimer(wg *sync.WaitGroup, chanSkipTimer chan bool) {
@@ -576,6 +893,7 @@ func handleAnswerSubmission(c *websocket.Conn, qc *quizSocketController, session
 				ok, err := qc.quizModel.IsAllAnswerGathered(session.ID, questionId)
 				if err != nil {
 					qc.logger.Error("error during listening skip event", zap.Error(err))
+					return
 				}
 				if ok {
 					return
@@ -590,346 +908,8 @@ func handleAnswerSubmission(c *websocket.Conn, qc *quizSocketController, session
 			err := utils.JSONSuccessWs(c, constants.EventAnswerSubmittedByUser, response)
 			if err != nil {
 				qc.logger.Error(fmt.Sprintf("socket error sending event: %s event, %s action, %v user", constants.EventSendQuestion, response.Action, user), zap.Error(err))
+				return
 			}
 		}
 	}
-
-}
-
-// Activate session
-
-func ActivateAndGetSession(c *websocket.Conn, activeQuizModel *models.ActiveQuizModel, logger *zap.Logger, sessionId string, userId string) (models.ActiveQuiz, error) {
-
-	response := QuizSendResponse{
-		Component: constants.Waiting,
-		Action:    constants.ActionAuthentication,
-		Data:      "",
-	}
-
-	session, err := activeQuizModel.GetOrActivateSession(sessionId, userId)
-
-	if err != nil {
-		if err.Error() == constants.Unauthenticated {
-			response.Action = constants.ActionSessionValidation
-			response.Data = constants.Unauthorized
-			err = utils.JSONFailWs(c, constants.EventAuthorization, response)
-			if err != nil {
-				logger.Error(fmt.Sprintf("socket error authentication host: %s event, %s action", constants.EventAuthorization, response.Action), zap.Error(err))
-			}
-			return session, err
-		} else if err.Error() == constants.ErrSessionWasCompleted {
-			response.Action = constants.ActionSessionActivation
-			response.Data = constants.ErrSessionWasCompleted
-			err = utils.JSONFailWs(c, constants.EventAuthorization, response)
-			if err != nil {
-				logger.Error(fmt.Sprintf("socket error authentication host: %s event, %s action", constants.EventAuthorization, response.Action), zap.Error(err))
-			}
-			return session, err
-		}
-
-		response.Action = constants.ActionSessionActivation
-		response.Data = constants.UnknownError
-		logger.Debug("unknown error was triggered from ActivateAndGetSession")
-		err = utils.JSONErrorWs(c, constants.EventActivateSession, response)
-		if err != nil {
-			logger.Error(fmt.Sprintf("socket error get or activate session: %s event, %s action", constants.EventActivateSession, response.Action), zap.Error(err))
-		}
-		return session, err
-	}
-
-	c.Locals(constants.ActiveQuizObj, session)
-
-	return session, nil
-}
-
-// handle waiting page
-func handleInvitationCodeSend(c *websocket.Conn, response *QuizSendResponse, logger *zap.Logger, invitationCode int32) bool {
-
-	// send code to client
-	response.Action = constants.ActionSessionActivation
-	response.Data = map[string]int{"code": int(invitationCode)}
-
-	err := utils.JSONSuccessWs(c, constants.EventSendInvitationCode, response)
-
-	if err != nil {
-		logger.Error(fmt.Sprintf("socket error sent code: %s event, %s action", constants.EventSendInvitationCode, response.Action), zap.Error(err))
-	}
-
-	return true
-}
-
-// start quiz by message event from admin
-func handleStartQuiz(c *websocket.Conn, logger *zap.Logger, isConnected *bool, action string) bool {
-	message := QuizReceiveResponse{}
-	err := c.ReadJSON(&message)
-	if err != nil {
-		logger.Error(fmt.Sprintf("socket error start event handling: %s event, %s action", constants.EventStartQuiz, action), zap.Error(err))
-		*isConnected = false
-		return true
-	}
-
-	if message.Event == constants.EventStartQuiz {
-		return true
-	}
-
-	return false
-}
-
-func shareEvenWithUser(c *websocket.Conn, qc *quizSocketController, response *QuizSendResponse, event string, sessionId string, invitationCode int, sentToWhom int) {
-	payload := map[string]any{"event": event, "response": response}
-	data, err := json.Marshal(payload)
-	if err != nil {
-		qc.logger.Error(fmt.Sprintf("socket error marshal redis payload: %s event, %s action %v code", constants.EventSendQuestion, response.Action, invitationCode), zap.Error(err))
-	}
-
-	if sentToWhom == constants.ToUser || sentToWhom == constants.ToAll {
-		// send event to user
-		err = qc.redis.PubSubModel.Client.Publish(qc.redis.PubSubModel.Ctx, sessionId, data).Err()
-
-		if err != nil {
-			qc.logger.Error(fmt.Sprintf("socket error publishing event: %s event, %s action %v code", constants.EventPublishQuestion, response.Action, invitationCode), zap.Error(err))
-		}
-	}
-
-	if sentToWhom == constants.ToAdmin || sentToWhom == constants.ToAll {
-		// send event to admin
-		err = utils.JSONSuccessWs(c, event, response)
-		if err != nil {
-			qc.logger.Error(fmt.Sprintf("socket error sending event: %s event, %s action %v code", constants.EventSendQuestion, response.Action, invitationCode), zap.Error(err))
-		}
-	}
-}
-
-func terminateQuiz(c *websocket.Conn, qc *quizSocketController, response *QuizSendResponse, session models.ActiveQuiz) {
-	response.Component = constants.Score
-	response.Data = constants.ActionTerminateQuiz
-	shareEvenWithUser(c, qc, response, constants.EventTerminateQuiz, session.ID.String(), int(session.InvitationCode.Int32), constants.ToAll)
-
-	err := qc.activeQuizModel.Deactivate(session.ID)
-	if err != nil {
-		qc.logger.Error(fmt.Sprintf("socket error get remaining questions: %s event, %s action %v code", constants.EventStartQuiz, response.Action, session.InvitationCode), zap.Error(err))
-		return
-	}
-
-	log.Panicln("terminateQuiz")
-	// here logic of publishing data of user to admin that terminate quiz so no need to listen for joining users
-	err = qc.redis.PubSubModel.Client.Publish(qc.redis.PubSubModel.Ctx, constants.EventTerminateQuiz, constants.EventTerminateQuiz).Err()
-	if err != nil {
-		qc.logger.Error(fmt.Sprintf("socket error while terminationg quiz %s", constants.ActionTerminateQuiz), zap.Error(err))
-		return
-	}
-
-}
-
-// when user connect at that time send data to admin
-func handleConnectedUser(c *websocket.Conn, qc *quizSocketController) {
-	response := QuizSendResponse{}
-	response.Action = "send user join data"
-	response.Component = constants.Waiting
-
-	pubsub := qc.redis.PubSubModel.Client.Subscribe(qc.redis.PubSubModel.Ctx, constants.EventUserJoined, constants.EventTerminateQuiz, constants.EventStartQuizByAdmin, constants.StartQuizByAdminNoPlayerFound)
-	defer func() {
-		if pubsub != nil {
-			err := pubsub.Unsubscribe(qc.redis.PubSubModel.Ctx, constants.EventUserJoined, constants.EventStartQuizByAdmin, constants.StartQuizByAdminNoPlayerFound)
-			if err != nil {
-				qc.logger.Error("unsubscribe failed", zap.Error(err))
-			}
-			pubsub.Close()
-		}
-	}()
-
-	ch := pubsub.Channel()
-	usersData := []UserInfo{}
-
-	for msg := range ch {
-		response.Data = msg.Payload
-
-		if response.Data == constants.EventStartQuizByAdmin || response.Data == constants.EventTerminateQuiz || response.Data == constants.StartQuizByAdminNoPlayerFound {
-			break
-		}
-
-		err := json.Unmarshal([]byte(msg.Payload), &usersData)
-		if err != nil {
-			qc.logger.Error("error while unmarshaling data inside handleconnectedUser ", zap.Error(err))
-
-			break
-		}
-
-		usersName := []string{}
-		for _, data := range usersData {
-			usersName = append(usersName, data.UserName)
-		}
-		response.Data = usersName
-		err = utils.JSONSuccessWs(c, constants.EventSendInvitationCode, response) // sending the user data to the admin
-		if err != nil {
-			qc.logger.Error("error while sending user data ", zap.Error(err))
-		}
-	}
-
-}
-
-// when admin refresh page at that time send redis conncted user data to admin
-func onRefreshHandleConnectedUser(qc *quizSocketController, topic string) {
-
-	users, err := qc.redis.PubSubModel.Client.Get(qc.redis.PubSubModel.Ctx, topic).Result()
-	if err != nil {
-		qc.logger.Error(fmt.Sprintf("socket error %s", constants.EventSendInvitationCode), zap.Error(err))
-	}
-
-	var usersData []UserInfo
-
-	err = json.Unmarshal([]byte(users), &usersData)
-	if err != nil {
-		qc.logger.Error("error while unmarshaling redis in publishUserOnJoin", zap.Error(err))
-	}
-
-	publishData := filterPublishUsers(qc, usersData, "onRefreshHandleConnectedUser")
-
-	err = qc.redis.PubSubModel.Client.Publish(qc.redis.PubSubModel.Ctx, constants.EventUserJoined, publishData).Err()
-
-	if err != nil {
-		qc.logger.Error("error while publishig data to redis  inside onRefreshHandleConnectedUser ", zap.Error(err))
-	}
-}
-
-func onConnectHandleUser(c *websocket.Conn, qc *quizSocketController, response *QuizSendResponse, session models.ActiveQuiz) {
-	if session.CurrentQuestion.Valid {
-
-		db, err := database.Connect(qc.appConfig.DB)
-		if err != nil {
-			qc.logger.Error("unable to connect with the database", zap.Error(err))
-		}
-
-		questionModel := models.InitQuestionModel(db, qc.logger)
-
-		questionID, err := uuid.Parse(session.CurrentQuestion.String)
-		if err != nil {
-			qc.logger.Error(fmt.Sprintf("\nquestionID is not being parsed from the current question id of this session and that current question id is - %v\n", session.CurrentQuestion), zap.Error(err))
-		}
-
-		currentQuestion, err := questionModel.GetCurrentQuestion(questionID)
-		if err != nil {
-			qc.logger.Error("unable to get the current question and the question id was "+session.CurrentQuestion.String, zap.Error(err))
-		}
-
-		response.Action = constants.ActionSendQuestion
-		responseData := map[string]any{
-			"id":            currentQuestion.ID,
-			"no":            currentQuestion.OrderNumber,
-			"duration":      currentQuestion.DurationInSeconds - int(time.Since(session.QuestionDeliveryTime.Time).Seconds()),
-			"question_time": session.QuestionDeliveryTime.Time,
-			"question":      currentQuestion.Question,
-			"options":       currentQuestion.Options,
-		}
-		response.Data = responseData
-		response.Component = constants.Question
-
-		err = utils.JSONSuccessWs(c, constants.EventSendQuestion, response)
-		if err != nil {
-			qc.logger.Error(fmt.Sprintf("socket error send current question on connect: %s event, %s action", constants.EventSendQuestion, response.Action), zap.Error(err))
-		}
-	} else {
-		response.Data = constants.QuizStartsSoon
-		err := utils.JSONSuccessWs(c, constants.EventJoinQuiz, response)
-		if err != nil {
-			qc.logger.Error(fmt.Sprintf("socket error send waiting message: %s event, %s action", constants.EventJoinQuiz, response.Action), zap.Error(err))
-		}
-	}
-}
-
-// function to update user IsAlive status
-func updateUserData(qc *quizSocketController, userId string, sessionId string, isAlive bool, wait bool) {
-
-	// get datat from redis
-	users, err := qc.redis.PubSubModel.Client.Get(qc.redis.PubSubModel.Ctx, sessionId).Result()
-	if err != nil {
-		qc.logger.Error("error while fetching data from redis inside updateUserData", zap.Error(err))
-	}
-
-	var usersData []UserInfo
-	err = json.Unmarshal([]byte(users), &usersData)
-	if err != nil {
-		qc.logger.Error("error while unmarshaling redis inside updateUserData", zap.Error(err))
-	}
-
-	var update bool
-	var user UserInfo
-
-	for i, data := range usersData {
-		if userId == data.UserId {
-			if usersData[i].IsAlive == isAlive {
-				update = false
-				break
-			}
-			usersData[i].IsAlive = isAlive
-			user = UserInfo{UserId: usersData[i].UserId, UserName: usersData[i].UserName, IsAlive: usersData[i].IsAlive}
-			update = true
-			break
-		}
-	}
-
-	// if alive state provided is different with the current alive state then change it
-	if update {
-		jsonData, err := json.Marshal(usersData)
-		if err != nil {
-			qc.logger.Error("error while marshaling data into json in updateUserData", zap.Error(err))
-		}
-
-		// set new data into redis
-		err = qc.redis.PubSubModel.Client.Set(qc.redis.PubSubModel.Ctx, sessionId, jsonData, time.Minute*100).Err()
-		if err != nil {
-			qc.logger.Error("error while updating data into redis in updateUserData", zap.Error(err))
-		} else {
-			qc.logger.Debug(fmt.Sprintf("isalive status updated for the user %s(%s) from %v to %v", user.UserName, user.UserId, !user.IsAlive, user.IsAlive))
-		}
-
-		// wait before publishing data to redis in case the user is alive and sends a ping
-		// do not wait when closeGoingAway error (tab is closed situations)
-		if wait {
-			time.Sleep(10 * time.Second)
-		}
-
-		// get data from redis in case it is changed by ping
-		users, err := qc.redis.PubSubModel.Client.Get(qc.redis.PubSubModel.Ctx, sessionId).Result()
-		if err != nil {
-			qc.logger.Error("error while fetching data from redis inside updateUserData", zap.Error(err))
-		}
-
-		var usersData []UserInfo
-		err = json.Unmarshal([]byte(users), &usersData)
-		if err != nil {
-			qc.logger.Error("error while unmarshaling redis inside updateUserData", zap.Error(err))
-		}
-
-		// get only alive connection to publish to the channel
-		publishData := filterPublishUsers(qc, usersData, "updateUserData")
-
-		// publish alive connections to the channel
-		err = qc.redis.PubSubModel.Client.Publish(qc.redis.PubSubModel.Ctx, constants.EventUserJoined, publishData).Err()
-
-		if err != nil {
-			qc.logger.Error("error while publishing data inside updateUserData", zap.Error(err))
-		}
-	}
-
-}
-
-// filter user data and publish only alive user to the channel
-func filterPublishUsers(qc *quizSocketController, usersData []UserInfo, functionName string) (publishData []byte) {
-
-	// Filter out elements where IsAlive is false
-	var filteredData []UserInfo
-	for _, data := range usersData {
-		if data.IsAlive {
-			filteredData = append(filteredData, data)
-		}
-	}
-
-	// store new data into publishData
-	publishData, err := json.Marshal(filteredData)
-	if err != nil {
-		qc.logger.Error(fmt.Sprintf("error while marshaling data into filterPublishUsers, called from %s", functionName), zap.Error(err))
-	}
-
-	return publishData
 }

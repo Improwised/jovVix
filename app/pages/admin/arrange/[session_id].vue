@@ -174,6 +174,10 @@ const terminateQuizHandler = () => {
   adminOperationHandler.value.requestTerminateQuiz();
 };
 
+onBeforeUnmount(() => {
+  adminOperationHandler.value.requestTerminateQuiz();
+});
+
 definePageMeta({
   layout: "empty",
 });

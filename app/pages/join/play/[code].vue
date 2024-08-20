@@ -31,6 +31,8 @@ const username = computed(() => route.query.username);
 const firstname = computed(() => route.query.firstname);
 const userPlayedQuiz = computed(() => route.query.user_played_quiz);
 
+const selectedAnswer = ref(0)
+
 // event handlers
 const handleCustomChange = (isFullScreenEvent) => {
   if (!isFullScreenEvent && myRef.value) {
@@ -128,6 +130,7 @@ const startQuiz = () => {
 };
 
 const sendAnswer = async (answers) => {
+  selectedAnswer.value = 0
   const response = await userOperationHandler.value.handleSendAnswer(
     answers,
     userPlayedQuiz.value
@@ -138,6 +141,9 @@ const sendAnswer = async (answers) => {
     return;
   }
   toast.success(app.$AnswerSubmitted);
+  if (answers.length > 0) {
+    selectedAnswer.value = answers[0]
+  }
 };
 
 definePageMeta({
@@ -192,6 +198,7 @@ onBeforeUnmount(() => {
         :data="data"
         :user-name="username"
         :is-admin="false"
+        :answer="selectedAnswer"
       ></QuizScoreSpace>
     </Playground>
   </div>
