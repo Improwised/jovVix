@@ -40,3 +40,13 @@ jobs:
           push: true
           tags: ${{ secrets.AWS_ECR_REGISTRY }}/${{ vars.AWS_ECR_REPOSITORY_APP }}:${{ steps.tag.outputs.tag }}
         timeout-minutes: 5
+
+      - name: status of workflow
+        uses: rtCamp/action-slack-notify@v2
+        if: always()
+        env:
+          SLACK_WEBHOOK: ${{ secrets.WEBHOOK_URL }}
+          SLACK_COLOR: ${{ job.status }}
+          SLACK_FOOTER: ""
+          SLACK_MESSAGE: "Build workflow run **${{ job.status }}**"
+        timeout-minutes: 5
