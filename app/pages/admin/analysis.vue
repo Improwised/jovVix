@@ -45,12 +45,76 @@
           </div>
         </div>
         <div v-if="selectedTab === 'questions'" class="text-center">
+
+           <!-- Display Total Questions in Card -->
+           <div class="card total-questions-card mx-auto mb-4">
+            <div class="card-body">
+              <h5 class="card-title">Total Questions</h5>
+              <p class="card-text">{{ totalQuestions }}</p>
+            </div>
+          </div>
+
           <Frame
-            v-for="(qData, index) in questionJson"
-            :key="index"
-            :page-title="'Q.' + index"
-          >
-          </Frame>
+  v-for="(qData, index) in questionJson"
+  :key="index"
+  :page-title="`Q. ${(index)}`"
+>
+
+
+<div class="question-details">
+              <div class="row m-2">
+                <div class="d-flex align-items-center justify-content-between">
+                  <span class="badge bg-primary">
+                    AVG. Response Time: {{ (qData[0].response_time / 1000).toFixed(2) }} seconds
+                  </span>
+                  <span
+                    v-if="qData[0].question_type === 'mcq'"
+                    class="badge bg-light-info mx-2 text-dark"
+                    >
+                    Multiple Choice Question
+                  </span>
+                  <span
+                   v-else
+                   class="badge bg-light-info mx-2 text-dark"
+                   >
+                   Survey
+                  </span>
+                </div>
+              </div>
+            </div>
+            
+  <ul style="list-style-type: none; padding-left: 0">
+    <li
+      v-for="(option, key) in qData[0].options"
+      :key="key"
+      :style="qData[0].correct_answer.includes(key) ? 'border: 2px solid green; padding: 5px; margin: 5px 0;' : ''"
+      style="display: flex; align-items: center; padding-left: 20px"
+    >
+      <span
+        v-if="
+          qData[0].selected_answer.String.includes(key) &&
+          !qData[0].correct_answer.includes(key)
+        "
+        
+      >
+
+      </span>
+
+      
+      <span>{{ key }}: {{ option }}</span>
+    </li>
+  </ul>
+  
+  <div
+    style="
+      display: flex;
+      flex: 1;
+      margin-top: 10px;
+      border-top: 1px solid #ccc;
+    "
+  >
+  </div>
+</Frame>
         </div>
       </div>
     </div>
@@ -72,6 +136,7 @@ const userJson = ref({});
 const questionJson = ref({});
 const rankData = ref([]);
 const surveyQuestions = ref(0);
+const totalQuestions = ref(0);
 const activeQuizId = computed(() => route.query.active_quiz_id);
 
 const {
@@ -131,20 +196,30 @@ watch(
     });
 
     questionJson.value = lodash.groupBy(analysisJson, "question");
-
-    // from userJson, count total points of all questions and count of total survey questions
-    for (const key in userJson.value) {
-      userJson.value[key].forEach((question) => {
-        if (!question.rank) {
-          if (question.question_type == "survey") {
-            surveyQuestions.value++;
-          }
+    totalQuestions.value = Object.keys(questionJson.value).length;
+    for (const key in questionJson.value) {
+      questionJson.value[key].forEach((question) => {
+        try {
+          const correctAnswers = JSON.parse(question.correct_answer);
+          question.question_type = correctAnswers.length > 1 ? "survey" : "mcq";
+        } catch (error) {
+          console.error(`Error parsing correct_answer for question: ${question.question}`, error);
+          question.question_type = "mcq"; // defaulting to MCQ if error occurs
         }
       });
     }
+
+    // Count total survey questions
+    surveyQuestions.value = Object.values(questionJson.value).flat().filter(q => q.question_type === "survey").length;
   },
   { immediate: true, deep: true }
 );
+
+
+
+
+
+
 
 function openPopup() {
   popup.value = true;
@@ -160,6 +235,42 @@ const selectTab = (tab) => {
 </script>
 
 <style scoped>
+
+.total-questions-card {
+  width: 210px; /* Fixed width */
+  height: 70px; /* Fixed height to make it more square-like */
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 10px; /* Adjust padding as needed */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  display: flex; /* Use flexbox to center content */
+  flex-direction: column; /* Stack elements vertically */
+  justify-content: center; /* Center content vertically */
+  align-items: center; /* Center content horizontally */
+  text-align: center; /* Center text */
+}
+
+.card-title {
+  font-size: 1rem; /* Adjusted font size */
+  margin-bottom: 8px; /* Reduced margin */
+  font-weight: bold;
+  color: #4a2c77; 
+}
+
+.card-text {
+  font-size: 1.25rem; /* Adjusted font size */
+  font-weight: bold;
+  color: #4a2c77;
+}
+
+
+
+.user-row {
+  background-color: #8968cd !important;
+  box-shadow: none;
+}
+
+
 body,
 .quiz-container {
   padding: 0;
@@ -185,8 +296,7 @@ header {
 .quiz-accuracy {
   position: relative;
   width: 80%;
-  margin-bottom: 30px;
-  /* Adds space between the bar and the tabs */
+  margin-bottom: 30px; /* Adds space between the bar and the tabs */
 }
 
 .progress {
@@ -202,8 +312,7 @@ header {
 }
 
 .nav-tabs {
-  margin-top: 20px;
-  /* Ensures there's space above the tabs */
+  margin-top: 20px; /* Ensures there's space above the tabs */
 }
 
 .nav-tabs .nav-link {
@@ -221,8 +330,7 @@ header {
 }
 
 .user-analytics-item {
-  margin-bottom: 20px;
-  /* Adjust spacing between each user analytics item */
+  margin-bottom: 20px; /* Adjust spacing between each user analytics item */
 }
 
 .progress-bar {
@@ -236,11 +344,9 @@ header {
   font-size: 14px;
   color: white;
 }
-
 .correct {
   background-color: #4caf50;
 }
-
 .incorrect {
   background-color: #f44336;
 }
@@ -248,16 +354,14 @@ header {
 .quiz-accuracy {
   position: relative;
   width: 80%;
-  margin-bottom: 30px;
-  /* Adds space between the bar and the tabs */
+  margin-bottom: 30px; /* Adds space between the bar and the tabs */
 }
 
 .progress {
   height: 40px;
   border-radius: 20px;
   overflow: hidden;
-  position: relative;
-  /* Ensure the circle is positioned relative to the progress bar */
+  position: relative; /* Ensure the circle is positioned relative to the progress bar */
 }
 
 .progress-bar {
@@ -282,8 +386,7 @@ header {
 
 .progress-circle {
   position: absolute;
-  top: -15px;
-  /* Adjust this value to move the circle vertically */
+  top: -15px; /* Adjust this value to move the circle vertically */
   width: 70px;
   height: 70px;
   background-color: #fff;
@@ -294,7 +397,6 @@ header {
   justify-content: center;
   font-size: 12px;
   font-weight: bold;
-  transition: left 1s ease-in-out;
-  /* Animation for the left property */
+  transition: left 1s ease-in-out; /* Animation for the left property */
 }
 </style>
