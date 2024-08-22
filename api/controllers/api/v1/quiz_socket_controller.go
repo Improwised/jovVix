@@ -390,7 +390,9 @@ func filterPublishUsers(qc *quizSocketController, usersData []UserInfo, function
 
 // for admin join
 func (qc *quizSocketController) Arrange(c *websocket.Conn) {
-
+	fmt.Println("------------------------------------")
+	qc.logger.Info("successfully active and get session")
+	fmt.Println("------------------------------------")
 	isConnected := true
 
 	response := QuizSendResponse{
@@ -423,8 +425,14 @@ func (qc *quizSocketController) Arrange(c *websocket.Conn) {
 		}
 		return
 	}
+	fmt.Println("------------------------------------")
+	qc.logger.Info("successfully active and get session")
+	fmt.Println("------------------------------------")
 
 	defer func() {
+		fmt.Println("------------------------------------")
+		qc.logger.Info("closing arrange function")
+		fmt.Println("------------------------------------")
 		isConnected = false
 		time.Sleep(1 * time.Second)
 		qc.logger.Debug("deactivating quiz - " + session.ID.String())
@@ -437,10 +445,14 @@ func (qc *quizSocketController) Arrange(c *websocket.Conn) {
 	}()
 
 	// handle code sharing with admin
+
 	handleCodeGeneration(c, qc, session, &isConnected, &response)
 
 	// if connection lost during waiting of start event
 	if !(isConnected) {
+		fmt.Println("------------------------------------")
+		qc.logger.Info("isconnected false logic executed")
+		fmt.Println("------------------------------------")
 		response.Component = constants.Loading
 		response.Data = constants.AdminDisconnected
 		shareEvenWithUser(c, qc, &response, constants.AdminDisconnected, sessionId, int(session.InvitationCode.Int32), constants.ToUser)
@@ -499,6 +511,9 @@ func ActivateAndGetSession(c *websocket.Conn, activeQuizModel *models.ActiveQuiz
 
 func handleCodeGeneration(c *websocket.Conn, qc *quizSocketController, session models.ActiveQuiz, isConnected *bool, response *QuizSendResponse) {
 	// is isQuestionActive true -> quiz started
+	fmt.Println("------------------------------------")
+	qc.logger.Info("handleCodeGeneration functin called")
+	fmt.Println("------------------------------------")
 	isInvitationCodeSent := session.CurrentQuestion.Valid
 
 	if !isInvitationCodeSent {
@@ -507,12 +522,18 @@ func handleCodeGeneration(c *websocket.Conn, qc *quizSocketController, session m
 
 			qc.mu.Lock()
 			if !(*isConnected) {
+				fmt.Println("------------------------------------")
+				qc.logger.Info("isConnected is false in handlecodegeneration exit from loop")
+				fmt.Println("------------------------------------")
 				qc.mu.Unlock()
 				break
 			}
 
 			// if code not sent then sent it
 			if !isInvitationCodeSent {
+				fmt.Println("------------------------------------")
+				qc.logger.Info("invitation code is not send, calling handleinviation code")
+				fmt.Println("------------------------------------")
 				// send code to client
 				handleInvitationCodeSend(c, response, qc.logger, session.InvitationCode.Int32)
 				isInvitationCodeSent = true
@@ -521,8 +542,13 @@ func handleCodeGeneration(c *websocket.Conn, qc *quizSocketController, session m
 
 			// once code sent receive start signal
 			if isInvitationCodeSent {
+				fmt.Println("------------------------------------")
+				qc.logger.Info("invitation code is already sended, calling handleConnectedUser function")
+				fmt.Println("------------------------------------")
 				go handleConnectedUser(c, qc)
-
+				fmt.Println("------------------------------------")
+				qc.logger.Info("handleStart quiz functin called")
+				fmt.Println("------------------------------------")
 				isBreak := handleStartQuiz(c, qc.logger, isConnected, response.Action, &qc.mu)
 				subscriberCount := qc.redis.PubSubModel.Client.PubSubNumSub(qc.redis.PubSubModel.Ctx, session.ID.String()).Val()[session.ID.String()]
 				if subscriberCount != 0 && isBreak {
@@ -557,6 +583,10 @@ func handleCodeGeneration(c *websocket.Conn, qc *quizSocketController, session m
 func handleInvitationCodeSend(c *websocket.Conn, response *QuizSendResponse, logger *zap.Logger, invitationCode int32) bool {
 
 	// send code to client
+
+	fmt.Println("------------------------------------")
+	fmt.Println("handleInvitationCodeSend functin called")
+	fmt.Println("------------------------------------")
 	response.Action = constants.ActionSessionActivation
 	response.Data = map[string]int{"code": int(invitationCode)}
 
@@ -617,6 +647,9 @@ func handleConnectedUser(c *websocket.Conn, qc *quizSocketController) {
 
 // start quiz by message event from admin
 func handleStartQuiz(c *websocket.Conn, logger *zap.Logger, isConnected *bool, action string, mu *sync.Mutex) bool {
+	fmt.Println("------------------------------------")
+	fmt.Println("handleStartQuiz functin called")
+	fmt.Println("------------------------------------")
 	message := QuizReceiveResponse{}
 	err := c.ReadJSON(&message)
 	if err != nil {
@@ -624,6 +657,7 @@ func handleStartQuiz(c *websocket.Conn, logger *zap.Logger, isConnected *bool, a
 		mu.Lock()
 		*isConnected = false
 		mu.Unlock()
+		fmt.Print("is connected is now false")
 		return true
 	}
 

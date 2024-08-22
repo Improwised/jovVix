@@ -79,6 +79,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   if (!startQuiz.value) {
+    console.log("terminating quiz because waiting space component is unmouted");
     emits("terminateQuiz");
   }
   if (props.isAdmin) {

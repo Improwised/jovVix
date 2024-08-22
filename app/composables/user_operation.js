@@ -5,6 +5,8 @@ import constants from "~~/config/constants";
 
 export default class UserOperation extends QuizHandler {
   constructor(code, username, handler, errorHandler, successHandler) {
+    console.log("user operation constructer called");
+
     const url = useRuntimeConfig().public;
     super(
       url.socket_url + "/join/" + code + "?username=" + username,

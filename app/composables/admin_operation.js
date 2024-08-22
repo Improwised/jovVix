@@ -3,6 +3,7 @@ import QuizHandler from "./quiz_operation";
 
 export default class AdminOperations extends QuizHandler {
   constructor(session_id, handler, errorHandler, skipConfirmHandler) {
+    console.log("admin operation constructer called");
     const url = useRuntimeConfig().public;
 
     // Initialize object
@@ -45,6 +46,7 @@ export default class AdminOperations extends QuizHandler {
   }
 
   requestTerminateQuiz() {
+    console.log("terminating quiz in admin operation with 1000 code");
     this.close(1000);
   }
 
@@ -53,7 +55,6 @@ export default class AdminOperations extends QuizHandler {
     if (event.code !== 1000 && this.currentEvent != constants.TerminateQuiz) {
       // 1000 indicates a normal closure
       console.log("Closed due to error, retrying...");
-      this.connect();
     } else {
       console.log("Closed Properly");
     }
