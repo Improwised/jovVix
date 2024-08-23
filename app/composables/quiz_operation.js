@@ -34,7 +34,6 @@ export default class QuizHandler {
 
   // connect and set websocket
   connect() {
-    console.log("web socket connect() called");
     this.socket = new WebSocket(this.socket_url);
     this.socket.onopen = (event) => this.onOpen(event);
     this.socket.onerror = (event) => this.onError(event);
@@ -219,7 +218,6 @@ export default class QuizHandler {
       message: event,
       time: new Date().toLocaleString(),
     });
-    this.printLog()
   }
 
   async handleTerminate() {

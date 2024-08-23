@@ -171,12 +171,10 @@ const handleModal = (confirm) => {
 };
 
 const terminateQuizHandler = () => {
-  console.log("terminateQuizhandler called by component");
   adminOperationHandler.value.requestTerminateQuiz();
 };
 
 onBeforeUnmount(() => {
-  console.log("unmounting session page....requested for terminating quiz");
   adminOperationHandler.value.requestTerminateQuiz();
 });
 
