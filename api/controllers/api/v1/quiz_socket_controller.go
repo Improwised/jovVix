@@ -109,20 +109,29 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 			_, p, err := c.ReadMessage()
 
 			if err != nil {
+				wait := true
+				if websocket.IsCloseError(err, websocket.CloseGoingAway) {
+					wait = false
+				}
 				// if error occurs, change the connection alive status to false
-				updateUserData(qc, userId, session.ID.String(), false)
+				updateUserData(qc, userId, session.ID.String(), false, wait)
 				break
 			}
 			err = json.Unmarshal([]byte(p), &quizResponse)
 			if err != nil {
-				updateUserData(qc, userId, session.ID.String(), false)
+				updateUserData(qc, userId, session.ID.String(), false, true)
 				break
 			}
 
 			if quizResponse.Event == "websocket_close" {
-				updateUserData(qc, userId, session.ID.String(), false)
+				updateUserData(qc, userId, session.ID.String(), false, false)
 				qc.logger.Info("connection close request is send by the user - " + user.Username)
 				break
+			}
+
+			if quizResponse.Event == "ping" {
+				// if gets ping, change the connection alive status to true
+				updateUserData(qc, userId, session.ID.String(), true, false)
 			}
 		}
 	}()
@@ -288,7 +297,7 @@ func onConnectHandleUser(c *websocket.Conn, qc *quizSocketController, response *
 }
 
 // function to update user IsAlive status
-func updateUserData(qc *quizSocketController, userId string, sessionId string, isAlive bool) {
+func updateUserData(qc *quizSocketController, userId string, sessionId string, isAlive bool, wait bool) {
 
 	// get datat from redis
 	users, err := qc.redis.PubSubModel.Client.Get(qc.redis.PubSubModel.Ctx, sessionId).Result()
@@ -318,18 +327,9 @@ func updateUserData(qc *quizSocketController, userId string, sessionId string, i
 		}
 	}
 
-	var updatedUserData []UserInfo
-	for _, data := range usersData {
-		if data.IsAlive {
-			updatedUserData = append(updatedUserData, data)
-		} else {
-			update = true
-		}
-	}
-
 	// if alive state provided is different with the current alive state then change it
 	if update {
-		jsonData, err := json.Marshal(updatedUserData)
+		jsonData, err := json.Marshal(usersData)
 		if err != nil {
 			qc.logger.Error("error while marshaling data into json in updateUserData", zap.Error(err))
 		}
@@ -340,6 +340,12 @@ func updateUserData(qc *quizSocketController, userId string, sessionId string, i
 			qc.logger.Error("error while updating data into redis in updateUserData", zap.Error(err))
 		} else {
 			qc.logger.Debug(fmt.Sprintf("isalive status updated for the user %s(%s) from %v to %v", user.UserName, user.UserId, !user.IsAlive, user.IsAlive))
+		}
+
+		// wait before publishing data to redis in case the user is alive and sends a ping
+		// do not wait when closeGoingAway error (tab is closed situations)
+		if wait {
+			time.Sleep(10 * time.Second)
 		}
 
 		// get data from redis in case it is changed by ping
@@ -359,10 +365,12 @@ func updateUserData(qc *quizSocketController, userId string, sessionId string, i
 
 		// publish alive connections to the channel
 		err = qc.redis.PubSubModel.Client.Publish(qc.redis.PubSubModel.Ctx, constants.EventUserJoined, publishData).Err()
+
 		if err != nil {
 			qc.logger.Error("error while publishing data inside updateUserData", zap.Error(err))
 		}
 	}
+
 }
 
 // filter user data and publish only alive user to the channel

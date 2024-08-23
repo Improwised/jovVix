@@ -218,6 +218,7 @@ export default class QuizHandler {
       message: event,
       time: new Date().toLocaleString(),
     });
+    this.printLog();
   }
 
   async handleTerminate() {

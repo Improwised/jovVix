@@ -17,9 +17,36 @@ export default class UserOperation extends QuizHandler {
     this.pingInterval = null;
     this.isWaiting = false;
 
-    this.pingIntervalTime = 5000;
+    this.pingIntervalTime = 45000;
     this.sendErrorMessage = false;
     this.reconnect = false;
+
+    this.startPing();
+  }
+
+  // Method to start pinging through WebSocket
+  startPing() {
+    if (!this.pingInterval) {
+      this.pingInterval = setInterval(() => {
+        this.pingServer();
+      }, this.pingIntervalTime);
+    }
+  }
+
+  pingServer() {
+    if (this.socket.readyState === WebSocket.OPEN) {
+      console.log("pinging server");
+      this.socket.send(JSON.stringify({ event: "ping", user: this.username }));
+    } else {
+      this.handleConnectionProblem();
+    }
+  }
+
+  stopPing() {
+    if (this.pingInterval) {
+      clearInterval(this.pingInterval);
+      this.pingInterval = null;
+    }
   }
 
   handleConnectionProblem() {
@@ -72,7 +99,10 @@ export default class UserOperation extends QuizHandler {
 
     if (message.component === constants.Waiting) {
       this.isWaiting = true;
+      this.startPing();
     } else if (this.isWaiting && message.component === constants.Question) {
+      console.log("stopping ping");
+      this.stopPing();
       this.isWaiting = false;
     }
 
