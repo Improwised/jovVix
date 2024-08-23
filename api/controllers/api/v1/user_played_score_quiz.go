@@ -97,20 +97,24 @@ func (ctrl *UserPlayedQuizeController) PlayedQuizValidation(c *fiber.Ctx) error 
 	}
 
 	ctrl.logger.Debug("userPlayedQuizModel.CreateUserPlayedQuizIfNotExists called", zap.Any("userId", userId), zap.Any("sessionID", session.ID))
-	userPlayedQuizId, _, err := ctrl.userPlayedQuizModel.CreateUserPlayedQuizIfNotExists(userId, session.ID)
+	userPlayedQuizId, isNonExistingParticipants, err := ctrl.userPlayedQuizModel.CreateUserPlayedQuizIfNotExists(userId, session.ID)
 	if err != nil {
 		ctrl.logger.Error(constants.ErrUserQuizSessionValidation, zap.Error(err))
 		return utils.JSONFail(c, http.StatusInternalServerError, constants.ErrUserQuizSessionValidation)
 	}
 	ctrl.logger.Debug("userPlayedQuizModel.CreateUserPlayedQuizIfNotExists success", zap.Any("userPlayedQuizId", userPlayedQuizId))
 
-	ctrl.logger.Debug("userPlayedQuizModel.CreateUserPlayedQuizIfNotExists called", zap.Any("userPlayedQuizId", userPlayedQuizId), zap.Any("sessionID", session.ID))
-	err = ctrl.userQuizResponseModel.GetQuestionsCopy(userPlayedQuizId, session.ID)
-	if err != nil {
-		ctrl.logger.Error("error while get question copy", zap.Error(err))
-		return utils.JSONFail(c, http.StatusInternalServerError, "error while get question copy")
+	// insert initial records of question if user is new for quiz(isNonExistingParticipants == 2 => new user)
+	if isNonExistingParticipants == 2 {
+		ctrl.logger.Debug("userQuizResponseModel.GetQuestionsCopy called", zap.Any("userPlayedQuizId", userPlayedQuizId), zap.Any("sessionID", session.ID))
+		err = ctrl.userQuizResponseModel.GetQuestionsCopy(userPlayedQuizId, session.ID)
+		if err != nil {
+			ctrl.logger.Error("error while get question copy", zap.Error(err))
+			return utils.JSONFail(c, http.StatusInternalServerError, "error while get question copy")
+		}
+		ctrl.logger.Debug("userQuizResponseModel.GetQuestionsCopy success")
 	}
-	ctrl.logger.Debug("userPlayedQuizModel.CreateUserPlayedQuizIfNotExists success")
+
 	ctrl.logger.Debug("UserPlayedQuizeController.PlayedQuizValidation success", zap.Any("userPlayedQuizId", userPlayedQuizId.String()))
 
 	return utils.JSONSuccess(c, http.StatusOK, userPlayedQuizId.String())
