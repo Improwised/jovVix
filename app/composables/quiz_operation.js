@@ -186,19 +186,12 @@ export default class QuizHandler {
       // sent alert
       this.handleConnectionProblem();
 
-      console.log("in on error");
-      console.log(this.socket.readyState);
-
-
-
       // check if retrying process is undergoing
       if (this.retrying == 0) {
-        console.log("retrying: ", this.retrying);
         // check for every 2 second
         const id = setInterval(() => {
           if (this.retrying < 3 && !this.isOpen) {
             this.retrying += 1;
-            console.log("connection called");
             this.connect();
           } else {
             clearInterval(id);
