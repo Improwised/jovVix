@@ -696,9 +696,9 @@ func questionAndScoreHandler(c *websocket.Conn, qc *quizSocketController, respon
 		wg.Add(1)
 		if isFirst { // handle running question
 			isFirst = false
-			sendSingleQuestion(c, qc, &wg, response, session, question, lastQuestionDeliveryTime, chanSkipEvent, chanSkipTimer)
+			sendSingleQuestion(c, qc, &wg, response, session, question, lastQuestionDeliveryTime, chanSkipEvent, chanSkipTimer, len(questions))
 		} else { // handle new question
-			sendSingleQuestion(c, qc, &wg, response, session, question, sql.NullTime{}, chanSkipEvent, chanSkipTimer)
+			sendSingleQuestion(c, qc, &wg, response, session, question, sql.NullTime{}, chanSkipEvent, chanSkipTimer, len(questions))
 		}
 		err := utils.JSONSuccessWs(c, constants.EventNextQuestionAsked, response)
 
@@ -752,7 +752,7 @@ func listenAllEvents(c *websocket.Conn, qc *quizSocketController, response *Quiz
 	}
 }
 
-func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.WaitGroup, response *QuizSendResponse, session models.ActiveQuiz, question models.Question, lastQuestionTimeStamp sql.NullTime, chanSkipEvent chan bool, chanSkipTimer chan bool) {
+func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.WaitGroup, response *QuizSendResponse, session models.ActiveQuiz, question models.Question, lastQuestionTimeStamp sql.NullTime, chanSkipEvent chan bool, chanSkipTimer chan bool, totalQuestions int) {
 
 	qc.mu.Lock()
 	defer qc.mu.Unlock()
@@ -777,12 +777,13 @@ func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.Wa
 	// question sent
 	response.Action = constants.ActionSendQuestion
 	responseData := map[string]any{
-		"id":            question.ID,
-		"no":            question.OrderNumber,
-		"duration":      question.DurationInSeconds,
-		"question_time": lastQuestionTimeStamp.Time,
-		"question":      question.Question,
-		"options":       question.Options,
+		"id":             question.ID,
+		"no":             question.OrderNumber,
+		"duration":       question.DurationInSeconds,
+		"question_time":  lastQuestionTimeStamp.Time,
+		"question":       question.Question,
+		"options":        question.Options,
+		"totalQuestions": totalQuestions,
 	}
 
 	if !lastQuestionTimeStamp.Valid { // handling new question
@@ -827,11 +828,12 @@ func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.Wa
 	}
 
 	response.Data = map[string]any{
-		"rankList": userRankBoard,
-		"question": question.Question,
-		"answers":  question.Answers,
-		"options":  question.Options,
-		"duration": 20,
+		"rankList":       userRankBoard,
+		"question":       question.Question,
+		"answers":        question.Answers,
+		"options":        question.Options,
+		"duration":       20,
+		"totalQuestions": totalQuestions,
 	}
 
 	shareEvenWithUser(c, qc, response, constants.EventShowScore, session.ID.String(), int(session.InvitationCode.Int32), constants.ToAll)

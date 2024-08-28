@@ -34,6 +34,9 @@ const time = ref(0);
 const progressValue = computed(() => {
   return (time.value * 100) / question.value.duration;
 });
+const progressQuiz = computed(() =>
+  ((question.value.no / question.value.totalQuestions) * 100).toFixed(0)
+);
 const isSubmitted = ref(false);
 
 // watchers
@@ -109,7 +112,7 @@ function handleSkip(e) {
 <template>
   <Frame
     v-if="question != null"
-    page-title="Question"
+    :page-title="`Question ${question.no} / ${question.totalQuestions}`"
     page-message="Let's Play"
   >
     <template #sub-title>
@@ -123,7 +126,18 @@ function handleSkip(e) {
         {{ question.duration - time }}
       </v-progress-circular>
     </template>
-    <div></div>
+    <div>
+      <div class="progress">
+        <div
+          class="progress-bar"
+          role="progressbar"
+          :aria-valuenow="progressQuiz"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          :style="{ width: ` ${progressQuiz}%` }"
+        ></div>
+      </div>
+    </div>
     <div>
       <span>{{ question.no }}. </span>
       <span>{{ question.question }}</span>
