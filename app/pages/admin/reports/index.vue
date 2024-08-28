@@ -154,13 +154,7 @@
               <td>{{ quiz.activated_from.Time }}</td>
               <td>{{ quiz.activated_to.Time }}</td>
               <td>{{ quiz.questions }}</td>
-              <td>
-                {{
-                  (quiz.correct_answers /
-                    (quiz.participants * quiz.questions)) *
-                  100
-                }}%
-              </td>
+              <td>{{ (quiz.correct_answers / (quiz.participants * quiz.questions) * 100).toFixed(2) }}%</td>
             </tr>
           </tbody>
         </table>
