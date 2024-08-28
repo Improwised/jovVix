@@ -107,7 +107,6 @@ const (
 	MaxInvitationCode = 999999
 	Counter           = 5
 	Count             = 3
-	PageSize          = 10
 )
 
 // Quiz Events
@@ -232,4 +231,14 @@ const (
 
 	SingleAnswer = 1
 	Survey       = 2
+)
+
+// Pagination and Filters
+
+const (
+	PageNumberQueryParam = "page"
+	NameQueryParam       = "name"
+	OrderQueryParam      = "order"
+	OrderByQueryParam    = "orderBy"
+	DefaultPageSize      = 10
 )

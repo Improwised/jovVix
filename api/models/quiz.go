@@ -4,8 +4,10 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/url"
+	"strings"
 	"time"
 
+	"github.com/Improwised/quizz-app/api/constants"
 	"github.com/doug-martin/goqu/v9"
 	"github.com/google/uuid"
 )
@@ -414,7 +416,7 @@ func (model *QuizModel) GetQuizAnalysis(activeQuizId string) ([]QuizAnalysis, er
 	return quizAnalysis, err
 }
 
-func (model *QuizModel) ListQuizzesAnalysis(userId string) ([]QuizzesAnalysis, error) {
+func (model *QuizModel) ListQuizzesAnalysis(name, order, orderBy, date, userId string, page int) ([]QuizzesAnalysis, int64, error) {
 
 	var quizzesAnalysis []QuizzesAnalysis
 
@@ -453,13 +455,39 @@ func (model *QuizModel) ListQuizzesAnalysis(userId string) ([]QuizzesAnalysis, e
 			"q.title",
 			"q.description")
 
-	sql, args, err := query.ToSQL()
+	if name != "" {
+		query = query.Where(goqu.Func("LOWER", goqu.I("title")).Like("%" + strings.ToLower(name) + "%"))
+	}
+
+	if date != "" {
+		query = query.Where(goqu.C("activated_from").Gte(date))
+	}
+
+	count, err := query.Count()
 
 	if err != nil {
-		return quizzesAnalysis, err
+		return quizzesAnalysis, 0, err
+	}
+
+	if order == "desc" {
+		query = query.Order(goqu.I(orderBy).Desc())
+	} else {
+		query = query.Order(goqu.I(orderBy).Asc())
+	}
+
+	offset := (page - 1) * constants.DefaultPageSize
+	if offset >= 0 {
+		query = query.Offset(uint(offset))
+	}
+
+	query = query.Limit(uint(constants.DefaultPageSize))
+
+	sql, args, err := query.ToSQL()
+	if err != nil {
+		return quizzesAnalysis, 0, err
 	}
 
 	err = model.db.ScanStructs(&quizzesAnalysis, sql, args...)
 
-	return quizzesAnalysis, err
+	return quizzesAnalysis, count, err
 }

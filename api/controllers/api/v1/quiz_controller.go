@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/Improwised/quizz-app/api/constants"
 	quizUtilsHelper "github.com/Improwised/quizz-app/api/helpers/utils"
@@ -176,20 +177,42 @@ func (qc *QuizController) GetQuizAnalysis(c *fiber.Ctx) error {
 
 func (qc *QuizController) ListQuizzesAnalysis(c *fiber.Ctx) error {
 
+	type resQuizAnalysisList struct {
+		Data  []models.QuizzesAnalysis
+		Count int64
+	}
+
 	userID := quizUtilsHelper.GetString(c.Locals(constants.ContextUid))
 
-	quizzes, err := qc.quizModel.ListQuizzesAnalysis(userID)
+	filters := c.Queries()
+	var page int
+	var err error
+
+	if val, isSet := filters[constants.PageNumberQueryParam]; isSet {
+		page, err = strconv.Atoi(val)
+		if err != nil {
+			return utils.JSONFail(c, http.StatusBadRequest, "Enter page number in integer only.")
+		}
+
+		if page <= 0 {
+			page = 1
+		}
+	} else {
+		page = 1
+	}
+
+	quizzes, count, err := qc.quizModel.ListQuizzesAnalysis(filters[constants.NameQueryParam], filters[constants.OrderQueryParam], filters[constants.OrderByQueryParam], filters["date"], userID, page)
 
 	if err != nil {
 		qc.logger.Error("error occured while listing quizzes for analysis", zap.Error(err))
 		return utils.JSONError(c, http.StatusInternalServerError, err.Error())
 	}
 
-	return utils.JSONSuccess(c, http.StatusOK, quizzes)
+	return utils.JSONSuccess(c, http.StatusOK, resQuizAnalysisList{Data: quizzes, Count: count})
 }
 
 func (ctrl *QuizController) CreateQuizByCsv(c *fiber.Ctx) error {
-
+	
 	quizTitle := c.Params(constants.QuizTitle)
 	quizDescription := c.FormValue("description")
 
