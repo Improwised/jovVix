@@ -37,8 +37,6 @@ export default class UserOperation extends QuizHandler {
     if (this.socket.readyState === WebSocket.OPEN) {
       console.log("pinging server");
       this.socket.send(JSON.stringify({ event: "ping", user: this.username }));
-    } else {
-      this.handleConnectionProblem();
     }
   }
 
