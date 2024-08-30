@@ -65,6 +65,7 @@ onMounted(() => {
         confirmSkip
       );
     } catch (err) {
+      console.error(err);
       toast.info(app.$ReloadRequired);
     }
   }

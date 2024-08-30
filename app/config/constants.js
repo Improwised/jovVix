@@ -38,6 +38,7 @@ export default {
   AdminDisconnectedMessage: "admin is disconnected, please wait...",
   SkipTimer: "skip_timer",
   EventAnswerSubmittedByUser: "answer submitted by user",
+  EventPing: "ping",
 
   // Actions
   ActionAnserSubmittedByUser: "answer submitted by user",

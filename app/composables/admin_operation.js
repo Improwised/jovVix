@@ -12,6 +12,33 @@ export default class AdminOperations extends QuizHandler {
     this.api_url = url.api_url;
     this.errorHandler = errorHandler;
     this.skipHandler = skipConfirmHandler;
+    this.pingIntervalTime = 45000;
+    this.pingInterval = null;
+    this.isWaiting = true;
+
+    this.startPing();
+  }
+
+  // Method to start pinging through WebSocket
+  startPing() {
+    if (!this.pingInterval) {
+      this.pingInterval = setInterval(() => {
+        this.pingServer();
+      }, this.pingIntervalTime);
+    }
+  }
+
+  pingServer() {
+    if (this.socket.readyState === WebSocket.OPEN) {
+      this.socket.send(JSON.stringify({ event: constants.EventPing, user: this.username }));
+    }
+  }
+
+  stopPing() {
+    if (this.pingInterval) {
+      clearInterval(this.pingInterval);
+      this.pingInterval = null;
+    }
   }
 
   quizStartRequest() {
@@ -39,8 +66,10 @@ export default class AdminOperations extends QuizHandler {
       this.sendMessage(this.currentComponent, this.currentEvent);
     } else if (this.currentEvent == constants.AskSkip) {
       this.skipHandler(message);
+    } else if (this.currentEvent === constants.Counter && this.isWaiting) {
+      this.stopPing();
+      this.isWaiting = false;
     }
-
     super.handler(message, preventAssignment);
   }
 
@@ -49,15 +78,6 @@ export default class AdminOperations extends QuizHandler {
   }
 
   onClose(event) {
-    // Check the close event code to determine if it was an error or proper closure
-    if (event.code !== 1000 && this.currentEvent != constants.TerminateQuiz) {
-      // 1000 indicates a normal closure
-      console.log("Closed due to error, retrying...");
-      this.connect();
-    } else {
-      console.log("Closed Properly");
-    }
-
     super.onClose(event);
   }
 }

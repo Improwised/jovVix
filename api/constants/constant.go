@@ -203,9 +203,12 @@ const (
 	EventTerminateQuiz  = "terminate_quiz"
 	ActionTerminateQuiz = "terminate quiz after completing"
 
-	// Event . unhandled event
+	// Event 10. unhandled event
 	UnknownError  = "unknown_error"
 	ErrJWTExpired = "JWT token expired, Please try again"
+
+	// Event 11. ping
+	EventPing = "ping"
 )
 
 // final scoreboard cookie for user

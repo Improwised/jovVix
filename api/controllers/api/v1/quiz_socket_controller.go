@@ -125,7 +125,7 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 				break
 			}
 
-			if quizResponse.Event == "ping" {
+			if quizResponse.Event == constants.EventPing {
 				// if gets ping, change the connection alive status to true
 				updateUserData(qc, userId, session.ID.String(), true)
 			}
@@ -496,13 +496,13 @@ func handleCodeGeneration(c *websocket.Conn, qc *quizSocketController, session m
 				// send code to client
 				handleInvitationCodeSend(c, response, qc.logger, session.InvitationCode.Int32)
 				isInvitationCodeSent = true
+				go handleConnectedUser(c, qc)
+
 			}
 			qc.mu.Unlock()
 
 			// once code sent receive start signal
 			if isInvitationCodeSent {
-				go handleConnectedUser(c, qc)
-
 				isBreak := handleStartQuiz(c, qc.logger, isConnected, response.Action, &qc.mu)
 				users, err := qc.redis.PubSubModel.Client.Get(qc.redis.PubSubModel.Ctx, session.ID.String()).Result()
 				if err != nil {
@@ -515,15 +515,16 @@ func handleCodeGeneration(c *websocket.Conn, qc *quizSocketController, session m
 					qc.logger.Error("error while unmarshaling redis inside updateUserData", zap.Error(err))
 				}
 
-				if len(usersData) != 0 && isBreak {
+				if isBreak == constants.EventPing {
+					continue
+				} else if len(usersData) != 0 && isBreak == constants.EventStartQuiz {
+				
 					// quiz is start publish for admin to stop looking for user
 					err := qc.redis.PubSubModel.Client.Publish(qc.redis.PubSubModel.Ctx, constants.EventStartQuizByAdmin, constants.EventStartQuizByAdmin).Err()
 					if err != nil {
-						qc.logger.Error("errro while start quiz", zap.Error(err))
+						qc.logger.Error("error while start quiz", zap.Error(err))
 					}
-
 					break
-
 				} else {
 					// quiz is start publish for admin to stop looking for user becuse no player found
 					err := qc.redis.PubSubModel.Client.Publish(qc.redis.PubSubModel.Ctx, constants.StartQuizByAdminNoPlayerFound, constants.StartQuizByAdminNoPlayerFound).Err()
@@ -537,7 +538,6 @@ func handleCodeGeneration(c *websocket.Conn, qc *quizSocketController, session m
 						qc.logger.Error(fmt.Sprintf("socket error middleware: %s event, %s action", constants.EventAuthentication, response.Action), zap.Error(err))
 					}
 				}
-
 			}
 		}
 	}
@@ -606,7 +606,7 @@ func handleConnectedUser(c *websocket.Conn, qc *quizSocketController) {
 }
 
 // start quiz by message event from admin
-func handleStartQuiz(c *websocket.Conn, logger *zap.Logger, isConnected *bool, action string, mu *sync.Mutex) bool {
+func handleStartQuiz(c *websocket.Conn, logger *zap.Logger, isConnected *bool, action string, mu *sync.Mutex) string {
 	message := QuizReceiveResponse{}
 	err := c.ReadJSON(&message)
 	if err != nil {
@@ -614,14 +614,18 @@ func handleStartQuiz(c *websocket.Conn, logger *zap.Logger, isConnected *bool, a
 		mu.Lock()
 		*isConnected = false
 		mu.Unlock()
-		return true
+		return constants.UnknownError
 	}
 
 	if message.Event == constants.EventStartQuiz {
-		return true
+		return constants.EventStartQuiz
 	}
 
-	return false
+	if message.Event == constants.EventPing {
+		return constants.EventPing
+	}
+
+	return constants.UnknownError
 }
 
 func shareEvenWithUser(c *websocket.Conn, qc *quizSocketController, response *QuizSendResponse, event string, sessionId string, invitationCode int, sentToWhom int) {
