@@ -49,13 +49,34 @@ services:
       - LOG_LEVEL=trace
     env_file:
       - .env
-    command: serve -c /etc/config/kratos/kratos.yml
+    command: serve -c /etc/config/kratos/kratos.yml --watch-courier
     restart: always
     depends_on:
       - db
       - kratos_migrate
     volumes:
       - "./pkg/kratos:/etc/config/kratos"
+  
+  mailpit:
+    image: axllent/mailpit
+    container_name: mailpit
+    restart: unless-stopped
+    volumes:
+      - ./data:/data
+    ports:
+      - 8025:8025
+      - 1025:1025
+    environment:
+      MP_MAX_MESSAGES: 5000
+      MP_DATABASE: /data/mailpit.db
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+      MP_SENDMAIL_SMTP_ADDR: mailpit:1025
+      MP_SENDMAIL_FROM: test@test.com
+      
+networks:
+  host:
+    external: true
 
 volumes:
   pgdata1:

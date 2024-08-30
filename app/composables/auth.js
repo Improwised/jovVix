@@ -1,10 +1,9 @@
 import { useUsersStore } from "~~/store/users";
+const userData = useUsersStore();
+const { setUserData } = userData;
 
 export const handleLogout = async () => {
   const { kratos_url } = useRuntimeConfig().public;
-  const userData = useUsersStore();
-  const { setUserData } = userData;
-
   try {
     // Step 1: Fetch logout URL and token from the first API endpoint
     const response = await fetch(`${kratos_url}/self-service/logout/browser`, {
@@ -42,5 +41,31 @@ export const handleLogout = async () => {
     navigateTo("/");
   } catch (error) {
     console.error("Error during logout:", error);
+  }
+};
+
+export const setUserDataStore = async () => {
+  const { api_url } = useRuntimeConfig().public;
+  const headers = useRequestHeaders(["cookie"]);
+  try {
+    const response = await fetch(api_url + "/user/who", {
+      method: "GET",
+      credentials: "include",
+      headers: headers,
+      mode: "cors",
+    });
+    if (response.status != 200) {
+      throw new Error(response.status);
+    } else if (response.status == 200) {
+      const data = await response.json();
+      setUserData(data?.data?.role);
+    }
+  } catch (error) {
+    if (error.message == 401) {
+      console.log(error.message);
+      setUserData(null);
+      return;
+    }
+    console.log(error.message);
   }
 };

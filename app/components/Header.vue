@@ -93,6 +93,7 @@
 
 <script setup>
 const router = useRouter();
+import { setUserDataStore } from "~~/composables/auth";
 import { useUsersStore } from "~~/store/users";
 const userData = useUsersStore();
 const { getUserData } = userData;
@@ -108,6 +109,11 @@ const isKratosUser = computed(() => {
   }
   return false;
 });
+
+onMounted(()=>{
+  setUserDataStore();
+})
+
 </script>
 
 <style scoped>

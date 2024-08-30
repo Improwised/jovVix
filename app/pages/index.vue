@@ -105,39 +105,8 @@
 </template>
 
 <script setup>
-import { useUsersStore } from "~~/store/users";
-const userData = useUsersStore();
-const { setUserData } = userData;
-const { api_url } = useRuntimeConfig().public;
-const headers = useRequestHeaders(["cookie"]);
-
-const setUserDataStore = async () => {
-  try {
-    const response = await fetch(api_url + "/user/who", {
-      method: "GET",
-      credentials: "include",
-      headers: headers,
-      mode: "cors",
-    });
-    if (response.status != 200) {
-      throw new Error(response.status);
-    } else if (response.status == 200) {
-      const data = await response.json();
-      setUserData(data?.data?.role);
-    }
-  } catch (error) {
-    if (error.message == 401) {
-      console.log(error.message);
-      setUserData(null);
-      return;
-    }
-    console.log(error.message);
-  }
-};
-
 onMounted(async () => {
   import("@lottiefiles/lottie-player");
-  await setUserDataStore();
 });
 </script>
 

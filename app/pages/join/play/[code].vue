@@ -103,6 +103,9 @@ const handleQuizEvents = async (message) => {
       "You are unauthorized to access the resource or Your JWT token is expired"
     );
   } else {
+    if (message?.component === "Question") {
+      selectedAnswer.value = 0;
+    }
     data.value = message;
     currentComponent.value = message.component;
   }
