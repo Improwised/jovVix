@@ -128,13 +128,13 @@ const showAnalysis = () => {
     <div>
       <div v-if="scoreboardData" class="table-responsive mt-5 w-100">
         <table
-          class="table align-middle"
+          class="table align-middle  table-hover"
           :class="{
-            'table-dark': props.isAdmin,
+            'table-light': props.isAdmin,
             'table-light': !props.isAdmin,
             'table-borderless': !props.isAdmin,
             'table-striped': !props.isAdmin,
-            'table-hover': !props.isAdmin,
+            
           }"
         >
           <thead>
@@ -153,6 +153,7 @@ const showAnalysis = () => {
                 :class="{
                   'user-row':
                     user.username === props.userName && !props.isAdmin,
+                    
                 }"
               >
                 {{ user.rank }}
@@ -252,4 +253,11 @@ const showAnalysis = () => {
   background-color: #8968cd !important;
   box-shadow: none;
 }
+
+.table-hover > tbody > tr:hover {
+  background-color: #783b9b !important; /* Light purple color */
+}
 </style>
+
+
+

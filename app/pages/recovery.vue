@@ -3,8 +3,8 @@
     id="otp-recovery"
     class="d-flex justify-content-center align-items-center vh-100"
   >
-    <div class="col-9">
-      <div class="card shadow-lg">
+    <div class="col-6">
+      <div class="card shadow-lg"> 
         <div class="card-body text-center" style="min-height: 400px">
           <div class="auth-logo mb-4">
             <NuxtLink to="/" style="font-size: 30px; font-weight: bold"
@@ -13,16 +13,12 @@
             <h2 class="mt-1 welcome-text">Recover your account</h2>
           </div>
 
-          <form @submit.prevent="verifyOTP">
+          <form @submit.prevent="verifyOTP"> 
             <div class="form-group mb-4">
               <label for="otp" class="form-label">OTP code</label>
-              <input
-                id="otp"
-                v-model="otp"
-                type="text"
-                class="form-control"
-                placeholder="Enter OTP code"
-              />
+              <div class="d-flex justify-content-center">
+                <input type="text" class="otp_input" placeholder="Enter text here" />
+            </div>
               <span v-if="otpError" class="text-danger">{{ otpError }}</span>
             </div>
 
@@ -146,4 +142,21 @@ const verifyOTP = async () => {
 };
 </script>
 
-<style scoped></style>
+<style scoped>
+
+.otp_input {
+  width: 350px;
+  text-align: center;
+  border: 2px solid rgb(189, 150, 226);
+  border-radius: 14px;
+  padding: 10px;
+  box-shadow: none;
+}
+
+.otp_input::placeholder {
+  color: rgb(168, 148, 202);
+}
+
+
+
+</style>

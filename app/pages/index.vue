@@ -20,17 +20,12 @@
           style="width: 100%"
         ></lottie-player>
         <!-- vector image -->
-        <img
-          src="../assets/images/shapes/1.svg"
-          alt=""
-          class="shapes shape-one absolute z--1 left-20% top-9%"
-        />
-        <!-- Purple Half Circle -->
-        <img
+    
+         <img
           src="../assets/images/shapes/2.svg"
           alt=""
           class="shapes shape-three absolute z--1 left-11% top-35%"
-        />
+        /> 
         <!-- Birds -->
         <img
           src="../assets/images/shapes/3.svg"
@@ -137,12 +132,6 @@ onMounted(async () => {
   }
 }
 
-.shape-one {
-  position: absolute;
-  left: 0;
-  top: 20%;
-  animation: opacitySwitch 1.5s infinite;
-}
 
 .shape-two {
   position: absolute;

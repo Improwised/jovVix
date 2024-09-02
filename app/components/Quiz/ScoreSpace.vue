@@ -85,7 +85,7 @@ function handleSkipTimer(e) {
 
     <div v-if="isAdmin" class="table-responsive mt-5">
       <table
-        class="table table-striped table-hover table-borderless table-light align-middle"
+        class="table table-hover table-borderless table-light table-custom  align-middle"
       >
         <caption class="caption-top">
           Rankings
@@ -99,7 +99,7 @@ function handleSkipTimer(e) {
         </thead>
         <tbody class="table-group-divider">
           <tr
-            v-for="(user, index) in props.data.data.rankList"
+            v-for="(user, index) in props.data.data.rankList"     
             :key="index"
             class="table-light"
           >
@@ -118,8 +118,8 @@ function handleSkipTimer(e) {
       <table
         class="table table-borderless align-middle"
       >
-        <caption class="caption-top">
-          Rankings
+        <caption class="caption-top"> 
+          Rankings    
         </caption>
         <thead class="table-light"></thead>
         <tbody class="table-group-divider">
@@ -143,3 +143,16 @@ function handleSkipTimer(e) {
     </div>
   </Frame>
 </template>
+
+<style scoped>
+
+.table-custom {
+  background-color: #f9f9f9; /* Example light color */
+}
+
+.table td,
+.table th{
+  background-color:  #f9f9f9; /* Ensure each cell has a white background */
+}
+
+</style>

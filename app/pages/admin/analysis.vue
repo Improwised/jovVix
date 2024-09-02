@@ -34,20 +34,13 @@
             :data="userJson[oData]"
             :survey-questions="surveyQuestions"
             class="user-analytics-item"
-            @click="openPopup"
           ></QuizUserAnalyticsSpace>
 
-          <div v-if="popup" class="full-page-popup">
-            <QuizPopupUserwiseAnalysis
-              v-if="popup"
-              @close="closePopup"
-            ></QuizPopupUserwiseAnalysis>
-          </div>
         </div>
         <div v-if="selectedTab === 'questions'" class="text-center">
 
            <!-- Display Total Questions in Card -->
-           <div class="card total-questions-card mx-auto mb-4">
+           <div class="card total-questions-card mx-auto mb-4 text-center">
             <div class="card-body">
               <h5 class="card-title">Total Questions</h5>
               <p class="card-text">{{ totalQuestions }}</p>
@@ -77,43 +70,32 @@
                    v-else
                    class="badge bg-light-info mx-2 text-dark"
                    >
-                   Survey
+                   Survey Question
                   </span>
                 </div>
               </div>
             </div>
             
-  <ul style="list-style-type: none; padding-left: 0">
-    <li
-      v-for="(option, key) in qData[0].options"
-      :key="key"
-      :style="qData[0].correct_answer.includes(key) ? 'border: 2px solid green; padding: 5px; margin: 5px 0;' : ''"
-      style="display: flex; align-items: center; padding-left: 20px"
-    >
-      <span
-        v-if="
-          qData[0].selected_answer.String.includes(key) &&
-          !qData[0].correct_answer.includes(key)
-        "
-        
-      >
-
-      </span>
-
-      
-      <span>{{ key }}: {{ option }}</span>
-    </li>
-  </ul>
+            <ul class="options-list">
+            <li
+              v-for="(option, key) in qData[0].options"
+              :key="key"
+              :class="qData[0].correct_answer.includes(key) ? 'correct-answer' : ''"
+            >
+              <span class="option-text">
+                {{ key }}: {{ option }}
+              </span>
+            </li>
+          </ul>
   
-  <div
+          <div
     style="
       display: flex;
       flex: 1;
       margin-top: 10px;
       border-top: 1px solid #ccc;
     "
-  >
-  </div>
+  ></div>
 </Frame>
         </div>
       </div>
@@ -130,7 +112,7 @@ const headers = useRequestHeaders(["cookie"]);
 const route = useRoute();
 
 const selectedTab = ref("overview");
-const popup = ref(false);
+
 
 const userJson = ref({});
 const questionJson = ref({});
@@ -217,24 +199,57 @@ watch(
 
 
 
-
-
-
-
-function openPopup() {
-  popup.value = true;
-}
-
-function closePopup() {
-  popup.value = false;
-}
-
 const selectTab = (tab) => {
   selectedTab.value = tab;
 };
 </script>
 
 <style scoped>
+
+.total-questions-card {
+  max-width: 300px; /* Set a max width for larger screens */
+  width: 100%; /* Ensure it scales down on smaller screens */
+}
+
+@media (max-width: 576px) {
+  .total-questions-card {
+    padding: 10px; /* Adjust padding on smaller screens */
+  }
+}
+
+.options-list {
+  padding: 0;
+  list-style: none;
+  margin: 0;
+}
+
+.options-list li {
+  background-color: #f2f4f8;
+  border-radius: 8px;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px; /* Add space between options */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.3s ease;
+}
+
+.options-list li.correct-answer {
+  background-color: #d4f5d4;
+}
+
+.option-text {
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.divider {
+  width: 100%;
+  height: 1px;
+  background-color: #ccc;
+  margin-top: 20px;
+}
 
 .total-questions-card {
   width: 210px; /* Fixed width */
