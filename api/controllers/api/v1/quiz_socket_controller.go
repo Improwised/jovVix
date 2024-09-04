@@ -146,7 +146,6 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 
 	// when user join at that time publish userName to admin
 	publishUserOnJoin(qc, response, user.FirstName, userId, session.ID.String())
-
 	response.Action = constants.QuizQuestionStatus
 
 	onConnectHandleUser(c, qc, &response, session)
@@ -156,7 +155,6 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 }
 
 func publishUserOnJoin(qc *quizSocketController, quizResponse QuizSendResponse, userName string, userId string, sessionId string) {
-
 	// store data to redis in form of slice
 	var usersData []UserInfo
 	var jsonData []byte
@@ -268,10 +266,14 @@ func onConnectHandleUser(c *websocket.Conn, qc *quizSocketController, response *
 		}
 
 		response.Action = constants.ActionSendQuestion
+		duration := currentQuestion.DurationInSeconds - int(time.Since(session.QuestionDeliveryTime.Time).Seconds())
+		if duration < 0 {
+			return
+		}
 		responseData := map[string]any{
 			"id":            currentQuestion.ID,
 			"no":            currentQuestion.OrderNumber,
-			"duration":      currentQuestion.DurationInSeconds - int(time.Since(session.QuestionDeliveryTime.Time).Seconds()),
+			"duration":      duration,
 			"question_time": session.QuestionDeliveryTime.Time,
 			"question":      currentQuestion.Question,
 			"options":       currentQuestion.Options,
@@ -518,7 +520,7 @@ func handleCodeGeneration(c *websocket.Conn, qc *quizSocketController, session m
 				if isBreak == constants.EventPing {
 					continue
 				} else if len(usersData) != 0 && isBreak == constants.EventStartQuiz {
-				
+
 					// quiz is start publish for admin to stop looking for user
 					err := qc.redis.PubSubModel.Client.Publish(qc.redis.PubSubModel.Ctx, constants.EventStartQuizByAdmin, constants.EventStartQuizByAdmin).Err()
 					if err != nil {
@@ -740,8 +742,6 @@ func listenAllEvents(c *websocket.Conn, qc *quizSocketController, response *Quiz
 
 func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.WaitGroup, response *QuizSendResponse, session models.ActiveQuiz, question models.Question, lastQuestionTimeStamp sql.NullTime, chanSkipEvent chan bool, chanSkipTimer chan bool, totalQuestions int) {
 
-	qc.mu.Lock()
-	defer qc.mu.Unlock()
 	defer wg.Done()
 
 	// start counter if not any question running
