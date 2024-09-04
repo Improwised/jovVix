@@ -54,9 +54,8 @@ watch(
 // event handlers
 function start_quiz(e) {
   e.preventDefault();
-  joinedParticipants.value = listUserStore.listUsers.length;
   startQuiz.value = true;
-  emits("startQuiz", joinedParticipants.value);
+  emits("startQuiz");
 }
 
 // main function

@@ -1,11 +1,45 @@
 <script setup>
 import { useUserThatSubmittedAnswer } from "~/store/userSubmittedAnswer";
-import { useListUserstore } from "~~/store/userlist";
+import { useNuxtApp } from "nuxt/app";
+import { useToast } from "vue-toastification";
+const app = useNuxtApp();
+const toast = useToast();
 
 const usersThatSubmittedAnswer = useUserThatSubmittedAnswer();
 const { usersSubmittedAnswers } = usersThatSubmittedAnswer;
+const totalUser = ref(0)
 
-const props = defineProps(["joinedParticipants"]);
+const props = defineProps({
+  data: {
+    default: () => {
+      return {};
+    },
+    type: Object,
+    required: true,
+  },
+});
+
+
+watch(
+  () => props.data,
+  (message) => {
+    if (message.status == app.$Fail) {
+      toast.error(message.data);
+      return;
+    }
+    handleCountUser(message);
+  },
+  { deep: true, immediate: true }
+);
+
+// main function
+function handleCountUser(message) {
+  if (message.event == app.$GetQuestion) {
+    console.log(message);
+    totalUser.value = message.data.totalJoinUser;
+  }
+}
+
 </script>
 
 <template>
@@ -26,9 +60,7 @@ const props = defineProps(["joinedParticipants"]);
         >
           <font-awesome-icon icon="fa-solid fa-users" size="xl" />
           <h5 class="text-center text-sm fs-5 mb-0">
-            {{ usersSubmittedAnswers.length }}/{{
-              props.joinedParticipants
-            }}
+            {{ usersSubmittedAnswers.length }}/{{ totalUser }}
             People Answered
           </h5>
         </div>

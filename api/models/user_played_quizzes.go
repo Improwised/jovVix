@@ -331,3 +331,9 @@ func (model *UserPlayedQuizModel) ListUserPlayedQuizesWithQuestionById(UserPlaye
 
 	return userPlayedQuizAnalyticsBoard, nil
 }
+
+func (model *UserPlayedQuizModel) GetCountOfTotalJoinUsers(activeQuizId string) (int64, error) {
+	return model.db.From(UserPlayedQuizTable).Where(goqu.Ex{
+		"active_quiz_id": activeQuizId,
+	}).Count()
+}

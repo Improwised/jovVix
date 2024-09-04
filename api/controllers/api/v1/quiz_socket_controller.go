@@ -255,6 +255,12 @@ func handleQuestion(c *websocket.Conn, qc *quizSocketController, session models.
 func onConnectHandleUser(c *websocket.Conn, qc *quizSocketController, response *QuizSendResponse, session models.ActiveQuiz) {
 	if session.CurrentQuestion.Valid {
 
+		totalQuestion, err := qc.questionModel.GetTotalQuestionCount(session.ID.String())
+		if err != nil {
+			qc.logger.Error(constants.ErrInGettingTotalQuestionCount, zap.Error(err))
+			return
+		}
+
 		questionID, err := uuid.Parse(session.CurrentQuestion.String)
 		if err != nil {
 			qc.logger.Error(fmt.Sprintf("\nquestionID is not being parsed from the current question id of this session and that current question id is - %v\n", session.CurrentQuestion), zap.Error(err))
@@ -271,12 +277,13 @@ func onConnectHandleUser(c *websocket.Conn, qc *quizSocketController, response *
 			return
 		}
 		responseData := map[string]any{
-			"id":            currentQuestion.ID,
-			"no":            currentQuestion.OrderNumber,
-			"duration":      duration,
-			"question_time": session.QuestionDeliveryTime.Time,
-			"question":      currentQuestion.Question,
-			"options":       currentQuestion.Options,
+			"id":             currentQuestion.ID,
+			"no":             currentQuestion.OrderNumber,
+			"duration":       duration,
+			"question_time":  session.QuestionDeliveryTime.Time,
+			"question":       currentQuestion.Question,
+			"options":        currentQuestion.Options,
+			"totalQuestions": totalQuestion,
 		}
 		response.Data = responseData
 		response.Component = constants.Question
@@ -669,6 +676,12 @@ func questionAndScoreHandler(c *websocket.Conn, qc *quizSocketController, respon
 		return
 	}
 
+	totalQuestion, err := qc.questionModel.GetTotalQuestionCount(session.ID.String())
+	if err != nil {
+		qc.logger.Error(constants.ErrInGettingTotalQuestionCount, zap.Error(err))
+		return
+	}
+
 	var wg sync.WaitGroup
 	chanNextEvent := make(chan bool)
 	chanSkipEvent := make(chan bool)
@@ -684,9 +697,9 @@ func questionAndScoreHandler(c *websocket.Conn, qc *quizSocketController, respon
 		wg.Add(1)
 		if isFirst { // handle running question
 			isFirst = false
-			sendSingleQuestion(c, qc, &wg, response, session, question, lastQuestionDeliveryTime, chanSkipEvent, chanSkipTimer, len(questions))
+			sendSingleQuestion(c, qc, &wg, response, session, question, lastQuestionDeliveryTime, chanSkipEvent, chanSkipTimer, totalQuestion)
 		} else { // handle new question
-			sendSingleQuestion(c, qc, &wg, response, session, question, sql.NullTime{}, chanSkipEvent, chanSkipTimer, len(questions))
+			sendSingleQuestion(c, qc, &wg, response, session, question, sql.NullTime{}, chanSkipEvent, chanSkipTimer, totalQuestion)
 		}
 		err := utils.JSONSuccessWs(c, constants.EventNextQuestionAsked, response)
 
@@ -740,9 +753,15 @@ func listenAllEvents(c *websocket.Conn, qc *quizSocketController, response *Quiz
 	}
 }
 
-func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.WaitGroup, response *QuizSendResponse, session models.ActiveQuiz, question models.Question, lastQuestionTimeStamp sql.NullTime, chanSkipEvent chan bool, chanSkipTimer chan bool, totalQuestions int) {
+func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.WaitGroup, response *QuizSendResponse, session models.ActiveQuiz, question models.Question, lastQuestionTimeStamp sql.NullTime, chanSkipEvent chan bool, chanSkipTimer chan bool, totalQuestions int64) {
 
 	defer wg.Done()
+
+	totalUserJoin, err := qc.userPlayedQuizModel.GetCountOfTotalJoinUsers(session.ID.String())
+	if err != nil {
+		qc.logger.Error(constants.ErrGetTotalJoinUser, zap.Error(err))
+		return
+	}
 
 	// start counter if not any question running
 	if !lastQuestionTimeStamp.Valid {
@@ -770,6 +789,7 @@ func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.Wa
 		"question":       question.Question,
 		"options":        question.Options,
 		"totalQuestions": totalQuestions,
+		"totalJoinUser":  totalUserJoin,
 	}
 
 	if !lastQuestionTimeStamp.Valid { // handling new question
@@ -797,7 +817,7 @@ func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.Wa
 	wgForQuestion.Wait()
 
 	// update current status to deactivate
-	err := qc.quizModel.UpdateCurrentQuestion(session.ID, question.ID, false)
+	err = qc.quizModel.UpdateCurrentQuestion(session.ID, question.ID, false)
 	if err != nil {
 		qc.logger.Error(fmt.Sprintf("socket error update current question: %s event, %s action %v code", constants.EventSendQuestion, response.Action, session.InvitationCode), zap.Error(err))
 		return

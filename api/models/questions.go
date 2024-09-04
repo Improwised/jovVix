@@ -161,7 +161,7 @@ func registerQuiz(transaction *goqu.TxDatabase, title, description, userId strin
 	if err != nil {
 		return quizId, err
 	}
-	
+
 	if !ok {
 		return quizId, sql.ErrNoRows
 	}
@@ -320,4 +320,10 @@ func (model *QuestionModel) GetCurrentQuestion(id uuid.UUID) (QuestionForUser, e
 		}
 		return question, nil
 	}
+}
+
+func (model *QuestionModel) GetTotalQuestionCount(activeQuizId string) (int64, error) {
+	return model.db.From(ActiveQuizQuestionsTable).Where(goqu.Ex{
+		"active_quiz_id": activeQuizId,
+	}).Count()
 }

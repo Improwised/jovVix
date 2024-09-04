@@ -47,6 +47,7 @@ const (
 	ErrKratosCookieTime    = "error while parsing the expiration time of the cookie"
 	ErrRegisterQuiz        = "error while creating quiz"
 	ErrCreatingDemoQuiz    = "error while creating demo quiz"
+	ErrGetTotalJoinUser    = "error while get count of user join in quiz"
 )
 
 // default Events
@@ -168,12 +169,13 @@ const (
 	EventStartQuizByAdmin = "startQuizByAdmin" // use by admin for start quiz
 
 	// Event 7. Get Questions
-	EventSendQuestion         = "send_question"
-	ActionSendQuestion        = "send single question to user"
-	QuizQuestionStatus        = "quiz question status"
-	GetQuestions              = "get quiz questions"
-	NextQuestionWillServeSoon = "Next question will coming soon"
-	ErrInGettingQuestion      = "error during getting question"
+	EventSendQuestion              = "send_question"
+	ActionSendQuestion             = "send single question to user"
+	QuizQuestionStatus             = "quiz question status"
+	GetQuestions                   = "get quiz questions"
+	NextQuestionWillServeSoon      = "Next question will coming soon"
+	ErrInGettingQuestion           = "error during getting question"
+	ErrInGettingTotalQuestionCount = "error during getting total question count"
 
 	EventPublishQuestion       = "publish_question"
 	EventStartCount5           = "5_sec_counter" // use by web
