@@ -17,8 +17,14 @@
             <div class="form-group mb-4">
               <label for="otp" class="form-label">OTP code</label>
               <div class="d-flex justify-content-center">
-                <input type="text" class="otp_input" placeholder="Enter text here" />
-            </div>
+                <input
+                  id="otp"
+                  v-model="otp"
+                  type="text"
+                  class="otp_input"
+                  placeholder="Enter OTP code"
+                />
+              </div>
               <span v-if="otpError" class="text-danger">{{ otpError }}</span>
             </div>
 
@@ -143,7 +149,6 @@ const verifyOTP = async () => {
 </script>
 
 <style scoped>
-
 .otp_input {
   width: 350px;
   text-align: center;
@@ -156,7 +161,4 @@ const verifyOTP = async () => {
 .otp_input::placeholder {
   color: rgb(168, 148, 202);
 }
-
-
-
 </style>

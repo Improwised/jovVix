@@ -19,6 +19,14 @@ export default class AdminOperations extends QuizHandler {
     this.startPing();
   }
 
+  continueAdmin() {
+    this.continue(this);
+  }
+
+  connectAdmin() {
+    this.connect(this);
+  }
+
   // Method to start pinging through WebSocket
   startPing() {
     if (!this.pingInterval) {
@@ -79,5 +87,6 @@ export default class AdminOperations extends QuizHandler {
 
   onClose(event) {
     super.onClose(event);
+    setSocketObject(null)
   }
 }

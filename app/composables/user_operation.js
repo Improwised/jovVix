@@ -21,7 +21,12 @@ export default class UserOperation extends QuizHandler {
     this.sendErrorMessage = false;
     this.reconnect = false;
 
+    this.connectUser();
     this.startPing();
+  }
+
+  connectUser() {
+    this.connect(this);
   }
 
   // Method to start pinging through WebSocket

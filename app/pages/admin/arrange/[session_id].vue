@@ -58,12 +58,23 @@ onMounted(() => {
   // core logic
   if (process.client) {
     try {
-      adminOperationHandler.value = new AdminOperations(
-        session_id,
-        handleQuizEvents,
-        handleNetworkEvent,
-        confirmSkip
-      );
+      if (socketObject) {
+        adminOperationHandler.value = new AdminOperations(
+          session_id,
+          handleQuizEvents,
+          handleNetworkEvent,
+          confirmSkip
+        );
+        continueAdmin();
+      } else {
+        adminOperationHandler.value = new AdminOperations(
+          session_id,
+          handleQuizEvents,
+          handleNetworkEvent,
+          confirmSkip
+        );
+        connectAdmin();
+      }
     } catch (err) {
       console.error(err);
       toast.info(app.$ReloadRequired);
@@ -134,6 +145,14 @@ const handleQuizEvents = async (message) => {
   }
 };
 
+const connectAdmin = () => {
+  adminOperationHandler.value.connectAdmin();
+}
+
+const continueAdmin = () => {
+  adminOperationHandler.value.continueAdmin();
+}
+
 function handleNetworkEvent(message) {
   toast.warning(message + ", please reload the page");
 }
@@ -170,14 +189,6 @@ const handleModal = (confirm) => {
   }
   confirmNeeded.show = false;
 };
-
-const terminateQuizHandler = () => {
-  adminOperationHandler.value.requestTerminateQuiz();
-};
-
-onBeforeUnmount(() => {
-  adminOperationHandler.value.requestTerminateQuiz();
-});
 
 definePageMeta({
   layout: "empty",

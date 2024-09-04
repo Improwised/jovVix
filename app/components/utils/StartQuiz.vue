@@ -42,6 +42,8 @@ const handleStartDemo = async () => {
     return;
   }
 
+  setSocketObject(null)
+
   router.push(`/admin/arrange/${activeQuizId.value}`);
 };
 </script>
