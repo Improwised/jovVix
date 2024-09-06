@@ -189,7 +189,7 @@ const showAnalysis = () => {
         <Frame
           v-for="(item, index) in analysisData"
           :key="index"
-          :page-title="'Q' + (index + 1) + '. ' + item.question"
+          :page-title="'Q' + (item.order_no) + '. ' + item.question"
         >
           <ul style="list-style-type: none; padding-left: 0">
             <li

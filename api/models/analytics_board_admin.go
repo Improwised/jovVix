@@ -24,6 +24,7 @@ type AnalyticsBoardAdmin struct {
 	Points           int               `db:"points,omitempty" json:"points"`
 	QuestionTypeID   int               `db:"type,omitempty" json:"question_type_id"`
 	QuestionType     string            `db:"omitempty" json:"question_type"`
+	OrderNo          int               `db:"order_no" json:"order_no"`
 }
 
 type AnalyticsBoardAdminModel struct {
@@ -56,13 +57,16 @@ func (model *AnalyticsBoardAdminModel) GetAnalyticsForAdmin(activeQuizId string)
 			"options",
 			"points",
 			"type",
+			"order_no",
 		).
 		InnerJoin(goqu.T(constants.QuestionsTable), goqu.On(goqu.I(constants.UserQuizResponsesTable+".question_id").Eq(goqu.I(constants.QuestionsTable+".id")))).
 		InnerJoin(goqu.T(constants.UserPlayedQuizzesTable), goqu.On(goqu.I(constants.UserPlayedQuizzesTable+".id").Eq(goqu.I(constants.UserQuizResponsesTable+".user_played_quiz_id")))).
 		InnerJoin(goqu.T(constants.UsersTable), goqu.On(goqu.I(constants.UsersTable+".id").Eq(goqu.I(constants.UserPlayedQuizzesTable+".user_id")))).
+		InnerJoin(goqu.T(constants.ActiveQuizQuestionsTable), goqu.On(goqu.I(constants.UserPlayedQuizzesTable+".active_quiz_id").Eq(goqu.I(constants.ActiveQuizQuestionsTable+".active_quiz_id")), goqu.I(constants.QuestionsTable+".id").Eq(goqu.I(constants.ActiveQuizQuestionsTable+".question_id")))).
 		Where(goqu.Ex{
 			constants.UserPlayedQuizzesTable + ".active_quiz_id": activeQuizId,
 		}).
+		Order(goqu.I(constants.ActiveQuizQuestionsTable + ".order_no").Asc()).
 		ScanStructs(&analyticsBoardData)
 
 	if err != nil {

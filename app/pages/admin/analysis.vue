@@ -35,12 +35,10 @@
             :survey-questions="surveyQuestions"
             class="user-analytics-item"
           ></QuizUserAnalyticsSpace>
-
         </div>
         <div v-if="selectedTab === 'questions'" class="text-center">
-
-           <!-- Display Total Questions in Card -->
-           <div class="card total-questions-card mx-auto mb-4 text-center">
+          <!-- Display Total Questions in Card -->
+          <div class="card total-questions-card mx-auto mb-4 text-center">
             <div class="card-body">
               <h5 class="card-title">Total Questions</h5>
               <p class="card-text">{{ totalQuestions }}</p>
@@ -48,55 +46,52 @@
           </div>
 
           <Frame
-  v-for="(qData, index) in questionJson"
-  :key="index"
-  :page-title="`Q. ${(index)}`"
->
-
-
-<div class="question-details">
+            v-for="(qData, index) in questionJson"
+            :key="index"
+            :page-title="`Q. ${qData[0] ? qData[0].order_no : ''} ${index}`"
+          >
+          <!-- {{qData[0].order_no}} -->
+            <div class="question-details">
               <div class="row m-2">
                 <div class="d-flex align-items-center justify-content-between">
                   <span class="badge bg-primary">
-                    AVG. Response Time: {{ (qData[0].response_time / 1000).toFixed(2) }} seconds
+                    AVG. Response Time:
+                    {{ (qData[0].response_time / 1000).toFixed(2) }} seconds
                   </span>
                   <span
                     v-if="qData[0].question_type === 'mcq'"
                     class="badge bg-light-info mx-2 text-dark"
-                    >
+                  >
                     Multiple Choice Question
                   </span>
-                  <span
-                   v-else
-                   class="badge bg-light-info mx-2 text-dark"
-                   >
-                   Survey Question
+                  <span v-else class="badge bg-light-info mx-2 text-dark">
+                    Survey Question
                   </span>
                 </div>
               </div>
             </div>
-            
+
             <ul class="options-list">
-            <li
-              v-for="(option, key) in qData[0].options"
-              :key="key"
-              :class="qData[0].correct_answer.includes(key) ? 'correct-answer' : ''"
-            >
-              <span class="option-text">
-                {{ key }}: {{ option }}
-              </span>
-            </li>
-          </ul>
-  
-          <div
-    style="
-      display: flex;
-      flex: 1;
-      margin-top: 10px;
-      border-top: 1px solid #ccc;
-    "
-  ></div>
-</Frame>
+              <li
+                v-for="(option, key) in qData[0].options"
+                :key="key"
+                :class="
+                  qData[0].correct_answer.includes(key) ? 'correct-answer' : ''
+                "
+              >
+                <span class="option-text"> {{ key }}: {{ option }} </span>
+              </li>
+            </ul>
+
+            <div
+              style="
+                display: flex;
+                flex: 1;
+                margin-top: 10px;
+                border-top: 1px solid #ccc;
+              "
+            ></div>
+          </Frame>
         </div>
       </div>
     </div>
@@ -112,7 +107,6 @@ const headers = useRequestHeaders(["cookie"]);
 const route = useRoute();
 
 const selectedTab = ref("overview");
-
 
 const userJson = ref({});
 const questionJson = ref({});
@@ -185,19 +179,22 @@ watch(
           const correctAnswers = JSON.parse(question.correct_answer);
           question.question_type = correctAnswers.length > 1 ? "survey" : "mcq";
         } catch (error) {
-          console.error(`Error parsing correct_answer for question: ${question.question}`, error);
+          console.error(
+            `Error parsing correct_answer for question: ${question.question}`,
+            error
+          );
           question.question_type = "mcq"; // defaulting to MCQ if error occurs
         }
       });
     }
 
     // Count total survey questions
-    surveyQuestions.value = Object.values(questionJson.value).flat().filter(q => q.question_type === "survey").length;
+    surveyQuestions.value = Object.values(questionJson.value)
+      .flat()
+      .filter((q) => q.question_type === "survey").length;
   },
   { immediate: true, deep: true }
 );
-
-
 
 const selectTab = (tab) => {
   selectedTab.value = tab;
@@ -205,7 +202,6 @@ const selectTab = (tab) => {
 </script>
 
 <style scoped>
-
 .total-questions-card {
   max-width: 300px; /* Set a max width for larger screens */
   width: 100%; /* Ensure it scales down on smaller screens */
@@ -269,7 +265,7 @@ const selectTab = (tab) => {
   font-size: 1rem; /* Adjusted font size */
   margin-bottom: 8px; /* Reduced margin */
   font-weight: bold;
-  color: #4a2c77; 
+  color: #4a2c77;
 }
 
 .card-text {
@@ -278,13 +274,10 @@ const selectTab = (tab) => {
   color: #4a2c77;
 }
 
-
-
 .user-row {
   background-color: #8968cd !important;
   box-shadow: none;
 }
-
 
 body,
 .quiz-container {
