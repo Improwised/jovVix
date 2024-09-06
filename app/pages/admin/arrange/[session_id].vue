@@ -208,7 +208,6 @@ definePageMeta({
       :data="data"
       :is-admin="true"
       @start-quiz="startQuiz"
-      @terminate-quiz="terminateQuizHandler"
     >
     </QuizWaitingSpace>
     <QuizQuestionSpace

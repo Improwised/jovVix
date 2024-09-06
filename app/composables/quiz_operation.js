@@ -82,7 +82,10 @@ export default class QuizHandler {
   // onmessage handler ans setup self object
   onMessage(event) {
     const message = this.destructureMessage(event);
-    if (
+    if (message.event == "pong") {
+        console.log("pong received");
+    }
+    else if (
       this.currentEvent == constants.GetQuestion &&
       message.event == constants.AdminDisconnected
     ) {

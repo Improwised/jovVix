@@ -131,8 +131,10 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 			}
 
 			if quizResponse.Event == constants.EventPing {
-				// if gets ping, change the connection alive status to true
-				updateUserData(qc, userId, session.ID.String(), true)
+				err := utils.JSONSuccessWs(c, "pong", "")
+				if err != nil {
+					qc.logger.Error("error while sending pong message", zap.Error(err))
+				}
 			}
 		}
 	}()
@@ -152,7 +154,6 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 	// when user join at that time publish userName to admin
 	publishUserOnJoin(qc, response, user.FirstName, userId, session.ID.String())
 	response.Action = constants.QuizQuestionStatus
-
 	onConnectHandleUser(c, qc, &response, session)
 
 	// userPlayedQuizId := quizUtilsHelper.GetString(c.Locals(constants.CurrentUserQuiz))
@@ -518,40 +519,46 @@ func handleCodeGeneration(c *websocket.Conn, qc *quizSocketController, session m
 			// once code sent receive start signal
 			if isInvitationCodeSent {
 				isBreak := handleStartQuiz(c, qc.logger, isConnected, response.Action, &qc.mu)
-				users, err := qc.redis.PubSubModel.Client.Get(qc.redis.PubSubModel.Ctx, session.ID.String()).Result()
-				if err != nil {
-					qc.logger.Error("error while fetching data from redis inside updateUserData", zap.Error(err))
-				}
-
-				var usersData []UserInfo
-				err = json.Unmarshal([]byte(users), &usersData)
-				if err != nil {
-					qc.logger.Error("error while unmarshaling redis inside updateUserData", zap.Error(err))
-				}
 
 				if isBreak == constants.EventPing {
-					continue
-				} else if len(usersData) != 0 && isBreak == constants.EventStartQuiz {
-
-					// quiz is start publish for admin to stop looking for user
-					err := qc.redis.PubSubModel.Client.Publish(qc.redis.PubSubModel.Ctx, constants.EventStartQuizByAdmin, constants.EventStartQuizByAdmin).Err()
+					err := utils.JSONSuccessWs(c, "pong", "")
 					if err != nil {
-						qc.logger.Error("error while start quiz", zap.Error(err))
+						qc.logger.Error("error while sending pong message", zap.Error(err))
 					}
-					break
 				} else {
-					// quiz is start publish for admin to stop looking for user becuse no player found
-					err := qc.redis.PubSubModel.Client.Publish(qc.redis.PubSubModel.Ctx, constants.StartQuizByAdminNoPlayerFound, constants.StartQuizByAdminNoPlayerFound).Err()
+					users, err := qc.redis.PubSubModel.Client.Get(qc.redis.PubSubModel.Ctx, session.ID.String()).Result()
 					if err != nil {
-						qc.logger.Error("errro while start quiz but no player found", zap.Error(err))
+						qc.logger.Error("error while fetching data from redis inside updateUserData", zap.Error(err))
 					}
-					response.Data = constants.NoPlayerFound
 
-					err = utils.JSONFailWs(c, constants.EventStartQuiz, response)
+					var usersData []UserInfo
+					err = json.Unmarshal([]byte(users), &usersData)
 					if err != nil {
-						qc.logger.Error(fmt.Sprintf("socket error middleware: %s event, %s action", constants.EventAuthentication, response.Action), zap.Error(err))
+						qc.logger.Error("error while unmarshaling redis inside updateUserData", zap.Error(err))
+					}
+					if len(usersData) != 0 && isBreak == constants.EventStartQuiz {
+
+						// quiz is start publish for admin to stop looking for user
+						err := qc.redis.PubSubModel.Client.Publish(qc.redis.PubSubModel.Ctx, constants.EventStartQuizByAdmin, constants.EventStartQuizByAdmin).Err()
+						if err != nil {
+							qc.logger.Error("error while start quiz", zap.Error(err))
+						}
+						break
+					} else {
+						// quiz is start publish for admin to stop looking for user becuse no player found
+						err := qc.redis.PubSubModel.Client.Publish(qc.redis.PubSubModel.Ctx, constants.StartQuizByAdminNoPlayerFound, constants.StartQuizByAdminNoPlayerFound).Err()
+						if err != nil {
+							qc.logger.Error("errro while start quiz but no player found", zap.Error(err))
+						}
+						response.Data = constants.NoPlayerFound
+
+						err = utils.JSONFailWs(c, constants.EventStartQuiz, response)
+						if err != nil {
+							qc.logger.Error(fmt.Sprintf("socket error middleware: %s event, %s action", constants.EventAuthentication, response.Action), zap.Error(err))
+						}
 					}
 				}
+
 			}
 		}
 	}
