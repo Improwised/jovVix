@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"sync"
 	"time"
 
@@ -12,11 +13,14 @@ import (
 	quizUtilsHelper "github.com/Improwised/quizz-app/api/helpers/utils"
 	"github.com/Improwised/quizz-app/api/models"
 	"github.com/Improwised/quizz-app/api/pkg/redis"
+	"github.com/Improwised/quizz-app/api/pkg/structs"
 	"github.com/Improwised/quizz-app/api/utils"
 	"github.com/doug-martin/goqu/v9"
 	"github.com/gofiber/contrib/websocket"
+	fiber "github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
+	validator "gopkg.in/go-playground/validator.v9"
 )
 
 type QuizSendResponse struct {
@@ -38,33 +42,34 @@ type UserInfo struct {
 }
 
 type quizSocketController struct {
-	activeQuizModel         *models.ActiveQuizModel
-	quizModel               *models.QuizModel
-	userPlayedQuizModel     *models.UserPlayedQuizModel
-	questionModel           *models.QuestionModel
-	appConfig               *config.AppConfig
-	logger                  *zap.Logger
-	redis                   *redis.RedisPubSub
-	answersSubmittedByUsers chan models.User
-	mu                      sync.Mutex
+	activeQuizModel       *models.ActiveQuizModel
+	quizModel             *models.QuizModel
+	userPlayedQuizModel   *models.UserPlayedQuizModel
+	questionModel         *models.QuestionModel
+	userQuizResponseModel *models.UserQuizResponseModel
+	appConfig             *config.AppConfig
+	logger                *zap.Logger
+	redis                 *redis.RedisPubSub
+	mu                    sync.Mutex
 }
 
-func InitQuizConfig(db *goqu.Database, appConfig *config.AppConfig, logger *zap.Logger, redis *redis.RedisPubSub, answersSubmittedByUsers chan models.User) *quizSocketController {
+func InitQuizConfig(db *goqu.Database, appConfig *config.AppConfig, logger *zap.Logger, redis *redis.RedisPubSub) *quizSocketController {
 
 	activeQuizModel := models.InitActiveQuizModel(db, logger)
 	quizModel := models.InitQuizModel(db)
 	userPlayedQuizModel := models.InitUserPlayedQuizModel(db)
 	questionModel := models.InitQuestionModel(db, logger)
+	userQuizResponseModel := models.InitUserQuizResponseModel(db)
 
 	return &quizSocketController{
-		activeQuizModel:         activeQuizModel,
-		quizModel:               quizModel,
-		userPlayedQuizModel:     userPlayedQuizModel,
-		questionModel:           questionModel,
-		appConfig:               appConfig,
-		logger:                  logger,
-		redis:                   redis,
-		answersSubmittedByUsers: answersSubmittedByUsers,
+		activeQuizModel:       activeQuizModel,
+		quizModel:             quizModel,
+		userPlayedQuizModel:   userPlayedQuizModel,
+		questionModel:         questionModel,
+		userQuizResponseModel: userQuizResponseModel,
+		appConfig:             appConfig,
+		logger:                logger,
+		redis:                 redis,
 	}
 }
 
@@ -210,7 +215,7 @@ func publishUserOnJoin(qc *quizSocketController, quizResponse QuizSendResponse, 
 	// remove data with isAlive false before publishing
 	publishData := filterPublishUsers(qc, usersData, "publishUserOnJoin")
 
-	err = qc.redis.PubSubModel.Client.Publish(qc.redis.PubSubModel.Ctx, constants.EventUserJoined, publishData).Err()
+	err = qc.redis.PubSubModel.Client.Publish(qc.redis.PubSubModel.Ctx, fmt.Sprintf("%s-%s", constants.ChannelUserJoin, sessionId), publishData).Err()
 
 	if err != nil {
 		qc.logger.Error(fmt.Sprintf("socket error publishing event: %s event, %s action", constants.EventUserJoined, response.Action), zap.Error(err))
@@ -348,7 +353,7 @@ func updateUserData(qc *quizSocketController, userId string, sessionId string, i
 
 		// Publish updated user data
 		publishData := filterPublishUsers(qc, updatedUserData, "updateUserData")
-		if err := qc.redis.PubSubModel.Client.Publish(qc.redis.PubSubModel.Ctx, constants.EventUserJoined, publishData).Err(); err != nil {
+		if err := qc.redis.PubSubModel.Client.Publish(qc.redis.PubSubModel.Ctx, fmt.Sprintf("%s-%s", constants.ChannelUserJoin, sessionId), publishData).Err(); err != nil {
 			qc.logger.Error("error publishing data in updateUserData", zap.Error(err))
 		}
 	}
@@ -505,7 +510,7 @@ func handleCodeGeneration(c *websocket.Conn, qc *quizSocketController, session m
 				// send code to client
 				handleInvitationCodeSend(c, response, qc.logger, session.InvitationCode.Int32)
 				isInvitationCodeSent = true
-				go handleConnectedUser(c, qc)
+				go handleConnectedUser(c, qc, session.ID.String())
 
 			}
 			qc.mu.Unlock()
@@ -569,15 +574,15 @@ func handleInvitationCodeSend(c *websocket.Conn, response *QuizSendResponse, log
 }
 
 // when user connect at that time send data to admin
-func handleConnectedUser(c *websocket.Conn, qc *quizSocketController) {
+func handleConnectedUser(c *websocket.Conn, qc *quizSocketController, sessionId string) {
 	response := QuizSendResponse{}
 	response.Action = "send user join data"
 	response.Component = constants.Waiting
 
-	pubsub := qc.redis.PubSubModel.Client.Subscribe(qc.redis.PubSubModel.Ctx, constants.EventUserJoined, constants.EventTerminateQuiz, constants.EventStartQuizByAdmin, constants.StartQuizByAdminNoPlayerFound)
+	pubsub := qc.redis.PubSubModel.Client.Subscribe(qc.redis.PubSubModel.Ctx, fmt.Sprintf("%s-%s", constants.ChannelUserJoin, sessionId), constants.EventTerminateQuiz, constants.EventStartQuizByAdmin, constants.StartQuizByAdminNoPlayerFound)
 	defer func() {
 		if pubsub != nil {
-			err := pubsub.Unsubscribe(qc.redis.PubSubModel.Ctx, constants.EventUserJoined, constants.EventStartQuizByAdmin, constants.StartQuizByAdminNoPlayerFound)
+			err := pubsub.Unsubscribe(qc.redis.PubSubModel.Ctx, fmt.Sprintf("%s-%s", constants.ChannelUserJoin, sessionId), constants.EventStartQuizByAdmin, constants.StartQuizByAdminNoPlayerFound)
 			if err != nil {
 				qc.logger.Error("unsubscribe failed", zap.Error(err))
 			}
@@ -898,6 +903,19 @@ func handleAnswerSubmission(c *websocket.Conn, qc *quizSocketController, session
 
 	isTimeout := time.NewTicker(time.Duration(duration) * time.Second)
 
+	pubsub := qc.redis.PubSubModel.Client.Subscribe(qc.redis.PubSubModel.Ctx, fmt.Sprintf("%s-%s", constants.ChannelSetAnswer, session.ID.String()))
+	defer func() {
+		if pubsub != nil {
+			err := pubsub.Unsubscribe(qc.redis.PubSubModel.Ctx, fmt.Sprintf("%s-%s", constants.ChannelSetAnswer, session.ID.String()))
+			if err != nil {
+				qc.logger.Error("unsubscribe failed", zap.Error(err))
+			}
+			pubsub.Close()
+		}
+	}()
+
+	ch := pubsub.Channel()
+
 	for {
 		select {
 		case <-isTimeout.C:
@@ -918,14 +936,114 @@ func handleAnswerSubmission(c *websocket.Conn, qc *quizSocketController, session
 					shareEvenWithUser(c, qc, response, constants.EventSkipAsked, session.ID.String(), int(session.InvitationCode.Int32), constants.ToAdmin)
 				}
 			}
-		case user := <-qc.answersSubmittedByUsers:
+		case msg := <-ch:
+			user := models.User{}
+
+			err := json.Unmarshal([]byte(msg.Payload), &user)
+			if err != nil {
+				qc.logger.Error(fmt.Sprintf("socket error send waiting message: %s event, %s action", constants.EventSendQuestion, constants.ActionAnserSubmittedByUser), zap.Error(err))
+			}
+
 			response.Data = user
 			response.Action = constants.ActionAnserSubmittedByUser
-			err := utils.JSONSuccessWs(c, constants.EventAnswerSubmittedByUser, response)
+			err = utils.JSONSuccessWs(c, constants.EventAnswerSubmittedByUser, response)
 			if err != nil {
 				qc.logger.Error(fmt.Sprintf("socket error sending event: %s event, %s action, %v user", constants.EventSendQuestion, response.Action, user), zap.Error(err))
 				return
 			}
 		}
 	}
+}
+
+func (qc *quizSocketController) SetAnswer(c *fiber.Ctx) error {
+	currentQuiz := c.Query(constants.CurrentUserQuiz)
+	sessionId := c.Query(constants.SessionIDParam)
+	qc.logger.Debug("quizSocketController.SetAnswer called", zap.Any("currentQuiz", currentQuiz), zap.Any("sessionid", sessionId))
+
+	// validations
+	if currentQuiz == "" {
+		qc.logger.Error(constants.ErrQuizNotFound)
+		return utils.JSONFail(c, http.StatusBadRequest, constants.ErrQuizNotFound)
+	}
+
+	currentQuizId, err := uuid.Parse(currentQuiz)
+	if err != nil {
+		qc.logger.Error("invalid UUID")
+		return utils.JSONFail(c, http.StatusBadRequest, "invalid UUID")
+	}
+
+	user, ok := quizUtilsHelper.ConvertType[models.User](c.Locals(constants.ContextUser))
+	if !ok {
+		qc.logger.Error("Unable to convert to user-model type from locals")
+		return utils.JSONFail(c, http.StatusInternalServerError, "Unable to convert to user-model type from locals")
+	}
+
+	var answer structs.ReqAnswerSubmit
+
+	err = json.Unmarshal(c.Body(), &answer)
+	if err != nil {
+		return utils.JSONFail(c, http.StatusBadRequest, err.Error())
+	}
+
+	validate := validator.New()
+	err = validate.Struct(answer)
+	if err != nil {
+		return utils.JSONFail(c, http.StatusBadRequest, utils.ValidatorErrorString(err))
+	}
+
+	// check for question is active or not to receive answers
+	qc.logger.Debug("userPlayedQuizModel.GetCurrentActiveQuestion called", zap.Any("currentQuizId", currentQuizId))
+	currentQuestion, err := qc.userPlayedQuizModel.GetCurrentActiveQuestion(currentQuizId)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			qc.logger.Error("error during answer submit get current active question", zap.Any("answers", answer), zap.Any("current_quiz_id", currentQuizId))
+			return utils.JSONFail(c, http.StatusBadRequest, constants.ErrAnswerSubmit)
+		}
+		qc.logger.Error("error during answer submit", zap.Error(err))
+		return utils.JSONFail(c, http.StatusBadRequest, constants.UnknownError)
+	}
+	qc.logger.Debug("userPlayedQuizModel.GetCurrentActiveQuestion success", zap.Any("currentQuestion", currentQuestion))
+
+	if currentQuestion != answer.QuestionId {
+		qc.logger.Error(constants.ErrQuestionNotActive)
+		return utils.JSONFail(c, http.StatusBadRequest, constants.ErrQuestionNotActive)
+	}
+
+	qc.logger.Debug("questionModel.GetAnswersPointsDurationType called", zap.Any("QuestionId", answer.QuestionId.String()))
+	answers, answerPoints, answerDurationInSeconds, questionType, err := qc.questionModel.GetAnswersPointsDurationType(answer.QuestionId.String())
+	if err != nil {
+		qc.logger.Error("error while get answer, points, duration and type")
+		return utils.JSONFail(c, http.StatusBadRequest, "error while get answer, points, duration and type")
+	}
+	qc.logger.Debug("questionModel.GetAnswersPointsDurationType success", zap.Any("answers", answers))
+
+	// calculate points
+	points, score := utils.CalculatePointsAndScore(answer, answers, answerPoints, answerDurationInSeconds, questionType)
+
+	// submit answer
+	qc.logger.Debug("userQuizResponseModel.SubmitAnswer called", zap.Any("currentQuizId", currentQuizId))
+	err = qc.userQuizResponseModel.SubmitAnswer(currentQuizId, answer, points, score)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return utils.JSONFail(c, http.StatusBadRequest, constants.ErrAnswerAlreadySubmitted)
+		}
+		qc.logger.Error("error during answer submit", zap.Error(err))
+		return utils.JSONFail(c, http.StatusBadRequest, constants.UnknownError)
+	}
+	qc.logger.Debug("userQuizResponseModel.SubmitAnswer success", zap.Any("currentQuestion", currentQuestion))
+
+	data, err := json.Marshal(user)
+	if err != nil {
+		qc.logger.Error(fmt.Sprintf("socket error marshal redis payload: %s event, %s action", constants.EventAnswerSubmittedByUser, constants.ActionAnserSubmittedByUser), zap.Error(err))
+	}
+
+	qc.logger.Debug("publish answer in redis called", zap.Any("ansChName", fmt.Sprintf("%s-%s", constants.ChannelSetAnswer, sessionId)))
+	err = qc.redis.PubSubModel.Client.Publish(qc.redis.PubSubModel.Ctx, fmt.Sprintf("%s-%s", constants.ChannelSetAnswer, sessionId), data).Err()
+	if err != nil {
+		qc.logger.Error(fmt.Sprintf("socket error publishing event: %s event, %s action", constants.EventAnswerSubmittedByUser, constants.ActionAnserSubmittedByUser), zap.Error(err))
+		return utils.JSONFail(c, http.StatusInternalServerError, constants.ErrPublishAnswer)
+	}
+	qc.logger.Debug("publish answer in redis success")
+
+	return utils.JSONSuccess(c, http.StatusAccepted, nil)
 }

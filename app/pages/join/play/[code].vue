@@ -30,6 +30,7 @@ const showReconnectedBar = ref(false);
 const username = computed(() => route.query.username);
 const firstname = computed(() => route.query.firstname);
 const userPlayedQuiz = computed(() => route.query.user_played_quiz);
+const sessionId = computed(() => route.query.session_id);
 
 const selectedAnswer = ref(0)
 
@@ -136,7 +137,8 @@ const sendAnswer = async (answers) => {
   selectedAnswer.value = 0
   const response = await userOperationHandler.value.handleSendAnswer(
     answers,
-    userPlayedQuiz.value
+    userPlayedQuiz.value,
+    sessionId.value
   );
 
   if (response?.error) {

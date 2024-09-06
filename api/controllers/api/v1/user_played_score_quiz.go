@@ -117,5 +117,10 @@ func (ctrl *UserPlayedQuizeController) PlayedQuizValidation(c *fiber.Ctx) error 
 
 	ctrl.logger.Debug("UserPlayedQuizeController.PlayedQuizValidation success", zap.Any("userPlayedQuizId", userPlayedQuizId.String()))
 
-	return utils.JSONSuccess(c, http.StatusOK, userPlayedQuizId.String())
+	response := map[string]string{
+		"user_played_quiz": userPlayedQuizId.String(),
+		"session_id":       session.ID.String(),
+	}
+
+	return utils.JSONSuccess(c, http.StatusOK, response)
 }

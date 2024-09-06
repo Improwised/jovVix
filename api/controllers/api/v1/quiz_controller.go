@@ -2,7 +2,6 @@ package v1
 
 import (
 	"database/sql"
-	"encoding/json"
 	"net/http"
 	"os"
 	"strconv"
@@ -11,28 +10,24 @@ import (
 	quizUtilsHelper "github.com/Improwised/quizz-app/api/helpers/utils"
 	"github.com/Improwised/quizz-app/api/models"
 	"github.com/Improwised/quizz-app/api/pkg/events"
-	"github.com/Improwised/quizz-app/api/pkg/structs"
 	"github.com/Improwised/quizz-app/api/pkg/watermill"
 	"github.com/Improwised/quizz-app/api/utils"
 	"github.com/doug-martin/goqu/v9"
 	fiber "github.com/gofiber/fiber/v2"
-	"github.com/google/uuid"
 	"go.uber.org/zap"
-	validator "gopkg.in/go-playground/validator.v9"
 )
 
 type QuizController struct {
-	userPlayedQuizModel     *models.UserPlayedQuizModel
-	questionModel           *models.QuestionModel
-	userQuizResponseModel   *models.UserQuizResponseModel
-	quizModel               *models.QuizModel
-	activeQuizModel         *models.ActiveQuizModel
-	logger                  *zap.Logger
-	event                   *events.Events
-	answersSubmittedByUsers chan models.User
+	userPlayedQuizModel   *models.UserPlayedQuizModel
+	questionModel         *models.QuestionModel
+	userQuizResponseModel *models.UserQuizResponseModel
+	quizModel             *models.QuizModel
+	activeQuizModel       *models.ActiveQuizModel
+	logger                *zap.Logger
+	event                 *events.Events
 }
 
-func InitQuizController(db *goqu.Database, logger *zap.Logger, event *events.Events, pub *watermill.WatermillPublisher, answersSubmittedByUsers chan models.User) *QuizController {
+func InitQuizController(db *goqu.Database, logger *zap.Logger, event *events.Events, pub *watermill.WatermillPublisher) *QuizController {
 
 	userPlayedQuizModel := models.InitUserPlayedQuizModel(db)
 	questionModel := models.InitQuestionModel(db, logger)
@@ -41,92 +36,14 @@ func InitQuizController(db *goqu.Database, logger *zap.Logger, event *events.Eve
 	activeQuizModel := models.InitActiveQuizModel(db, logger)
 
 	return &QuizController{
-		userPlayedQuizModel:     userPlayedQuizModel,
-		questionModel:           questionModel,
-		userQuizResponseModel:   userQuizResponseModel,
-		quizModel:               quizModel,
-		activeQuizModel:         activeQuizModel,
-		logger:                  logger,
-		event:                   event,
-		answersSubmittedByUsers: answersSubmittedByUsers,
+		userPlayedQuizModel:   userPlayedQuizModel,
+		questionModel:         questionModel,
+		userQuizResponseModel: userQuizResponseModel,
+		quizModel:             quizModel,
+		activeQuizModel:       activeQuizModel,
+		logger:                logger,
+		event:                 event,
 	}
-}
-
-func (ctrl *QuizController) SetAnswer(c *fiber.Ctx) error {
-	currentQuiz := c.Query(constants.CurrentUserQuiz)
-	ctrl.logger.Debug("QuizController.SetAnswer called", zap.Any("currentQuiz", currentQuiz))
-
-	// validations
-	if currentQuiz == "" {
-		ctrl.logger.Error(constants.ErrQuizNotFound)
-		return utils.JSONFail(c, http.StatusBadRequest, constants.ErrQuizNotFound)
-	}
-
-	currentQuizId, err := uuid.Parse(currentQuiz)
-	if err != nil {
-		ctrl.logger.Error("invalid UUID")
-		return utils.JSONFail(c, http.StatusBadRequest, "invalid UUID")
-	}
-
-	user, ok := quizUtilsHelper.ConvertType[models.User](c.Locals(constants.ContextUser))
-	if !ok {
-		ctrl.logger.Error("Unable to convert to user-model type from locals")
-		return utils.JSONFail(c, http.StatusInternalServerError, "Unable to convert to user-model type from locals")
-	}
-
-	var answer structs.ReqAnswerSubmit
-
-	err = json.Unmarshal(c.Body(), &answer)
-	if err != nil {
-		return utils.JSONFail(c, http.StatusBadRequest, err.Error())
-	}
-
-	validate := validator.New()
-	err = validate.Struct(answer)
-	if err != nil {
-		return utils.JSONFail(c, http.StatusBadRequest, utils.ValidatorErrorString(err))
-	}
-
-	// check for question is active or not to receive answers
-	ctrl.logger.Debug("userPlayedQuizModel.GetCurrentActiveQuestion called", zap.Any("currentQuiz", currentQuiz))
-	currentQuestion, err := ctrl.userPlayedQuizModel.GetCurrentActiveQuestion(currentQuizId)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			ctrl.logger.Error("error during answer submit get current active question", zap.Any("answers", answer), zap.Any("current_quiz_id", currentQuizId))
-			return utils.JSONFail(c, http.StatusBadRequest, constants.ErrAnswerSubmit)
-		}
-		ctrl.logger.Error("error during answer submit", zap.Error(err))
-		return utils.JSONFail(c, http.StatusBadRequest, constants.UnknownError)
-	}
-	ctrl.logger.Debug("userPlayedQuizModel.GetCurrentActiveQuestion success", zap.Any("currentQuestion", currentQuestion))
-
-	if currentQuestion != answer.QuestionId {
-		ctrl.logger.Error(constants.ErrQuestionNotActive)
-		return utils.JSONFail(c, http.StatusBadRequest, constants.ErrQuestionNotActive)
-	}
-
-	answers, answerPoints, answerDurationInSeconds, questionType, err := ctrl.questionModel.GetAnswersPointsDurationType(answer.QuestionId.String())
-	if err != nil {
-		ctrl.logger.Error("error while get answer, points, duration and type")
-		return utils.JSONFail(c, http.StatusBadRequest, "error while get answer, points, duration and type")
-	}
-
-	// calculate points
-	points, score := utils.CalculatePointsAndScore(answer, answers, answerPoints, answerDurationInSeconds, questionType)
-
-	// submit answer
-	err = ctrl.userQuizResponseModel.SubmitAnswer(currentQuizId, answer, points, score)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return utils.JSONFail(c, http.StatusBadRequest, constants.ErrAnswerAlreadySubmitted)
-		}
-		ctrl.logger.Error("error during answer submit", zap.Error(err))
-		return utils.JSONFail(c, http.StatusBadRequest, constants.UnknownError)
-	}
-
-	ctrl.answersSubmittedByUsers <- user
-
-	return utils.JSONSuccess(c, http.StatusAccepted, nil)
 }
 
 // GetAdminUploadedQuizzes for getting quiz details uploaded by Admin
@@ -212,7 +129,7 @@ func (qc *QuizController) ListQuizzesAnalysis(c *fiber.Ctx) error {
 }
 
 func (ctrl *QuizController) CreateQuizByCsv(c *fiber.Ctx) error {
-	
+
 	quizTitle := c.Params(constants.QuizTitle)
 	quizDescription := c.FormValue("description")
 

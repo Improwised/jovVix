@@ -113,6 +113,7 @@ const toast = useToast();
 const userError = ref(false);
 const quickUserPending = ref(false);
 const userPlayedQuiz = ref("");
+const sessionId = ref("");
 
 const join_quiz = async () => {
   username.value = username.value.trim();
@@ -169,7 +170,8 @@ const join_quiz = async () => {
       },
       onResponse({ response }) {
         if (response.status == 200) {
-          userPlayedQuiz.value = response._data?.data;
+          userPlayedQuiz.value = response._data?.data?.user_played_quiz;
+          sessionId.value = response._data?.data?.session_id;
           quickUserPending.value = false;
         }
       },
@@ -186,7 +188,7 @@ const join_quiz = async () => {
   router.push(
     `/join/play/${code.value}?username=${encodeURIComponent(
       username.value
-    )}&firstname=${firstname.value}&user_played_quiz=${userPlayedQuiz.value}`
+    )}&firstname=${firstname.value}&user_played_quiz=${userPlayedQuiz.value}&session_id=${sessionId.value}`
   );
 };
 

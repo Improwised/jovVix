@@ -12,7 +12,6 @@ import (
 	"github.com/Improwised/quizz-app/api/constants"
 	controller "github.com/Improwised/quizz-app/api/controllers/api/v1"
 	"github.com/Improwised/quizz-app/api/middlewares"
-	"github.com/Improwised/quizz-app/api/models"
 	"github.com/Improwised/quizz-app/api/pkg/events"
 	pMetrics "github.com/Improwised/quizz-app/api/pkg/prometheus"
 	"github.com/Improwised/quizz-app/api/pkg/redis"
@@ -53,12 +52,12 @@ func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config confi
 
 	router := app.Group("/api")
 
-	err = healthCheckController(router, goqu, logger)
+	err = setupHealthCheckController(router, goqu, logger)
 	if err != nil {
 		return err
 	}
 
-	err = metricsController(router, goqu, logger, pMetrics)
+	err = setupMetricsController(router, goqu, logger, pMetrics)
 	if err != nil {
 		return err
 	}
@@ -103,12 +102,12 @@ func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config confi
 		return err
 	}
 
-	err = quizController(v1, goqu, logger, middleware, events, pub, config, redis)
+	err = setupQuizController(v1, goqu, logger, middleware, events, pub, config, redis)
 	if err != nil {
 		return err
 	}
 
-	err = UserPlayedQuizeController(v1, goqu, logger, middleware, events, pub)
+	err = setupUserPlayedQuizeController(v1, goqu, logger, middleware, events, pub)
 	if err != nil {
 		return err
 	}
@@ -194,7 +193,7 @@ func setupUserController(v1 fiber.Router, goqu *goqu.Database, logger *zap.Logge
 	return nil
 }
 
-func healthCheckController(api fiber.Router, goqu *goqu.Database, logger *zap.Logger) error {
+func setupHealthCheckController(api fiber.Router, goqu *goqu.Database, logger *zap.Logger) error {
 	healthController, err := controller.NewHealthController(goqu, logger)
 	if err != nil {
 		return err
@@ -206,7 +205,7 @@ func healthCheckController(api fiber.Router, goqu *goqu.Database, logger *zap.Lo
 	return nil
 }
 
-func metricsController(api fiber.Router, db *goqu.Database, logger *zap.Logger, pMetrics *pMetrics.PrometheusMetrics) error {
+func setupMetricsController(api fiber.Router, db *goqu.Database, logger *zap.Logger, pMetrics *pMetrics.PrometheusMetrics) error {
 	metricsController, err := controller.InitMetricsController(db, logger, pMetrics)
 	if err != nil {
 		return nil
@@ -216,26 +215,13 @@ func metricsController(api fiber.Router, db *goqu.Database, logger *zap.Logger, 
 	return nil
 }
 
-func quizController(
-	v1 fiber.Router,
-	db *goqu.Database,
-	logger *zap.Logger,
-	middleware middlewares.Middleware,
-	events *events.Events,
-	pub *watermill.WatermillPublisher,
-	config config.AppConfig,
-	redis *redis.RedisPubSub) error {
-
-	AnswersSubmittedByUsers := make(chan models.User, 50)
-
-	quizSocketController := controller.InitQuizConfig(db, &config, logger, redis, AnswersSubmittedByUsers)
-	quizController := controller.InitQuizController(db, logger, events, pub, AnswersSubmittedByUsers)
-
-	// middleware format := param-check/pass... , authentication... , authorization..., controller(API/SOCKET)...
+func setupQuizController(v1 fiber.Router, db *goqu.Database, logger *zap.Logger, middleware middlewares.Middleware, events *events.Events, pub *watermill.WatermillPublisher, config config.AppConfig, redis *redis.RedisPubSub) error {
+	quizSocketController := controller.InitQuizConfig(db, &config, logger, redis)
+	quizController := controller.InitQuizController(db, logger, events, pub)
 
 	v1.Get(fmt.Sprintf("/socket/join/:%s", constants.QuizSessionInvitationCode), middleware.CheckSessionCode, middleware.CustomAuthenticated, websocket.New(quizSocketController.Join))
 
-	v1.Post("/quiz/answer", middleware.Authenticated, middleware.CustomAuthenticated, quizController.SetAnswer)
+	v1.Post("/quiz/answer", middleware.Authenticated, middleware.CustomAuthenticated, quizSocketController.SetAnswer)
 
 	v1.Get("/quiz/terminate", middleware.Authenticated, quizController.Terminate)
 
@@ -243,7 +229,7 @@ func quizController(
 	admin.Use(middleware.KratosAuthenticated)
 
 	quizzes := admin.Group("/quizzes")
-	report := admin.Group("/reports");
+	report := admin.Group("/reports")
 
 	quizzes.Post(fmt.Sprintf("/:%s/demo_session", constants.QuizId), quizController.GenerateDemoSession)
 	quizzes.Post(fmt.Sprintf("/:%s/upload", constants.QuizTitle), middleware.ValidateCsv, middleware.KratosAuthenticated, quizController.CreateQuizByCsv)
@@ -293,7 +279,7 @@ func setUpAnalyticsBoardController(v1 fiber.Router, goqu *goqu.Database, logger 
 	return nil
 }
 
-func UserPlayedQuizeController(v1 fiber.Router, goqu *goqu.Database, logger *zap.Logger, middlewares middlewares.Middleware, events *events.Events, pub *watermill.WatermillPublisher) error {
+func setupUserPlayedQuizeController(v1 fiber.Router, goqu *goqu.Database, logger *zap.Logger, middlewares middlewares.Middleware, events *events.Events, pub *watermill.WatermillPublisher) error {
 	userPlayedQuizeController, err := controller.NewUserPlayedQuizeController(goqu, logger, events, pub)
 	if err != nil {
 		return err

@@ -190,6 +190,7 @@ const (
 	ErrAnswerSubmit           = "error malfunction in inputs"
 	ErrAnswerAlreadySubmitted = "answer already submitted"
 	ErrQuestionNotActive      = "question can not receive answers anymore"
+	ErrPublishAnswer          = "error while publish answer in redis"
 
 	// Event skip
 	EventSkipAsked = "ask_skip" // use by web
@@ -246,4 +247,10 @@ const (
 	OrderQueryParam      = "order"
 	OrderByQueryParam    = "orderBy"
 	DefaultPageSize      = 10
+)
+
+// Channel name for redis pubsub
+const (
+	ChannelUserJoin  = "user_joined"
+	ChannelSetAnswer = "set_answer"
 )
