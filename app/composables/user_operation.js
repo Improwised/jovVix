@@ -85,13 +85,16 @@ export default class UserOperation extends QuizHandler {
           mode: "cors",
         }
       );
-      const responseJson = await response.json();
-      error = responseJson.data;
-    } catch (err) {
-      error = err;
-    }
 
-    return { error };
+      if (response.status !== 202) {
+        const errorMessage = await response.text();
+        return { error: `Failed to submit answer: ${errorMessage}` };
+      }
+
+      return { error: null }
+    } catch (err) {
+      return { error: err.message || "An unknown error occurred." };
+    }
   }
 
   endQuiz() {

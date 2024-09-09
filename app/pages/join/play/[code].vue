@@ -135,20 +135,25 @@ const startQuiz = () => {
 
 const sendAnswer = async (answers) => {
   selectedAnswer.value = 0
-  const response = await userOperationHandler.value.handleSendAnswer(
-    answers,
-    userPlayedQuiz.value,
-    sessionId.value
-  );
+  try {
+    const { error } = await userOperationHandler.value.handleSendAnswer(
+      answers,
+      userPlayedQuiz.value,
+      sessionId.value
+    );
 
-  if (response?.error) {
-    toast.error(response.error);
-    return;
+    if (error) {
+      toast.error(error);
+      return;
+    }
+    toast.success(app.$AnswerSubmitted);
+    if (answers.length > 0) {
+      selectedAnswer.value = answers[0]
+    }
+  } catch (err) {
+    toast.error("An error occurred while submitting the answer.");
   }
-  toast.success(app.$AnswerSubmitted);
-  if (answers.length > 0) {
-    selectedAnswer.value = answers[0]
-  }
+
 };
 
 definePageMeta({

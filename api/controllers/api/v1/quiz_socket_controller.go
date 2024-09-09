@@ -956,7 +956,6 @@ func handleAnswerSubmission(c *websocket.Conn, qc *quizSocketController, session
 			err = utils.JSONSuccessWs(c, constants.EventAnswerSubmittedByUser, response)
 			if err != nil {
 				qc.logger.Error(fmt.Sprintf("socket error sending event: %s event, %s action, %v user", constants.EventSendQuestion, response.Action, user), zap.Error(err))
-				return
 			}
 		}
 	}
@@ -1000,7 +999,7 @@ func (qc *quizSocketController) SetAnswer(c *fiber.Ctx) error {
 
 	// check for question is active or not to receive answers
 	qc.logger.Debug("userPlayedQuizModel.GetCurrentActiveQuestion called", zap.Any("currentQuizId", currentQuizId))
-	currentQuestion, err := qc.userPlayedQuizModel.GetCurrentActiveQuestion(currentQuizId)
+	currentQuestion, err := qc.userPlayedQuizModel.GetCurrentActiveQuestion(sessionId)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			qc.logger.Error("error during answer submit get current active question", zap.Any("answers", answer), zap.Any("current_quiz_id", currentQuizId))

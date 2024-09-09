@@ -255,11 +255,9 @@ func registerQuestionToQuizzes(transaction *goqu.TxDatabase, quizId uuid.UUID, q
 func (model *QuestionModel) GetAnswersPointsDurationType(QuestionID string) ([]int, int16, int, int, error) {
 
 	var answers []int = []int{}
-	// var options map[string]string
 	var answerDurationInSeconds int
 	var answerBytes []byte = []byte{}
 	var answerPoints int16
-	// var optionsBytes []byte
 	var questionType int
 
 	rows, err := model.db.Select(goqu.I("answers"), goqu.I("points"), goqu.I("duration_in_seconds"), goqu.I("type")).From(QuestionTable).Where(goqu.I("id").Eq(QuestionID)).Executor().Query()
@@ -270,7 +268,6 @@ func (model *QuestionModel) GetAnswersPointsDurationType(QuestionID string) ([]i
 	defer rows.Close()
 
 	if rows.Next() {
-		// err = rows.Scan(&answerBytes, &answerPoints, &answerDurationInSeconds, &optionsBytes, &questionType)
 		err = rows.Scan(&answerBytes, &answerPoints, &answerDurationInSeconds, &questionType)
 		if err != nil {
 			return answers, answerPoints, answerDurationInSeconds, 0, err
@@ -279,16 +276,9 @@ func (model *QuestionModel) GetAnswersPointsDurationType(QuestionID string) ([]i
 
 	err = json.Unmarshal(answerBytes, &answers)
 	if err != nil {
-		// return answers, answerPoints, answerDurationInSeconds, options, 0, err
 		return answers, answerPoints, answerDurationInSeconds, 0, err
 	}
 
-	// err = json.Unmarshal(optionsBytes, &options)
-	// if err != nil {
-	// 	return answers, answerPoints, answerDurationInSeconds, options, 0, err
-	// }
-
-	// return answers, answerPoints, answerDurationInSeconds, options, questionType, nil
 	return answers, answerPoints, answerDurationInSeconds, questionType, nil
 }
 
