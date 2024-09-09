@@ -6,6 +6,7 @@
         v-for="(oData, index) in rankData"
         :key="index"
         :data="userJson[oData]"
+        :user-name="oData"
         :survey-questions="surveyQuestions"
         class="user-analytics-item"
       ></QuizUserAnalyticsSpace>

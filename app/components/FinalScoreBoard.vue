@@ -128,13 +128,12 @@ const showAnalysis = () => {
     <div>
       <div v-if="scoreboardData" class="table-responsive mt-5 w-100">
         <table
-          class="table align-middle  table-hover"
+          class="table align-middle table-hover"
           :class="{
             'table-light': props.isAdmin,
             'table-light': !props.isAdmin,
             'table-borderless': !props.isAdmin,
             'table-striped': !props.isAdmin,
-            
           }"
         >
           <thead>
@@ -153,7 +152,6 @@ const showAnalysis = () => {
                 :class="{
                   'user-row':
                     user.username === props.userName && !props.isAdmin,
-                    
                 }"
               >
                 {{ user.rank }}
@@ -186,60 +184,7 @@ const showAnalysis = () => {
       <div v-if="!props.isAdmin">
         <h3 class="text-center">Accuracy: {{ userAccuracy }}%</h3>
         <h3 class="text-center">Total Score: {{ userTotalScore }}</h3>
-        <Frame
-          v-for="(item, index) in analysisData"
-          :key="index"
-          :page-title="'Q' + (item.order_no) + '. ' + item.question"
-        >
-          <ul style="list-style-type: none; padding-left: 0">
-            <li
-              v-for="(option, key) in item.options"
-              :key="key"
-              style="display: flex; align-items: center; padding-left: 20px"
-            >
-              <span
-                v-if="item.correct_answer.includes(key)"
-                style="margin-right: 10px"
-                >&#10004;</span
-              >
-              <span
-                v-if="
-                  item.selected_answer.String.includes(key) &&
-                  !item.correct_answer.includes(key)
-                "
-                style="margin-right: 10px"
-              >
-                &#10006;
-              </span>
-              <span>{{ key }}: {{ option }}</span>
-            </li>
-          </ul>
-          <div
-            style="
-              display: flex;
-              flex: 1;
-              margin-top: 10px;
-              border-top: 1px solid #ccc;
-            "
-          >
-            <div
-              v-if="item.response_time > 0"
-              style="flex: 1; padding: 10px; border-right: 1px solid #ccc"
-            >
-              Response Time:
-              {{ (item.response_time / 1000).toFixed(2) }} seconds
-            </div>
-            <div
-              v-else
-              style="flex: 1; padding: 10px; border-right: 1px solid #ccc"
-            >
-              Response Time: -
-            </div>
-            <div style="flex: 1; padding: 10px">
-              {{ item.is_attend ? "Attempted" : "Not Attempted" }}
-            </div>
-          </div>
-        </Frame>
+        <QuizQuestionAnalysis :data="analysisData" />
       </div>
     </div>
     <button v-if="props.isAdmin" class="btn btn-primary" @click="showAnalysis">
@@ -258,6 +203,3 @@ const showAnalysis = () => {
   background-color: #783b9b !important; /* Light purple color */
 }
 </style>
-
-
-

@@ -4,6 +4,10 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  userName: {
+    type: String,
+    required: true,
+  },
 });
 
 const analysis = ref({});
@@ -30,8 +34,42 @@ const handleMouseLeave = (event) => {
 </script>
 
 <template>
+  <!-- userQuestionsAnalysis Modal -->
+  <div
+    :id="props.userName"
+    class="modal fade"
+    tabindex="-1"
+    aria-labelledby="exampleModalLabel"
+    aria-hidden="true"
+  >
+    <div
+      class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered"
+    >
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 id="exampleModalLabel" class="modal-title fs-5">
+            Questions Analysis
+          </h1>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+            aria-label="Close"
+          ></button>
+        </div>
+        <div class="modal-body">
+          <QuizQuestionAnalysis :data="props.data" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Participants Analysis-->
   <div
     class="user-analytics-item"
+    type="button"
+    data-bs-toggle="modal"
+    :data-bs-target="`#${props.userName}`"
     @mouseenter="handleMouseEnter"
     @mouseleave="handleMouseLeave"
   >
