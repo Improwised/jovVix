@@ -14,7 +14,7 @@ const props = defineProps({
   <div class="card text-center" style="width: 18rem">
     <div class="card-body">
       <h5 class="card-title">{{ decodeURI(props.details?.title) }}</h5>
-      <p class="card-text">{{ props.details?.description }}</p>
+      <p class="card-text">{{ props.details?.description?.String }}</p>
       <p class="card-text text-muted">
         {{ props.details?.total_questions }} Questions
       </p>

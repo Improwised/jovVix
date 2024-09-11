@@ -11,11 +11,11 @@ type SocketResponseFormat struct {
 }
 
 type ResUserPlayedQuiz struct {
-	Id             string `json:"id" db:"id"`
-	Title          string `json:"title" db:"title"`
-	Description    string `json:"description" db:"description"`
-	CreatedAt      string `json:"created_at" db:"created_at"`
-	TotalQuestions string `json:"total_questions" db:"total_questions"`
+	Id             string         `json:"id" db:"id"`
+	Title          string         `json:"title" db:"title"`
+	Description    sql.NullString `json:"description" db:"description"`
+	CreatedAt      string         `json:"created_at" db:"created_at"`
+	TotalQuestions string         `json:"total_questions" db:"total_questions"`
 }
 
 type ResUserPlayedQuizAnalyticsBoard struct {

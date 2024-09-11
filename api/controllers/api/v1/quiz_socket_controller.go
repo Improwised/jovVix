@@ -1026,30 +1026,27 @@ func (qc *quizSocketController) SetAnswer(c *fiber.Ctx) error {
 	// calculate points
 	points, score := utils.CalculatePointsAndScore(answer, answers, answerPoints, answerDurationInSeconds, questionType)
 
-	// submit answer
-	qc.logger.Debug("userQuizResponseModel.SubmitAnswer called", zap.Any("currentQuizId", currentQuizId))
-	err = qc.userQuizResponseModel.SubmitAnswer(currentQuizId, answer, points, score)
-	if err != nil {
+	// Submit answer
+	if err := qc.userQuizResponseModel.SubmitAnswer(currentQuizId, answer, points, score); err != nil {
 		if err == sql.ErrNoRows {
 			return utils.JSONFail(c, http.StatusBadRequest, constants.ErrAnswerAlreadySubmitted)
 		}
 		qc.logger.Error("error during answer submit", zap.Error(err))
-		return utils.JSONFail(c, http.StatusBadRequest, constants.UnknownError)
-	}
-	qc.logger.Debug("userQuizResponseModel.SubmitAnswer success", zap.Any("currentQuestion", currentQuestion))
-
-	data, err := json.Marshal(user)
-	if err != nil {
-		qc.logger.Error(fmt.Sprintf("socket error marshal redis payload: %s event, %s action", constants.EventAnswerSubmittedByUser, constants.ActionAnserSubmittedByUser), zap.Error(err))
+		return utils.JSONFail(c, http.StatusInternalServerError, constants.UnknownError)
 	}
 
-	qc.logger.Debug("publish answer in redis called", zap.Any("ansChName", fmt.Sprintf("%s-%s", constants.ChannelSetAnswer, sessionId)))
-	err = qc.redis.PubSubModel.Client.Publish(qc.redis.PubSubModel.Ctx, fmt.Sprintf("%s-%s", constants.ChannelSetAnswer, sessionId), data).Err()
-	if err != nil {
-		qc.logger.Error(fmt.Sprintf("socket error publishing event: %s event, %s action", constants.EventAnswerSubmittedByUser, constants.ActionAnserSubmittedByUser), zap.Error(err))
-		return utils.JSONFail(c, http.StatusInternalServerError, constants.ErrPublishAnswer)
-	}
-	qc.logger.Debug("publish answer in redis success")
+	// Publish to Redis in a goroutine
+	go func() {
+		data, err := json.Marshal(user)
+		if err != nil {
+			qc.logger.Error("Error marshaling user data", zap.Error(err))
+			return
+		}
+
+		if err := qc.redis.PubSubModel.Client.Publish(qc.redis.PubSubModel.Ctx, fmt.Sprintf("%s-%s", constants.ChannelSetAnswer, sessionId), data).Err(); err != nil {
+			qc.logger.Error("Error publishing answer to Redis", zap.Error(err))
+		}
+	}()
 
 	return utils.JSONSuccess(c, http.StatusAccepted, nil)
 }

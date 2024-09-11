@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/Improwised/quizz-app/api/config"
 	"github.com/Improwised/quizz-app/api/constants"
@@ -39,6 +40,29 @@ func (m *Middleware) Authenticated(c *fiber.Ctx) error {
 
 		m.Logger.Error("error while checking user identity", zap.Error(err))
 		return utils.JSONError(c, http.StatusInternalServerError, constants.ErrUnauthenticated)
+	}
+
+	// Check if expiration time is less than 10 minutes than refesh token
+	if time.Until(claims.Expiration()) < 10*time.Minute {
+		cookieExpirationTime, err := time.ParseDuration(m.Config.Kratos.CookieExpirationTime)
+		if err != nil {
+			m.Logger.Error("unable to parse the duration for the cookie expiration", zap.Error(err))
+			return utils.JSONError(c, http.StatusInternalServerError, constants.ErrKratosCookieTime)
+		}
+
+		// Generate a new token
+		newToken, err := jwt.CreateToken(m.Config, claims.Subject(), time.Now().Add(time.Hour*2))
+		if err != nil {
+			m.Logger.Error("error while refreshing token", zap.Error(err))
+			return utils.JSONError(c, http.StatusInternalServerError, constants.ErrUnauthenticated)
+		}
+
+		// Set Coockie
+		c.Cookie(&fiber.Cookie{
+			Name:    constants.CookieUser,
+			Value:   newToken,
+			Expires: time.Now().Add(cookieExpirationTime),
+		})
 	}
 
 	c.Locals(constants.ContextUid, claims.Subject())

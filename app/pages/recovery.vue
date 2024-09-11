@@ -14,17 +14,15 @@
           </div>
 
           <form @submit.prevent="verifyOTP"> 
-            <div class="form-group mb-4">
+            <div class="form-group mb-4 d-flex align-items-center flex-column">
               <label for="otp" class="form-label">OTP code</label>
-              <div class="d-flex justify-content-center">
                 <input
                   id="otp"
                   v-model="otp"
                   type="text"
-                  class="otp_input"
+                  class="form-control otp-input"
                   placeholder="Enter OTP code"
                 />
-              </div>
               <span v-if="otpError" class="text-danger">{{ otpError }}</span>
             </div>
 
@@ -149,16 +147,7 @@ const verifyOTP = async () => {
 </script>
 
 <style scoped>
-.otp_input {
-  width: 350px;
-  text-align: center;
-  border: 2px solid rgb(189, 150, 226);
-  border-radius: 14px;
-  padding: 10px;
-  box-shadow: none;
-}
-
-.otp_input::placeholder {
-  color: rgb(168, 148, 202);
+.otp-input{
+  max-width: 350px;
 }
 </style>

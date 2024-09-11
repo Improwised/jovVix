@@ -64,7 +64,7 @@ function handleSkipTimer(e) {
             v-for="(answer, key) in props.data.data.options"
             :key="key"
             class="flex-grow-1 border m-1 rounded p-1 card-text"
-            :class="{ 'bg-success': answer.isAnswer, 'bg-danger': !answer.isAnswer && key == props.answer}"
+            :class="{ 'bg-success': answer.isAnswer, 'bg-danger text-white': !answer.isAnswer && key == props.answer}"
           >
             <div class="form-check form-check-inline">
               <label class="form-check-label">{{ answer.value }}</label>
