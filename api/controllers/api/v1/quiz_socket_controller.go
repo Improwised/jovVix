@@ -102,6 +102,7 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 	}
 
 	userId := quizUtilsHelper.GetString(c.Locals(constants.ContextUid))
+	isUserConnected := make(chan bool)
 
 	defer func() {
 		c.Close()
@@ -110,16 +111,20 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 
 	// check user web socket connection is close or not
 	go func() {
+
 		for {
 			_, p, err := c.ReadMessage()
 
 			if err != nil {
 				// if error occurs, change the connection alive status to false
+				qc.logger.Error("error while reading data from websocket", zap.Error(err))
 				updateUserData(qc, userId, session.ID.String(), false)
+				isUserConnected <- false
 				break
 			}
 			err = json.Unmarshal([]byte(p), &quizResponse)
 			if err != nil {
+				qc.logger.Error("error while unmarshaling data from websocket", zap.Error(err))
 				updateUserData(qc, userId, session.ID.String(), false)
 				break
 			}
@@ -155,9 +160,8 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 	publishUserOnJoin(qc, response, user.FirstName, userId, session.ID.String())
 	response.Action = constants.QuizQuestionStatus
 	onConnectHandleUser(c, qc, &response, session)
-
 	// userPlayedQuizId := quizUtilsHelper.GetString(c.Locals(constants.CurrentUserQuiz))
-	handleQuestion(c, qc, session, response)
+	handleQuestion(c, qc, session, response, isUserConnected)
 }
 
 func publishUserOnJoin(qc *quizSocketController, quizResponse QuizSendResponse, userName string, userId string, sessionId string) {
@@ -223,7 +227,7 @@ func publishUserOnJoin(qc *quizSocketController, quizResponse QuizSendResponse, 
 	}
 }
 
-func handleQuestion(c *websocket.Conn, qc *quizSocketController, session models.ActiveQuiz, response QuizSendResponse) {
+func handleQuestion(c *websocket.Conn, qc *quizSocketController, session models.ActiveQuiz, response QuizSendResponse, isUserConnected chan bool) {
 	pubsub := qc.redis.PubSubModel.Client.Subscribe(qc.redis.PubSubModel.Ctx, session.ID.String())
 	defer func() {
 		if pubsub != nil {
@@ -236,24 +240,29 @@ func handleQuestion(c *websocket.Conn, qc *quizSocketController, session models.
 	}()
 
 	ch := pubsub.Channel()
+	for {
+		select {
+		case isConnected := <-isUserConnected:
+			if !isConnected {
+				return
+			}
+		case msg := <-ch:
+			message := map[string]any{}
+			err := json.Unmarshal([]byte(msg.Payload), &message)
 
-	for msg := range ch {
+			if err != nil {
+				qc.logger.Error(fmt.Sprintf("socket error send waiting message: %s event, %s action", constants.EventJoinQuiz, response.Action), zap.Error(err))
+			}
 
-		message := map[string]any{}
-		err := json.Unmarshal([]byte(msg.Payload), &message)
+			event := quizUtilsHelper.GetString(message["event"])
+			err = utils.JSONSuccessWs(c, event, message["response"])
+			if err != nil {
+				qc.logger.Error(fmt.Sprintf("socket error send waiting message: %s event, %s action", event, response.Action), zap.Error(err))
+			}
 
-		if err != nil {
-			qc.logger.Error(fmt.Sprintf("socket error send waiting message: %s event, %s action", constants.EventJoinQuiz, response.Action), zap.Error(err))
-		}
-
-		event := quizUtilsHelper.GetString(message["event"])
-		err = utils.JSONSuccessWs(c, event, message["response"])
-		if err != nil {
-			qc.logger.Error(fmt.Sprintf("socket error send waiting message: %s event, %s action", event, response.Action), zap.Error(err))
-		}
-
-		if message["event"] == constants.EventTerminateQuiz {
-			break
+			if message["event"] == constants.EventTerminateQuiz {
+				return
+			}
 		}
 	}
 }

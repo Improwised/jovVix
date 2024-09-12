@@ -127,15 +127,7 @@ const showAnalysis = () => {
   <ClientOnly>
     <div>
       <div v-if="scoreboardData" class="table-responsive mt-5 w-100">
-        <table
-          class="table align-middle table-hover"
-          :class="{
-            'table-light': props.isAdmin,
-            'table-light': !props.isAdmin,
-            'table-borderless': !props.isAdmin,
-            'table-striped': !props.isAdmin,
-          }"
-        >
+        <table class="table align-middle table-light">
           <thead>
             <caption>
               Rankings
@@ -180,7 +172,6 @@ const showAnalysis = () => {
           </tbody>
         </table>
       </div>
-      <hr v-if="!props.isAdmin" />
       <div v-if="!props.isAdmin">
         <h3 class="text-center">Accuracy: {{ userAccuracy }}%</h3>
         <h3 class="text-center">Total Score: {{ userTotalScore }}</h3>
@@ -196,6 +187,7 @@ const showAnalysis = () => {
 <style scoped>
 .user-row {
   background-color: #8968cd !important;
+  color: white;
   box-shadow: none;
 }
 
