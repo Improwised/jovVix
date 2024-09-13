@@ -189,9 +189,5 @@ const showAnalysis = () => {
   background-color: #8968cd !important;
   color: white;
   box-shadow: none;
-}
-
-.table-hover > tbody > tr:hover {
-  background-color: #783b9b !important; /* Light purple color */
-}
+  }
 </style>

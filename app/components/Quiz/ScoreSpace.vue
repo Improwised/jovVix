@@ -1,4 +1,5 @@
 <script setup>
+import AnswerSubmissionChart from "../AnswerSubmissionChart.vue";
 const props = defineProps({
   data: {
     default: () => {
@@ -21,9 +22,12 @@ const props = defineProps({
     required: true,
     type: Number,
   },
+  analysisTab: {
+    type: String,
+  },
 });
 
-const emits = defineEmits(["askSkipTimer"]);
+const emits = defineEmits(["askSkipTimer", "changeAnalysisTab"]);
 const timer = ref(null);
 const time = ref(0);
 
@@ -45,6 +49,8 @@ function handleSkipTimer(e) {
   e.preventDefault();
   emits("askSkipTimer");
 }
+
+const changeAnalysisTab = (tab) => emits("changeAnalysisTab", tab);
 </script>
 
 <template>
@@ -73,7 +79,6 @@ function handleSkipTimer(e) {
         </div>
       </div>
     </div>
-
     <button
       v-if="isAdmin"
       type="button"
@@ -82,77 +87,104 @@ function handleSkipTimer(e) {
     >
       Skip
     </button>
+    <ul
+      class="nav nav-tabs mt-3 mb-3 nav-justified"
+      id="pills-tab"
+      role="tablist"
+      v-if="isAdmin"
+    >
+      <!-- Ranking tab -->
+      <li class="nav-item">
+        <a
+          class="nav-link"
+          :class="{ active: props.analysisTab === 'ranking' }"
+          id="pills-ranking-tab"
+          data-bs-toggle="pill"
+          href="#pills-ranking"
+          role="tab"
+          aria-controls="pills-ranking"
+          aria-selected="true"
+          @click="changeAnalysisTab('ranking')"
+          >Rankings</a
+        >
+      </li>
 
-    <div v-if="isAdmin" class="table-responsive mt-5">
-      <table
-        class="table table-hover table-borderless table-light table-custom  align-middle"
+      <!-- Charts tab -->
+      <li class="nav-item">
+        <a
+          class="nav-link"
+          :class="{ active: props.analysisTab === 'chart' }"
+          id="pills-chart-tab"
+          data-bs-toggle=""
+          href="#pills-chart"
+          role="tab"
+          aria-controls="pills-chart"
+          aria-selected="true"
+          @click="changeAnalysisTab('chart')"
+          >Chart</a
+        >
+      </li>
+    </ul>
+    <!-- Ranking Table -->
+    <div class="tab-content p-4" id="pills-tabContent">
+      <div
+        class="tab-pane fade"
+        :class="{ 'active show': props.analysisTab === 'ranking' || !isAdmin }"
+        id="pills-ranking"
+        role="tabpanel"
+        aria-labelledby="pills-ranking-tab"
       >
-        <caption class="caption-top">
-          Rankings
-        </caption>
-        <thead class="table-light">
-          <tr>
-            <th>Rank</th>
-            <th>User</th>
-            <th>Score</th>
-          </tr>
-        </thead>
-        <tbody class="table-group-divider">
-          <tr
-            v-for="(user, index) in props.data.data.rankList"     
-            :key="index"
-            class="table-light"
-          >
-            <td scope="row">{{ user.rank }}</td>
-            <td>
-              {{ user.firstname }}
-              <span>&nbsp; ({{ user.username }})</span>
-            </td>
-            <td>{{ user.score }}</td>
-          </tr>
-        </tbody>
-        <tfoot></tfoot>
-      </table>
-    </div>
-    <div v-else>
-      <table
-        class="table table-borderless align-middle"
-      >
-        <caption class="caption-top"> 
-          Rankings    
-        </caption>
-        <thead class="table-light"></thead>
-        <tbody class="table-group-divider">
-          <tr v-for="(user, index) in props.data.data.rankList" :key="index">
-            <td :class="{ 'bg-primary': user.username === props.userName }">
-              {{ user.rank }}
-            </td>
-            <td :class="{ 'bg-primary': user.username === props.userName }">
-              {{ user.firstname }}
-              <span v-if="user.username === props.userName"
-                >&nbsp; ({{ user.username }})</span
+        <div class="table-responsive mt-2">
+          <table class="table table-borderless align-middle">
+            <thead class="table-light"></thead>
+            <tbody class="table-group-divider">
+              <tr
+                v-for="(user, index) in props.data.data.rankList"
+                :key="index"
               >
-            </td>
-            <td :class="{ 'bg-primary': user.username === props.userName }">
-              {{ user.score }}
-            </td>
-          </tr>
-        </tbody>
-        <tfoot></tfoot>
-      </table>
+                <td :class="{ 'bg-primary': user.username === props.userName }">
+                  {{ user.rank }}
+                </td>
+                <td :class="{ 'bg-primary': user.username === props.userName }">
+                  {{ user.firstname }}
+                  <span v-if="user.username === props.userName"
+                    >&nbsp; ({{ user.username }})</span
+                  >
+                </td>
+                <td :class="{ 'bg-primary': user.username === props.userName }">
+                  {{ user.score }}
+                </td>
+              </tr>
+            </tbody>
+            <tfoot></tfoot>
+          </table>
+        </div>
+      </div>
+      <!-- Chart -->
+      <div
+        class="tab-pane fade"
+        :class="{ 'active show': props.analysisTab === 'chart' }"
+        id="pills-chart"
+        role="tabpanel"
+        aria-labelledby="pills-chart-tab"
+      >
+        <AnswerSubmissionChart
+          v-if="isAdmin"
+          :options="props.data.data.options"
+          :responses="props.data.data.userResponses"
+        />
+      </div>
     </div>
   </Frame>
 </template>
 
 <style scoped>
-
 .table-custom {
   background-color: #f9f9f9; /* Example light color */
 }
 
 .table td,
-.table th{
-  background-color:  #f9f9f9; /* Ensure each cell has a white background */
+.table th {
+  background-color: #f9f9f9; /* Ensure each cell has a white background */
 }
-
 </style>

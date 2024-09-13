@@ -41,6 +41,7 @@ const confirmNeeded = reactive({
 });
 const currentComponent = ref("Loading");
 const adminOperationHandler = ref();
+const analysisTab = ref("ranking");
 
 const session_id = route.params.session_id;
 
@@ -146,11 +147,11 @@ const handleQuizEvents = async (message) => {
 
 const connectAdmin = () => {
   adminOperationHandler.value.connectAdmin();
-}
+};
 
 const continueAdmin = () => {
   adminOperationHandler.value.continueAdmin();
-}
+};
 
 function handleNetworkEvent(message) {
   toast.warning(message + ", please reload the page");
@@ -187,6 +188,8 @@ const handleModal = (confirm) => {
   confirmNeeded.show = false;
 };
 
+const handleAnalysisTabChange = (tab) => (analysisTab.value = tab);
+
 definePageMeta({
   layout: "empty",
 });
@@ -221,6 +224,8 @@ definePageMeta({
       v-else-if="currentComponent == 'Score'"
       :data="data"
       :is-admin="true"
+      :analysisTab="analysisTab"
+      @changeAnalysisTab="handleAnalysisTabChange"
       @ask-skip-timer="askSkipTimer"
     ></QuizScoreSpace>
     <ListJoinUser v-if="currentComponent == 'Waiting'"></ListJoinUser>

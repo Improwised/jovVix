@@ -29,9 +29,7 @@ export default defineNuxtConfig({
     },
   },
 
-  css: [
-    "@/assets/scss/theme.scss",
-  ], // add
+  css: ["@/assets/scss/theme.scss"], // add
   modules: [
     [
       "@pinia/nuxt",
@@ -62,4 +60,6 @@ export default defineNuxtConfig({
   build: {
     transpile: ["vue-toastification", "vuetify"],
   },
+
+  plugins: ["@/plugins/chart.js"],
 });

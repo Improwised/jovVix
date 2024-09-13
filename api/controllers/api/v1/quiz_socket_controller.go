@@ -848,10 +848,13 @@ func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.Wa
 	response.Component = constants.Score
 	response.Action = constants.ActionShowScore
 	userRankBoard, err := qc.userPlayedQuizModel.GetRank(session.ID, question.ID)
-
 	if err != nil {
 		qc.logger.Error("error during get userRankBoard", zap.Error(err))
 		return
+	}
+	userResponses, err := qc.userQuizResponseModel.GetUserResponses(session.ID, question.ID)
+	if err != nil {
+		qc.logger.Error("error during get userResponses", zap.Error(err))
 	}
 
 	response.Data = map[string]any{
@@ -861,9 +864,19 @@ func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.Wa
 		"options":        question.Options,
 		"duration":       20,
 		"totalQuestions": totalQuestions,
+		"userResponses":  userResponses,
 	}
+	shareEvenWithUser(c, qc, response, constants.EventShowScore, session.ID.String(), int(session.InvitationCode.Int32), constants.ToAdmin)
 
-	shareEvenWithUser(c, qc, response, constants.EventShowScore, session.ID.String(), int(session.InvitationCode.Int32), constants.ToAll)
+	response.Data = map[string]any{
+		"rankList":       userRankBoard,
+		"question":       question.Question,
+		"answers":        question.Answers,
+		"options":        question.Options,
+		"duration":       20,
+		"totalQuestions": totalQuestions,
+	}
+	shareEvenWithUser(c, qc, response, constants.EventShowScore, session.ID.String(), int(session.InvitationCode.Int32), constants.ToUser )
 
 	wgForSkipTimer := &sync.WaitGroup{}
 	wgForSkipTimer.Add(1)

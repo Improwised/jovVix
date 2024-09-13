@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/Improwised/quizz-app/api/constants"
 	"github.com/Improwised/quizz-app/api/pkg/structs"
 	"github.com/doug-martin/goqu/v9"
 	"github.com/google/uuid"
@@ -24,6 +25,11 @@ type UserQuizResponse struct {
 	CreatedAt        time.Time `json:"created_at,omitempty" db:"created_at,omitempty"`
 	UpdatedAt        time.Time `json:"updated_at,omitempty" db:"updated_at,omitempty"`
 	CalculatedPoints int       `json:"calculated_points,omitempty" db:"calculated_points"`
+}
+
+type UsersQustionResponse struct {
+	UserId  string         `json:"id" db:"user_id"`
+	Answers sql.NullString `json:"answers" db:"answers"`
 }
 
 // QuestionModel implements question related database operations
@@ -122,4 +128,27 @@ func (model *UserQuizResponseModel) SubmitAnswer(userPlayedQuizId uuid.UUID, ans
 	}
 
 	return nil
+}
+
+func (model *UserQuizResponseModel) GetUserResponses(sessionId uuid.UUID, questionId uuid.UUID) ([]UsersQustionResponse, error) {
+
+	var userQuestionResponses []UsersQustionResponse
+	query := model.db.From(goqu.T(constants.UserQuizResponsesTable).As("uqr")).
+		Select("upq.user_id", "uqr.answers").
+		Join(
+			goqu.T(constants.UserPlayedQuizzesTable).As("upq"),
+			goqu.On(goqu.Ex{
+				"uqr.user_played_quiz_id": goqu.I("upq.id"),
+			}),
+		).
+		Where(
+			goqu.Ex{
+				"uqr.question_id":    questionId,
+				"upq.active_quiz_id": sessionId,
+			},
+		)
+
+	err := query.ScanStructs(&userQuestionResponses)
+
+	return userQuestionResponses, err
 }
