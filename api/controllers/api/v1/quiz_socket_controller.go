@@ -852,7 +852,7 @@ func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.Wa
 		qc.logger.Error("error during get userRankBoard", zap.Error(err))
 		return
 	}
-	userResponses, err := qc.userQuizResponseModel.GetUserResponses(session.ID, question.ID)
+	userResponses, err := qc.userQuizResponseModel.GetUsersResponses(session.ID, question.ID)
 	if err != nil {
 		qc.logger.Error("error during get userResponses", zap.Error(err))
 	}

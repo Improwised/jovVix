@@ -20,6 +20,7 @@ const questionsAnalysis = computed(() => {
     v-for="(item, index) in questionsAnalysis"
     :key="index"
     :page-title="'Q' + (index + 1) + '. ' + item.question"
+    class="mb-2"
   >
     <ul style="list-style-type: none; padding-left: 0">
       <li

@@ -44,8 +44,7 @@ const chartData = computed(() => {
 
       return acc;
     }, response);
-    console.log(responses);
-    console.log(Object.keys(responses));
+
     return {
       labels: Object.keys(responses),
       datasets: [

@@ -37,7 +37,7 @@ const props = defineProps({
   },
   userPlayedQuiz: {
     type: String,
-    required: true,
+    required: false,
     default: "",
   },
 });

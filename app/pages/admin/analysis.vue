@@ -27,14 +27,15 @@
       </ul>
 
       <div class="tab-content">
-        <div v-if="selectedTab === 'overview'" class="text-center">
+        <div
+          v-if="selectedTab === 'overview'"
+          class="text-center user-analytics-item"
+        >
           <QuizUserAnalyticsSpace
             v-for="(oData, index) in rankData"
             :key="index"
             :data="userJson[oData]"
             :user-name="oData"
-            :survey-questions="surveyQuestions"
-            class="user-analytics-item"
           ></QuizUserAnalyticsSpace>
         </div>
         <div v-if="selectedTab === 'questions'" class="text-center">
@@ -50,25 +51,23 @@
             v-for="(qData, index) in questionJson"
             :key="index"
             :page-title="`Q. ${qData[0] ? qData[0].order_no : ''} ${index}`"
+            class="mb-2"
           >
-          <!-- {{qData[0].order_no}} -->
-            <div class="question-details">
-              <div class="row m-2">
-                <div class="d-flex align-items-center justify-content-between">
-                  <span class="badge bg-primary">
-                    AVG. Response Time:
-                    {{ (qData[0].response_time / 1000).toFixed(2) }} seconds
-                  </span>
-                  <span
-                    v-if="qData[0].question_type === 'mcq'"
-                    class="badge bg-light-info mx-2 text-dark"
-                  >
-                    Multiple Choice Question
-                  </span>
-                  <span v-else class="badge bg-light-info mx-2 text-dark">
-                    Survey Question
-                  </span>
-                </div>
+            <div class="row m-2">
+              <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <span class="badge bg-primary">
+                  AVG. Response Time:
+                  {{ (qData[0].response_time / 1000).toFixed(2) }} seconds
+                </span>
+                <span
+                  v-if="qData[0].question_type === 'mcq'"
+                  class="badge bg-light-info mx-2 text-dark"
+                >
+                  Multiple Choice Question
+                </span>
+                <span v-else class="badge bg-light-info mx-2 text-dark">
+                  Survey Question
+                </span>
               </div>
             </div>
 
@@ -83,15 +82,6 @@
                 <span class="option-text"> {{ key }}: {{ option }} </span>
               </li>
             </ul>
-
-            <div
-              style="
-                display: flex;
-                flex: 1;
-                margin-top: 10px;
-                border-top: 1px solid #ccc;
-              "
-            ></div>
           </Frame>
         </div>
       </div>
@@ -112,7 +102,6 @@ const selectedTab = ref("overview");
 const userJson = ref({});
 const questionJson = ref({});
 const rankData = ref([]);
-const surveyQuestions = ref(0);
 const totalQuestions = ref(0);
 const activeQuizId = computed(() => route.query.active_quiz_id);
 
@@ -188,11 +177,6 @@ watch(
         }
       });
     }
-
-    // Count total survey questions
-    surveyQuestions.value = Object.values(questionJson.value)
-      .flat()
-      .filter((q) => q.question_type === "survey").length;
   },
   { immediate: true, deep: true }
 );
@@ -278,12 +262,6 @@ const selectTab = (tab) => {
 .user-row {
   background-color: #8968cd !important;
   box-shadow: none;
-}
-
-body,
-.quiz-container {
-  padding: 0;
-  margin: 0;
 }
 
 .quiz-container {

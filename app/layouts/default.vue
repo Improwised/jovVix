@@ -4,7 +4,7 @@
       <!-- <SideNavbar></SideNavbar> -->
       <div id="page-content">
         <Header></Header>
-        <div class="container-fluid p-6">
+        <div class="container-fluid pt-6">
           <slot />
         </div>
       </div>

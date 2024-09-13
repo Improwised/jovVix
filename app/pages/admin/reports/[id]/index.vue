@@ -1,84 +1,71 @@
 <template>
   <PageLayout />
-  <div v-if="quizAnalysisPending">loading...</div>
-  <div v-else-if="quizAnalysisError">{{ quizAnalysisError }}</div>
-  <div v-else class="card m-3 row" v-for="(quiz, index) in quizAnalysis.data">
-    <div class="row m-2">
-      <div class="col-lg-8 col-sm-12">
-        <div>
-          <strong class="text-primary">Question: </strong>
-          <h4 class="font-bold">{{ quiz.question }}</h4>
-        </div>
-      </div>
-      <div
-        class="col-lg-4 col-sm-12 d-flex flex-wrap align-items-center justify-content-around"
-      >
-        <span class="badge bg-primary m-1"
-          >AVG. Response Time:
-          {{ (quiz.avg_response_time / 1000).toFixed(2) }}</span
-        >
-        <span class="badge bg-secondary m-1"
-          >Time Duration: {{ quiz.duration }}</span
-        >
-        <span v-if="quiz.type === 1" class="badge bg-light-info m-1 text-dark"
-          >Multiple Choice Question</span
-        >
-        <span v-else class="badge bg-light-info m-1 text-dark">Survey</span>
-      </div>
-    </div>
-    <div class="border-bottom pb-4 mb-4"></div>
-    <div class="row d-flex align-items-stretch">
-      <div class="col-sm-12 col-lg-8 part-left">
-        <div class="row">
-          <div
-            v-for="(option, order) in quiz.options"
-            class="col-lg-6 col-md-12"
-          >
-            <div
-              v-if="quiz.correct_answer.includes(Number(order))"
-              class="bg-light-success option-box d-flex align-items-center m-2 border-rounded justify-content-between position-relative"
-            >
-              <Option
-                class=""
-                :order="order"
-                :option="option"
-                :selected="quiz.selected_answers[order]?.length || 0"
-                icon="fa-solid fa-check"
-                :isCorrect="true"
-              />
-              <span
-                class="position-absolute top-0 start-50 translate-middle badge rounded-pill bg-success"
-              >
-                correct
-              </span>
-            </div>
-            <div
-              v-else
-              class="bg-light-primary option-box d-flex align-items-center m-2 border-rounded justify-content-between"
-            >
-              <Option
-                class=""
-                :order="order"
-                :option="option"
-                :selected="quiz.selected_answers[order]?.length || 0"
-              />
-            </div>
+  <div v-if="quizAnalysisPending">Loading...</div>
+  <div
+    v-else-if="quizAnalysisError"
+    class="text-danger alert alert-danger mt-3"
+  >
+    Error while fetching data:
+    <span>
+      {{ quizAnalysisError }}
+    </span>
+  </div>
+  <div v-else class="container mt-3">
+    <div class="card mb-3 row" v-for="(quiz, index) in quizAnalysis.data">
+      <div class="row m-2">
+        <div class="col-lg-6 col-sm-12">
+          <div>
+            <strong class="text-primary">Question: </strong>
+            <h3 class="font-bold">{{ quiz.question }}</h3>
           </div>
+        </div>
+        <div
+          class="col-lg-6 col-sm-12 d-flex flex-wrap align-items-center justify-content-around"
+        >
+          <span class="bg-light-primary rounded px-2 text-dark">
+            AVG. Response Time:
+            {{ Math.abs((quiz.avg_response_time / 1000).toFixed(2)) }}/
+            {{ quiz.duration }} seconds
+          </span>
+          <span v-if="quiz.type === 1" class="badge bg-light-info m-1 text-dark"
+            >M.C.Q.</span
+          >
+          <span v-else class="badge bg-light-info m-1 text-dark">Survey</span>
+          <v-progress-circular
+            class="mt-2"
+            :model-value="quiz.correctPercentage"
+            :rotate="360"
+            :size="60"
+            :width="5"
+            :color="quiz.correctPercentage >= 50 ? 'teal' : '#D2042D'"
+          >
+            {{ quiz.correctPercentage.toFixed(0) }}%
+          </v-progress-circular>
         </div>
       </div>
 
-      <div class="col-sm-12 col-lg-4 part-right mb-3">
-        <div class="fw-bold">Accuracy:</div>
-        <div class="progress">
+      <div class="row d-flex align-items-stretch m-2">
+        <div v-for="(option, order) in quiz.options" class="col-lg-6 col-md-12">
           <div
-            class="progress-bar bg-success"
-            role="progressbar"
-            :style="{ width: `${quiz.correctPercentage}%` }"
-            :aria-valuenow="quiz.correctPercentage"
-            aria-valuemin="0"
-            aria-valuemax="100"
+            v-if="quiz.correct_answer.includes(Number(order))"
+            class="bg-light-success option-box"
           >
-            {{ quiz.correctPercentage }}%
+            <Option
+              class="text-success font-bold"
+              :order="order"
+              :option="option"
+              :selected="quiz.selected_answers[order]?.length || 0"
+              icon="fa-solid fa-check"
+              :isCorrect="true"
+            />
+          </div>
+          <div v-else class="option-box wrong-option">
+            <Option
+              class=""
+              :order="order"
+              :option="option"
+              :selected="quiz.selected_answers[order]?.length || 0"
+            />
           </div>
         </div>
       </div>
@@ -139,36 +126,15 @@ const {
   min-height: 70px;
   padding-top: 3px;
   border-radius: 30px;
-}
-.part-left {
-  border-right: 1px solid #ccc; /* Vertical divider */
-}
-
-.part-right {
-  border-top: 1px solid #ccc; /* Horizontal divider */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 5px;
+  margin-top: 3px;
 }
 
+.wrong-option {
+  border: 1px solid var(--bs-light-primary);
+}
 /* Adjust the divider for large screens */
-@media (min-width: 992px) {
-  .part-left {
-    border-right: 1px solid #ccc; /* Keep vertical divider */
-    border-bottom: none; /* Remove horizontal divider */
-  }
-
-  .part-right {
-    border-top: none; /* Remove horizontal divider */
-  }
-}
-
-/* Adjust the divider for smaller screens */
-@media (max-width: 991.98px) {
-  .part-left {
-    border-right: none; /* Remove vertical divider */
-    border-bottom: 1px solid #ccc; /* Add horizontal divider */
-  }
-
-  .part-right {
-    border-top: none; /* Remove horizontal divider */
-  }
-}
 </style>

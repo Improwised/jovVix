@@ -108,16 +108,21 @@ const uploadQuizAndQuestions = async (e) => {
           Required
         </div>
       </div>
-      <button v-if="requestPending" class="btn text-white btn-primary me-2">
-        Pending...
-      </button>
-      <button v-else type="submit" class="btn text-white btn-primary me-2">
-        Create Quiz
-      </button>
-      <a class="btn btn-primary me-2" href="/files/demo.csv" download="demo.csv"
-        >Download Sample</a
-      >
-      <UtilsStartQuiz v-if="quizId" :quiz-id="quizId" />
+      <div class="d-flex p-2">
+        <button v-if="requestPending" class="btn text-white btn-primary me-2">
+          Pending...
+        </button>
+        <button v-else type="submit" class="btn text-white btn-primary me-2">
+          Create Quiz
+        </button>
+        <a
+          class="btn btn-primary me-2"
+          href="/files/demo.csv"
+          download="demo.csv"
+          >Download Sample</a
+        >
+        <UtilsStartQuiz v-if="quizId" :quiz-id="quizId" />
+      </div>
     </form>
   </Frame>
 </template>

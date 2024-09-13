@@ -1,6 +1,13 @@
 <template>
   <PageLayout />
-  <div class="quiz-content">
+  <div v-if="pending">Loading...</div>
+  <div v-else-if="fetchError" class="text-danger alert alert-danger mt-3">
+    Error while fetching data:
+    <span>
+      {{ fetchError }}
+    </span>
+  </div>
+  <div v-else class="quiz-content">
     <div class="tab-content">
       <QuizUserAnalyticsSpace
         v-for="(oData, index) in rankData"
@@ -31,12 +38,15 @@ const userJson = ref({});
 const questionJson = ref({});
 const rankData = ref([]);
 const ranks = ref();
+const pending = ref(false);
+const fetchError = ref("");
 import PageLayout from "~~/components/reports/PageLayout.vue";
 
 const surveyQuestions = ref(0);
 
 const getAnalysisJson = async (activeQuizId) => {
   try {
+    pending.value = true;
     const response = await fetch(
       `${url.api_url}/analytics_board/admin?active_quiz_id=${activeQuizId}`,
       {
@@ -100,7 +110,11 @@ const getAnalysisJson = async (activeQuizId) => {
     } else {
       console.error(result);
     }
+
+    pending.value = false;
   } catch (error) {
+    pending.value = false;
+    fetchError.value = error;
     console.error("Failed to fetch data", error);
   }
 };

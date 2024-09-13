@@ -1,132 +1,112 @@
 <template>
-  <div v-if="quizListPending">loading....</div>
-  <div v-else-if="quizListError">{{ quizListError }}</div>
-  <div v-else class="row mt-6">
+  <div v-if="quizListPending">Loading....</div>
+  <div v-else-if="quizListError" class="text-danger alert alert-danger mt-3">
+    Error while fetching data:
+    <span>
+      {{ quizListError }}
+    </span>
+  </div>
+  <div v-else class="row mt-3">
     <div class="card">
       <div class="card-header bg-white py-4 row">
-        <h4 class="mb-0 col-sm-12 col-md-4">Quiz Reports</h4>
-
-        <input
-          type="text"
-          v-model="nameInput"
-          class="col-sm-5 col-md-3 border rounded p-2 mx-2"
-          placeholder="Search quiz"
-        />
-        <input
-          type="datetime-local"
-          v-model="date"
-          placeholder="Select date"
-          class="col-sm-5 col-md-3 border rounded p-2 mx-2"
-        />
+        <div class="col-sm-12 col-md-4">
+          <h3>Quiz Reports</h3>
+        </div>
+        <div
+          class="col-sm-12 col-md-8 d-flex align-items-center justify-content-md-end flex-wrap gap-2"
+        >
+          <input
+            type="text"
+            v-model="nameInput"
+            placeholder="Search quiz"
+            class="border rounded p-2 mx-2"
+          />
+          <input
+            type="datetime-local"
+            v-model="date"
+            placeholder="Select date"
+            class="border rounded p-2 mx-2"
+          />
+        </div>
       </div>
       <div class="table-responsive">
         <table class="table text-nowrap mb-0">
           <thead class="table-light">
             <tr>
-              <th>
+              <th @click="sortEventHandler('title')" role="button">
                 Quiz Name
                 <font-awesome-icon
                   icon="arrow-up-short-wide"
                   v-if="orderBy === 'title' && order === 'asc'"
                   class="bx bx-sort-up"
-                  @click="sortEventHandler('title')"
                 />
                 <font-awesome-icon
                   icon="arrow-up-wide-short"
                   v-else-if="orderBy === 'title' && order === 'desc'"
                   class="bx bx-sort-down"
-                  @click="sortEventHandler('title')"
                 />
-                <font-awesome-icon
-                  icon="sort"
-                  v-else
-                  class="bx bx-sort"
-                  @click="sortEventHandler('title')"
-                />
+                <font-awesome-icon icon="sort" v-else class="bx bx-sort" />
               </th>
-              <th>
+              <th role="button" @click="sortEventHandler('participants')">
                 Total Participants
                 <font-awesome-icon
                   icon="arrow-up-short-wide"
                   v-if="orderBy === 'participants' && order === 'asc'"
                   class="bx bx-sort-up"
-                  @click="sortEventHandler('participants')"
                 />
                 <font-awesome-icon
                   icon="arrow-up-wide-short"
                   v-else-if="orderBy === 'participants' && order === 'desc'"
                   class="bx bx-sort-down"
-                  @click="sortEventHandler('participants')"
                 />
-                <font-awesome-icon
-                  icon="sort"
-                  v-else
-                  class="bx bx-sort"
-                  @click="sortEventHandler('participants')"
-                />
+                <font-awesome-icon icon="sort" v-else class="bx bx-sort" />
               </th>
-              <th>
+              <th role="button" @click="sortEventHandler('activated_from')">
                 Starts At
                 <font-awesome-icon
                   icon="arrow-up-short-wide"
                   v-if="orderBy === 'activated_from' && order === 'asc'"
                   class="bx bx-sort-up"
-                  @click="sortEventHandler('activated_from')"
                 />
                 <font-awesome-icon
                   icon="arrow-up-wide-short"
                   v-else-if="orderBy === 'activated_from' && order === 'desc'"
                   class="bx bx-sort-down"
-                  @click="sortEventHandler('activated_from')"
                 />
-                <font-awesome-icon
-                  icon="sort"
-                  v-else
-                  class="bx bx-sort"
-                  @click="sortEventHandler('activated_from')"
-                />
+                <font-awesome-icon icon="sort" v-else class="bx bx-sort" />
               </th>
-              <th>
+              <th role="button" @click="sortEventHandler('activated_to')">
                 Ends At
                 <font-awesome-icon
                   icon="arrow-up-short-wide"
                   v-if="orderBy === 'activated_to' && order === 'asc'"
                   class="bx bx-sort-up"
-                  @click="sortEventHandler('activated_to')"
                 />
                 <font-awesome-icon
                   icon="arrow-up-wide-short"
                   v-else-if="orderBy === 'activated_to' && order === 'desc'"
                   class="bx bx-sort-down"
-                  @click="sortEventHandler('activated_to')"
                 />
                 <font-awesome-icon
+                  role="button"
                   icon="sort"
                   v-else
                   class="bx bx-sort"
-                  @click="sortEventHandler('activated_to')"
                 />
               </th>
-              <th>
+              <th role="button" @click="sortEventHandler('questions')">
                 Total Questions
                 <font-awesome-icon
                   icon="arrow-up-short-wide"
                   v-if="orderBy === 'questions' && order === 'asc'"
                   class="bx bx-sort-up"
-                  @click="sortEventHandler('questions')"
                 />
                 <font-awesome-icon
                   icon="arrow-up-wide-short"
                   v-else-if="orderBy === 'questions' && order === 'desc'"
                   class="bx bx-sort-down"
-                  @click="sortEventHandler('questions')"
                 />
-                <font-awesome-icon
-                  icon="sort"
-                  v-else
-                  class="bx bx-sort"
-                  @click="sortEventHandler('questions')"
-                />
+                <font-awesome-icon icon="sort" v-else class="bx bx-sort" />
               </th>
               <th>Accuracy</th>
             </tr>
@@ -137,24 +117,30 @@
               v-else
               v-for="(quiz, index) in quizList?.data.Data"
               :key="index"
+              @click="viewReport(quiz.id)"
+              role="button"
             >
               <td>
                 <div class="ms-3 lh-1">
-                  <h5 class="mb-1">
-                    <NuxtLink
-                      :to="`/admin/reports/${quiz.id}`"
-                      class="text-inherit"
-                      >{{ decodeURI(quiz.title) }}
-                    </NuxtLink>
-                  </h5>
-                  <p>{{ quiz.description.String }}</p>
+                  <p class="mb-1 h4 font-weight-bold text-primary">
+                    {{ decodeURI(quiz.title) }}
+                  </p>
+                  <p class="text-secondary">{{ quiz.description.String }}</p>
                 </div>
               </td>
               <td>{{ quiz.participants }}</td>
               <td>{{ quiz.activated_from.Time }}</td>
               <td>{{ quiz.activated_to.Time }}</td>
               <td>{{ quiz.questions }}</td>
-              <td>{{ (quiz.correct_answers / (quiz.participants * quiz.questions) * 100).toFixed(2) }}%</td>
+              <td>
+                {{
+                  (
+                    (quiz.correct_answers /
+                      (quiz.participants * quiz.questions)) *
+                    100
+                  ).toFixed(2)
+                }}%
+              </td>
             </tr>
           </tbody>
         </table>
@@ -210,6 +196,10 @@ const {
     date,
   },
 });
+
+const viewReport = (id) => {
+  navigateTo(`/admin/reports/${id}`);
+};
 
 const sortEventHandler = (columnName) => {
   let ordercol = order.value;

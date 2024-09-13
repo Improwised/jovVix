@@ -130,7 +130,7 @@ func (model *UserQuizResponseModel) SubmitAnswer(userPlayedQuizId uuid.UUID, ans
 	return nil
 }
 
-func (model *UserQuizResponseModel) GetUserResponses(sessionId uuid.UUID, questionId uuid.UUID) ([]UsersQustionResponse, error) {
+func (model *UserQuizResponseModel) GetUsersResponses(sessionId uuid.UUID, questionId uuid.UUID) ([]UsersQustionResponse, error) {
 
 	var userQuestionResponses []UsersQustionResponse
 	query := model.db.From(goqu.T(constants.UserQuizResponsesTable).As("uqr")).

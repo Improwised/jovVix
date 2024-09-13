@@ -35,7 +35,6 @@ watch(
 // main function
 function handleCountUser(message) {
   if (message.event == app.$GetQuestion) {
-    console.log(message);
     totalUser.value = message.data.totalJoinUser;
   }
 }

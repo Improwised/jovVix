@@ -19,7 +19,7 @@ const props = defineProps({
     default: "",
   },
   answer: {
-    required: true,
+    required: false,
     type: Number,
   },
   analysisTab: {

@@ -1,5 +1,5 @@
 <template>
-    <div class="row">
+    <div class="row mt-3">
         <div class="col-sm-12 col-md-6">
             <nav aria-label="Page navigation example">
                 <ul class="pagination pagination-primary justify-content-end">
