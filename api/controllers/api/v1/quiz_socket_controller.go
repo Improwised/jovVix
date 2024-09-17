@@ -612,7 +612,11 @@ func handleConnectedUser(c *websocket.Conn, qc *quizSocketController, sessionId 
 	for msg := range ch {
 		response.Data = msg.Payload
 
-		if response.Data == constants.EventStartQuizByAdmin || response.Data == constants.EventTerminateQuiz || response.Data == constants.StartQuizByAdminNoPlayerFound {
+		if response.Data == constants.StartQuizByAdminNoPlayerFound {
+			continue
+		}
+
+		if response.Data == constants.EventStartQuizByAdmin || response.Data == constants.EventTerminateQuiz {
 			break
 		}
 
@@ -876,7 +880,7 @@ func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.Wa
 		"duration":       20,
 		"totalQuestions": totalQuestions,
 	}
-	shareEvenWithUser(c, qc, response, constants.EventShowScore, session.ID.String(), int(session.InvitationCode.Int32), constants.ToUser )
+	shareEvenWithUser(c, qc, response, constants.EventShowScore, session.ID.String(), int(session.InvitationCode.Int32), constants.ToUser)
 
 	wgForSkipTimer := &sync.WaitGroup{}
 	wgForSkipTimer.Add(1)
