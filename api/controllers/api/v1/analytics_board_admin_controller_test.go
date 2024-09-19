@@ -26,11 +26,10 @@ func TestNewAnalyticsBoardAdminController(t *testing.T) {
 	assert.Nil(t, err)
 	t.Run("check whether controller is being returned or not", func(t *testing.T) {
 
-		analyticsAdminController, err := v1.NewAnalyticsBoardAdminController(db, logger, events)
+		analyticsAdminController, err := v1.NewAnalyticsBoardAdminController(db, logger, events, &cfg)
 		assert.Nil(t, err)
 
 		assert.NotNil(t, analyticsAdminController)
 	})
 
-	
 }

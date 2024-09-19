@@ -7,7 +7,7 @@ const toast = useToast();
 
 const usersThatSubmittedAnswer = useUserThatSubmittedAnswer();
 const { usersSubmittedAnswers } = usersThatSubmittedAnswer;
-const totalUser = ref(0)
+const totalUser = ref(0);
 
 const props = defineProps({
   data: {
@@ -18,7 +18,6 @@ const props = defineProps({
     required: true,
   },
 });
-
 
 watch(
   () => props.data,
@@ -38,7 +37,6 @@ function handleCountUser(message) {
     totalUser.value = message.data.totalJoinUser;
   }
 }
-
 </script>
 
 <template>

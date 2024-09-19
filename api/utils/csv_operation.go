@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"database/sql"
 	"fmt"
 	"io"
 	"os"
@@ -22,6 +23,9 @@ type Question struct {
 	Option4       string `csv:"Option 4"`
 	Option5       string `csv:"Option 5"`
 	CorrectAnswer string `csv:"Correct Answer"`
+	QuestionMedia string `csv:"Question Media"`
+	OptionsMedia  string `csv:"Options Media"`
+	Resource      string `csv:"Resource"`
 }
 
 func ValidateCSVFileFormat(fileName string) ([]Question, error) {
@@ -113,6 +117,9 @@ func ExtractQuestionsFromCSV(questions []Question) ([]models.Question, error) {
 			Points:            int16(points),
 			DurationInSeconds: duration,
 			OrderNumber:       i + 1,
+			QuestionMedia:     u.QuestionMedia,
+			OptionsMedia:      u.OptionsMedia,
+			Resource:          sql.NullString{String: u.Resource, Valid: true},
 		})
 	}
 	return validQuestions, nil

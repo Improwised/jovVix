@@ -3,8 +3,8 @@ const headers = useRequestHeaders(["cookie"]);
 const url = useRuntimeConfig().public;
 const route = useRoute();
 
-const userAccuracy = ref(0)
-const userTotalScore = ref(0)
+const userAccuracy = ref(0);
+const userTotalScore = ref(0);
 const played_quiz_id = computed(() => route.params.played_quiz_id);
 
 const {
@@ -24,7 +24,7 @@ watch(
     if (quizPending.value || quizError.value) {
       return;
     }
-    const analysis = questionsAnalysis(quizList.value?.data)
+    const analysis = questionsAnalysis(quizList.value?.data);
     userAccuracy.value = analysis.accuracy;
     userTotalScore.value = analysis.totalScore;
   },
@@ -38,9 +38,7 @@ watch(
       <div v-if="quizError" class="alert alert-danger" role="alert">
         {{ quizError.data }}
       </div>
-      <div v-else-if="quizPending">
-        Pending...
-      </div>
+      <div v-else-if="quizPending">Pending...</div>
       <div v-else>
         <h3 class="text-center">Accuracy: {{ userAccuracy }}%</h3>
         <h3 class="text-center">Total Score: {{ userTotalScore }}</h3>

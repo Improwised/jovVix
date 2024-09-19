@@ -53,8 +53,17 @@
             :page-title="`Q. ${qData[0] ? qData[0].order_no : ''} ${index}`"
             class="mb-2"
           >
+            <div v-if="qData[0]?.question_media === 'image'" class="d-flex align-items-center justify-content-center">
+              <img
+                :src="`${qData[0]?.resource}`"
+                :alt="`${qData[0]?.resource}`"
+                class="rounded img-thumbnail"
+              />
+            </div>
             <div class="row m-2">
-              <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+              <div
+                class="d-flex flex-wrap align-items-center justify-content-between gap-2"
+              >
                 <span class="badge bg-primary">
                   AVG. Response Time:
                   {{ (qData[0].response_time / 1000).toFixed(2) }} seconds
@@ -79,7 +88,15 @@
                   qData[0].correct_answer.includes(key) ? 'correct-answer' : ''
                 "
               >
-                <span class="option-text"> {{ key }}: {{ option }} </span>
+                <span v-if="qData[0]?.options_media === 'text'">{{ key }}: {{ option }}</span>
+                <div v-if="qData[0]?.options_media === 'image'" class="d-flex align-items-center justify-content-center">
+                  <span>{{ key }}:</span>
+                  <img
+                    :src="`${option}`"
+                    :alt="`${option}`"
+                    class="rounded img-thumbnail"
+                  />
+                </div>
               </li>
             </ul>
           </Frame>

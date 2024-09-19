@@ -87,7 +87,7 @@ func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config confi
 	if err != nil {
 		return err
 	}
-	err = setUpAnalyticsBoardController(v1, goqu, logger, middleware, events)
+	err = setUpAnalyticsBoardController(v1, goqu, logger, config, middleware, events)
 	if err != nil {
 		return err
 	}
@@ -108,6 +108,11 @@ func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config confi
 	}
 
 	err = setupUserPlayedQuizeController(v1, goqu, logger, middleware, events, pub)
+	if err != nil {
+		return err
+	}
+
+	err = setupImageController(v1, goqu, logger, middleware, events, pub, config)
 	if err != nil {
 		return err
 	}
@@ -179,13 +184,7 @@ func setupUserController(v1 fiber.Router, goqu *goqu.Database, logger *zap.Logge
 
 	// user route
 	userRouter := v1.Group("/user")
-	userRouter.Get("/is_admin", authController.IsRegisteredUser)
 	userRouter.Get("/who", middlewares.Authenticated, userController.GetUserMeta)
-
-	// users route
-	usersRouter := v1.Group("/users")
-	usersRouter.Get(fmt.Sprintf("/:%s", constants.ParamUid), middlewares.Authenticated, userController.GetUser)
-	usersRouter.Post("/", userController.CreateUser)
 
 	// quick user route
 	quickUsersRouter := v1.Group("/quick_users")
@@ -216,8 +215,15 @@ func setupMetricsController(api fiber.Router, db *goqu.Database, logger *zap.Log
 }
 
 func setupQuizController(v1 fiber.Router, db *goqu.Database, logger *zap.Logger, middleware middlewares.Middleware, events *events.Events, pub *watermill.WatermillPublisher, config config.AppConfig, redis *redis.RedisPubSub) error {
-	quizSocketController := controller.InitQuizConfig(db, &config, logger, redis)
-	quizController := controller.InitQuizController(db, logger, events, pub)
+	quizSocketController, err := controller.InitQuizConfig(db, &config, logger, redis)
+	if err != nil {
+		return err
+	}
+
+	quizController, err := controller.InitQuizController(db, logger, events, pub, &config)
+	if err != nil {
+		return err
+	}
 
 	v1.Get(fmt.Sprintf("/socket/join/:%s", constants.QuizSessionInvitationCode), middleware.CheckSessionCode, middleware.CustomAuthenticated, websocket.New(quizSocketController.Join))
 
@@ -234,6 +240,7 @@ func setupQuizController(v1 fiber.Router, db *goqu.Database, logger *zap.Logger,
 	quizzes.Post(fmt.Sprintf("/:%s/demo_session", constants.QuizId), quizController.GenerateDemoSession)
 	quizzes.Post(fmt.Sprintf("/:%s/upload", constants.QuizTitle), middleware.ValidateCsv, middleware.KratosAuthenticated, quizController.CreateQuizByCsv)
 	quizzes.Get("/list", quizController.GetAdminUploadedQuizzes)
+	quizzes.Get(fmt.Sprintf("/:%s", constants.QuizId), quizController.ListQuestionByQuizId)
 
 	v1.Get(fmt.Sprintf("/socket/admin/arrange/:%s", constants.SessionIDParam), middleware.CheckSessionId, middleware.KratosAuthenticated, websocket.New(quizSocketController.Arrange))
 
@@ -261,13 +268,13 @@ func setUpFinalScoreBoardController(v1 fiber.Router, goqu *goqu.Database, logger
 	return nil
 }
 
-func setUpAnalyticsBoardController(v1 fiber.Router, goqu *goqu.Database, logger *zap.Logger, middlewares middlewares.Middleware, events *events.Events) error {
-	analyticsBoardUserController, err := controller.NewAnalyticsBoardUserController(goqu, logger, events)
+func setUpAnalyticsBoardController(v1 fiber.Router, goqu *goqu.Database, logger *zap.Logger, config config.AppConfig, middlewares middlewares.Middleware, events *events.Events) error {
+	analyticsBoardUserController, err := controller.NewAnalyticsBoardUserController(goqu, logger, events, &config)
 	if err != nil {
 		return err
 	}
 
-	analyticsBoardAdminController, err := controller.NewAnalyticsBoardAdminController(goqu, logger, events)
+	analyticsBoardAdminController, err := controller.NewAnalyticsBoardAdminController(goqu, logger, events, &config)
 	if err != nil {
 		return err
 	}
@@ -289,5 +296,16 @@ func setupUserPlayedQuizeController(v1 fiber.Router, goqu *goqu.Database, logger
 	userRouter.Get("/", middlewares.KratosAuthenticated, userPlayedQuizeController.ListUserPlayedQuizes)
 	userRouter.Get(fmt.Sprintf("/:%s", constants.UserPlayedQuizId), userPlayedQuizeController.ListUserPlayedQuizesWithQuestionById)
 	userRouter.Post(fmt.Sprintf("/:%s", constants.QuizSessionInvitationCode), middlewares.Authenticated, userPlayedQuizeController.PlayedQuizValidation)
+	return nil
+}
+
+func setupImageController(v1 fiber.Router, goqu *goqu.Database, logger *zap.Logger, middlewares middlewares.Middleware, events *events.Events, pub *watermill.WatermillPublisher, config config.AppConfig) error {
+	imageController, err := controller.NewImageController(goqu, logger, events, pub, &config)
+	if err != nil {
+		return err
+	}
+
+	imageRouter := v1.Group("/images")
+	imageRouter.Post("/", middlewares.KratosAuthenticated, imageController.InsertImage)
 	return nil
 }

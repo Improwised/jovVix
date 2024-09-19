@@ -110,10 +110,9 @@ const isKratosUser = computed(() => {
   return false;
 });
 
-onMounted(()=>{
+onMounted(() => {
   setUserDataStore();
-})
-
+});
 </script>
 
 <style scoped>

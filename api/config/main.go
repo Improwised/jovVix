@@ -32,6 +32,7 @@ type AppConfig struct {
 	DB            DBConfig
 	Kratos        KratosConfig
 	MQ            MQConfig
+	AWS           AWSConfig
 }
 
 // GetConfig Collects all configs

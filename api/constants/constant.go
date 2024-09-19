@@ -23,6 +23,7 @@ const (
 	ParamUid         = "userId"
 	UserPlayedQuizId = "user_played_quiz_id"
 	Username         = "username"
+	MediaQuery       = "media"
 )
 
 // Success messages
@@ -48,6 +49,7 @@ const (
 	ErrRegisterQuiz        = "error while creating quiz"
 	ErrCreatingDemoQuiz    = "error while creating demo quiz"
 	ErrGetTotalJoinUser    = "error while get count of user join in quiz"
+	ErrInsertImage         = "error while insert image"
 )
 
 // default Events

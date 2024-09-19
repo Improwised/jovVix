@@ -6,6 +6,7 @@ import { useToast } from "vue-toastification";
 // define nuxt configs
 const app = useNuxtApp();
 const toast = useToast();
+const url = useRuntimeConfig().public;
 
 // define props and emits
 const props = defineProps({
@@ -141,6 +142,12 @@ function handleSkip(e) {
     <div>
       <span>{{ question.no }}. </span>
       <span>{{ question.question }}</span>
+      <img
+        v-if="question?.question_media === 'image'"
+        :src="`${question?.resource}`"
+        :alt="`${question?.resource}`"
+        class="rounded img-thumbnail"
+      />
     </div>
     <div class="d-flex flex-column flex-md-row">
       <div
@@ -148,6 +155,12 @@ function handleSkip(e) {
         :key="key"
         class="border m-1 rounded p-1 w-100"
       >
+        <img
+          v-if="question?.options_media === 'image'"
+          :src="`${value}`"
+          :alt="`${value}`"
+          class="rounded img-thumbnail"
+        />
         <label
           class="form-check-label d-flex align-items-center"
           :class="{
@@ -166,7 +179,13 @@ function handleSkip(e) {
               :disabled="isSubmitted"
             />
           </div>
-          <p class="mb-0 ms-2" :for="`${key}`">{{ value }}</p>
+          <p
+            v-if="question?.options_media === 'text'"
+            class="mb-0 ms-2"
+            :for="`${key}`"
+          >
+            {{ value }}
+          </p>
         </label>
       </div>
     </div>

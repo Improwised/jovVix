@@ -46,6 +46,9 @@ type QuizAnalysis struct {
 	Question          string                 `json:"question" db:"question"`
 	Type              int                    `json:"type" db:"type"`
 	Options           map[string]string      `json:"options" db:"options"`
+	QuestionsMedia    string                 `db:"question_media" json:"question_media"`
+	OptionsMedia      string                 `db:"options_media" json:"options_media"`
+	Resource          string                 `db:"resource" json:"resource"`
 	CorrectAnswers    []int                  `json:"correct_answer" db:"answers"`
 	SelectedAnswers   map[string]interface{} `json:"selected_answers" db:"selected_answers"`
 	DurationInSeconds int                    `json:"duration" db:"duration_in_seconds"`
@@ -179,6 +182,7 @@ func (model *QuizModel) GetSharedQuestions(invitationCode int) ([]Question, sql.
 	with core as (
 		select
 			q.*,
+			aq.quiz_id,
 			aq.current_question,
 			aq.is_question_active,
 			aq.question_delivery_time,
@@ -216,6 +220,7 @@ func (model *QuizModel) GetSharedQuestions(invitationCode int) ([]Question, sql.
 		limit 1
 		)select
 			id,
+			quiz_id,
 			order_no,
 			question_delivery_time,
 			question,
@@ -223,6 +228,9 @@ func (model *QuizModel) GetSharedQuestions(invitationCode int) ([]Question, sql.
 			answers,
 			points,
 			duration_in_seconds,
+			question_media,
+			options_media,
+			resource,
 			created_at,
 			updated_at
 		from
@@ -257,7 +265,7 @@ func (model *QuizModel) GetSharedQuestions(invitationCode int) ([]Question, sql.
 		question := Question{}
 		var options []byte
 		var answers []byte
-		err := rows.Scan(&question.ID, &question.OrderNumber, &QuestionDeliveryTime, &question.Question, &options, &answers, &question.Points, &question.DurationInSeconds, &question.CreatedAt, &question.UpdatedAt)
+		err := rows.Scan(&question.ID, &question.QuizId, &question.OrderNumber, &QuestionDeliveryTime, &question.Question, &options, &answers, &question.Points, &question.DurationInSeconds, &question.QuestionMedia, &question.OptionsMedia, &question.Resource, &question.CreatedAt, &question.UpdatedAt)
 		if err != nil {
 
 			return nil, QuestionDeliveryTime, err
@@ -365,6 +373,9 @@ func (model *QuizModel) GetQuizAnalysis(activeQuizId string) ([]QuizAnalysis, er
 			goqu.C("question_id").Table("a"),
 			goqu.C("question").Table("q"),
 			goqu.C("options").Table("q"),
+			goqu.C("question_media").Table("q"),
+			goqu.C("options_media").Table("q"),
+			goqu.C("resource").Table("q"),
 			goqu.C("answers").Table("q"),
 			goqu.C("selected_answers").Table("a"),
 			goqu.C("duration_in_seconds").Table("q"),
@@ -386,7 +397,7 @@ func (model *QuizModel) GetQuizAnalysis(activeQuizId string) ([]QuizAnalysis, er
 		var options []byte
 		var answers []byte
 		var selectedAnswer []byte
-		err := rows.Scan(&quizAnalysisRow.ID, &quizAnalysisRow.Question, &options, &answers, &selectedAnswer, &quizAnalysisRow.DurationInSeconds, &quizAnalysisRow.AvgResponseTime, &quizAnalysisRow.Type)
+		err := rows.Scan(&quizAnalysisRow.ID, &quizAnalysisRow.Question, &options, &quizAnalysisRow.QuestionsMedia, &quizAnalysisRow.OptionsMedia, &quizAnalysisRow.Resource, &answers, &selectedAnswer, &quizAnalysisRow.DurationInSeconds, &quizAnalysisRow.AvgResponseTime, &quizAnalysisRow.Type)
 		if err != nil {
 
 			return nil, err

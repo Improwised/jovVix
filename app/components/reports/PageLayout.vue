@@ -5,17 +5,17 @@
       <ul class="nav nav-tabs">
         <li class="nav-item">
           <NuxtLink
-            :class="{ active: route.path === `/admin/reports/${id}` }"
+            :class="{ active: route.path === `/admin/reports/${activeQuizId}` }"
             class="nav-link"
-            :to="`/admin/reports/${id}`"
+            :to="`/admin/reports/${activeQuizId}`"
             >Questions</NuxtLink
           >
         </li>
         <li class="nav-item">
           <NuxtLink
-            :class="{ active: route.path === `/admin/reports/${id}/participants` }"
+            :class="{ active: route.path === `/admin/reports/${activeQuizId}/participants` }"
             class="nav-link"
-            :to="`/admin/reports/${id}/participants`"
+            :to="`/admin/reports/${activeQuizId}/participants`"
             >Participants</NuxtLink
           >
         </li>
@@ -26,5 +26,5 @@
 
 <script setup>
 const route = useRoute();
-const id = route.params.id;
+const activeQuizId = computed(() => route.params.id );
 </script>

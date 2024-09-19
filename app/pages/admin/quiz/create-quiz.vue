@@ -13,6 +13,8 @@ let title = ref("");
 const url = useRuntimeConfig().public;
 let quizId = ref();
 const requestPending = ref(false);
+const requiredImage = ref([])
+const imageForm = new FormData();
 
 const uploadQuizAndQuestions = async (e) => {
   e.preventDefault();
@@ -44,7 +46,6 @@ const uploadQuizAndQuestions = async (e) => {
           if (response.status == 202) {
             quizId.value = response._data?.data;
             toast.success(app.$CsvUploadSuccess);
-            requestPending.value = false;
           }
         },
       }
@@ -54,10 +55,153 @@ const uploadQuizAndQuestions = async (e) => {
     requestPending.value = false;
     return;
   }
+
+  try {
+      await $fetch(encodeURI(`${url.api_url}/admin/quizzes/${quizId.value}?media=image`), {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+        },
+        mode: "cors",
+        credentials: "include",
+        onResponse({ response }) {
+          if (response.status != 200) {
+            requestPending.value = false;
+            toast.error("error while create quiz");
+            return;
+          }
+          if (response.status == 200) {
+            requiredImage.value = response._data.data;
+            requestPending.value = false;
+          }
+        },
+      });
+    } catch (error) {
+      toast.error(error.message);
+      requestPending.value = false;
+      return;
+    }
+};
+
+const imageFileAppend = (e) => {
+  imageForm.append("image-attachment", e.target.files[0], e.target.name);
+};
+
+const imageUlpoads3 = async() => {
+  const imageAttachment = document.getElementById("image-attachment");
+  if (imageAttachment.files.length !== 0) {
+    try {
+      await $fetch(encodeURI(`${url.api_url}/images?quiz_id=${quizId.value}`), {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+        },
+        body: imageForm,
+        mode: "cors",
+        credentials: "include",
+        onResponse({ response }) {
+          if (response.status != 200) {
+            requestPending.value = false;
+            toast.error("error while create quiz");
+            return;
+          }
+          if (response.status == 200) {
+            console.log(response._data);
+            toast.success(response._data?.data);
+            requestPending.value = false;
+          }
+        },
+      });
+    } catch (error) {
+      toast.error(error.message);
+      requestPending.value = false;
+      return;
+    }
+  }
 };
 </script>
 
 <template>
+
+    <!-- ImageUpload Modal -->
+     <div v-if="requiredImage.length > 0">
+      <div
+        id="imageUpload"
+        class="modal fade"
+        tabindex="-1"
+        aria-labelledby="exampleModalLabel"
+        aria-hidden="true"
+      >
+        <div
+          class="modal-dialog modal-xl modal-dialog-scrollable modal-dialog-centered"
+        >
+          <div class="modal-content">
+            <div class="modal-header">
+              <h1 id="exampleModalLabel" class="modal-title fs-5">
+                Questions Analysis
+              </h1>
+              <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+              ></button>
+            </div>
+            <div class="modal-body">
+              <table class="table table-responsive">
+                  <thead>
+                    <tr>
+                      <th scope="col">Question</th>
+                      <th scope="col">QuestionImage</th>
+                      <th scope="col">OptionsImage</th>
+                    </tr>
+                </thead>
+                  <tbody>
+                    <tr v-for="(value) in requiredImage" :key="value.id">
+                      <td>{{ value.question }}</td>
+                      <td>
+                        <v-file-input
+                          v-if="value.question_media == 'image'"
+                          prepend-icon="mdi-camera"
+                          id="image-attachment"
+                          type="file"
+                          class="form-control"
+                          :name="value.id"
+                          label="Question"
+                          accept="image/*"
+                          @change="imageFileAppend"
+                        >
+                        </v-file-input>
+                      </td>
+                      <td>
+                        <v-file-input
+                          v-if="value.options_media == 'image'"
+                          v-for="index in 5"
+                          prepend-icon="mdi-camera"
+                          id="image-attachment"
+                          type="file"
+                          class="form-control mb-2"
+                          :name="index + '_' + value.id"
+                          :label="'Option ' + index"
+                          accept="image/*"
+                          @change="imageFileAppend"
+                        >
+                        </v-file-input>
+                      </td>
+                    </tr>
+                  </tbody>
+              </table>
+            </div>
+            <div class="modal-footer text-white">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              <button @click="imageUlpoads3" type="button" class="btn btn-primary">Save changes</button>
+            </div>
+          </div>
+        </div>
+      </div>
+     </div>
+    
+
   <Frame
     page-title="Create Quiz"
     page-message="Create New Quiz By Uploading CSV"
@@ -89,23 +233,25 @@ const uploadQuizAndQuestions = async (e) => {
             name="description"
             aria-describedby="helpId"
             placeholder=""
+            required
           />
           <!-- <small id="helpId" class="form-text text-muted">Help text</small> -->
         </div>
-
-        <label for="attachment" class="form-label">Choose File</label>
-        <input
-          id="attachment"
-          type="file"
-          class="form-control"
-          name="attachment"
-          placeholder="upload"
-          aria-describedby="fileHelpId"
-          accept=".csv"
-          @change="(e) => (file = e.target.files.length)"
-        />
-        <div v-if="file == 0" id="fileHelpId" class="form-text text-danger">
-          Required
+        <div class="mb-3">
+          <label for="attachment" class="form-label">Choose File</label>
+          <input
+            id="attachment"
+            type="file"
+            class="form-control"
+            name="attachment"
+            placeholder="upload"
+            aria-describedby="fileHelpId"
+            accept=".csv"
+            @change="(e) => (file = e.target.files.length)"
+          />
+          <div v-if="file == 0" id="fileHelpId" class="form-text text-danger">
+            Required
+          </div>
         </div>
       </div>
       <div class="d-flex p-2">
@@ -121,6 +267,15 @@ const uploadQuizAndQuestions = async (e) => {
           download="demo.csv"
           >Download Sample</a
         >
+        <div
+          v-if="requiredImage.length > 0"
+          data-bs-toggle="modal"
+          :data-bs-target="`#imageUpload`" 
+          type="button"
+          class="btn text-white btn-primary me-2"
+        >
+          Upload Images
+        </div>
         <UtilsStartQuiz v-if="quizId" :quiz-id="quizId" />
       </div>
     </form>

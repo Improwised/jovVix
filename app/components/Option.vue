@@ -5,7 +5,14 @@
     >
       {{ String.fromCharCode(64 + Number(props.order)) }}
     </button>
-    <div :class="{'text-success': props.isCorrect }" class="mx-3 font-weight-bold">{{ props.option }}</div>
+    <div v-if="props.optionsMedia === 'image'" class="d-flex align-items-center justify-content-center">
+      <img
+        :src="`${props.option}`"
+        :alt="`${props.option}`"
+        class="rounded img-thumbnail"
+      />
+    </div>
+    <div v-if="props.optionsMedia === 'text'" :class="{'text-success': props.isCorrect }" class="mx-3 font-weight-bold">{{ props.option }}</div>
   </div>
   <span
     :class="{ 'bg-success': props.isCorrect }"
@@ -15,5 +22,5 @@
   >
 </template>
 <script setup>
-const props = defineProps(["order", "selected", "option", "icon", "isCorrect"]);
+const props = defineProps(["order", "selected", "option", "icon", "isCorrect","optionsMedia"]);
 </script>

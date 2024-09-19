@@ -22,6 +22,13 @@ const questionsAnalysis = computed(() => {
     :page-title="'Q' + (index + 1) + '. ' + item.question"
     class="mb-2"
   >
+    <div v-if="item?.question_media === 'image'" class="d-flex align-items-center justify-content-center">
+      <img
+        :src="`${item?.resource}`"
+        :alt="`${item?.resource}`"
+        class="rounded img-thumbnail"
+      />
+    </div>
     <ul style="list-style-type: none; padding-left: 0">
       <li
         v-for="(option, key) in item.options"
@@ -42,7 +49,15 @@ const questionsAnalysis = computed(() => {
         >
           &#10006;
         </span>
-        <span>{{ key }}: {{ option }}</span>
+        <span v-if="item?.options_media === 'text'">{{ key }}: {{ option }}</span>
+        <div v-if="item?.options_media === 'image'" class="d-flex align-items-center justify-content-center">
+          <span>{{ key }}:</span>
+          <img
+            :src="`${option}`"
+            :alt="`${option}`"
+            class="rounded img-thumbnail"
+          />
+        </div>
       </li>
     </ul>
     <div

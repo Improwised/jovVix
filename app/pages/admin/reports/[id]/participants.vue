@@ -25,24 +25,21 @@
 import { ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import lodash from "lodash";
+import PageLayout from "~~/components/reports/PageLayout.vue";
 
 const url = useRuntimeConfig().public;
+const route = useRoute();
 const headers = useRequestHeaders(["cookie"]);
 
 const analysisJson = ref([]);
-
-const route = useRoute();
 const activeQuizId = ref("");
-
 const userJson = ref({});
 const questionJson = ref({});
 const rankData = ref([]);
+const surveyQuestions = ref(0);
 const ranks = ref();
 const pending = ref(false);
 const fetchError = ref("");
-import PageLayout from "~~/components/reports/PageLayout.vue";
-
-const surveyQuestions = ref(0);
 
 const getAnalysisJson = async (activeQuizId) => {
   try {

@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/Improwised/quizz-app/api/constants"
@@ -27,6 +28,7 @@ const QuestionTable = "questions"
 
 type Question struct {
 	ID                uuid.UUID         `json:"id" db:"id"`
+	QuizId            uuid.UUID         `json:"quiz_id" db:"quiz_id"`
 	Question          string            `json:"question" db:"question"`
 	Type              int               `json:"type" db:"type"`
 	Options           map[string]string `json:"options" db:"options"`
@@ -36,6 +38,9 @@ type Question struct {
 	CreatedAt         time.Time         `json:"created_at" db:"created_at,omitempty"`
 	UpdatedAt         time.Time         `json:"updated_at" db:"updated_at,omitempty"`
 	OrderNumber       int               `json:"order" db:"order_no"`
+	QuestionMedia     string            `json:"question_media" db:"question_media"`
+	OptionsMedia      string            `json:"options_media" db:"options_media"`
+	Resource          sql.NullString    `json:"resource" db:"resource"`
 }
 
 type QuestionForUser struct {
@@ -191,6 +196,9 @@ func registerQuestions(transaction *goqu.TxDatabase, questions []Question) ([]uu
 			"answers":             string(answers),
 			"points":              question.Points,
 			"duration_in_seconds": question.DurationInSeconds,
+			"question_media":      question.QuestionMedia,
+			"options_media":       question.OptionsMedia,
+			"resource":            question.Resource.String,
 		})
 	}
 
@@ -316,4 +324,82 @@ func (model *QuestionModel) GetTotalQuestionCount(activeQuizId string) (int64, e
 	return model.db.From(ActiveQuizQuestionsTable).Where(goqu.Ex{
 		"active_quiz_id": activeQuizId,
 	}).Count()
+}
+
+func (model *QuestionModel) ListQuestionByQuizId(QuizId string, media string) ([]Question, error) {
+	var questions []Question
+
+	query := model.db.From(QuestionTable).
+		Join(
+			goqu.T(constants.QuizQuestionsTable),
+			goqu.On(goqu.I("quiz_questions.question_id").Eq(goqu.I("questions.id"))),
+		).
+		Where(
+			goqu.I("quiz_questions.quiz_id").Eq(QuizId),
+		).
+		Select(
+			"questions.id",
+			"questions.question",
+			"questions.question_media",
+			"questions.options_media",
+		)
+
+	if media != "" {
+		query = query.Where(goqu.Or(
+			goqu.I("questions.question_media").Eq(media),
+			goqu.I("questions.options_media").Eq(media),
+		))
+	}
+
+	sql, args, err := query.ToSQL()
+	if err != nil {
+		return nil, err
+	}
+
+	err = model.db.ScanStructs(&questions, sql, args...)
+
+	return questions, err
+}
+
+func (model *QuestionModel) UpdateQuestionsResourceById(id, resource string) error {
+
+	result, err := model.db.Update(QuestionTable).Set(goqu.Record{
+		"resource":   resource,
+		"updated_at": goqu.L("now()"),
+	}).Where(goqu.I("id").Eq(id)).Executor().Exec()
+	if err != nil {
+		return err
+	}
+
+	affectedRow, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if affectedRow == 0 {
+		return sql.ErrNoRows
+	}
+	return nil
+}
+
+func (model *QuestionModel) UpdateQuestionsOptionById(id, keyPath, data string) error {
+
+	jsonValue := fmt.Sprintf("\"%s\"", data)
+
+	result, err := model.db.Update(QuestionTable).Set(goqu.Record{
+		"options": goqu.L("jsonb_set(options::jsonb, '{" + keyPath + "}', '" + jsonValue + "')"),
+	}).Where(goqu.I("id").Eq(id)).Executor().Exec()
+	if err != nil {
+		return err
+	}
+
+	affectedRow, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if affectedRow == 0 {
+		return sql.ErrNoRows
+	}
+	return nil
 }

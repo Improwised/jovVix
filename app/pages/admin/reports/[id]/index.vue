@@ -19,6 +19,13 @@
             <h3 class="font-bold">{{ quiz.question }}</h3>
           </div>
         </div>
+        <div v-if="quiz?.question_media === 'image'" class="d-flex align-items-center justify-content-center">
+          <img
+            :src="`${quiz?.resource}`"
+            :alt="`${quiz?.resource}`"
+            class="rounded img-thumbnail"
+          />
+        </div>
         <div
           class="col-lg-6 col-sm-12 d-flex flex-wrap align-items-center justify-content-around"
         >
@@ -57,6 +64,7 @@
               :selected="quiz.selected_answers[order]?.length || 0"
               icon="fa-solid fa-check"
               :isCorrect="true"
+              :options-media="quiz?.options_media"
             />
           </div>
           <div v-else class="option-box wrong-option">
@@ -65,6 +73,7 @@
               :order="order"
               :option="option"
               :selected="quiz.selected_answers[order]?.length || 0"
+              :options-media="quiz?.options_media"
             />
           </div>
         </div>
@@ -83,13 +92,13 @@ definePageMeta({
 const { api_url } = useRuntimeConfig().public;
 const headers = useRequestHeaders(["cookie"]);
 const route = useRoute();
-const quizId = route.params.id;
+const activeQuizId = computed(() => route.params.id );
 
 const {
   data: quizAnalysis,
   error: quizAnalysisError,
   pending: quizAnalysisPending,
-} = useFetch(`${api_url}/admin/reports/${quizId}/analysis`, {
+} = useFetch(`${api_url}/admin/reports/${activeQuizId.value}/analysis`, {
   transform: (quizAnalysis) => {
     quizAnalysis.data?.map((quiz) => {
       quiz.userParticipants = Object.keys(quiz.selected_answers).length;

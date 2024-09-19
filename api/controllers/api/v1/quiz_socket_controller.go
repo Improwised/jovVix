@@ -14,6 +14,7 @@ import (
 	"github.com/Improwised/quizz-app/api/models"
 	"github.com/Improwised/quizz-app/api/pkg/redis"
 	"github.com/Improwised/quizz-app/api/pkg/structs"
+	"github.com/Improwised/quizz-app/api/services"
 	"github.com/Improwised/quizz-app/api/utils"
 	"github.com/doug-martin/goqu/v9"
 	"github.com/gofiber/contrib/websocket"
@@ -47,13 +48,14 @@ type quizSocketController struct {
 	userPlayedQuizModel   *models.UserPlayedQuizModel
 	questionModel         *models.QuestionModel
 	userQuizResponseModel *models.UserQuizResponseModel
+	presignedURLSvc       *services.PresignURLService
 	appConfig             *config.AppConfig
 	logger                *zap.Logger
 	redis                 *redis.RedisPubSub
 	mu                    sync.Mutex
 }
 
-func InitQuizConfig(db *goqu.Database, appConfig *config.AppConfig, logger *zap.Logger, redis *redis.RedisPubSub) *quizSocketController {
+func InitQuizConfig(db *goqu.Database, appConfig *config.AppConfig, logger *zap.Logger, redis *redis.RedisPubSub) (*quizSocketController, error) {
 
 	activeQuizModel := models.InitActiveQuizModel(db, logger)
 	quizModel := models.InitQuizModel(db)
@@ -61,16 +63,22 @@ func InitQuizConfig(db *goqu.Database, appConfig *config.AppConfig, logger *zap.
 	questionModel := models.InitQuestionModel(db, logger)
 	userQuizResponseModel := models.InitUserQuizResponseModel(db)
 
+	presignedURLSvc, err := services.NewFileUploadServices(appConfig.AWS.BucketName)
+	if err != nil {
+		return nil, err
+	}
+
 	return &quizSocketController{
 		activeQuizModel:       activeQuizModel,
 		quizModel:             quizModel,
 		userPlayedQuizModel:   userPlayedQuizModel,
 		questionModel:         questionModel,
 		userQuizResponseModel: userQuizResponseModel,
+		presignedURLSvc:       presignedURLSvc,
 		appConfig:             appConfig,
 		logger:                logger,
 		redis:                 redis,
-	}
+	}, nil
 }
 
 // for user Join
@@ -782,6 +790,24 @@ func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.Wa
 
 	defer wg.Done()
 
+	if question.QuestionMedia == "image" {
+		presignedURL, err := qc.presignedURLSvc.GetPresignedURL(question.Resource.String, 5*time.Minute)
+		if err != nil {
+			qc.logger.Error("error while generating presign url")
+		}
+		question.Resource = sql.NullString{String: presignedURL, Valid: true}
+	}
+
+	if question.OptionsMedia == "image" {
+		for i, v := range question.Options {
+			presignedURL, err := qc.presignedURLSvc.GetPresignedURL(v, 1*time.Minute)
+			if err != nil {
+				qc.logger.Error("error while generating presign url")
+			}
+			question.Options[i] = presignedURL
+		}
+	}
+
 	totalUserJoin, err := qc.userPlayedQuizModel.GetCountOfTotalJoinUsers(session.ID.String())
 	if err != nil {
 		qc.logger.Error(constants.ErrGetTotalJoinUser, zap.Error(err))
@@ -808,11 +834,15 @@ func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.Wa
 	response.Action = constants.ActionSendQuestion
 	responseData := map[string]any{
 		"id":             question.ID,
+		"quiz_id":        question.QuizId,
 		"no":             question.OrderNumber,
 		"duration":       question.DurationInSeconds,
 		"question_time":  lastQuestionTimeStamp.Time,
 		"question":       question.Question,
 		"options":        question.Options,
+		"question_media": question.QuestionMedia,
+		"options_media":  question.OptionsMedia,
+		"resource":       question.Resource.String,
 		"totalQuestions": totalQuestions,
 		"totalJoinUser":  totalUserJoin,
 	}
@@ -862,10 +892,14 @@ func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.Wa
 	}
 
 	response.Data = map[string]any{
+		"quiz_id":        question.QuizId,
 		"rankList":       userRankBoard,
 		"question":       question.Question,
 		"answers":        question.Answers,
 		"options":        question.Options,
+		"question_media": question.QuestionMedia,
+		"options_media":  question.OptionsMedia,
+		"resource":       question.Resource.String,
 		"duration":       20,
 		"totalQuestions": totalQuestions,
 		"userResponses":  userResponses,
@@ -873,10 +907,14 @@ func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.Wa
 	shareEvenWithUser(c, qc, response, constants.EventShowScore, session.ID.String(), int(session.InvitationCode.Int32), constants.ToAdmin)
 
 	response.Data = map[string]any{
+		"quiz_id":        question.QuizId,
 		"rankList":       userRankBoard,
 		"question":       question.Question,
 		"answers":        question.Answers,
 		"options":        question.Options,
+		"question_media": question.QuestionMedia,
+		"options_media":  question.OptionsMedia,
+		"resource":       question.Resource.String,
 		"duration":       20,
 		"totalQuestions": totalQuestions,
 	}

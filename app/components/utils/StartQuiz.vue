@@ -42,7 +42,7 @@ const handleStartDemo = async () => {
     return;
   }
 
-  setSocketObject(null)
+  setSocketObject(null);
 
   router.push(`/admin/arrange/${activeQuizId.value}`);
 };

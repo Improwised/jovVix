@@ -197,8 +197,8 @@ const {
   },
 });
 
-const viewReport = (id) => {
-  navigateTo(`/admin/reports/${id}`);
+const viewReport = (activeQuizId) => {
+  navigateTo(`/admin/reports/${activeQuizId}`);
 };
 
 const sortEventHandler = (columnName) => {

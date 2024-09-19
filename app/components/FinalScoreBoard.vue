@@ -189,5 +189,5 @@ const showAnalysis = () => {
   background-color: #8968cd !important;
   color: white;
   box-shadow: none;
-  }
+}
 </style>

@@ -1,5 +1,6 @@
 <script setup>
 import AnswerSubmissionChart from "../AnswerSubmissionChart.vue";
+const url = useRuntimeConfig().public;
 const props = defineProps({
   data: {
     default: () => {
@@ -65,14 +66,32 @@ const changeAnalysisTab = (tab) => emits("changeAnalysisTab", tab);
     <div class="card border-secondary mt-3">
       <div class="card-body">
         <h4 class="card-title">{{ props.data.data.question }}</h4>
+        <img
+          v-if="props.data?.data?.question_media === 'image'"
+          :src="`${props.data?.data?.resource}`"
+          :alt="`${question?.resource}`"
+          class="rounded img-thumbnail"
+        />
         <div class="d-flex flex-column flex-md-row">
           <div
             v-for="(answer, key) in props.data.data.options"
             :key="key"
-            class="flex-grow-1 border m-1 rounded p-1 card-text"
-            :class="{ 'bg-success': answer.isAnswer, 'bg-danger text-white': !answer.isAnswer && key == props.answer}"
+            class="border m-1 rounded p-1 w-100"
+            :class="{
+              'bg-success': answer.isAnswer,
+              'bg-danger text-white': !answer.isAnswer && key == props.answer,
+            }"
           >
-            <div class="form-check form-check-inline">
+            <img
+              v-if="props.data?.data?.options_media === 'image'"
+              :src="`${answer.value}`"
+              :alt="`${answer.value}`"
+              class="rounded img-thumbnail"
+            />
+            <div
+              v-if="props.data?.data?.options_media === 'text'"
+              class="form-check form-check-inline"
+            >
               <label class="form-check-label">{{ answer.value }}</label>
             </div>
           </div>
@@ -88,17 +107,17 @@ const changeAnalysisTab = (tab) => emits("changeAnalysisTab", tab);
       Skip
     </button>
     <ul
-      class="nav nav-tabs mt-3 mb-3 nav-justified"
-      id="pills-tab"
-      role="tablist"
       v-if="isAdmin"
+      id="pills-tab"
+      class="nav nav-tabs mt-3 mb-3 nav-justified"
+      role="tablist"
     >
       <!-- Ranking tab -->
       <li class="nav-item">
         <a
+          id="pills-ranking-tab"
           class="nav-link"
           :class="{ active: props.analysisTab === 'ranking' }"
-          id="pills-ranking-tab"
           data-bs-toggle="pill"
           href="#pills-ranking"
           role="tab"
@@ -112,9 +131,9 @@ const changeAnalysisTab = (tab) => emits("changeAnalysisTab", tab);
       <!-- Charts tab -->
       <li class="nav-item">
         <a
+          id="pills-chart-tab"
           class="nav-link"
           :class="{ active: props.analysisTab === 'chart' }"
-          id="pills-chart-tab"
           data-bs-toggle=""
           href="#pills-chart"
           role="tab"
@@ -126,11 +145,11 @@ const changeAnalysisTab = (tab) => emits("changeAnalysisTab", tab);
       </li>
     </ul>
     <!-- Ranking Table -->
-    <div class="tab-content p-4" id="pills-tabContent">
+    <div id="pills-tabContent" class="tab-content p-4">
       <div
+        id="pills-ranking"
         class="tab-pane fade"
         :class="{ 'active show': props.analysisTab === 'ranking' || !isAdmin }"
-        id="pills-ranking"
         role="tabpanel"
         aria-labelledby="pills-ranking-tab"
       >
@@ -162,9 +181,9 @@ const changeAnalysisTab = (tab) => emits("changeAnalysisTab", tab);
       </div>
       <!-- Chart -->
       <div
+        id="pills-chart"
         class="tab-pane fade"
         :class="{ 'active show': props.analysisTab === 'chart' }"
-        id="pills-chart"
         role="tabpanel"
         aria-labelledby="pills-chart-tab"
       >

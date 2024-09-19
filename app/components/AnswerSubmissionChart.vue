@@ -75,7 +75,11 @@ const chartOptions = ref({
       ticks: {
         callback: function (value, index) {
           const val = this.getLabelForValue(value);
-          return props.options[val]?.value || "Not Attempted";
+          let xAxisName = props.options[val]?.value || "Not Attempted"
+          if (xAxisName.length > 15) {
+            xAxisName = xAxisName.slice(0,15) + "..."
+          }
+          return xAxisName;
         },
       },
     },

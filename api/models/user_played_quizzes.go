@@ -301,6 +301,9 @@ func (model *UserPlayedQuizModel) ListUserPlayedQuizesWithQuestionById(UserPlaye
 			"calculated_points",
 			"question",
 			"options",
+			"question_media",
+			"options_media",
+			"resource",
 			"points",
 			"type",
 		).

@@ -5,12 +5,16 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"sync"
+	"time"
 
+	"github.com/Improwised/quizz-app/api/config"
 	"github.com/Improwised/quizz-app/api/constants"
 	quizUtilsHelper "github.com/Improwised/quizz-app/api/helpers/utils"
 	"github.com/Improwised/quizz-app/api/models"
 	"github.com/Improwised/quizz-app/api/pkg/events"
 	"github.com/Improwised/quizz-app/api/pkg/watermill"
+	"github.com/Improwised/quizz-app/api/services"
 	"github.com/Improwised/quizz-app/api/utils"
 	"github.com/doug-martin/goqu/v9"
 	fiber "github.com/gofiber/fiber/v2"
@@ -23,11 +27,12 @@ type QuizController struct {
 	userQuizResponseModel *models.UserQuizResponseModel
 	quizModel             *models.QuizModel
 	activeQuizModel       *models.ActiveQuizModel
+	presignedURLSvc       *services.PresignURLService
 	logger                *zap.Logger
 	event                 *events.Events
 }
 
-func InitQuizController(db *goqu.Database, logger *zap.Logger, event *events.Events, pub *watermill.WatermillPublisher) *QuizController {
+func InitQuizController(db *goqu.Database, logger *zap.Logger, event *events.Events, pub *watermill.WatermillPublisher, appConfig *config.AppConfig) (*QuizController, error) {
 
 	userPlayedQuizModel := models.InitUserPlayedQuizModel(db)
 	questionModel := models.InitQuestionModel(db, logger)
@@ -35,15 +40,21 @@ func InitQuizController(db *goqu.Database, logger *zap.Logger, event *events.Eve
 	userQuizResponseModel := models.InitUserQuizResponseModel(db)
 	activeQuizModel := models.InitActiveQuizModel(db, logger)
 
+	presignedURLSvc, err := services.NewFileUploadServices(appConfig.AWS.BucketName)
+	if err != nil {
+		return nil, err
+	}
+
 	return &QuizController{
 		userPlayedQuizModel:   userPlayedQuizModel,
 		questionModel:         questionModel,
 		userQuizResponseModel: userQuizResponseModel,
 		quizModel:             quizModel,
 		activeQuizModel:       activeQuizModel,
+		presignedURLSvc:       presignedURLSvc,
 		logger:                logger,
 		event:                 event,
-	}
+	}, nil
 }
 
 // GetAdminUploadedQuizzes for getting quiz details uploaded by Admin
@@ -87,6 +98,63 @@ func (qc *QuizController) GetQuizAnalysis(c *fiber.Ctx) error {
 	if err != nil {
 		qc.logger.Error("error while get quiz analysis", zap.Error(err))
 		return utils.JSONError(c, http.StatusInternalServerError, err.Error())
+	}
+
+	var wg sync.WaitGroup
+	urlChan := make(chan URLResult, len(quizAnalysis)*2)
+
+	for i, v := range quizAnalysis {
+		if v.QuestionsMedia == "image" {
+			wg.Add(1)
+			go func(i int, resource string) {
+				defer wg.Done()
+				presignedURL, err := qc.presignedURLSvc.GetPresignedURL(resource, 5*time.Minute)
+				if err != nil {
+					qc.logger.Error("error while generating presign url for question media", zap.Error(err))
+					urlChan <- URLResult{i, "", "", err}
+					return
+				}
+				urlChan <- URLResult{i, "", presignedURL, nil}
+			}(i, v.Resource)
+		}
+
+		if v.OptionsMedia == "image" {
+			for optionKey, optionValue := range v.Options {
+				wg.Add(1)
+				go func(i int, optionKey string, optionValue string) {
+					defer wg.Done()
+					presignedURL, err := qc.presignedURLSvc.GetPresignedURL(optionValue, 1*time.Minute)
+					if err != nil {
+						qc.logger.Error("error while generating presign url for option media", zap.Error(err))
+						urlChan <- URLResult{i, optionKey, "", err}
+						return
+					}
+					urlChan <- URLResult{i, optionKey, presignedURL, nil}
+				}(i, optionKey, optionValue)
+			}
+		}
+	}
+
+	go func() {
+		wg.Wait()
+		close(urlChan)
+	}()
+
+	for result := range urlChan {
+		if result.err == nil && result.index < len(quizAnalysis) {
+			// For Question media
+			if quizAnalysis[result.index].QuestionsMedia == "image" {
+				quizAnalysis[result.index].Resource = result.url
+			}
+			// For Options media
+			if quizAnalysis[result.index].OptionsMedia == "image" {
+				if result.optionKey != "" {
+					quizAnalysis[result.index].Options[result.optionKey] = result.url
+				}
+			}
+		} else if result.err != nil {
+			qc.logger.Error("Failed to update URL", zap.Error(result.err))
+		}
 	}
 
 	return utils.JSONSuccess(c, http.StatusOK, quizAnalysis)
@@ -188,4 +256,19 @@ func (ctrl *QuizController) GenerateDemoSession(c *fiber.Ctx) error {
 	}
 
 	return utils.JSONSuccess(c, http.StatusAccepted, sessionId)
+}
+
+func (ctrl *QuizController) ListQuestionByQuizId(c *fiber.Ctx) error {
+	QuizId := c.Params(constants.QuizId)
+	Query := c.Queries()
+	ctrl.logger.Debug("QuizController.ListQuestionByQuizId called", zap.Any(constants.QuizId, QuizId), zap.Any("Query", Query))
+
+	questions, err := ctrl.questionModel.ListQuestionByQuizId(QuizId, Query[constants.MediaQuery])
+	if err != nil {
+		ctrl.logger.Error("error occured while getting quizzes by admin", zap.Error(err))
+		return utils.JSONError(c, http.StatusInternalServerError, err.Error())
+	}
+
+	ctrl.logger.Debug("QuizController.ListQuestionByQuizId success", zap.Any("questions", questions))
+	return utils.JSONSuccess(c, http.StatusOK, questions)
 }
