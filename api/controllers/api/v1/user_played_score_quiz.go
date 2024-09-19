@@ -4,11 +4,13 @@ import (
 	"database/sql"
 	"net/http"
 
+	"github.com/Improwised/quizz-app/api/config"
 	"github.com/Improwised/quizz-app/api/constants"
 	quizUtilsHelper "github.com/Improwised/quizz-app/api/helpers/utils"
 	"github.com/Improwised/quizz-app/api/models"
 	"github.com/Improwised/quizz-app/api/pkg/events"
 	"github.com/Improwised/quizz-app/api/pkg/watermill"
+	"github.com/Improwised/quizz-app/api/services"
 	"github.com/Improwised/quizz-app/api/utils"
 	goqu "github.com/doug-martin/goqu/v9"
 	fiber "github.com/gofiber/fiber/v2"
@@ -20,23 +22,30 @@ type UserPlayedQuizeController struct {
 	userPlayedQuizModel   *models.UserPlayedQuizModel
 	activeQuizModel       *models.ActiveQuizModel
 	userQuizResponseModel *models.UserQuizResponseModel
+	presignedURLSvc       *services.PresignURLService
 	logger                *zap.Logger
 	event                 *events.Events
 	pub                   *watermill.WatermillPublisher
 }
 
 // NewUserController returns a user
-func NewUserPlayedQuizeController(goqu *goqu.Database, logger *zap.Logger, event *events.Events, pub *watermill.WatermillPublisher) (*UserPlayedQuizeController, error) {
+func NewUserPlayedQuizeController(goqu *goqu.Database, logger *zap.Logger, event *events.Events, pub *watermill.WatermillPublisher, appConfig *config.AppConfig) (*UserPlayedQuizeController, error) {
 	userPlayedQuizModel := models.InitUserPlayedQuizModel(goqu)
 
 	activeQuizModel := models.InitActiveQuizModel(goqu, logger)
 
 	userQuizResponseModel := models.InitUserQuizResponseModel(goqu)
 
+	presignedURLSvc, err := services.NewFileUploadServices(appConfig.AWS.BucketName)
+	if err != nil {
+		return nil, err
+	}
+
 	return &UserPlayedQuizeController{
 		userPlayedQuizModel:   userPlayedQuizModel,
 		activeQuizModel:       activeQuizModel,
 		userQuizResponseModel: userQuizResponseModel,
+		presignedURLSvc:       presignedURLSvc,
 		logger:                logger,
 		event:                 event,
 		pub:                   pub,
@@ -64,6 +73,8 @@ func (ctrl *UserPlayedQuizeController) ListUserPlayedQuizesWithQuestionById(c *f
 	if err != nil {
 		return err
 	}
+
+	services.ProcessAnalyticsData(userPlayedQuizesWithQuestion, ctrl.presignedURLSvc, ctrl.logger)
 
 	ctrl.logger.Debug("UserPlayedQuizeController.ListUserPlayedQuizesWithQuestionById success", zap.Any("userPlayedQuizesWithQuestion", userPlayedQuizesWithQuestion))
 	return utils.JSONSuccess(c, http.StatusOK, userPlayedQuizesWithQuestion)

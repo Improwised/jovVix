@@ -5,8 +5,6 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	"sync"
-	"time"
 
 	"github.com/Improwised/quizz-app/api/config"
 	"github.com/Improwised/quizz-app/api/constants"
@@ -100,62 +98,7 @@ func (qc *QuizController) GetQuizAnalysis(c *fiber.Ctx) error {
 		return utils.JSONError(c, http.StatusInternalServerError, err.Error())
 	}
 
-	var wg sync.WaitGroup
-	urlChan := make(chan URLResult, len(quizAnalysis)*2)
-
-	for i, v := range quizAnalysis {
-		if v.QuestionsMedia == "image" {
-			wg.Add(1)
-			go func(i int, resource string) {
-				defer wg.Done()
-				presignedURL, err := qc.presignedURLSvc.GetPresignedURL(resource, 5*time.Minute)
-				if err != nil {
-					qc.logger.Error("error while generating presign url for question media", zap.Error(err))
-					urlChan <- URLResult{i, "", "", err}
-					return
-				}
-				urlChan <- URLResult{i, "", presignedURL, nil}
-			}(i, v.Resource)
-		}
-
-		if v.OptionsMedia == "image" {
-			for optionKey, optionValue := range v.Options {
-				wg.Add(1)
-				go func(i int, optionKey string, optionValue string) {
-					defer wg.Done()
-					presignedURL, err := qc.presignedURLSvc.GetPresignedURL(optionValue, 1*time.Minute)
-					if err != nil {
-						qc.logger.Error("error while generating presign url for option media", zap.Error(err))
-						urlChan <- URLResult{i, optionKey, "", err}
-						return
-					}
-					urlChan <- URLResult{i, optionKey, presignedURL, nil}
-				}(i, optionKey, optionValue)
-			}
-		}
-	}
-
-	go func() {
-		wg.Wait()
-		close(urlChan)
-	}()
-
-	for result := range urlChan {
-		if result.err == nil && result.index < len(quizAnalysis) {
-			// For Question media
-			if quizAnalysis[result.index].QuestionsMedia == "image" {
-				quizAnalysis[result.index].Resource = result.url
-			}
-			// For Options media
-			if quizAnalysis[result.index].OptionsMedia == "image" {
-				if result.optionKey != "" {
-					quizAnalysis[result.index].Options[result.optionKey] = result.url
-				}
-			}
-		} else if result.err != nil {
-			qc.logger.Error("Failed to update URL", zap.Error(result.err))
-		}
-	}
+	services.ProcessAnalyticsData(quizAnalysis, qc.presignedURLSvc, qc.logger)
 
 	return utils.JSONSuccess(c, http.StatusOK, quizAnalysis)
 }

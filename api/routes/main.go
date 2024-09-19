@@ -107,7 +107,7 @@ func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config confi
 		return err
 	}
 
-	err = setupUserPlayedQuizeController(v1, goqu, logger, middleware, events, pub)
+	err = setupUserPlayedQuizeController(v1, goqu, logger, middleware, events, pub, config)
 	if err != nil {
 		return err
 	}
@@ -286,8 +286,8 @@ func setUpAnalyticsBoardController(v1 fiber.Router, goqu *goqu.Database, logger 
 	return nil
 }
 
-func setupUserPlayedQuizeController(v1 fiber.Router, goqu *goqu.Database, logger *zap.Logger, middlewares middlewares.Middleware, events *events.Events, pub *watermill.WatermillPublisher) error {
-	userPlayedQuizeController, err := controller.NewUserPlayedQuizeController(goqu, logger, events, pub)
+func setupUserPlayedQuizeController(v1 fiber.Router, goqu *goqu.Database, logger *zap.Logger, middlewares middlewares.Middleware, events *events.Events, pub *watermill.WatermillPublisher, config config.AppConfig) error {
+	userPlayedQuizeController, err := controller.NewUserPlayedQuizeController(goqu, logger, events, pub, &config)
 	if err != nil {
 		return err
 	}
