@@ -107,22 +107,15 @@ function copyToClipboard(text) {
     <form @submit="start_quiz">
       <div class="mb-3 pe-3">
         <label for="code" class="form-label">Invitation Code</label>
-        <div
-          class="d-flex justify-content-start justify-content-md-center align-items-center position-relative"
-        >
-          <div
-            type="number"
-            class="large-otp-input"
-            style="font-size: 4rem; letter-spacing: 2rem"
-          >
-            {{ code }}
-          </div>
+        <div class="d-flex align-items-center justify-content-center gap-2">
+          <span id="code" class="code display-2">{{ code }}</span>
           <font-awesome-icon
             id="OTP-input-container"
             icon="fa-solid fa-copy"
             size="xl"
             style="color: #0c6efd"
-            class="position-absolute end-0 copy-icon"
+            class="copy-icon"
+            role="button"
           />
         </div>
       </div>
@@ -142,52 +135,22 @@ function copyToClipboard(text) {
   font-size: 30px;
 }
 
-.copy-icon:hover {
-  cursor: pointer;
+.code {
+  color: #000000;
+  padding: 20px;
+  letter-spacing: 1rem;
 }
 
-.large-otp-input :deep(input) {
-  width: 70px;
-  /* Adjust the width as needed */
-  height: 70px;
-  /* Adjust the height as needed */
-  font-size: 62px;
-  /* Adjust the font size as needed */
-
-  color: rgb(85, 73, 73) !important;
-  text-align: center;
-  /* Center the text horizontally */
-  line-height: 70px;
-  /* Vertically center the text */
-  padding: 0;
-  /* Ensure no extra padding */
-  box-sizing: border-box;
-  /* Ensure padding and border are included in width and height */
-  display: flex;
-  /* Flexbox to center the content */
-  justify-content: center;
-  /* Center the content horizontally */
-  align-items: center;
-  /* Center the content vertically */
-  font-family: "Pacifico", cursive;
+@media (max-width: 768px) {
+  .code {
+    letter-spacing: 0.4rem;
+  }
 }
 
-.large-otp-input :deep(input::placeholder) {
-  font-size: 72px;
-  /* Match font size with input text */
-  color: rgb(12, 11, 11) !important;
-  text-align: center;
-  /* Center the placeholder text */
-  line-height: 70px;
-  /* Vertically center the placeholder text */
-  opacity: 1;
-  /* Ensure placeholder visibility */
-  font-family: "Pacifico", cursive;
-}
-
-@media only screen and (max-width: 991px) {
-  .copy-icon {
-    right: -20px !important;
+@media (max-width: 480px) {
+  .code {
+    padding: 15px;
+    letter-spacing: 0.3rem;
   }
 }
 </style>
