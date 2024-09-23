@@ -13,6 +13,9 @@
       />
     </div>
     <div v-if="props.optionsMedia === 'text'" :class="{'text-success': props.isCorrect }" class="mx-3 font-weight-bold">{{ props.option }}</div>
+    <div v-if="props.optionsMedia === 'code'" class="d-flex align-items-center justify-content-center" >
+      <CodeBlockComponent :code="props?.option"/>
+    </div>
   </div>
   <span
     :class="{ 'bg-success': props.isCorrect }"

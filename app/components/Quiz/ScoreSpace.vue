@@ -69,14 +69,15 @@ const changeAnalysisTab = (tab) => emits("changeAnalysisTab", tab);
         <img
           v-if="props.data?.data?.question_media === 'image'"
           :src="`${props.data?.data?.resource}`"
-          :alt="`${question?.resource}`"
+          :alt="`${props.data?.data?.resource}`"
           class="rounded img-thumbnail"
         />
-        <div class="d-flex flex-column flex-md-row">
+        <CodeBlockComponent v-if="props.data?.data?.question_media === 'code'" :code="props.data?.data?.resource" />
+        <div class="d-flex flex-column">
           <div
             v-for="(answer, key) in props.data.data.options"
             :key="key"
-            class="border m-1 rounded p-1 w-100"
+            class="border m-1 rounded p-1"
             :class="{
               'bg-success': answer.isAnswer,
               'bg-danger text-white': !answer.isAnswer && key == props.answer,
@@ -88,6 +89,7 @@ const changeAnalysisTab = (tab) => emits("changeAnalysisTab", tab);
               :alt="`${answer.value}`"
               class="rounded img-thumbnail"
             />
+            <CodeBlockComponent v-if="props.data?.data?.options_media === 'code'" :code="answer.value" />
             <div
               v-if="props.data?.data?.options_media === 'text'"
               class="form-check form-check-inline"

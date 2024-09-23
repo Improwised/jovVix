@@ -26,8 +26,9 @@
             class="rounded img-thumbnail"
           />
         </div>
+        <CodeBlockComponent v-if="quiz?.question_media === 'code'" :code="quiz?.resource" />
         <div
-          class="col-lg-6 col-sm-12 d-flex flex-wrap align-items-center justify-content-around"
+          class="col-lg-12 d-flex flex-wrap align-items-center justify-content-around"
         >
           <span class="bg-light-primary rounded px-2 text-dark">
             AVG. Response Time:

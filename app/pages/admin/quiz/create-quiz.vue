@@ -13,6 +13,7 @@ let title = ref("");
 const url = useRuntimeConfig().public;
 let quizId = ref();
 const requestPending = ref(false);
+const imageRequestPending = ref(false);
 const requiredImage = ref([])
 const imageForm = new FormData();
 
@@ -90,6 +91,7 @@ const imageFileAppend = (e) => {
 const imageUlpoads3 = async() => {
   const imageAttachment = document.getElementById("image-attachment");
   if (imageAttachment.files.length !== 0) {
+    imageRequestPending.value = true;
     try {
       await $fetch(encodeURI(`${url.api_url}/images?quiz_id=${quizId.value}`), {
         method: "POST",
@@ -101,20 +103,19 @@ const imageUlpoads3 = async() => {
         credentials: "include",
         onResponse({ response }) {
           if (response.status != 200) {
-            requestPending.value = false;
+            imageRequestPending.value = false;
             toast.error("error while create quiz");
             return;
           }
           if (response.status == 200) {
-            console.log(response._data);
             toast.success(response._data?.data);
-            requestPending.value = false;
+            imageRequestPending.value = false;
           }
         },
       });
     } catch (error) {
       toast.error(error.message);
-      requestPending.value = false;
+      imageRequestPending.value = false;
       return;
     }
   }
@@ -194,7 +195,8 @@ const imageUlpoads3 = async() => {
             </div>
             <div class="modal-footer text-white">
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-              <button @click="imageUlpoads3" type="button" class="btn btn-primary">Save changes</button>
+              <button v-if="imageRequestPending" type="button" class="btn btn-primary">Pending...</button>
+              <button v-else @click="imageUlpoads3" type="button" class="btn btn-primary">Save changes</button>
             </div>
           </div>
         </div>

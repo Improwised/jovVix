@@ -118,8 +118,7 @@ if (!props.isAdmin) {
 
 const showAnalysis = () => {
   router.push({
-    path: "/admin/analysis",
-    query: { active_quiz_id: activeQuizId.value },
+    path: `/admin/reports/${activeQuizId.value}`,
   });
 };
 </script>

@@ -2,6 +2,7 @@
 // core dependencies
 import { useNuxtApp } from "nuxt/app";
 import { useToast } from "vue-toastification";
+import CodeBlockComponent from "../CodeBlockComponent.vue";
 
 // define nuxt configs
 const app = useNuxtApp();
@@ -148,25 +149,16 @@ function handleSkip(e) {
         :alt="`${question?.resource}`"
         class="rounded img-thumbnail"
       />
+      <CodeBlockComponent v-if="question?.question_media === 'code'" :code="question?.resource" />
     </div>
-    <div class="d-flex flex-column flex-md-row">
+    <div class="d-flex flex-column">
       <div
         v-for="(value, key) in question.options"
         :key="key"
-        class="border m-1 rounded p-1 w-100"
+        class="border m-1 rounded p-1"
       >
-        <img
-          v-if="question?.options_media === 'image'"
-          :src="`${value}`"
-          :alt="`${value}`"
-          class="rounded img-thumbnail"
-        />
         <label
           class="form-check-label d-flex align-items-center"
-          :class="{
-            'justify-content-between': !isAdmin,
-            'justify-content-center': isAdmin,
-          }"
         >
           <div v-if="!isAdmin" class="form-check form-check-inline me-0">
             <input
@@ -186,6 +178,14 @@ function handleSkip(e) {
           >
             {{ value }}
           </p>
+          <img
+            v-if="question?.options_media === 'image'"
+            :src="`${value}`"
+            :alt="`${value}`"
+            class="rounded img-thumbnail"
+            :for="`${key}`"
+          />
+          <CodeBlockComponent v-if="question?.options_media === 'code'" :code="value" />
         </label>
       </div>
     </div>

@@ -29,6 +29,9 @@ const questionsAnalysis = computed(() => {
         class="rounded img-thumbnail"
       />
     </div>
+    <div v-if="item?.question_media === 'code'" class="d-flex align-items-center justify-content-center">
+      <CodeBlockComponent :code="item?.resource" />
+    </div>
     <ul style="list-style-type: none; padding-left: 0">
       <li
         v-for="(option, key) in item.options"
@@ -57,6 +60,10 @@ const questionsAnalysis = computed(() => {
             :alt="`${option}`"
             class="rounded img-thumbnail"
           />
+        </div>
+        <div v-if="item?.options_media === 'code'" class="mt-2 d-flex align-items-center justify-content-center">
+            <span class="mr-1">{{ key }}:</span>
+            <CodeBlockComponent :code="option" />
         </div>
       </li>
     </ul>
