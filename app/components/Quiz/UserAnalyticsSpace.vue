@@ -132,7 +132,7 @@ const handleMouseLeave = (event) => {
           </div>
         </div>
       </div>
-      <div>
+      <div class="d-flex justify-content-center">
         &#9989; {{ analysis?.correctAnwers }} &ensp; &#10060;
         {{ analysis?.wrongAnwers }} &ensp; &#x25CC;
         {{ analysis?.unAttemptedQuestions }} &ensp;

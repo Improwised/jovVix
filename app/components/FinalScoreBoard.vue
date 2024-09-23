@@ -124,7 +124,8 @@ const showAnalysis = () => {
 </script>
 <template>
   <ClientOnly>
-    <div>
+    <div class="text-center" v-if="requestPending">Loading...</div>
+    <div v-else>
       <div v-if="scoreboardData" class="table-responsive mt-5 w-100">
         <table class="table align-middle table-light">
           <thead>
@@ -176,10 +177,10 @@ const showAnalysis = () => {
         <h3 class="text-center">Total Score: {{ userTotalScore }}</h3>
         <QuizQuestionAnalysis :data="analysisData" />
       </div>
+      <button v-if="props.isAdmin" class="btn btn-primary" @click="showAnalysis">
+        Show Analysis
+      </button>
     </div>
-    <button v-if="props.isAdmin" class="btn btn-primary" @click="showAnalysis">
-      Show Analysis
-    </button>
   </ClientOnly>
 </template>
 
