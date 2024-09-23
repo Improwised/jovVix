@@ -369,6 +369,9 @@ func (model *QuizModel) GetQuizAnalysis(activeQuizId string) ([]QuizAnalysis, er
 	query := model.db.From(goqu.T(QuestionTable).As("q")).
 		With("quiz_response_analysis", quizResponseAnalysis).
 		InnerJoin(goqu.T("quiz_response_analysis").As("a"), goqu.On(goqu.Ex{"q.id": goqu.I("a.question_id")})).
+		InnerJoin(goqu.T(ActiveQuizQuestionsTable), goqu.On(goqu.I("q.id").Eq(goqu.I(ActiveQuizQuestionsTable+".question_id")))).
+		Where(goqu.Ex{"active_quiz_questions.active_quiz_id": activeQuizId}).
+		Order(goqu.I(ActiveQuizQuestionsTable+".order_no").Asc()).
 		Select(
 			goqu.C("question_id").Table("a"),
 			goqu.C("question").Table("q"),
