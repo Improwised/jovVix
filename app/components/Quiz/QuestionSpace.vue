@@ -7,7 +7,6 @@ import CodeBlockComponent from "../CodeBlockComponent.vue";
 // define nuxt configs
 const app = useNuxtApp();
 const toast = useToast();
-const url = useRuntimeConfig().public;
 
 // define props and emits
 const props = defineProps({
@@ -149,7 +148,10 @@ function handleSkip(e) {
         :alt="`${question?.resource}`"
         class="rounded img-thumbnail"
       />
-      <CodeBlockComponent v-if="question?.question_media === 'code'" :code="question?.resource" />
+      <CodeBlockComponent
+        v-if="question?.question_media === 'code'"
+        :code="question?.resource"
+      />
     </div>
     <div class="d-flex flex-column">
       <div
@@ -157,9 +159,7 @@ function handleSkip(e) {
         :key="key"
         class="border m-1 rounded p-1"
       >
-        <label
-          class="form-check-label d-flex align-items-center"
-        >
+        <label class="form-check-label d-flex align-items-center">
           <div v-if="!isAdmin" class="form-check form-check-inline me-0">
             <input
               :id="`${key}`"
@@ -185,7 +185,10 @@ function handleSkip(e) {
             class="rounded img-thumbnail"
             :for="`${key}`"
           />
-          <CodeBlockComponent v-if="question?.options_media === 'code'" :code="value" />
+          <CodeBlockComponent
+            v-if="question?.options_media === 'code'"
+            :code="value"
+          />
         </label>
       </div>
     </div>

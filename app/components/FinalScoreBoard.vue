@@ -1,5 +1,4 @@
 <script setup>
-import { isCorrectAnswer } from "~/composables/check_is_correct.js/";
 import { useToast } from "vue-toastification";
 
 const url = useRuntimeConfig().public;
@@ -124,7 +123,7 @@ const showAnalysis = () => {
 </script>
 <template>
   <ClientOnly>
-    <div class="text-center" v-if="requestPending">Loading...</div>
+    <div v-if="requestPending" class="text-center">Loading...</div>
     <div v-else>
       <div v-if="scoreboardData" class="table-responsive mt-5 w-100">
         <table class="table align-middle table-light">
@@ -177,7 +176,11 @@ const showAnalysis = () => {
         <h3 class="text-center">Total Score: {{ userTotalScore }}</h3>
         <QuizQuestionAnalysis :data="analysisData" />
       </div>
-      <button v-if="props.isAdmin" class="btn btn-primary" @click="showAnalysis">
+      <button
+        v-if="props.isAdmin"
+        class="btn btn-primary"
+        @click="showAnalysis"
+      >
         Show Analysis
       </button>
     </div>

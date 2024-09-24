@@ -5,16 +5,28 @@
     >
       {{ String.fromCharCode(64 + Number(props.order)) }}
     </button>
-    <div v-if="props.optionsMedia === 'image'" class="d-flex align-items-center justify-content-center">
+    <div
+      v-if="props.optionsMedia === 'image'"
+      class="d-flex align-items-center justify-content-center"
+    >
       <img
         :src="`${props.option}`"
         :alt="`${props.option}`"
         class="rounded img-thumbnail"
       />
     </div>
-    <div v-if="props.optionsMedia === 'text'" :class="{'text-success': props.isCorrect }" class="mx-3 font-weight-bold">{{ props.option }}</div>
-    <div v-if="props.optionsMedia === 'code'" class="d-flex align-items-center justify-content-center" >
-      <CodeBlockComponent :code="props?.option"/>
+    <div
+      v-if="props.optionsMedia === 'text'"
+      :class="{ 'text-success': props.isCorrect }"
+      class="mx-3 font-weight-bold"
+    >
+      {{ props.option }}
+    </div>
+    <div
+      v-if="props.optionsMedia === 'code'"
+      class="d-flex align-items-center justify-content-center"
+    >
+      <CodeBlockComponent :code="props?.option" />
     </div>
   </div>
   <span
@@ -25,5 +37,36 @@
   >
 </template>
 <script setup>
-const props = defineProps(["order", "selected", "option", "icon", "isCorrect","optionsMedia"]);
+const props = defineProps({
+  order: {
+    type: Number,
+    required: false,
+    default: 0,
+  },
+  selected: {
+    type: Number,
+    required: false,
+    default: 0,
+  },
+  option: {
+    type: String,
+    required: false,
+    default: "",
+  },
+  icon: {
+    type: String,
+    required: false,
+    default: "",
+  },
+  isCorrect: {
+    type: Boolean,
+    required: false,
+    default: false,
+  },
+  optionsMedia: {
+    type: String,
+    required: true,
+    default: "",
+  },
+});
 </script>

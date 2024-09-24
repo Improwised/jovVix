@@ -26,7 +26,7 @@
 
 <script setup>
 const route = useRoute();
-const activeQuizId = computed(() => route.params.id );
+const activeQuizId = computed(() => route.params.id);
 
 const props = defineProps({
   currentTab: {
@@ -37,7 +37,7 @@ const props = defineProps({
 });
 
 const emits = defineEmits(["changeTab"]);
-const changeComponent = (tab)=>{
-  emits("changeTab", tab)
-}
+const changeComponent = (tab) => {
+  emits("changeTab", tab);
+};
 </script>

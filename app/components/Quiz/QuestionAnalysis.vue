@@ -22,14 +22,20 @@ const questionsAnalysis = computed(() => {
     :page-title="'Q' + (index + 1) + '. ' + item.question"
     class="mb-2"
   >
-    <div v-if="item?.question_media === 'image'" class="d-flex align-items-center justify-content-center">
+    <div
+      v-if="item?.question_media === 'image'"
+      class="d-flex align-items-center justify-content-center"
+    >
       <img
         :src="`${item?.resource}`"
         :alt="`${item?.resource}`"
         class="rounded img-thumbnail"
       />
     </div>
-    <div v-if="item?.question_media === 'code'" class="d-flex align-items-center justify-content-center">
+    <div
+      v-if="item?.question_media === 'code'"
+      class="d-flex align-items-center justify-content-center"
+    >
       <CodeBlockComponent :code="item?.resource" />
     </div>
     <ul style="list-style-type: none; padding-left: 0">
@@ -52,8 +58,13 @@ const questionsAnalysis = computed(() => {
         >
           &#10006;
         </span>
-        <span v-if="item?.options_media === 'text'">{{ key }}: {{ option }}</span>
-        <div v-if="item?.options_media === 'image'" class="d-flex align-items-center justify-content-center">
+        <span v-if="item?.options_media === 'text'"
+          >{{ key }}: {{ option }}</span
+        >
+        <div
+          v-if="item?.options_media === 'image'"
+          class="d-flex align-items-center justify-content-center"
+        >
           <span>{{ key }}:</span>
           <img
             :src="`${option}`"
@@ -61,9 +72,12 @@ const questionsAnalysis = computed(() => {
             class="rounded img-thumbnail"
           />
         </div>
-        <div v-if="item?.options_media === 'code'" class="mt-2 d-flex align-items-center justify-content-center">
-            <span class="mr-1">{{ key }}:</span>
-            <CodeBlockComponent :code="option" />
+        <div
+          v-if="item?.options_media === 'code'"
+          class="mt-2 d-flex align-items-center justify-content-center"
+        >
+          <span class="mr-1">{{ key }}:</span>
+          <CodeBlockComponent :code="option" />
         </div>
       </li>
     </ul>

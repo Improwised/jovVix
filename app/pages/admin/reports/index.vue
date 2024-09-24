@@ -16,14 +16,14 @@
           class="col-sm-12 col-md-8 d-flex align-items-center justify-content-md-end flex-wrap gap-2"
         >
           <input
-            type="text"
             v-model="nameInput"
+            type="text"
             placeholder="Search quiz"
             class="border rounded p-2 mx-2"
           />
           <input
-            type="datetime-local"
             v-model="date"
+            type="datetime-local"
             placeholder="Select date"
             class="border rounded p-2 mx-2"
           />
@@ -33,80 +33,80 @@
         <table class="table text-nowrap mb-0">
           <thead class="table-light">
             <tr>
-              <th @click="sortEventHandler('title')" role="button">
+              <th role="button" @click="sortEventHandler('title')">
                 Quiz Name
                 <font-awesome-icon
-                  icon="arrow-up-short-wide"
                   v-if="orderBy === 'title' && order === 'asc'"
+                  icon="arrow-up-short-wide"
                   class="bx bx-sort-up"
                 />
                 <font-awesome-icon
-                  icon="arrow-up-wide-short"
                   v-else-if="orderBy === 'title' && order === 'desc'"
+                  icon="arrow-up-wide-short"
                   class="bx bx-sort-down"
                 />
-                <font-awesome-icon icon="sort" v-else class="bx bx-sort" />
+                <font-awesome-icon v-else icon="sort" class="bx bx-sort" />
               </th>
               <th role="button" @click="sortEventHandler('participants')">
                 Total Participants
                 <font-awesome-icon
-                  icon="arrow-up-short-wide"
                   v-if="orderBy === 'participants' && order === 'asc'"
+                  icon="arrow-up-short-wide"
                   class="bx bx-sort-up"
                 />
                 <font-awesome-icon
-                  icon="arrow-up-wide-short"
                   v-else-if="orderBy === 'participants' && order === 'desc'"
+                  icon="arrow-up-wide-short"
                   class="bx bx-sort-down"
                 />
-                <font-awesome-icon icon="sort" v-else class="bx bx-sort" />
+                <font-awesome-icon v-else icon="sort" class="bx bx-sort" />
               </th>
               <th role="button" @click="sortEventHandler('activated_from')">
                 Starts At
                 <font-awesome-icon
-                  icon="arrow-up-short-wide"
                   v-if="orderBy === 'activated_from' && order === 'asc'"
+                  icon="arrow-up-short-wide"
                   class="bx bx-sort-up"
                 />
                 <font-awesome-icon
-                  icon="arrow-up-wide-short"
                   v-else-if="orderBy === 'activated_from' && order === 'desc'"
+                  icon="arrow-up-wide-short"
                   class="bx bx-sort-down"
                 />
-                <font-awesome-icon icon="sort" v-else class="bx bx-sort" />
+                <font-awesome-icon v-else icon="sort" class="bx bx-sort" />
               </th>
               <th role="button" @click="sortEventHandler('activated_to')">
                 Ends At
                 <font-awesome-icon
-                  icon="arrow-up-short-wide"
                   v-if="orderBy === 'activated_to' && order === 'asc'"
+                  icon="arrow-up-short-wide"
                   class="bx bx-sort-up"
                 />
                 <font-awesome-icon
-                  icon="arrow-up-wide-short"
                   v-else-if="orderBy === 'activated_to' && order === 'desc'"
+                  icon="arrow-up-wide-short"
                   class="bx bx-sort-down"
                 />
                 <font-awesome-icon
+                  v-else
                   role="button"
                   icon="sort"
-                  v-else
                   class="bx bx-sort"
                 />
               </th>
               <th role="button" @click="sortEventHandler('questions')">
                 Total Questions
                 <font-awesome-icon
-                  icon="arrow-up-short-wide"
                   v-if="orderBy === 'questions' && order === 'asc'"
+                  icon="arrow-up-short-wide"
                   class="bx bx-sort-up"
                 />
                 <font-awesome-icon
-                  icon="arrow-up-wide-short"
                   v-else-if="orderBy === 'questions' && order === 'desc'"
+                  icon="arrow-up-wide-short"
                   class="bx bx-sort-down"
                 />
-                <font-awesome-icon icon="sort" v-else class="bx bx-sort" />
+                <font-awesome-icon v-else icon="sort" class="bx bx-sort" />
               </th>
               <th>Accuracy</th>
             </tr>
@@ -114,11 +114,11 @@
           <tbody>
             <div v-if="quizList?.data?.Count <= 0">No quiz found....</div>
             <tr
-              v-else
               v-for="(quiz, index) in quizList?.data.Data"
+              v-else
               :key="index"
-              @click="viewReport(quiz.id)"
               role="button"
+              @click="viewReport(quiz.id)"
             >
               <td>
                 <div class="ms-3 lh-1">
@@ -145,7 +145,7 @@
           </tbody>
         </table>
       </div>
-      <Pagination :page="page" :numOfRecords="quizList?.data?.Count" />
+      <Pagination :page="page" :num-of-records="quizList?.data?.Count" />
     </div>
   </div>
 </template>

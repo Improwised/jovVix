@@ -38,7 +38,9 @@ export default class AdminOperations extends QuizHandler {
 
   pingServer() {
     if (this.socket.readyState === WebSocket.OPEN) {
-      this.socket.send(JSON.stringify({ event: constants.EventPing, user: this.username }));
+      this.socket.send(
+        JSON.stringify({ event: constants.EventPing, user: this.username })
+      );
     }
   }
 
@@ -87,6 +89,6 @@ export default class AdminOperations extends QuizHandler {
 
   onClose(event) {
     super.onClose(event);
-    setSocketObject(null)
+    setSocketObject(null);
   }
 }

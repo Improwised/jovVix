@@ -101,7 +101,7 @@ async function setFlowIDAndCSRFToken() {
 
 const handleForgotPassword = async () => {
   if (!email.value) {
-    toast.error("please enter email first!")
+    toast.error("please enter email first!");
     return;
   }
   const recoveryResponse = await fetch(
@@ -116,7 +116,7 @@ const handleForgotPassword = async () => {
 
   const recoverypage = recovery?.ui?.action;
 
-  const recoveryCodeResponse = await fetch(recoverypage, {
+  await fetch(recoverypage, {
     method: "POST",
     credentials: "include",
     headers: {
@@ -129,8 +129,6 @@ const handleForgotPassword = async () => {
       method: "code", // Specify the method (e.g., code) for password recovery
     }),
   });
-
-  const recoveryCode = await recoveryCodeResponse.json();
 
   navigateTo(recoverypage, { external: true });
 };
@@ -171,8 +169,8 @@ const handleForgotPassword = async () => {
             <div class="mb-3">
               <label for="password" class="form-label">Password</label>
               <input
-                class="form-control"
                 id="password"
+                class="form-control"
                 type="password"
                 name="password"
                 required=""
@@ -203,8 +201,8 @@ const handleForgotPassword = async () => {
                 </div>
                 <div>
                   <button
-                    @click.prevent="handleForgotPassword"
                     class="text-inherit fs-5"
+                    @click.prevent="handleForgotPassword"
                   >
                     Forgot your password?
                   </button>

@@ -32,7 +32,7 @@ const firstname = computed(() => route.query.firstname);
 const userPlayedQuiz = computed(() => route.query.user_played_quiz);
 const sessionId = computed(() => route.query.session_id);
 
-const selectedAnswer = ref(0)
+const selectedAnswer = ref(0);
 
 // event handlers
 const handleCustomChange = (isFullScreenEvent) => {
@@ -134,7 +134,7 @@ const startQuiz = () => {
 };
 
 const sendAnswer = async (answers) => {
-  selectedAnswer.value = 0
+  selectedAnswer.value = 0;
   try {
     const { error } = await userOperationHandler.value.handleSendAnswer(
       answers,
@@ -148,12 +148,11 @@ const sendAnswer = async (answers) => {
     }
     toast.success(app.$AnswerSubmitted);
     if (answers.length > 0) {
-      selectedAnswer.value = answers[0]
+      selectedAnswer.value = answers[0];
     }
   } catch (err) {
     toast.error("An error occurred while submitting the answer.");
   }
-
 };
 
 definePageMeta({
@@ -208,7 +207,7 @@ onBeforeUnmount(() => {
         :data="data"
         :user-name="username"
         :is-admin="false"
-        :answer="selectedAnswer"
+        :selected-answer="selectedAnswer"
       ></QuizScoreSpace>
     </Playground>
   </div>

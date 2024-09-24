@@ -20,12 +20,12 @@
           style="width: 100%"
         ></lottie-player>
         <!-- vector image -->
-    
-         <img
+
+        <img
           src="../assets/images/shapes/2.svg"
           alt=""
           class="shapes shape-three absolute z--1 left-11% top-35%"
-        /> 
+        />
         <!-- Birds -->
         <img
           src="../assets/images/shapes/3.svg"
@@ -131,7 +131,6 @@ onMounted(async () => {
     opacity: 0.5;
   }
 }
-
 
 .shape-two {
   position: absolute;

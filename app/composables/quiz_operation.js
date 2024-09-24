@@ -39,7 +39,7 @@ export default class QuizHandler {
     this.socket.onclose = (event) => this.onClose(event);
     this.socket.onmessage = (event) => this.onMessage(event);
     this.close = (code) => this.socket.close(code);
-    setSocketObject(this.socket)
+    setSocketObject(this.socket);
   }
 
   continue() {
@@ -83,9 +83,8 @@ export default class QuizHandler {
   onMessage(event) {
     const message = this.destructureMessage(event);
     if (message.event == "pong") {
-        console.log("pong received");
-    }
-    else if (
+      console.log("pong received");
+    } else if (
       this.currentEvent == constants.GetQuestion &&
       message.event == constants.AdminDisconnected
     ) {

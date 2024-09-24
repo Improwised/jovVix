@@ -11,7 +11,10 @@
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h1 id="exampleModalLabel" class="modal-title fs-5 text-center text-white">
+            <h1
+              id="exampleModalLabel"
+              class="modal-title fs-5 text-center text-white"
+            >
               Change Password
             </h1>
             <button

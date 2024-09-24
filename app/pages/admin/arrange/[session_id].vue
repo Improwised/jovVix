@@ -224,14 +224,14 @@ definePageMeta({
       v-else-if="currentComponent == 'Score'"
       :data="data"
       :is-admin="true"
-      :analysisTab="analysisTab"
-      @changeAnalysisTab="handleAnalysisTabChange"
+      :analysis-tab="analysisTab"
+      @change-analysis-tab="handleAnalysisTabChange"
       @ask-skip-timer="askSkipTimer"
     ></QuizScoreSpace>
     <ListJoinUser v-if="currentComponent == 'Waiting'"></ListJoinUser>
     <QuizListUserAnswered
-      :data="data"
       v-if="currentComponent == 'Question'"
+      :data="data"
     ></QuizListUserAnswered>
   </Playground>
 </template>

@@ -4,7 +4,7 @@
     class="d-flex justify-content-center align-items-center vh-100"
   >
     <div class="col-6">
-      <div class="card shadow-lg"> 
+      <div class="card shadow-lg">
         <div class="card-body text-center" style="min-height: 400px">
           <div class="auth-logo mb-4">
             <NuxtLink to="/" style="font-size: 30px; font-weight: bold"
@@ -13,16 +13,16 @@
             <h2 class="mt-1 welcome-text">Recover your account</h2>
           </div>
 
-          <form @submit.prevent="verifyOTP"> 
+          <form @submit.prevent="verifyOTP">
             <div class="form-group mb-4 d-flex align-items-center flex-column">
               <label for="otp" class="form-label">OTP code</label>
-                <input
-                  id="otp"
-                  v-model="otp"
-                  type="text"
-                  class="form-control otp-input"
-                  placeholder="Enter OTP code"
-                />
+              <input
+                id="otp"
+                v-model="otp"
+                type="text"
+                class="form-control otp-input"
+                placeholder="Enter OTP code"
+              />
               <span v-if="otpError" class="text-danger">{{ otpError }}</span>
             </div>
 
@@ -36,7 +36,9 @@
 
           <div class="mt-3">
             Back to
-            <NuxtLink to="/account/login" class="text-primary"> Sign in</NuxtLink>
+            <NuxtLink to="/account/login" class="text-primary">
+              Sign in</NuxtLink
+            >
           </div>
         </div>
       </div>
@@ -48,7 +50,7 @@
 import { ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
 const config = useRuntimeConfig();
-const { kratos_url, web_url } = config.public;
+const { kratos_url } = config.public;
 definePageMeta({
   layout: false,
 });
@@ -147,7 +149,7 @@ const verifyOTP = async () => {
 </script>
 
 <style scoped>
-.otp-input{
+.otp-input {
   max-width: 350px;
 }
 </style>

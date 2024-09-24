@@ -14,7 +14,7 @@ const url = useRuntimeConfig().public;
 let quizId = ref();
 const requestPending = ref(false);
 const imageRequestPending = ref(false);
-const requiredImage = ref([])
+const requiredImage = ref([]);
 const imageForm = new FormData();
 
 const uploadQuizAndQuestions = async (e) => {
@@ -58,7 +58,9 @@ const uploadQuizAndQuestions = async (e) => {
   }
 
   try {
-      await $fetch(encodeURI(`${url.api_url}/admin/quizzes/${quizId.value}?media=image`), {
+    await $fetch(
+      encodeURI(`${url.api_url}/admin/quizzes/${quizId.value}?media=image`),
+      {
         method: "GET",
         headers: {
           Accept: "application/json",
@@ -76,19 +78,20 @@ const uploadQuizAndQuestions = async (e) => {
             requestPending.value = false;
           }
         },
-      });
-    } catch (error) {
-      toast.error(error.message);
-      requestPending.value = false;
-      return;
-    }
+      }
+    );
+  } catch (error) {
+    toast.error(error.message);
+    requestPending.value = false;
+    return;
+  }
 };
 
 const imageFileAppend = (e) => {
   imageForm.append("image-attachment", e.target.files[0], e.target.name);
 };
 
-const imageUlpoads3 = async() => {
+const imageUlpoads3 = async () => {
   const imageAttachment = document.getElementById("image-attachment");
   if (imageAttachment.files.length !== 0) {
     imageRequestPending.value = true;
@@ -123,86 +126,104 @@ const imageUlpoads3 = async() => {
 </script>
 
 <template>
-
-    <!-- ImageUpload Modal -->
-     <div v-if="requiredImage.length > 0">
+  <!-- ImageUpload Modal -->
+  <div v-if="requiredImage.length > 0">
+    <div
+      id="imageUpload"
+      class="modal fade"
+      tabindex="-1"
+      aria-labelledby="exampleModalLabel"
+      aria-hidden="true"
+    >
       <div
-        id="imageUpload"
-        class="modal fade"
-        tabindex="-1"
-        aria-labelledby="exampleModalLabel"
-        aria-hidden="true"
+        class="modal-dialog modal-xl modal-dialog-scrollable modal-dialog-centered"
       >
-        <div
-          class="modal-dialog modal-xl modal-dialog-scrollable modal-dialog-centered"
-        >
-          <div class="modal-content">
-            <div class="modal-header">
-              <h1 id="exampleModalLabel" class="modal-title fs-5">
-                Questions Analysis
-              </h1>
-              <button
-                type="button"
-                class="btn-close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              ></button>
-            </div>
-            <div class="modal-body">
-              <table class="table table-responsive">
-                  <thead>
-                    <tr>
-                      <th scope="col">Question</th>
-                      <th scope="col">QuestionImage</th>
-                      <th scope="col">OptionsImage</th>
-                    </tr>
-                </thead>
-                  <tbody>
-                    <tr v-for="(value) in requiredImage" :key="value.id">
-                      <td>{{ value.question }}</td>
-                      <td>
-                        <v-file-input
-                          v-if="value.question_media == 'image'"
-                          prepend-icon="mdi-camera"
-                          id="image-attachment"
-                          type="file"
-                          class="form-control"
-                          :name="value.id"
-                          label="Question"
-                          accept="image/*"
-                          @change="imageFileAppend"
-                        >
-                        </v-file-input>
-                      </td>
-                      <td>
-                        <v-file-input
-                          v-if="value.options_media == 'image'"
-                          v-for="index in 5"
-                          prepend-icon="mdi-camera"
-                          id="image-attachment"
-                          type="file"
-                          class="form-control mb-2"
-                          :name="index + '_' + value.id"
-                          :label="'Option ' + index"
-                          accept="image/*"
-                          @change="imageFileAppend"
-                        >
-                        </v-file-input>
-                      </td>
-                    </tr>
-                  </tbody>
-              </table>
-            </div>
-            <div class="modal-footer text-white">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-              <button v-if="imageRequestPending" type="button" class="btn btn-primary">Pending...</button>
-              <button v-else @click="imageUlpoads3" type="button" class="btn btn-primary">Save changes</button>
-            </div>
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 id="exampleModalLabel" class="modal-title fs-5">
+              Questions Analysis
+            </h1>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <table class="table table-responsive">
+              <thead>
+                <tr>
+                  <th scope="col">Question</th>
+                  <th scope="col">QuestionImage</th>
+                  <th scope="col">OptionsImage</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="value in requiredImage" :key="value.id">
+                  <td>{{ value.question }}</td>
+                  <td>
+                    <v-file-input
+                      v-if="value.question_media == 'image'"
+                      id="image-attachment"
+                      prepend-icon="mdi-camera"
+                      type="file"
+                      class="form-control"
+                      :name="value.id"
+                      label="Question"
+                      accept="image/*"
+                      @change="imageFileAppend"
+                    >
+                    </v-file-input>
+                  </td>
+                  v-if="value.options_media == 'image'"
+                  <td v-if="value.options_media == 'image'">
+                    <v-file-input
+                      v-for="index in 5"
+                      id="image-attachment"
+                      :key="index"
+                      :name="index + '_' + value.id"
+                      :label="'Option ' + index"
+                      prepend-icon="mdi-camera"
+                      type="file"
+                      class="form-control mb-2"
+                      accept="image/*"
+                      @change="imageFileAppend"
+                    >
+                    </v-file-input>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="modal-footer text-white">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Close
+            </button>
+            <button
+              v-if="imageRequestPending"
+              type="button"
+              class="btn btn-primary"
+            >
+              Pending...
+            </button>
+            <button
+              v-else
+              type="button"
+              class="btn btn-primary"
+              @click="imageUlpoads3"
+            >
+              Save changes
+            </button>
           </div>
         </div>
       </div>
-     </div>
-    
+    </div>
+  </div>
 
   <Frame
     page-title="Create Quiz"
@@ -272,7 +293,7 @@ const imageUlpoads3 = async() => {
         <div
           v-if="requiredImage.length > 0"
           data-bs-toggle="modal"
-          :data-bs-target="`#imageUpload`" 
+          :data-bs-target="`#imageUpload`"
           type="button"
           class="btn text-white btn-primary me-2"
         >

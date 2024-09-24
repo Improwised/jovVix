@@ -1,5 +1,5 @@
 <template>
-  <PageLayout :current-tab="currentTab" @change-tab="changeTab"/>
+  <PageLayout :current-tab="currentTab" @change-tab="changeTab" />
   <template v-if="currentTab == 'report'">
     <div v-if="quizAnalysisPending">Loading...</div>
     <div
@@ -12,7 +12,11 @@
       </span>
     </div>
     <div v-else class="container mt-3">
-      <div class="card mb-3 row" v-for="(quiz, index) in quizAnalysis.data">
+      <div
+        v-for="(quiz, index) in quizAnalysis.data"
+        :key="index"
+        class="card mb-3 row"
+      >
         <div class="row m-2">
           <div class="col-lg-6 col-sm-12">
             <div>
@@ -20,14 +24,20 @@
               <h3 class="font-bold">{{ quiz.question }}</h3>
             </div>
           </div>
-          <div v-if="quiz?.question_media === 'image'" class="d-flex align-items-center justify-content-center">
+          <div
+            v-if="quiz?.question_media === 'image'"
+            class="d-flex align-items-center justify-content-center"
+          >
             <img
               :src="`${quiz?.resource}`"
               :alt="`${quiz?.resource}`"
               class="rounded img-thumbnail"
             />
           </div>
-          <CodeBlockComponent v-if="quiz?.question_media === 'code'" :code="quiz?.resource" />
+          <CodeBlockComponent
+            v-if="quiz?.question_media === 'code'"
+            :code="quiz?.resource"
+          />
           <div
             class="col-lg-12 d-flex flex-wrap align-items-center justify-content-around"
           >
@@ -36,7 +46,9 @@
               {{ Math.abs((quiz.avg_response_time / 1000).toFixed(2)) }}/
               {{ quiz.duration }} seconds
             </span>
-            <span v-if="quiz.type === 1" class="badge bg-light-info m-1 text-dark"
+            <span
+              v-if="quiz.type === 1"
+              class="badge bg-light-info m-1 text-dark"
               >M.C.Q.</span
             >
             <span v-else class="badge bg-light-info m-1 text-dark">Survey</span>
@@ -54,7 +66,11 @@
         </div>
 
         <div class="row d-flex align-items-stretch m-2">
-          <div v-for="(option, order) in quiz.options" class="col-lg-6 col-md-12">
+          <div
+            v-for="(option, order) in quiz.options"
+            :key="order"
+            class="col-lg-6 col-md-12"
+          >
             <div
               v-if="quiz.correct_answer.includes(Number(order))"
               class="bg-light-success option-box"
@@ -65,7 +81,7 @@
                 :option="option"
                 :selected="quiz.selected_answers[order]?.length || 0"
                 icon="fa-solid fa-check"
-                :isCorrect="true"
+                :is-correct="true"
                 :options-media="quiz?.options_media"
               />
             </div>
@@ -118,8 +134,8 @@ definePageMeta({
 const { api_url } = useRuntimeConfig().public;
 const headers = useRequestHeaders(["cookie"]);
 const route = useRoute();
-const activeQuizId = computed(() => route.params.id );
-const currentTab = ref("report")
+const activeQuizId = computed(() => route.params.id);
+const currentTab = ref("report");
 
 const {
   data: quizAnalysis,
@@ -244,9 +260,9 @@ onMounted(() => {
   getAnalysisJson();
 });
 
-const changeTab = (data)=> {
+const changeTab = (data) => {
   currentTab.value = data;
-}
+};
 </script>
 
 <style scoped>

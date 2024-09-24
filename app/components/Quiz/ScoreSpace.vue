@@ -1,6 +1,5 @@
 <script setup>
 import AnswerSubmissionChart from "../AnswerSubmissionChart.vue";
-const url = useRuntimeConfig().public;
 const props = defineProps({
   data: {
     default: () => {
@@ -19,12 +18,14 @@ const props = defineProps({
     type: String,
     default: "",
   },
-  answer: {
+  selectedAnswer: {
     required: false,
     type: Number,
+    default: 0,
   },
   analysisTab: {
     type: String,
+    default: "",
   },
 });
 
@@ -72,15 +73,19 @@ const changeAnalysisTab = (tab) => emits("changeAnalysisTab", tab);
           :alt="`${props.data?.data?.resource}`"
           class="rounded img-thumbnail"
         />
-        <CodeBlockComponent v-if="props.data?.data?.question_media === 'code'" :code="props.data?.data?.resource" />
+        <CodeBlockComponent
+          v-if="props.data?.data?.question_media === 'code'"
+          :code="props.data?.data?.resource"
+        />
         <div class="d-flex flex-column">
           <div
             v-for="(answer, key) in props.data.data.options"
             :key="key"
-            class="border m-1 rounded p-1"
+            class="flex-grow-1 border m-1 rounded p-1 card-text"
             :class="{
               'bg-success': answer.isAnswer,
-              'bg-danger text-white': !answer.isAnswer && key == props.answer,
+              'bg-danger text-white':
+                !answer.isAnswer && key == props.selectedAnswer,
             }"
           >
             <img
@@ -89,7 +94,10 @@ const changeAnalysisTab = (tab) => emits("changeAnalysisTab", tab);
               :alt="`${answer.value}`"
               class="rounded img-thumbnail"
             />
-            <CodeBlockComponent v-if="props.data?.data?.options_media === 'code'" :code="answer.value" />
+            <CodeBlockComponent
+              v-if="props.data?.data?.options_media === 'code'"
+              :code="answer.value"
+            />
             <div
               v-if="props.data?.data?.options_media === 'text'"
               class="form-check form-check-inline"

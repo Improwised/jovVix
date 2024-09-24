@@ -7,7 +7,22 @@
 <script setup>
 import { Bar } from "vue-chartjs";
 
-const props = defineProps(["options", "responses"]);
+const props = defineProps({
+  options: {
+    type: Object,
+    required: true,
+    default: () => {
+      return {};
+    },
+  },
+  responses: {
+    type: Array,
+    required: true,
+    default: () => {
+      return [];
+    },
+  },
+});
 
 const chartData = computed(() => {
   if (props.options && props.responses) {
@@ -73,11 +88,11 @@ const chartOptions = ref({
         display: false,
       },
       ticks: {
-        callback: function (value, index) {
+        callback: function (value) {
           const val = this.getLabelForValue(value);
-          let xAxisName = props.options[val]?.value || "Not Attempted"
+          let xAxisName = props.options[val]?.value || "Not Attempted";
           if (xAxisName.length > 15) {
-            xAxisName = xAxisName.slice(0,15) + "..."
+            xAxisName = xAxisName.slice(0, 15) + "...";
           }
           return xAxisName;
         },

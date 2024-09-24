@@ -41,7 +41,9 @@ export default class UserOperation extends QuizHandler {
   pingServer() {
     if (this.socket.readyState === WebSocket.OPEN) {
       console.log("pinging server");
-      this.socket.send(JSON.stringify({ event: constants.EventPing, user: this.username }));
+      this.socket.send(
+        JSON.stringify({ event: constants.EventPing, user: this.username })
+      );
     }
   }
 
@@ -74,7 +76,6 @@ export default class UserOperation extends QuizHandler {
   }
 
   async handleSendAnswer(answers, user_played_quiz, session_id) {
-    let error;
     const responseTime = this.getAnswerResponseTime();
     try {
       const response = await fetch(
@@ -96,7 +97,7 @@ export default class UserOperation extends QuizHandler {
         return { error: `Failed to submit answer: ${errorMessage}` };
       }
 
-      return { error: null }
+      return { error: null };
     } catch (err) {
       return { error: err.message || "An unknown error occurred." };
     }

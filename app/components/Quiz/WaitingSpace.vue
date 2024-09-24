@@ -18,7 +18,7 @@ const listUserStore = useListUserstore();
 const { removeAllUsers } = listUserStore;
 
 const startQuiz = ref(false);
-const joinedParticipants = ref();
+
 // define props and emits
 const props = defineProps({
   data: {
