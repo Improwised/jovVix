@@ -42,7 +42,7 @@ watch(
       <div v-else>
         <h3 class="text-center">Accuracy: {{ userAccuracy }}%</h3>
         <h3 class="text-center">Total Score: {{ userTotalScore }}</h3>
-        <QuizQuestionAnalysis :data="quizList.data" />
+        <QuizAnalysis :data="quizList.data" />
       </div>
     </div>
   </ClientOnly>

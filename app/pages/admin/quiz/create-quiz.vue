@@ -15,7 +15,6 @@ let quizId = ref();
 const requestPending = ref(false);
 const imageRequestPending = ref(false);
 const requiredImage = ref([]);
-const imageForm = new FormData();
 
 const uploadQuizAndQuestions = async (e) => {
   e.preventDefault();
@@ -87,40 +86,65 @@ const uploadQuizAndQuestions = async (e) => {
   }
 };
 
-const imageFileAppend = (e) => {
-  imageForm.append("image-attachment", e.target.files[0], e.target.name);
-};
+const imageFileUpload = async (e) => {
+  if (e.target.files.length === 0) {
+    toast.error("Please select a file to upload.");
+    return;
+  }
 
-const imageUlpoads3 = async () => {
-  const imageAttachment = document.getElementById("image-attachment");
-  if (imageAttachment.files.length !== 0) {
-    imageRequestPending.value = true;
-    try {
-      await $fetch(encodeURI(`${url.api_url}/images?quiz_id=${quizId.value}`), {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-        },
-        body: imageForm,
-        mode: "cors",
-        credentials: "include",
-        onResponse({ response }) {
-          if (response.status != 200) {
-            imageRequestPending.value = false;
-            toast.error("error while create quiz");
-            return;
-          }
-          if (response.status == 200) {
-            toast.success(response._data?.data);
-            imageRequestPending.value = false;
-          }
-        },
-      });
-    } catch (error) {
-      toast.error(error.message);
-      imageRequestPending.value = false;
-      return;
-    }
+  // Validate file
+  const file = e.target.files[0];
+
+  const validImageTypes = [
+    "image/jpeg",
+    "image/png",
+    "image/gif",
+    "image/webp",
+    "image/heic",
+    "image/heif",
+  ];
+  if (!validImageTypes.includes(file.type)) {
+    toast.error(
+      "Please upload a valid image file (JPEG, PNG, GIF, WEBP, HEIC, HEIF)."
+    );
+    return;
+  }
+
+  // 2 MB max
+  if (file.size > 2000000) {
+    toast.error("Please upload an image less than 2 MB.");
+    return;
+  }
+
+  const imageForm = new FormData();
+  imageForm.append("image-attachment", e.target.files[0], e.target.name);
+
+  imageRequestPending.value = true;
+  try {
+    await $fetch(encodeURI(`${url.api_url}/images?quiz_id=${quizId.value}`), {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+      },
+      body: imageForm,
+      mode: "cors",
+      credentials: "include",
+      onResponse({ response }) {
+        if (response.status != 200) {
+          imageRequestPending.value = false;
+          toast.error("error upload image");
+          return;
+        }
+        if (response.status == 200) {
+          toast.success(response._data?.data);
+          imageRequestPending.value = false;
+        }
+      },
+    });
+  } catch (error) {
+    toast.error(error.message);
+    imageRequestPending.value = false;
+    return;
   }
 };
 </script>
@@ -165,22 +189,21 @@ const imageUlpoads3 = async () => {
                   <td>
                     <v-file-input
                       v-if="value.question_media == 'image'"
-                      id="image-attachment"
+                      id="image-attachment-question"
                       prepend-icon="mdi-camera"
                       type="file"
                       class="form-control"
                       :name="value.id"
                       label="Question"
                       accept="image/*"
-                      @change="imageFileAppend"
+                      @change="imageFileUpload"
                     >
                     </v-file-input>
                   </td>
-                  v-if="value.options_media == 'image'"
                   <td v-if="value.options_media == 'image'">
                     <v-file-input
                       v-for="index in 5"
-                      id="image-attachment"
+                      id="image-attachment-option"
                       :key="index"
                       :name="index + '_' + value.id"
                       :label="'Option ' + index"
@@ -188,7 +211,7 @@ const imageUlpoads3 = async () => {
                       type="file"
                       class="form-control mb-2"
                       accept="image/*"
-                      @change="imageFileAppend"
+                      @change="imageFileUpload"
                     >
                     </v-file-input>
                   </td>
@@ -198,26 +221,19 @@ const imageUlpoads3 = async () => {
           </div>
           <div class="modal-footer text-white">
             <button
-              type="button"
-              class="btn btn-secondary"
-              data-bs-dismiss="modal"
-            >
-              Close
-            </button>
-            <button
               v-if="imageRequestPending"
               type="button"
-              class="btn btn-primary"
+              class="btn btn-secondary"
             >
               Pending...
             </button>
             <button
               v-else
               type="button"
-              class="btn btn-primary"
-              @click="imageUlpoads3"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
             >
-              Save changes
+              Close
             </button>
           </div>
         </div>

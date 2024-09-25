@@ -1,13 +1,13 @@
 <template>
-  <div class="d-flex align-items-center flex-wrap">
+  <div class="d-flex align-items-center flex-wrap flex-grow-1">
     <button
-      class="btn btn-icon btn-white border border-2 rounded-circle btn-dashed ms-2"
+      class="btn btn-icon btn-white border border-2 rounded-circle btn-dashed ms-2 mr-2"
     >
       {{ String.fromCharCode(64 + Number(props.order)) }}
     </button>
     <div
       v-if="props.optionsMedia === 'image'"
-      class="d-flex align-items-center justify-content-center"
+      class="d-flex flex-grow-1 justify-content-center"
     >
       <img
         :src="`${props.option}`"
@@ -22,14 +22,12 @@
     >
       {{ props.option }}
     </div>
-    <div
-      v-if="props.optionsMedia === 'code'"
-      class="d-flex align-items-center justify-content-center"
-    >
+    <div v-if="props.optionsMedia === 'code'">
       <CodeBlockComponent :code="props?.option" />
     </div>
   </div>
   <span
+    v-if="props.isAdminAnalysis"
     :class="{ 'bg-success': props.isCorrect }"
     class="badge bg-secondary text-white mx-3 rounded-pill"
     ><font-awesome-icon icon="fa-solid fa-user" class="mx-2" />
@@ -53,11 +51,6 @@ const props = defineProps({
     required: false,
     default: "",
   },
-  icon: {
-    type: String,
-    required: false,
-    default: "",
-  },
   isCorrect: {
     type: Boolean,
     required: false,
@@ -68,5 +61,16 @@ const props = defineProps({
     required: true,
     default: "",
   },
+  isAdminAnalysis: {
+    type: Boolean,
+    required: false,
+    default: false,
+  },
 });
 </script>
+
+<style scoped>
+img {
+  max-height: 150px;
+}
+</style>

@@ -64,47 +64,41 @@ const changeAnalysisTab = (tab) => emits("changeAnalysisTab", tab);
       rounded="true"
       :model-value="(time * 100) / props.data.data.duration"
     ></v-progress-linear>
-    <div class="card border-secondary mt-3">
-      <div class="card-body">
-        <h4 class="card-title">{{ props.data.data.question }}</h4>
-        <img
-          v-if="props.data?.data?.question_media === 'image'"
-          :src="`${props.data?.data?.resource}`"
-          :alt="`${props.data?.data?.resource}`"
-          class="rounded img-thumbnail"
-        />
-        <CodeBlockComponent
-          v-if="props.data?.data?.question_media === 'code'"
-          :code="props.data?.data?.resource"
-        />
-        <div class="d-flex flex-column">
-          <div
-            v-for="(answer, key) in props.data.data.options"
-            :key="key"
-            class="flex-grow-1 border m-1 rounded p-1 card-text"
-            :class="{
-              'bg-success': answer.isAnswer,
-              'bg-danger text-white':
-                !answer.isAnswer && key == props.selectedAnswer,
-            }"
-          >
-            <img
-              v-if="props.data?.data?.options_media === 'image'"
-              :src="`${answer.value}`"
-              :alt="`${answer.value}`"
-              class="rounded img-thumbnail"
-            />
-            <CodeBlockComponent
-              v-if="props.data?.data?.options_media === 'code'"
-              :code="answer.value"
-            />
-            <div
-              v-if="props.data?.data?.options_media === 'text'"
-              class="form-check form-check-inline"
-            >
-              <label class="form-check-label">{{ answer.value }}</label>
-            </div>
-          </div>
+
+    <!-- Question -->
+    <QuizQuestionAnalysis :question="props.data?.data" :is-for-quiz="true" />
+
+    <!-- Options -->
+    <div class="row d-flex align-items-stretch m-2">
+      <div
+        v-for="(answer, key) in props.data.data.options"
+        :key="key"
+        class="col-lg-6 col-md-12"
+      >
+        <div v-if="answer.isAnswer" class="bg-light-success option-box">
+          <Option
+            :order="Number(key)"
+            :option="answer?.value"
+            :is-correct="true"
+            :options-media="props.data.data.options_media"
+          />
+        </div>
+        <div
+          v-else-if="!answer.isAnswer && key == props.selectedAnswer"
+          class="bg-light-danger option-box wrong-option"
+        >
+          <Option
+            :order="Number(key)"
+            :option="answer?.value"
+            :options-media="props.data.data.options_media"
+          />
+        </div>
+        <div v-else class="option-box wrong-option">
+          <Option
+            :order="Number(key)"
+            :option="answer?.value"
+            :options-media="props.data.data.options_media"
+          />
         </div>
       </div>
     </div>
@@ -215,5 +209,20 @@ const changeAnalysisTab = (tab) => emits("changeAnalysisTab", tab);
 .table td,
 .table th {
   background-color: #f9f9f9; /* Ensure each cell has a white background */
+}
+
+.option-box {
+  min-height: 70px;
+  padding-top: 3px;
+  border-radius: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 5px;
+  margin-top: 3px;
+}
+
+.wrong-option {
+  border: 1px solid var(--bs-light-primary);
 }
 </style>

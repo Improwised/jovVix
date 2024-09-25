@@ -2,7 +2,6 @@
 // core dependencies
 import { useNuxtApp } from "nuxt/app";
 import { useToast } from "vue-toastification";
-import CodeBlockComponent from "../CodeBlockComponent.vue";
 
 // define nuxt configs
 const app = useNuxtApp();
@@ -139,55 +138,36 @@ function handleSkip(e) {
         ></div>
       </div>
     </div>
-    <div>
-      <span>{{ question.no }}. </span>
-      <span>{{ question.question }}</span>
-      <img
-        v-if="question?.question_media === 'image'"
-        :src="`${question?.resource}`"
-        :alt="`${question?.resource}`"
-        class="rounded img-thumbnail"
-      />
-      <CodeBlockComponent
-        v-if="question?.question_media === 'code'"
-        :code="question?.resource"
-      />
-    </div>
-    <div class="d-flex flex-column">
+
+    <!-- Question -->
+    <QuizQuestionAnalysis
+      :question="props.data?.data"
+      :is-for-quiz="true"
+      :order="question.no"
+    />
+
+    <!-- Options -->
+    <div class="row d-flex align-items-stretch m-2">
       <div
         v-for="(value, key) in question.options"
         :key="key"
-        class="border m-1 rounded p-1"
+        class="col-lg-6 col-md-12"
       >
-        <label class="form-check-label d-flex align-items-center">
-          <div v-if="!isAdmin" class="form-check form-check-inline me-0">
-            <input
-              :id="`${key}`"
-              v-model="answer"
-              class="form-check-input"
-              type="radio"
-              name="answer"
-              :value="{ key }"
-              :disabled="isSubmitted"
-            />
-          </div>
-          <p
-            v-if="question?.options_media === 'text'"
-            class="mb-0 ms-2"
-            :for="`${key}`"
-          >
-            {{ value }}
-          </p>
-          <img
-            v-if="question?.options_media === 'image'"
-            :src="`${value}`"
-            :alt="`${value}`"
-            class="rounded img-thumbnail"
-            :for="`${key}`"
-          />
-          <CodeBlockComponent
-            v-if="question?.options_media === 'code'"
-            :code="value"
+        <input
+          v-if="!isAdmin"
+          :id="`${key}`"
+          v-model="answer"
+          class="option-radio"
+          type="radio"
+          name="answer"
+          :value="{ key }"
+          :disabled="isSubmitted"
+        />
+        <label :for="`${key}`" class="option-box wrong-option">
+          <Option
+            :order="Number(key)"
+            :option="value"
+            :options-media="question.options_media"
           />
         </label>
       </div>
@@ -222,18 +202,27 @@ function handleSkip(e) {
 </template>
 
 <style scoped>
-@media (max-width: 768px) {
-  .d-flex.flex-column.flex-md-row {
-    flex-direction: column !important;
-  }
-  .d-flex.flex-column.flex-md-row .border {
-    width: 100% !important;
-  }
-  .form-check-label {
-    justify-content: flex-start !important;
-  }
-  .form-check-input + .mb-0 {
-    margin-left: 0.5rem; /* Adjust the spacing between the radio button and the text */
-  }
+.option-box {
+  min-height: 70px;
+  padding-top: 3px;
+  border-radius: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 5px;
+  margin-top: 3px;
+  transition: all 0.3s ease;
+}
+
+.wrong-option {
+  border: 1px solid var(--bs-light-primary);
+}
+
+.option-radio {
+  -webkit-appearance: none;
+}
+
+input[type="radio"]:checked + .option-box {
+  border-color: rgb(24, 255, 0);
 }
 </style>

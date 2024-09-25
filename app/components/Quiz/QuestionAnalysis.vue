@@ -1,107 +1,100 @@
-<script setup>
-const props = defineProps({
-  data: {
-    type: Object,
-    required: true,
-  },
-});
-
-const questionsAnalysis = computed(() => {
-  // to remove rank object from data
-  const filteredData = props.data?.filter(
-    (item) => !item.hasOwnProperty("rank")
-  );
-  return filteredData;
-});
-</script>
-
 <template>
-  <Frame
-    v-for="(item, index) in questionsAnalysis"
-    :key="index"
-    :page-title="'Q' + (index + 1) + '. ' + item.question"
-    class="mb-2"
-  >
+  <div class="row m-2">
+    <div class="col-lg-12">
+      <div>
+        <strong v-if="props.order !== 0" class="text-primary"
+          >Question: {{ props.order }}</strong
+        >
+        <h3 class="font-bold">{{ props.question?.question }}</h3>
+      </div>
+    </div>
     <div
-      v-if="item?.question_media === 'image'"
+      v-if="props.question?.question_media === 'image'"
       class="d-flex align-items-center justify-content-center"
     >
       <img
-        :src="`${item?.resource}`"
-        :alt="`${item?.resource}`"
+        :src="`${props.question?.resource}`"
+        :alt="`${props.question?.resource}`"
         class="rounded img-thumbnail"
       />
     </div>
+    <CodeBlockComponent
+      v-if="props.question?.question_media === 'code'"
+      :code="props.question?.resource"
+    />
     <div
-      v-if="item?.question_media === 'code'"
-      class="d-flex align-items-center justify-content-center"
+      v-if="props.isAdminAnalysis && !props.isForQuiz"
+      class="col-lg-12 d-flex flex-wrap align-items-center justify-content-around"
     >
-      <CodeBlockComponent :code="item?.resource" />
-    </div>
-    <ul style="list-style-type: none; padding-left: 0">
-      <li
-        v-for="(option, key) in item.options"
-        :key="key"
-        style="display: flex; align-items: center; padding-left: 20px"
+      <span class="bg-light-primary rounded px-2 text-dark">
+        AVG. Response Time:
+        {{ Math.abs((props.question?.avg_response_time / 1000).toFixed(2)) }}/
+        {{ props.question?.duration }} seconds
+      </span>
+      <span
+        v-if="props.question?.type === 1"
+        class="badge bg-light-info m-1 text-dark"
+        >M.C.Q.</span
       >
-        <span
-          v-if="item.correct_answer.includes(key)"
-          style="margin-right: 10px"
-          >&#10004;</span
-        >
-        <span
-          v-if="
-            item.selected_answer.String.includes(key) &&
-            !item.correct_answer.includes(key)
-          "
-          style="margin-right: 10px"
-        >
-          &#10006;
-        </span>
-        <span v-if="item?.options_media === 'text'"
-          >{{ key }}: {{ option }}</span
-        >
-        <div
-          v-if="item?.options_media === 'image'"
-          class="d-flex align-items-center justify-content-center"
-        >
-          <span>{{ key }}:</span>
-          <img
-            :src="`${option}`"
-            :alt="`${option}`"
-            class="rounded img-thumbnail"
-          />
-        </div>
-        <div
-          v-if="item?.options_media === 'code'"
-          class="mt-2 d-flex align-items-center justify-content-center"
-        >
-          <span class="mr-1">{{ key }}:</span>
-          <CodeBlockComponent :code="option" />
-        </div>
-      </li>
-    </ul>
+      <span v-else class="badge bg-light-info m-1 text-dark">Survey</span>
+      <v-progress-circular
+        class="mt-2"
+        :model-value="props.question?.correctPercentage"
+        :rotate="360"
+        :size="60"
+        :width="5"
+        :color="props.question?.correctPercentage >= 50 ? 'teal' : '#D2042D'"
+      >
+        {{ props.question?.correctPercentage.toFixed(0) }}%
+      </v-progress-circular>
+    </div>
     <div
-      style="
-        display: flex;
-        flex: 1;
-        margin-top: 10px;
-        border-top: 1px solid #ccc;
-      "
+      v-else-if="!props.isAdminAnalysis && !props.isForQuiz"
+      class="col-lg-12 d-flex flex-wrap align-items-center justify-content-around mt-1"
     >
-      <div
-        v-if="item.response_time > 0"
-        style="flex: 1; padding: 10px; border-right: 1px solid #ccc"
+      <span
+        v-if="props.question?.response_time > 0"
+        class="bg-light-primary rounded px-2 text-dark"
       >
         Response Time:
-        {{ (item.response_time / 1000).toFixed(2) }} seconds
-      </div>
-      <div v-else style="flex: 1; padding: 10px; border-right: 1px solid #ccc">
+        {{ (props.question?.response_time / 1000).toFixed(2) }} seconds
+      </span>
+      <span v-else class="bg-light-primary rounded px-2 text-dark">
         Response Time: -
-      </div>
-      <div style="flex: 1; padding: 10px">
-        {{ item.is_attend ? "Attempted" : "Not Attempted" }}
-      </div>
+      </span>
+      <span
+        v-if="props.question?.is_attend"
+        class="badge bg-success m-1 text-white"
+        >Attempted</span
+      >
+      <span v-else class="badge bg-danger m-1 text-white">Not Attempted</span>
     </div>
-  </Frame>
+  </div>
 </template>
+
+<script setup>
+const props = defineProps({
+  question: {
+    type: Object,
+    required: true,
+    default: () => {
+      return {};
+    },
+  },
+  order: {
+    type: Number,
+    required: false,
+    default: 0,
+  },
+  isAdminAnalysis: {
+    type: Boolean,
+    required: true,
+    default: false,
+  },
+  isForQuiz: {
+    type: Boolean,
+    required: false,
+    default: false,
+  },
+});
+</script>

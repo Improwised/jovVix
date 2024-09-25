@@ -59,7 +59,7 @@ const handleMouseLeave = (event) => {
           ></button>
         </div>
         <div class="modal-body">
-          <QuizQuestionAnalysis :data="props.data" />
+          <QuizAnalysis :data="props.data" />
         </div>
       </div>
     </div>

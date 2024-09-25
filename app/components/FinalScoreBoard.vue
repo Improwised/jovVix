@@ -13,10 +13,8 @@ useSystemEnv();
 
 const analysisData = reactive([]);
 const userAnalysisEndpoint = "/analytics_board/user";
-
-const userAccuracy = ref(0);
-const userTotalScore = ref(0);
 const requestPending = ref(false);
+const userStatistics = ref({});
 
 const props = defineProps({
   userURL: {
@@ -100,9 +98,7 @@ if (!props.isAdmin) {
       () => {
         if (data.value) {
           analysisData.push(...data.value.data);
-          let analysis = questionsAnalysis(data.value?.data);
-          userAccuracy.value = analysis.accuracy;
-          userTotalScore.value = analysis.totalScore;
+          userStatistics.value = questionsAnalysis(data.value?.data);
         }
         if (error.value) {
           toast.error(app.$$Unauthorized);
@@ -125,8 +121,8 @@ const showAnalysis = () => {
   <ClientOnly>
     <div v-if="requestPending" class="text-center">Loading...</div>
     <div v-else>
-      <div v-if="scoreboardData" class="table-responsive mt-5 w-100">
-        <table class="table align-middle table-light">
+      <div v-if="scoreboardData" class="table-responsive mt-5 w-100 container">
+        <table class="table align-middle table-bordered">
           <thead>
             <caption>
               Rankings
@@ -138,59 +134,70 @@ const showAnalysis = () => {
             </tr>
           </thead>
           <tbody class="table-group-divider">
-            <tr v-for="(user, index) in scoreboardData" :key="index">
-              <td
-                :class="{
-                  'user-row':
-                    user.username === props.userName && !props.isAdmin,
-                }"
-              >
+            <tr
+              v-for="(user, index) in scoreboardData"
+              :key="index"
+              :class="{
+                'table-primary':
+                  user.username === props.userName && !props.isAdmin,
+              }"
+            >
+              <td>
                 {{ user.rank }}
               </td>
               <td v-if="props.isAdmin">
                 {{ user.firstname }} <span>({{ user.username }})</span>
               </td>
-              <td
-                v-else
-                :class="{ 'user-row': user.username === props.userName }"
-              >
+              <td v-else>
                 {{ user.firstname }}
                 <span v-if="props?.userName === user.username">
                   &nbsp;({{ user.username }})
                 </span>
               </td>
-              <td
-                :class="{
-                  'user-row':
-                    user.username === props.userName && !props.isAdmin,
-                }"
-              >
-                {{ user.score }}
-              </td>
+              <td>{{ user.score }}</td>
             </tr>
           </tbody>
         </table>
+        <button
+          v-if="props.isAdmin"
+          class="btn btn-primary"
+          @click="showAnalysis"
+        >
+          Show Analysis
+        </button>
       </div>
       <div v-if="!props.isAdmin">
-        <h3 class="text-center">Accuracy: {{ userAccuracy }}%</h3>
-        <h3 class="text-center">Total Score: {{ userTotalScore }}</h3>
-        <QuizQuestionAnalysis :data="analysisData" />
+        <div
+          class="d-flex flex-wrap align-items-center justify-content-around container bg-white rounded p-5"
+        >
+          <span
+            class="badge rounded-pill bg-light-primary text-dark m-2 px-2 fs-5"
+          >
+            Accuracy: {{ userStatistics?.accuracy }}%
+          </span>
+          <span
+            class="badge rounded-pill bg-light-primary text-dark m-2 px-2 fs-5"
+          >
+            Total Score: {{ userStatistics?.totalScore }}
+          </span>
+          <span
+            class="badge rounded-pill bg-light-primary text-dark m-2 px-2 fs-5"
+          >
+            Total Correct: {{ userStatistics?.correctAnwers }}</span
+          >
+          <span
+            class="badge rounded-pill bg-light-secondary text-dark m-2 px-2 fs-5"
+          >
+            Total Incorrect: {{ userStatistics?.wrongAnwers }}
+          </span>
+          <span
+            class="badge rounded-pill bg-light-secondary text-dark m-2 px-2 fs-5"
+          >
+            Total Un-attmpted: {{ userStatistics?.unAttemptedQuestions }}
+          </span>
+        </div>
+        <QuizAnalysis :data="analysisData" />
       </div>
-      <button
-        v-if="props.isAdmin"
-        class="btn btn-primary"
-        @click="showAnalysis"
-      >
-        Show Analysis
-      </button>
     </div>
   </ClientOnly>
 </template>
-
-<style scoped>
-.user-row {
-  background-color: #8968cd !important;
-  color: white;
-  box-shadow: none;
-}
-</style>
