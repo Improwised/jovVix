@@ -82,6 +82,7 @@ import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { useToast } from "vue-toastification";
 import { useUsersStore } from "~~/store/users";
+import { getRandomAvatarName } from "~~/composables/avatar";
 const userData = useUsersStore();
 const { setUserData } = userData;
 const pageLoading = ref(true);
@@ -120,23 +121,31 @@ const join_quiz = async () => {
   // create quick user
   if (!isUserLoggedIn.value) {
     quickUserPending.value = true;
+    const avatarName = getRandomAvatarName();
+
     try {
-      await $fetch(`${api_url}/quick_users/${username.value}`, {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          Accept: "application/json",
-        },
-        onResponse({ response }) {
-          if (response.status == 200) {
-            isUserLoggedIn.value = true;
-            quickUserPending.value = false;
-            firstname.value = response._data?.data?.first_name;
-            username.value = response._data?.data?.username;
-            setUserData("guest-user");
-          }
-        },
-      });
+      await $fetch(
+        `${api_url}/quick_users/${username.value}?avatar_name=${avatarName}`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            Accept: "application/json",
+          },
+          onResponse({ response }) {
+            if (response.status == 200) {
+              isUserLoggedIn.value = true;
+              quickUserPending.value = false;
+              firstname.value = response._data?.data?.first_name;
+              username.value = response._data?.data?.username;
+              setUserData({
+                role: "guest-user",
+                avatar: response._data?.data?.img_key,
+              });
+            }
+          },
+        }
+      );
     } catch (error) {
       userError.value = error.message;
       quickUserPending.value = false;

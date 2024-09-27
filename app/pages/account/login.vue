@@ -21,7 +21,7 @@ console.log();
 (async () => {
   if (process.client) {
     const user = getUserData();
-    if (user && user == "admin-user") {
+    if (user && user?.role == "admin-user") {
       navigateTo("/");
       return;
     }

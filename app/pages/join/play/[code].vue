@@ -70,7 +70,7 @@ const handleQuizEvents = async (message) => {
   } else if (message.event == app.$TerminateQuiz) {
     monitorTerminateQuiz.value = true;
     return await router.push(
-      `/join/${username.value}/scoreboard?user_played_quiz=${userPlayedQuiz.value}`
+      `/join/${username.value}/scoreboard?user_played_quiz=${userPlayedQuiz.value}&winner_ui=true`
     );
   } else if (message.event == app.$RedirectToAdmin) {
     return await router.push("/admin/arrange/" + message.data.sessionId);

@@ -58,7 +58,7 @@ export const setUserDataStore = async () => {
       throw new Error(response.status);
     } else if (response.status == 200) {
       const data = await response.json();
-      setUserData(data?.data?.role);
+      setUserData({ role: data?.data?.role, avatar: data?.data?.avatar });
     }
   } catch (error) {
     if (error.message == 401) {

@@ -193,6 +193,7 @@ func (ctrl *UserController) GetUserMeta(c *fiber.Ctx) error {
 			"firstname": user.FirstName,
 			"email":     user.Email,
 			"role":      "admin-user",
+			"avatar":    user.ImageKey,
 		})
 	}
 
@@ -214,6 +215,7 @@ func (ctrl *UserController) GetUserMeta(c *fiber.Ctx) error {
 		"firstname": user.FirstName,
 		"email":     user.Email,
 		"role":      "guest-user",
+		"avatar":    user.ImageKey,
 	})
 }
 

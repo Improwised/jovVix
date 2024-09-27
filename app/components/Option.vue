@@ -22,7 +22,7 @@
     >
       {{ props.option }}
     </div>
-    <div v-if="props.optionsMedia === 'code'">
+    <div v-if="props.optionsMedia === 'code'" class="code-block-container">
       <CodeBlockComponent :code="props?.option" />
     </div>
   </div>
@@ -71,6 +71,10 @@ const props = defineProps({
 
 <style scoped>
 img {
-  max-height: 150px;
+  height: 150px;
+  max-width: 180px;
+}
+.code-block-container {
+  flex: 1;
 }
 </style>

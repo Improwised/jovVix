@@ -11,6 +11,7 @@ type FinalScoreBoardAdmin struct {
 	FirstName    string `db:"first_name" json:"firstname"`
 	Score        int    `db:"score,omitempty" json:"score"`
 	ResponseTime int    `db:"response_time,omitempty" json:"response_time"`
+	ImageKey     string `json:"img_key,omitempty" db:"img_key"`
 }
 
 type FinalScoreBoardAdminModel struct {
@@ -36,6 +37,7 @@ func (model *FinalScoreBoardAdminModel) GetScoreForAdmin(activeQuizId string) ([
 		Select(
 			goqu.I(constants.UsersTable+".username"),
 			goqu.I(constants.UsersTable+".first_name"),
+			goqu.I(constants.UsersTable+".img_key"),
 			goqu.SUM("user_quiz_responses.calculated_score").As("score"),
 			goqu.SUM("user_quiz_responses.response_time").As("response_time"),
 			goqu.DENSE_RANK().Over(goqu.W().OrderBy(goqu.SUM("user_quiz_responses.calculated_score").Desc())).As("rank"),

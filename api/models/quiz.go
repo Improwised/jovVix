@@ -358,7 +358,7 @@ func (model *QuizModel) GetQuizAnalysis(activeQuizId string) ([]QuizAnalysis, er
 		InnerJoin(goqu.T(UserTable).As("u"), goqu.On(goqu.Ex{"upq.user_id": goqu.I("u.id")})).
 		Select(
 			goqu.C("question_id"),
-			goqu.L("jsonb_object_agg(?, ?)", goqu.I("u.first_name"), goqu.I("uqr.answers")).As("selected_answers"),
+			goqu.L("jsonb_object_agg(?, ?)", goqu.I("u.username"), goqu.I("uqr.answers")).As("selected_answers"),
 			goqu.L("avg(?)", goqu.I("response_time")).As("avg_response_time"),
 		).
 		Where(goqu.Ex{"upq.active_quiz_id": activeQuizId}).

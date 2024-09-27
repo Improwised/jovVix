@@ -1,5 +1,7 @@
 <script setup>
 import { useToast } from "vue-toastification";
+import WinnerCard from "./WinnerCard.vue";
+import ScoreBoardTable from "./ScoreBoardTable.vue";
 
 const url = useRuntimeConfig().public;
 const scoreboardData = ref([]);
@@ -15,6 +17,7 @@ const analysisData = reactive([]);
 const userAnalysisEndpoint = "/analytics_board/user";
 const requestPending = ref(false);
 const userStatistics = ref({});
+const winnerUI = computed(() => route.query.winner_ui || false);
 
 const props = defineProps({
   userURL: {
@@ -116,54 +119,67 @@ const showAnalysis = () => {
     path: `/admin/reports/${activeQuizId.value}`,
   });
 };
+
+const changeUI = (value) => {
+  navigateTo({ path: route.path, query: { ...route.query, winner_ui: value } });
+};
 </script>
 <template>
-  <ClientOnly>
+  <div v-if="winnerUI == 'true' && props.isAdmin">
+    <video id="myVideo" autoplay muted loop>
+      <source src="@/assets/video/winner.mp4" type="video/mp4" />
+      Your browser does not support HTML5 video.
+    </video>
+    <div v-if="requestPending" class="text-center">Loading...</div>
+    <div
+      v-else
+      class="container-fluid justify-content-around row winners-container"
+    >
+      <div v-if="scoreboardData.length > 1" class="col-sm-12 col-lg-3 mt-4">
+        <WinnerCard :winner="scoreboardData[1]" />
+      </div>
+      <div
+        v-if="scoreboardData.length > 0"
+        class="col-sm-12 col-lg-3 mt-4 first-rank"
+      >
+        <WinnerCard :winner="scoreboardData[0]" />
+      </div>
+      <div v-if="scoreboardData.length > 2" class="col-sm-12 col-lg-3 mt-4">
+        <WinnerCard :winner="scoreboardData[2]" />
+      </div>
+      <div class="text-center change-ui-button" @click="changeUI(false)">
+        <v-btn rounded color="light" dark x-large class="mt-3 px-7" flat
+          >Next</v-btn
+        >
+      </div>
+    </div>
+  </div>
+
+  <ClientOnly v-else>
     <div v-if="requestPending" class="text-center">Loading...</div>
     <div v-else>
-      <div v-if="scoreboardData" class="table-responsive mt-5 w-100 container">
-        <table class="table align-middle table-bordered">
-          <thead>
-            <caption>
-              Rankings
-            </caption>
-            <tr>
-              <th>Rank</th>
-              <th>User</th>
-              <th>Score</th>
-            </tr>
-          </thead>
-          <tbody class="table-group-divider">
-            <tr
-              v-for="(user, index) in scoreboardData"
-              :key="index"
-              :class="{
-                'table-primary':
-                  user.username === props.userName && !props.isAdmin,
-              }"
-            >
-              <td>
-                {{ user.rank }}
-              </td>
-              <td v-if="props.isAdmin">
-                {{ user.firstname }} <span>({{ user.username }})</span>
-              </td>
-              <td v-else>
-                {{ user.firstname }}
-                <span v-if="props?.userName === user.username">
-                  &nbsp;({{ user.username }})
-                </span>
-              </td>
-              <td>{{ user.score }}</td>
-            </tr>
-          </tbody>
-        </table>
+      <div
+        v-if="scoreboardData"
+        class="table-responsive mt-5 w-100 container p-0 pb-2"
+      >
+        <ScoreBoardTable
+          :scoreboard-data="scoreboardData"
+          :is-admin="props.isAdmin"
+          :user-name="props.userName"
+        />
         <button
           v-if="props.isAdmin"
           class="btn btn-primary"
           @click="showAnalysis"
         >
           Show Analysis
+        </button>
+        <button
+          v-if="props.isAdmin"
+          class="btn m-2 btn-primary"
+          @click="changeUI(true)"
+        >
+          Show Winners
         </button>
       </div>
       <div v-if="!props.isAdmin">
@@ -201,3 +217,49 @@ const showAnalysis = () => {
     </div>
   </ClientOnly>
 </template>
+
+<style scoped>
+#myVideo {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  min-width: 100%;
+  min-height: 100%;
+}
+
+.winners-container {
+  margin-top: 10rem;
+}
+
+.winner-card {
+  border-radius: 10px;
+  box-shadow: 0px 4px 5px white;
+  transition: transform 1s;
+}
+
+.winner-card:hover {
+  transform: scale(1.1);
+}
+
+.first-rank {
+  transform: scale(1.5);
+}
+
+.change-ui-button {
+  margin-top: 8rem;
+}
+
+@media only screen and (max-width: 1079px) {
+  .first-rank {
+    transform: scale(1);
+  }
+
+  .change-ui-button {
+    margin-top: 2rem;
+  }
+
+  .winners-container {
+    margin-top: 0px;
+  }
+}
+</style>

@@ -196,10 +196,16 @@ func (ctrl *AuthController) DoKratosAuth(c *fiber.Ctx) error {
 func (ctrl *AuthController) CreateQuickUser(c *fiber.Ctx) error {
 	username := c.Params(constants.Username)
 
+	avatarName := c.Query("avatar_name")
+	if username == "" || avatarName == "" {
+		return utils.JSONError(c, http.StatusBadRequest, "please provide username and avatar name")
+	}
+
 	userObj := models.User{
 		FirstName: username,
 		Username:  username,
 		Roles:     "user",
+		ImageKey:  avatarName,
 	}
 	user, err := ctrl.userModel.InsertUser(userObj)
 	if err != nil {

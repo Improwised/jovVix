@@ -85,7 +85,7 @@
       <div class="col-md-5 mt-4">
         <div class="card d-flex justify-content-center align-items-center">
           <img
-            src="@/assets/images/avatar.png"
+            :src="avatar"
             class="card-img-top mt-3"
             style="width: 14rem"
             alt="..."
@@ -221,12 +221,21 @@
 </template>
 
 <script setup>
+import { useUsersStore } from "~~/store/users";
+import { getAvatarUrlByName } from "~~/composables/avatar";
+const userStore = useUsersStore();
+const { getUserData } = userStore;
 const url = useRuntimeConfig().public;
 const headers = useRequestHeaders(["cookie"]);
 const updateuserError = ref(false);
 const updateuserPending = ref(false);
 const passwordRequestError = ref(false);
 const cancleButton = ref(false);
+
+const avatar = computed(() => {
+  const user = getUserData();
+  return getAvatarUrlByName(user?.avatar);
+});
 
 const {
   data: user,

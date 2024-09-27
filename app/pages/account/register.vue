@@ -26,7 +26,7 @@ console.log(); // this console.log is required because without this, nuxt will g
 (async () => {
   if (process.client) {
     const user = getUserData();
-    if (user && user == "admin-user") {
+    if (user && user?.role == "admin-user") {
       navigateTo("/");
       return;
     }

@@ -3,8 +3,8 @@
     <CodeEditor
       :wrap="true"
       font-size="10px"
-      width="100%"
-      height="100%"
+      width="98%"
+      height="150px"
       :read-only="true"
       :header="false"
       theme="atom-one-dark"

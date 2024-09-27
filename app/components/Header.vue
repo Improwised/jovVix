@@ -104,7 +104,7 @@ const navigate = (url) => {
 
 const isKratosUser = computed(() => {
   const user = getUserData();
-  if (user && user == "admin-user") {
+  if (user && user?.role == "admin-user") {
     return true;
   }
   return false;

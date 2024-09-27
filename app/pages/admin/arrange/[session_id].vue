@@ -90,7 +90,9 @@ const handleQuizEvents = async (message) => {
   } else if (message.event == app.$TerminateQuiz) {
     invitationCode.value = undefined;
     removeAllUsers();
-    return await router.push("/admin/scoreboard?aqi=" + session_id);
+    return await router.push(
+      "/admin/scoreboard?winner_ui=true&aqi=" + session_id
+    );
   } else if (message.event == app.$RedirectToAdmin) {
     return await router.push("/admin/arrange/" + message.data.sessionId);
   } else if (

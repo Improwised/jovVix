@@ -25,6 +25,7 @@ type User struct {
 	Username  string         `json:"username" db:"username" validate:"required"`
 	Password  sql.NullString `json:"-" db:"password"`
 	Roles     string         `json:"roles,omitempty" db:"roles" validate:"required"`
+	ImageKey  string         `json:"img_key,omitempty" db:"img_key"`
 	CreatedAt string         `json:"created_at,omitempty" db:"created_at,omitempty"`
 	UpdatedAt string         `json:"updated_at,omitempty" db:"updated_at,omitempty"`
 }
@@ -64,6 +65,7 @@ func (model *UserModel) GetById(id string) (User, error) {
 		"email",
 		"username",
 		"roles",
+		"img_key",
 	).ScanStruct(&user)
 
 	if err != nil {
@@ -90,6 +92,7 @@ func (model *UserModel) InsertUser(user User) (User, error) {
 			"password":   user.Password,
 			"roles":      user.Roles,
 			"username":   user.Username,
+			"img_key":    user.ImageKey,
 		},
 	).Executor().Exec()
 	if err != nil {
