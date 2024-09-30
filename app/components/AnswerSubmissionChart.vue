@@ -73,7 +73,7 @@ const chartData = computed(() => {
           backgroundColor: backgroundColors,
           borderWidth: 1,
           borderRadius: 5,
-          barThickness: 20,
+          barThickness: 30,
         },
       ],
     };

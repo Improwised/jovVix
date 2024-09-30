@@ -232,7 +232,7 @@ definePageMeta({
     ></QuizScoreSpace>
     <ListJoinUser v-if="currentComponent == 'Waiting'"></ListJoinUser>
     <QuizListUserAnswered
-      v-if="currentComponent == 'Question'"
+      v-if="currentComponent == 'Question' && data?.event !== '5_sec_counter'"
       :data="data"
     ></QuizListUserAnswered>
   </Playground>
