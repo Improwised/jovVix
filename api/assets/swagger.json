@@ -13,7 +13,7 @@
     "description": "Quizz-app",
     "version": "0.0.1-alpha"
   },
-  "host": "127.0.0.1",
+  "host": "127.0.0.1:3000",
   "basePath": "/api",
   "paths": {
     "/healthz": {
@@ -81,19 +81,293 @@
           "https"
         ],
         "tags": [
-          "AdminUploadedQuizzes"
+          "Quiz"
         ],
         "summary": "Get details of quizzes uploaded by Admin.",
         "operationId": "none",
         "responses": {
           "200": {
-            "$ref": "#/responses/ResponseAdminUploadedQuizDetails"
+            "$ref": "#/responses/ResponseAdminUploadedQuiz"
           },
           "400": {
             "$ref": "#/responses/GenericResFailNotFound"
           },
           "401": {
             "$ref": "#/responses/GenericResFailConflict"
+          },
+          "500": {
+            "$ref": "#/responses/GenericResError"
+          }
+        }
+      }
+    },
+    "/v1/admin/quizzes/{quiz_id}": {
+      "get": {
+        "consumes": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "Quiz"
+        ],
+        "summary": "List all questions of quiz.",
+        "operationId": "RequestListQuestionByQuizId",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "QuizId",
+            "name": "quiz_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/ResponseListQuestionByQuizId"
+          },
+          "400": {
+            "$ref": "#/responses/GenericResFailNotFound"
+          },
+          "500": {
+            "$ref": "#/responses/GenericResError"
+          }
+        }
+      }
+    },
+    "/v1/admin/quizzes/{quiz_id}/demo_session": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "Quiz"
+        ],
+        "summary": "Create quiz active for user.",
+        "operationId": "RequestGenerateDemoSession",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "QuizId",
+            "name": "quiz_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/ResponseGenerateDemoSession"
+          },
+          "400": {
+            "$ref": "#/responses/GenericResFailNotFound"
+          },
+          "500": {
+            "$ref": "#/responses/GenericResError"
+          }
+        }
+      }
+    },
+    "/v1/admin/quizzes/{quiz_title}/upload": {
+      "post": {
+        "consumes": [
+          "multipart/form-data"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "Quiz"
+        ],
+        "summary": "Create a new quiz by uploading a CSV file.",
+        "operationId": "RequestQuizCreated",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "QuizTitle",
+            "name": "quiz_title",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "file",
+            "x-go-name": "File",
+            "name": "attachment",
+            "in": "formData",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Description",
+            "name": "description",
+            "in": "formData"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/ResponseQuizCreated"
+          },
+          "400": {
+            "$ref": "#/responses/GenericResFailNotFound"
+          },
+          "401": {
+            "$ref": "#/responses/GenericResFailConflict"
+          },
+          "500": {
+            "$ref": "#/responses/GenericResError"
+          }
+        }
+      }
+    },
+    "/v1/admin/reports/list": {
+      "get": {
+        "consumes": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "Reports"
+        ],
+        "summary": "Get details of quizzes list host by Admin.",
+        "operationId": "RequestListQuizzesAnalysis",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "OrderBy",
+            "name": "orderBy",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/RsponseListQuizzesAnalysis"
+          },
+          "400": {
+            "$ref": "#/responses/GenericResFailNotFound"
+          },
+          "401": {
+            "$ref": "#/responses/GenericResFailConflict"
+          },
+          "500": {
+            "$ref": "#/responses/GenericResError"
+          }
+        }
+      }
+    },
+    "/v1/admin/reports/{active_quiz_id}/analysis": {
+      "get": {
+        "consumes": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "Reports"
+        ],
+        "summary": "Get details of quizzes host by Admin.",
+        "operationId": "RequestGetQuizAnalysis",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "ActiveQuizId",
+            "name": "active_quiz_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/ResponseGetQuizAnalysis"
+          },
+          "400": {
+            "$ref": "#/responses/GenericResFailNotFound"
+          },
+          "401": {
+            "$ref": "#/responses/GenericResFailConflict"
+          },
+          "500": {
+            "$ref": "#/responses/GenericResError"
+          }
+        }
+      }
+    },
+    "/v1/analytics_board/admin": {
+      "get": {
+        "consumes": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "AnalyticsBoard"
+        ],
+        "summary": "Get a analyticsboard details for admin.",
+        "operationId": "RequestAnalyticsBoardForAdmin",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "ActiveQuizId",
+            "name": "active_quiz_id",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/ResponseAnalyticsBoardForAdmin"
+          },
+          "400": {
+            "$ref": "#/responses/GenericResFailNotFound"
+          },
+          "500": {
+            "$ref": "#/responses/GenericResError"
+          }
+        }
+      }
+    },
+    "/v1/analytics_board/user": {
+      "get": {
+        "consumes": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "AnalyticsBoard"
+        ],
+        "summary": "Get a analyticsboard details for user.",
+        "operationId": "RequestAnalyticsBoardForUser",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "UserPlayedQuiz",
+            "name": "user_played_quiz",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/ResponseAnalyticsBoardForUser"
+          },
+          "400": {
+            "$ref": "#/responses/GenericResFailNotFound"
           },
           "500": {
             "$ref": "#/responses/GenericResError"
@@ -111,7 +385,7 @@
           "https"
         ],
         "tags": [
-          "FinalScoreForAdmin"
+          "FinalScore"
         ],
         "summary": "Get a finalScore details for admin.",
         "operationId": "RequestFinalScoreForAdmin",
@@ -120,7 +394,8 @@
             "type": "string",
             "x-go-name": "ActiveQuizId",
             "name": "active_quiz_id",
-            "in": "query"
+            "in": "query",
+            "required": true
           }
         ],
         "responses": {
@@ -146,16 +421,71 @@
           "https"
         ],
         "tags": [
-          "FinalScoreForUser"
+          "FinalScore"
         ],
-        "summary": "Get a finalScore details.",
-        "operationId": "RequestFinalScore",
+        "summary": "Get a finalScore details for user.",
+        "operationId": "RequestFinalScoreForUser",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "UserPlayedQuiz",
+            "name": "user_played_quiz",
+            "in": "query",
+            "required": true
+          }
+        ],
         "responses": {
           "200": {
-            "$ref": "#/responses/ResponseFinalScore"
+            "$ref": "#/responses/ResponseFinalScoreForUser"
           },
           "400": {
             "$ref": "#/responses/GenericResFailNotFound"
+          },
+          "500": {
+            "$ref": "#/responses/GenericResError"
+          }
+        }
+      }
+    },
+    "/v1/images": {
+      "post": {
+        "consumes": [
+          "multipart/form-data"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "FileUpload"
+        ],
+        "summary": "Insert image in s3 bucket.",
+        "operationId": "RequestInsertImage",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "QuizId",
+            "name": "quiz_id",
+            "in": "query",
+            "required": true
+          },
+          {
+            "type": "file",
+            "x-go-name": "File",
+            "name": "image-attachment",
+            "in": "formData",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/ResponseInsertImage"
+          },
+          "400": {
+            "$ref": "#/responses/GenericResFailNotFound"
+          },
+          "401": {
+            "$ref": "#/responses/GenericResFailConflict"
           },
           "500": {
             "$ref": "#/responses/GenericResError"
@@ -187,8 +517,8 @@
         }
       }
     },
-    "/v1/login": {
-      "post": {
+    "/v1/kratos/user": {
+      "put": {
         "consumes": [
           "application/json"
         ],
@@ -197,60 +527,10 @@
           "https"
         ],
         "tags": [
-          "Auth"
+          "User"
         ],
-        "summary": "Authenticate user with email and password.",
-        "operationId": "RequestAuthnUser",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "type": "object",
-              "properties": {
-                "email": {
-                  "type": "string",
-                  "x-go-name": "Email"
-                },
-                "password": {
-                  "type": "string",
-                  "x-go-name": "Password"
-                }
-              }
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/ResponseAuthnUser"
-          },
-          "400": {
-            "$ref": "#/responses/GenericResFailBadRequest"
-          },
-          "401": {
-            "$ref": "#/responses/ResForbiddenRequest"
-          },
-          "500": {
-            "$ref": "#/responses/GenericResError"
-          }
-        }
-      }
-    },
-    "/v1/users": {
-      "post": {
-        "consumes": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "Users"
-        ],
-        "summary": "Register a user.",
-        "operationId": "RequestCreateUser",
+        "summary": "Update user Details.",
+        "operationId": "RequestUpadateRegisteredUser",
         "parameters": [
           {
             "name": "Body",
@@ -270,25 +550,20 @@
                 "last_name": {
                   "type": "string",
                   "x-go-name": "LastName"
-                },
-                "password": {
-                  "type": "string",
-                  "x-go-name": "Password"
-                },
-                "username": {
-                  "type": "string",
-                  "x-go-name": "UserName"
                 }
               }
             }
           }
         ],
         "responses": {
-          "201": {
-            "$ref": "#/responses/ResponseCreateUser"
+          "200": {
+            "$ref": "#/responses/ResponseUserDetails"
           },
           "400": {
-            "$ref": "#/responses/GenericResFailBadRequest"
+            "$ref": "#/responses/GenericResFailNotFound"
+          },
+          "401": {
+            "$ref": "#/responses/GenericResFailConflict"
           },
           "500": {
             "$ref": "#/responses/GenericResError"
@@ -296,7 +571,7 @@
         }
       }
     },
-    "/v1/users/{userId}": {
+    "/v1/kratos/whoami": {
       "get": {
         "consumes": [
           "application/json"
@@ -306,22 +581,53 @@
           "https"
         ],
         "tags": [
-          "Users"
+          "User"
         ],
-        "summary": "Get a user.",
-        "operationId": "RequestGetUser",
+        "summary": "Get Details of Register user.",
+        "operationId": "none",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/ResponseGetRegisteredUser"
+          },
+          "401": {
+            "$ref": "#/responses/GenericResFailConflict"
+          }
+        }
+      }
+    },
+    "/v1/quick_users/{username}": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "User"
+        ],
+        "summary": "Create Quick user to play for quiz directly without login.",
+        "operationId": "RequestCreateQuickUser",
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "UserId",
-            "name": "userId",
+            "x-go-name": "Username",
+            "name": "username",
             "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Avatar",
+            "name": "avatar_name",
+            "in": "query",
             "required": true
           }
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/ResponseGetUser"
+            "$ref": "#/responses/ResponseUserDetails"
           },
           "400": {
             "$ref": "#/responses/GenericResFailNotFound"
@@ -331,29 +637,135 @@
           }
         }
       }
+    },
+    "/v1/user/who": {
+      "get": {
+        "consumes": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "User"
+        ],
+        "summary": "Get Details of user.",
+        "operationId": "GetUserMeta",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/ResponseUserDetails"
+          },
+          "401": {
+            "$ref": "#/responses/GenericResFailConflict"
+          },
+          "500": {
+            "$ref": "#/responses/GenericResError"
+          }
+        }
+      }
+    },
+    "/v1/user_played_quizes": {
+      "get": {
+        "consumes": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "UserPlayedQuiz"
+        ],
+        "summary": "List played quiz by user.",
+        "operationId": "UserPlayedQuiz",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/ResponseListUserPlayedQuizes"
+          },
+          "401": {
+            "$ref": "#/responses/GenericResFailConflict"
+          },
+          "500": {
+            "$ref": "#/responses/GenericResError"
+          }
+        }
+      }
+    },
+    "/v1/user_played_quizes/{invitationCode}": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "UserPlayedQuiz"
+        ],
+        "summary": "Validate the code and copy the questions in reponses for user.",
+        "operationId": "RequestPlayedQuizValidation",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "InvitationCode",
+            "name": "invitationCode",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/ResponsePlayedQuizValidation"
+          },
+          "401": {
+            "$ref": "#/responses/GenericResFailConflict"
+          },
+          "500": {
+            "$ref": "#/responses/GenericResError"
+          }
+        }
+      }
+    },
+    "/v1/user_played_quizes/{user_played_quiz_id}": {
+      "get": {
+        "consumes": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "UserPlayedQuiz"
+        ],
+        "summary": "Analysis of played quiz by user.",
+        "operationId": "RequestListUserPlayedQuizesWithQuestionById",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "UserPlayedQuizId",
+            "name": "user_played_quiz_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/ResponseListUserPlayedQuizesWithQuestionById"
+          },
+          "401": {
+            "$ref": "#/responses/GenericResFailConflict"
+          },
+          "500": {
+            "$ref": "#/responses/GenericResError"
+          }
+        }
+      }
     }
   },
   "definitions": {
-    "FinalScoreBoard": {
-      "type": "object",
-      "properties": {
-        "response_time": {
-          "type": "integer",
-          "format": "int64",
-          "x-go-name": "ResponseTime"
-        },
-        "score": {
-          "type": "integer",
-          "format": "int64",
-          "x-go-name": "Score"
-        },
-        "username": {
-          "type": "string",
-          "x-go-name": "UserName"
-        }
-      },
-      "x-go-package": "github.com/Improwised/quizz-app/api/models"
-    },
     "NullString": {
       "description": "var s NullString\nerr := db.QueryRow(\"SELECT name FROM foo WHERE id=?\", id).Scan(\u0026s)\n...\nif s.Valid {\nuse s.String\n} else {\nNULL value\n}",
       "type": "object",
@@ -361,6 +773,21 @@
       "properties": {
         "String": {
           "type": "string"
+        },
+        "Valid": {
+          "type": "boolean"
+        }
+      },
+      "x-go-package": "database/sql"
+    },
+    "NullTime": {
+      "description": "NullTime implements the Scanner interface so\nit can be used as a scan destination, similar to NullString.",
+      "type": "object",
+      "title": "NullTime represents a time.Time that may be null.",
+      "properties": {
+        "Time": {
+          "type": "string",
+          "format": "date-time"
         },
         "Valid": {
           "type": "boolean"
@@ -512,182 +939,254 @@
         }
       }
     },
-    "ResponseAdminUploadedQuizDetails": {
+    "ResponseAdminUploadedQuiz": {
       "description": "",
       "schema": {
         "type": "object",
         "properties": {
           "data": {
-            "type": "object",
-            "properties": {
-              "created_at": {
-                "type": "string",
-                "format": "date-time",
-                "x-go-name": "CreatedAt"
-              },
-              "creator_id": {
-                "type": "string",
-                "x-go-name": "CreatorID"
-              },
-              "description": {
-                "$ref": "#/definitions/NullString"
-              },
-              "id": {
-                "$ref": "#/definitions/UUID"
-              },
-              "title": {
-                "type": "string",
-                "x-go-name": "Title"
-              },
-              "total_questions": {
-                "type": "integer",
-                "format": "int64",
-                "x-go-name": "TotalQuestions"
-              },
-              "updated_at": {
-                "type": "string",
-                "format": "date-time",
-                "x-go-name": "UpdatedAt"
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "created_at": {
+                  "type": "string",
+                  "format": "date-time",
+                  "x-go-name": "CreatedAt"
+                },
+                "creator_id": {
+                  "type": "string",
+                  "x-go-name": "CreatorID"
+                },
+                "description": {
+                  "$ref": "#/definitions/NullString"
+                },
+                "id": {
+                  "$ref": "#/definitions/UUID"
+                },
+                "title": {
+                  "type": "string",
+                  "x-go-name": "Title"
+                },
+                "total_questions": {
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "TotalQuestions"
+                },
+                "updated_at": {
+                  "type": "string",
+                  "format": "date-time",
+                  "x-go-name": "UpdatedAt"
+                }
               }
             },
             "x-go-name": "Data"
           },
           "status": {
             "type": "string",
-            "enum": [
-              "success"
-            ],
             "x-go-name": "Status"
           }
         }
       }
     },
-    "ResponseAuthnUser": {
+    "ResponseAnalyticsBoardForAdmin": {
       "description": "",
       "schema": {
         "type": "object",
         "properties": {
           "data": {
-            "type": "object",
-            "properties": {
-              "created_at": {
-                "type": "string",
-                "x-go-name": "CreatedAt"
-              },
-              "email": {
-                "type": "string",
-                "x-go-name": "Email"
-              },
-              "first_name": {
-                "type": "string",
-                "x-go-name": "FirstName"
-              },
-              "id": {
-                "type": "string",
-                "x-go-name": "ID"
-              },
-              "kratos_id": {
-                "type": "string",
-                "x-go-name": "KratosID"
-              },
-              "last_name": {
-                "type": "string",
-                "x-go-name": "LastName"
-              },
-              "roles": {
-                "type": "string",
-                "x-go-name": "Roles"
-              },
-              "updated_at": {
-                "type": "string",
-                "x-go-name": "UpdatedAt"
-              },
-              "username": {
-                "type": "string",
-                "x-go-name": "Username"
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "calculated_points": {
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "CalculatedPoints"
+                },
+                "calculated_score": {
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "CalculatedScore"
+                },
+                "correct_answer": {
+                  "type": "string",
+                  "x-go-name": "CorrectAnswer"
+                },
+                "firstname": {
+                  "type": "string",
+                  "x-go-name": "FirstName"
+                },
+                "is_attend": {
+                  "type": "boolean",
+                  "x-go-name": "IsAttend"
+                },
+                "options": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "x-go-name": "Options"
+                },
+                "options_media": {
+                  "type": "string",
+                  "x-go-name": "OptionsMedia"
+                },
+                "order_no": {
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "OrderNo"
+                },
+                "points": {
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "Points"
+                },
+                "question": {
+                  "type": "string",
+                  "x-go-name": "Question"
+                },
+                "question_media": {
+                  "type": "string",
+                  "x-go-name": "QuestionsMedia"
+                },
+                "question_type": {
+                  "type": "string",
+                  "x-go-name": "QuestionType"
+                },
+                "question_type_id": {
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "QuestionTypeID"
+                },
+                "raw_options": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "format": "uint8"
+                  },
+                  "x-go-name": "RawOptions"
+                },
+                "resource": {
+                  "type": "string",
+                  "x-go-name": "Resource"
+                },
+                "response_time": {
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "ResponseTime"
+                },
+                "selected_answer": {
+                  "$ref": "#/definitions/NullString"
+                },
+                "username": {
+                  "type": "string",
+                  "x-go-name": "UserName"
+                }
               }
             },
             "x-go-name": "Data"
           },
           "status": {
             "type": "string",
-            "enum": [
-              "success"
-            ],
             "x-go-name": "Status"
           }
         }
       }
     },
-    "ResponseCreateUser": {
+    "ResponseAnalyticsBoardForUser": {
       "description": "",
       "schema": {
         "type": "object",
         "properties": {
           "data": {
-            "type": "object",
-            "properties": {
-              "created_at": {
-                "type": "string",
-                "x-go-name": "CreatedAt"
-              },
-              "email": {
-                "type": "string",
-                "x-go-name": "Email"
-              },
-              "first_name": {
-                "type": "string",
-                "x-go-name": "FirstName"
-              },
-              "id": {
-                "type": "string",
-                "x-go-name": "ID"
-              },
-              "kratos_id": {
-                "type": "string",
-                "x-go-name": "KratosID"
-              },
-              "last_name": {
-                "type": "string",
-                "x-go-name": "LastName"
-              },
-              "roles": {
-                "type": "string",
-                "x-go-name": "Roles"
-              },
-              "updated_at": {
-                "type": "string",
-                "x-go-name": "UpdatedAt"
-              },
-              "username": {
-                "type": "string",
-                "x-go-name": "Username"
-              }
-            },
-            "x-go-name": "Data"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "success"
-            ],
-            "x-go-name": "Status"
-          }
-        }
-      }
-    },
-    "ResponseFinalScore": {
-      "description": "",
-      "schema": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "type": "object",
-            "properties": {
-              "FinalScore": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/definitions/FinalScoreBoard"
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "calculated_points": {
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "CalculatedPoints"
+                },
+                "calculated_score": {
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "CalculatedScore"
+                },
+                "correct_answer": {
+                  "type": "string",
+                  "x-go-name": "CorrectAnswer"
+                },
+                "firstname": {
+                  "type": "string",
+                  "x-go-name": "FirstName"
+                },
+                "is_attend": {
+                  "type": "boolean",
+                  "x-go-name": "IsAttend"
+                },
+                "options": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "x-go-name": "Options"
+                },
+                "options_media": {
+                  "type": "string",
+                  "x-go-name": "OptionsMedia"
+                },
+                "order_no": {
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "OrderNo"
+                },
+                "points": {
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "Points"
+                },
+                "question": {
+                  "type": "string",
+                  "x-go-name": "Question"
+                },
+                "question_media": {
+                  "type": "string",
+                  "x-go-name": "QuestionsMedia"
+                },
+                "question_type": {
+                  "type": "string",
+                  "x-go-name": "QuestionType"
+                },
+                "question_type_id": {
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "QuestionTypeID"
+                },
+                "raw_options": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "format": "uint8"
+                  },
+                  "x-go-name": "RawOptions"
+                },
+                "resource": {
+                  "type": "string",
+                  "x-go-name": "Resource"
+                },
+                "response_time": {
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "ResponseTime"
+                },
+                "selected_answer": {
+                  "$ref": "#/definitions/NullString"
+                },
+                "username": {
+                  "type": "string",
+                  "x-go-name": "UserName"
                 }
               }
             },
@@ -706,12 +1205,36 @@
         "type": "object",
         "properties": {
           "data": {
-            "type": "object",
-            "properties": {
-              "FinalScore": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/definitions/FinalScoreBoard"
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "firstname": {
+                  "type": "string",
+                  "x-go-name": "FirstName"
+                },
+                "img_key": {
+                  "type": "string",
+                  "x-go-name": "ImageKey"
+                },
+                "rank": {
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "Rank"
+                },
+                "response_time": {
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "ResponseTime"
+                },
+                "score": {
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "Score"
+                },
+                "username": {
+                  "type": "string",
+                  "x-go-name": "UserName"
                 }
               }
             },
@@ -724,7 +1247,410 @@
         }
       }
     },
-    "ResponseGetUser": {
+    "ResponseFinalScoreForUser": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "firstname": {
+                  "type": "string",
+                  "x-go-name": "FirstName"
+                },
+                "img_key": {
+                  "type": "string",
+                  "x-go-name": "ImageKey"
+                },
+                "rank": {
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "Rank"
+                },
+                "response_time": {
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "ResponseTime"
+                },
+                "score": {
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "Score"
+                },
+                "username": {
+                  "type": "string",
+                  "x-go-name": "UserName"
+                }
+              }
+            },
+            "x-go-name": "Data"
+          },
+          "status": {
+            "type": "string",
+            "x-go-name": "Status"
+          }
+        }
+      }
+    },
+    "ResponseGenerateDemoSession": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "quizId": {
+            "type": "string",
+            "x-go-name": "QuizId"
+          },
+          "status": {
+            "type": "string",
+            "x-go-name": "Status"
+          }
+        }
+      }
+    },
+    "ResponseGetQuizAnalysis": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "avg_response_time": {
+                  "type": "number",
+                  "format": "float",
+                  "x-go-name": "AvgResponseTime"
+                },
+                "correct_answer": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "format": "int64"
+                  },
+                  "x-go-name": "CorrectAnswers"
+                },
+                "duration": {
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "DurationInSeconds"
+                },
+                "options": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "x-go-name": "Options"
+                },
+                "options_media": {
+                  "type": "string",
+                  "x-go-name": "OptionsMedia"
+                },
+                "question": {
+                  "type": "string",
+                  "x-go-name": "Question"
+                },
+                "question_id": {
+                  "$ref": "#/definitions/UUID"
+                },
+                "question_media": {
+                  "type": "string",
+                  "x-go-name": "QuestionsMedia"
+                },
+                "resource": {
+                  "type": "string",
+                  "x-go-name": "Resource"
+                },
+                "selected_answers": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "object"
+                  },
+                  "x-go-name": "SelectedAnswers"
+                },
+                "type": {
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "Type"
+                }
+              }
+            },
+            "x-go-name": "Data"
+          },
+          "status": {
+            "type": "string",
+            "x-go-name": "Status"
+          }
+        }
+      }
+    },
+    "ResponseGetRegisteredUser": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "identity": {
+                "type": "object",
+                "x-go-name": "Identity"
+              }
+            },
+            "x-go-name": "Data"
+          },
+          "status": {
+            "type": "string",
+            "x-go-name": "Status"
+          }
+        }
+      }
+    },
+    "ResponseInsertImage": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "x-go-name": "Message"
+          },
+          "status": {
+            "type": "string",
+            "x-go-name": "Status"
+          }
+        }
+      }
+    },
+    "ResponseListQuestionByQuizId": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "answers": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "format": "int64"
+                  },
+                  "x-go-name": "Answers"
+                },
+                "created_at": {
+                  "type": "string",
+                  "format": "date-time",
+                  "x-go-name": "CreatedAt"
+                },
+                "duration": {
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "DurationInSeconds"
+                },
+                "id": {
+                  "$ref": "#/definitions/UUID"
+                },
+                "options": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "x-go-name": "Options"
+                },
+                "options_media": {
+                  "type": "string",
+                  "x-go-name": "OptionsMedia"
+                },
+                "order": {
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "OrderNumber"
+                },
+                "points": {
+                  "type": "integer",
+                  "format": "int16",
+                  "x-go-name": "Points"
+                },
+                "question": {
+                  "type": "string",
+                  "x-go-name": "Question"
+                },
+                "question_media": {
+                  "type": "string",
+                  "x-go-name": "QuestionMedia"
+                },
+                "quiz_id": {
+                  "$ref": "#/definitions/UUID"
+                },
+                "resource": {
+                  "$ref": "#/definitions/NullString"
+                },
+                "type": {
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "Type"
+                },
+                "updated_at": {
+                  "type": "string",
+                  "format": "date-time",
+                  "x-go-name": "UpdatedAt"
+                }
+              }
+            },
+            "x-go-name": "Data"
+          },
+          "status": {
+            "type": "string",
+            "x-go-name": "Status"
+          }
+        }
+      }
+    },
+    "ResponseListUserPlayedQuizesWithQuestionById": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "calculated_points": {
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "CalculatedPoints"
+                },
+                "calculated_score": {
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "CalculatedScore"
+                },
+                "correct_answer": {
+                  "type": "string",
+                  "x-go-name": "CorrectAnswer"
+                },
+                "is_attend": {
+                  "type": "boolean",
+                  "x-go-name": "IsAttend"
+                },
+                "options": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "x-go-name": "Options"
+                },
+                "options_media": {
+                  "type": "string",
+                  "x-go-name": "OptionsMedia"
+                },
+                "points": {
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "Points"
+                },
+                "question": {
+                  "type": "string",
+                  "x-go-name": "Question"
+                },
+                "question_media": {
+                  "type": "string",
+                  "x-go-name": "QuestionsMedia"
+                },
+                "question_type": {
+                  "type": "string",
+                  "x-go-name": "QuestionType"
+                },
+                "question_type_id": {
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "QuestionTypeID"
+                },
+                "raw_options": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "format": "uint8"
+                  },
+                  "x-go-name": "RawOptions"
+                },
+                "resource": {
+                  "type": "string",
+                  "x-go-name": "Resource"
+                },
+                "response_time": {
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "ResponseTime"
+                },
+                "selected_answer": {
+                  "$ref": "#/definitions/NullString"
+                }
+              }
+            },
+            "x-go-name": "Data"
+          },
+          "status": {
+            "type": "string",
+            "x-go-name": "Status"
+          }
+        }
+      }
+    },
+    "ResponsePlayedQuizValidation": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "session_id": {
+                  "type": "string",
+                  "x-go-name": "SessionId"
+                },
+                "user_played_quiz": {
+                  "type": "string",
+                  "x-go-name": "UserPlayedQuizId"
+                }
+              }
+            },
+            "x-go-name": "Data"
+          },
+          "status": {
+            "type": "string",
+            "x-go-name": "Status"
+          }
+        }
+      }
+    },
+    "ResponseQuizCreated": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "quizId": {
+            "type": "string",
+            "x-go-name": "QuizId"
+          },
+          "status": {
+            "type": "string",
+            "x-go-name": "Status"
+          }
+        }
+      }
+    },
+    "ResponseUserDetails": {
       "description": "",
       "schema": {
         "type": "object",
@@ -748,9 +1674,12 @@
                 "type": "string",
                 "x-go-name": "ID"
               },
-              "kratos_id": {
+              "img_key": {
                 "type": "string",
-                "x-go-name": "KratosID"
+                "x-go-name": "ImageKey"
+              },
+              "kratos_id": {
+                "$ref": "#/definitions/NullString"
               },
               "last_name": {
                 "type": "string",
@@ -773,9 +1702,63 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "success"
-            ],
+            "x-go-name": "Status"
+          }
+        }
+      }
+    },
+    "RsponseListQuizzesAnalysis": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "Count"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "activated_from": {
+                  "$ref": "#/definitions/NullTime"
+                },
+                "activated_to": {
+                  "$ref": "#/definitions/NullTime"
+                },
+                "correct_answers": {
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "CorrectAnswers"
+                },
+                "description": {
+                  "$ref": "#/definitions/NullString"
+                },
+                "id": {
+                  "$ref": "#/definitions/UUID"
+                },
+                "participants": {
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "Participants"
+                },
+                "questions": {
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "Questions"
+                },
+                "title": {
+                  "type": "string",
+                  "x-go-name": "Title"
+                }
+              }
+            },
+            "x-go-name": "Data"
+          },
+          "status": {
+            "type": "string",
             "x-go-name": "Status"
           }
         }

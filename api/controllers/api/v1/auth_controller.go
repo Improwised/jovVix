@@ -46,61 +46,6 @@ func NewAuthController(goqu *goqu.Database, logger *zap.Logger, config config.Ap
 	}, nil
 }
 
-// DoAuth authenticate user with email and password
-// swagger:route POST /v1/login Auth RequestAuthnUser
-//
-// Authenticate user with email and password.
-//
-//			Consumes:
-//			- application/json
-//
-//			Schemes: http, https
-//
-//			Responses:
-//			  200: ResponseAuthnUser
-//		   400: GenericResFailBadRequest
-//	    401: ResForbiddenRequest
-//			  500: GenericResError
-func (ctrl *AuthController) DoAuth(c *fiber.Ctx) error {
-	var reqLoginUser structs.ReqLoginUser
-
-	err := json.Unmarshal(c.Body(), &reqLoginUser)
-	if err != nil {
-		return utils.JSONError(c, http.StatusBadRequest, err.Error())
-	}
-
-	validate := validator.New()
-	err = validate.Struct(reqLoginUser)
-	if err != nil {
-		return utils.JSONFail(c, http.StatusBadRequest, utils.ValidatorErrorString(err))
-	}
-
-	user, err := ctrl.userService.Authenticate(reqLoginUser.Email, reqLoginUser.Password)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return utils.JSONFail(c, http.StatusUnauthorized, constants.InvalidCredentials)
-		}
-		ctrl.logger.Error("error while get user by email and password", zap.Error(err), zap.Any("email", reqLoginUser.Email))
-		return utils.JSONError(c, http.StatusInternalServerError, constants.ErrLoginUser)
-	}
-
-	// token is valid for 1 hour
-	token, err := jwt.CreateToken(ctrl.config, user.ID, time.Now().Add(time.Hour*1))
-	if err != nil {
-		ctrl.logger.Error("error while creating token", zap.Error(err), zap.Any("id", user.ID))
-		return utils.JSONFail(c, http.StatusInternalServerError, constants.ErrLoginUser)
-	}
-
-	userCookie := &fiber.Cookie{
-		Name:    constants.CookieUser,
-		Value:   token,
-		Expires: time.Now().Add(1 * time.Hour),
-	}
-	c.Cookie(userCookie)
-
-	return utils.JSONSuccess(c, http.StatusOK, user)
-}
-
 // DoKratosAuth authenticate user with kratos session id
 // swagger:route GET /v1/kratos/auth Auth none
 //
@@ -113,7 +58,6 @@ func (ctrl *AuthController) DoAuth(c *fiber.Ctx) error {
 //		Responses:
 //	      400: GenericResFailBadRequest
 //		  500: GenericResError
-
 func (ctrl *AuthController) DoKratosAuth(c *fiber.Ctx) error {
 	kratosId := c.Cookies("ory_kratos_session")
 	if kratosId == "" {
@@ -193,6 +137,20 @@ func (ctrl *AuthController) DoKratosAuth(c *fiber.Ctx) error {
 	return c.Redirect(ctrl.config.WebUrl)
 }
 
+// Create Quick user to play for quiz directly without login
+// swagger:route POST /v1/quick_users/{username} User RequestCreateQuickUser
+//
+// Create Quick user to play for quiz directly without login.
+//
+//		Consumes:
+//		- application/json
+//
+//		Schemes: http, https
+//
+//		Responses:
+//		  200: ResponseUserDetails
+//	     400: GenericResFailNotFound
+//		  500: GenericResError
 func (ctrl *AuthController) CreateQuickUser(c *fiber.Ctx) error {
 	username := c.Params(constants.Username)
 
@@ -268,24 +226,19 @@ func (ctrl *AuthController) CreateQuickUser(c *fiber.Ctx) error {
 	return utils.JSONSuccess(c, http.StatusOK, user)
 }
 
-func (ctrl *AuthController) IsRegisteredUser(c *fiber.Ctx) error {
-	kratosId := c.Cookies("ory_kratos_session")
-	if kratosId == "" {
-		return utils.JSONError(c, http.StatusUnauthorized, constants.ErrKratosIDEmpty)
-	}
-
-	kratosUser := config.KratosUserDetails{}
-	kratosClient := resty.New().SetBaseURL(ctrl.config.Kratos.BaseUrl+"/sessions").SetHeader("Cookie", fmt.Sprintf("%v=%v", constants.KratosCookie, kratosId)).SetHeader("accept", "application/json").SetHeader("withCredentials", "true").SetHeader("credentials", "include")
-
-	res, err := kratosClient.R().SetResult(&kratosUser).Get("/whoami")
-	if err != nil || res.StatusCode() != http.StatusOK {
-		ctrl.logger.Debug("unauthenticated registration", zap.Any("response from kratos", res.RawResponse), zap.Error(err), zap.Any("kratos response", res))
-		return utils.JSONError(c, res.StatusCode(), constants.ErrKratosAuth)
-	} else {
-		return utils.JSONSuccess(c, http.StatusOK, true)
-	}
-}
-
+// Get Details of Register user
+// swagger:route GET /v1/kratos/whoami User none
+//
+// Get Details of Register user.
+//
+//		Consumes:
+//		- application/json
+//
+//		Schemes: http, https
+//
+//		Responses:
+//		  200: ResponseGetRegisteredUser
+//	     401: GenericResFailConflict
 func (ctrl *AuthController) GetRegisteredUser(c *fiber.Ctx) error {
 	kratosId := c.Cookies("ory_kratos_session")
 	ctrl.logger.Debug("AuthController.GetRegisteredUser called", zap.Any("ory_kratos_session", kratosId))
@@ -306,6 +259,21 @@ func (ctrl *AuthController) GetRegisteredUser(c *fiber.Ctx) error {
 	}
 }
 
+// Update user Details
+// swagger:route PUT /v1/kratos/user User RequestUpadateRegisteredUser
+//
+// Update user Details.
+//
+//		Consumes:
+//		- application/json
+//
+//		Schemes: http, https
+//
+//		Responses:
+//		  200: ResponseUserDetails
+//	     400: GenericResFailNotFound
+//		  500: GenericResError
+//	     401: GenericResFailConflict
 func (ctrl *AuthController) UpadateRegisteredUser(c *fiber.Ctx) error {
 	userId := quizUtilsHelper.GetString(c.Locals(constants.ContextUid))
 	ctrl.logger.Debug("AuthController.UpadateRegisteredUser called", zap.Any("userId", userId))

@@ -34,7 +34,7 @@ func NewFinalScoreBoardAdminController(goqu *goqu.Database, logger *zap.Logger, 
 }
 
 // GetScore to send final score after quiz over to admin
-// swagger:route GET /v1/final_score/admin FinalScoreForAdmin RequestFinalScoreForAdmin
+// swagger:route GET /v1/final_score/admin FinalScore RequestFinalScoreForAdmin
 //
 // Get a finalScore details for admin.
 //
@@ -63,5 +63,4 @@ func (fc *FinalScoreBoardAdminController) GetScoreForAdmin(ctx *fiber.Ctx) error
 	}
 
 	return utils.JSONSuccess(ctx, http.StatusOK, finalScoreBoardData)
-
 }

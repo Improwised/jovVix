@@ -43,7 +43,7 @@ func NewAnalyticsBoardAdminController(goqu *goqu.Database, logger *zap.Logger, e
 }
 
 // GetAnalytics to send final score after quiz over to admin
-// swagger:route GET /v1/analytics_board/admin AnalyticsBoardForAdmin RequestAnalyticsBoardForAdmin
+// swagger:route GET /v1/analytics_board/admin AnalyticsBoard RequestAnalyticsBoardForAdmin
 //
 // Get a analyticsboard details for admin.
 //

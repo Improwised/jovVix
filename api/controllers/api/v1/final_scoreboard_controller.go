@@ -34,9 +34,9 @@ func NewFinalScoreBoardController(goqu *goqu.Database, logger *zap.Logger, event
 }
 
 // GetScore to send final score after quiz over
-// swagger:route GET /v1/final_score/user FinalScoreForUser RequestFinalScore
+// swagger:route GET /v1/final_score/user FinalScore RequestFinalScoreForUser
 //
-// Get a finalScore details.
+// Get a finalScore details for user.
 //
 //		Consumes:
 //		- application/json
@@ -44,7 +44,7 @@ func NewFinalScoreBoardController(goqu *goqu.Database, logger *zap.Logger, event
 //		Schemes: http, https
 //
 //		Responses:
-//		  200: ResponseFinalScore
+//		  200: ResponseFinalScoreForUser
 //	     400: GenericResFailNotFound
 //		  500: GenericResError
 func (fc *FinalScoreBoardController) GetScore(ctx *fiber.Ctx) error {
@@ -66,5 +66,4 @@ func (fc *FinalScoreBoardController) GetScore(ctx *fiber.Ctx) error {
 	fc.logger.Debug("FinalScoreBoardController.GetScore success", zap.Any("finalScoreBoardData", finalScoreBoardData))
 
 	return utils.JSONSuccess(ctx, http.StatusOK, finalScoreBoardData)
-
 }

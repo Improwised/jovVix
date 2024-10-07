@@ -52,6 +52,20 @@ func NewUserPlayedQuizeController(goqu *goqu.Database, logger *zap.Logger, event
 	}, nil
 }
 
+// ListUserPlayedQuizes to List played quiz by user
+// swagger:route GET /v1/user_played_quizes UserPlayedQuiz UserPlayedQuiz
+//
+// List played quiz by user.
+//
+//		Consumes:
+//		- application/json
+//
+//		Schemes: http, https
+//
+//		Responses:
+//		  200: ResponseListUserPlayedQuizes
+//	     401: GenericResFailConflict
+//		  500: GenericResError
 func (ctrl *UserPlayedQuizeController) ListUserPlayedQuizes(c *fiber.Ctx) error {
 	userId := quizUtilsHelper.GetString(c.Locals(constants.ContextUid))
 	ctrl.logger.Debug("UserPlayedQuizeController.ListUserPlayedQuizes called", zap.Any("userId", userId))
@@ -65,6 +79,20 @@ func (ctrl *UserPlayedQuizeController) ListUserPlayedQuizes(c *fiber.Ctx) error 
 	return utils.JSONSuccess(c, http.StatusOK, userPlayedQuizes)
 }
 
+// ListUserPlayedQuizesWithQuestionById to Analysis of played quiz by user
+// swagger:route GET /v1/user_played_quizes/{user_played_quiz_id} UserPlayedQuiz RequestListUserPlayedQuizesWithQuestionById
+//
+// Analysis of played quiz by user.
+//
+//		Consumes:
+//		- application/json
+//
+//		Schemes: http, https
+//
+//		Responses:
+//		  200: ResponseListUserPlayedQuizesWithQuestionById
+//	     401: GenericResFailConflict
+//		  500: GenericResError
 func (ctrl *UserPlayedQuizeController) ListUserPlayedQuizesWithQuestionById(c *fiber.Ctx) error {
 	userPlayedQuizId := c.Params(constants.UserPlayedQuizId)
 	ctrl.logger.Debug("UserPlayedQuizeController.ListUserPlayedQuizesWithQuestionById called", zap.Any("userPlayedQuizId", userPlayedQuizId))
@@ -80,6 +108,20 @@ func (ctrl *UserPlayedQuizeController) ListUserPlayedQuizesWithQuestionById(c *f
 	return utils.JSONSuccess(c, http.StatusOK, userPlayedQuizesWithQuestion)
 }
 
+// PlayedQuizValidation to validate the code and copy the questions in reponses for user
+// swagger:route POST /v1/user_played_quizes/{invitationCode} UserPlayedQuiz RequestPlayedQuizValidation
+//
+//	 Validate the code and copy the questions in reponses for user.
+//
+//			Consumes:
+//			- application/json
+//
+//			Schemes: http, https
+//
+//			Responses:
+//			  200: ResponsePlayedQuizValidation
+//		     401: GenericResFailConflict
+//			  500: GenericResError
 func (ctrl *UserPlayedQuizeController) PlayedQuizValidation(c *fiber.Ctx) error {
 	invitationCode := c.Params(constants.QuizSessionInvitationCode)
 	userId := quizUtilsHelper.GetString(c.Locals(constants.ContextUid))

@@ -56,7 +56,7 @@ func InitQuizController(db *goqu.Database, logger *zap.Logger, event *events.Eve
 }
 
 // GetAdminUploadedQuizzes for getting quiz details uploaded by Admin
-// swagger:route GET /v1/admin/quizzes/list AdminUploadedQuizzes none
+// swagger:route GET /v1/admin/quizzes/list Quiz none
 //
 // Get details of quizzes uploaded by Admin.
 //
@@ -66,7 +66,7 @@ func InitQuizController(db *goqu.Database, logger *zap.Logger, event *events.Eve
 //			Schemes: http, https
 //
 //			Responses:
-//			  200: ResponseAdminUploadedQuizDetails
+//			  200: ResponseAdminUploadedQuiz
 //		     400: GenericResFailNotFound
 //	     401: GenericResFailConflict
 //			  500: GenericResError
@@ -87,6 +87,21 @@ func (ctrl *QuizController) Terminate(c *fiber.Ctx) error {
 	return utils.JSONSuccess(c, http.StatusOK, nil)
 }
 
+// GetQuizAnalysis for getting quiz details hosted by Admin
+// swagger:route GET /v1/admin/reports/{active_quiz_id}/analysis Reports RequestGetQuizAnalysis
+//
+// Get details of quizzes host by Admin.
+//
+//			Consumes:
+//			- application/json
+//
+//			Schemes: http, https
+//
+//			Responses:
+//			  200: ResponseGetQuizAnalysis
+//		     400: GenericResFailNotFound
+//	     401: GenericResFailConflict
+//			  500: GenericResError
 func (qc *QuizController) GetQuizAnalysis(c *fiber.Ctx) error {
 
 	activeQuizId := c.Params(constants.ActiveQuizId)
@@ -103,6 +118,21 @@ func (qc *QuizController) GetQuizAnalysis(c *fiber.Ctx) error {
 	return utils.JSONSuccess(c, http.StatusOK, quizAnalysis)
 }
 
+// GetQuizAnalysis for getting quiz list hosted by Admin
+// swagger:route GET /v1/admin/reports/list Reports RequestListQuizzesAnalysis
+//
+// Get details of quizzes list host by Admin.
+//
+//			Consumes:
+//			- application/json
+//
+//			Schemes: http, https
+//
+//			Responses:
+//			  200: RsponseListQuizzesAnalysis
+//		     400: GenericResFailNotFound
+//	     401: GenericResFailConflict
+//			  500: GenericResError
 func (qc *QuizController) ListQuizzesAnalysis(c *fiber.Ctx) error {
 
 	type resQuizAnalysisList struct {
@@ -139,6 +169,21 @@ func (qc *QuizController) ListQuizzesAnalysis(c *fiber.Ctx) error {
 	return utils.JSONSuccess(c, http.StatusOK, resQuizAnalysisList{Data: quizzes, Count: count})
 }
 
+// CreateQuizByCsv a new quiz by uploading a CSV file
+// swagger:route POST /v1/admin/quizzes/{quiz_title}/upload Quiz RequestQuizCreated
+//
+// Create a new quiz by uploading a CSV file.
+//
+//			Consumes:
+//			- multipart/form-data
+//
+//			Schemes: http, https
+//
+//			Responses:
+//			  200: ResponseQuizCreated
+//		     400: GenericResFailNotFound
+//	     401: GenericResFailConflict
+//			  500: GenericResError
 func (ctrl *QuizController) CreateQuizByCsv(c *fiber.Ctx) error {
 
 	quizTitle := c.Params(constants.QuizTitle)
@@ -181,6 +226,20 @@ func (ctrl *QuizController) CreateQuizByCsv(c *fiber.Ctx) error {
 	return utils.JSONSuccess(c, http.StatusAccepted, quizId)
 }
 
+// GenerateDemoSession to create quiz active for user.
+// swagger:route POST /v1/admin/quizzes/{quiz_id}/demo_session Quiz RequestGenerateDemoSession
+//
+// Create quiz active for user.
+//
+//		Consumes:
+//		- application/json
+//
+//		Schemes: http, https
+//
+//		Responses:
+//		  200: ResponseGenerateDemoSession
+//	     400: GenericResFailNotFound
+//		  500: GenericResError
 func (ctrl *QuizController) GenerateDemoSession(c *fiber.Ctx) error {
 	quizId := c.Params(constants.QuizId)
 	userId := quizUtilsHelper.GetString(c.Locals(constants.ContextUid))
@@ -201,6 +260,20 @@ func (ctrl *QuizController) GenerateDemoSession(c *fiber.Ctx) error {
 	return utils.JSONSuccess(c, http.StatusAccepted, sessionId)
 }
 
+// ListQuestionByQuizId to list all questions of quiz.
+// swagger:route GET /v1/admin/quizzes/{quiz_id} Quiz RequestListQuestionByQuizId
+//
+// List all questions of quiz.
+//
+//		Consumes:
+//		- application/json
+//
+//		Schemes: http, https
+//
+//		Responses:
+//		  200: ResponseListQuestionByQuizId
+//	     400: GenericResFailNotFound
+//		  500: GenericResError
 func (ctrl *QuizController) ListQuestionByQuizId(c *fiber.Ctx) error {
 	QuizId := c.Params(constants.QuizId)
 	Query := c.Queries()

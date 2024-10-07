@@ -43,7 +43,7 @@ func NewAnalyticsBoardUserController(goqu *goqu.Database, logger *zap.Logger, ev
 }
 
 // GetAnalytics to send analytics board after quiz over to user
-// swagger:route GET /v1/analytics_board/user AnalyticsBoardForUser RequestAnalyticsBoardForUser
+// swagger:route GET /v1/analytics_board/user AnalyticsBoard RequestAnalyticsBoardForUser
 //
 // Get a analyticsboard details for user.
 //

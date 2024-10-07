@@ -40,15 +40,12 @@ func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config confi
 		return err
 	}
 
-	cfg := swagger.Config{
+	app.Use(swagger.New(swagger.Config{
+		BasePath: "/api/v1/",
 		FilePath: swagger_new_file_path,
+		Path:     "docs",
 		Title:    "Swagger API Docs",
-		Path:     "/api/docs",
-	}
-
-	app.Use(swagger.New(cfg))
-
-	app.Static("/assets/", "./assets")
+	}))
 
 	router := app.Group("/api")
 
@@ -161,7 +158,10 @@ func setupAuthController(v1 fiber.Router, goqu *goqu.Database, logger *zap.Logge
 	if err != nil {
 		return err
 	}
-	v1.Post("/login", authController.IsRegisteredUser)
+
+	// quick user route
+	quickUsersRouter := v1.Group("/quick_users")
+	quickUsersRouter.Post(fmt.Sprintf("/:%s", constants.Username), authController.CreateQuickUser)
 
 	if config.Kratos.IsEnabled {
 		kratos := v1.Group("/kratos")
@@ -177,18 +177,11 @@ func setupUserController(v1 fiber.Router, goqu *goqu.Database, logger *zap.Logge
 	if err != nil {
 		return err
 	}
-	authController, err := controller.NewAuthController(goqu, logger, middlewares.Config)
-	if err != nil {
-		return err
-	}
 
 	// user route
 	userRouter := v1.Group("/user")
 	userRouter.Get("/who", middlewares.Authenticated, userController.GetUserMeta)
 
-	// quick user route
-	quickUsersRouter := v1.Group("/quick_users")
-	quickUsersRouter.Post(fmt.Sprintf("/:%s", constants.Username), authController.CreateQuickUser)
 	return nil
 }
 
@@ -245,7 +238,7 @@ func setupQuizController(v1 fiber.Router, db *goqu.Database, logger *zap.Logger,
 	v1.Get(fmt.Sprintf("/socket/admin/arrange/:%s", constants.SessionIDParam), middleware.CheckSessionId, middleware.KratosAuthenticated, websocket.New(quizSocketController.Arrange))
 
 	report.Get("/list", quizController.ListQuizzesAnalysis)
-	report.Get(fmt.Sprintf("/:%s/analysis", constants.ActiveQuizId), quizController.GetQuizAnalysis)
+	report.Get(fmt.Sprintf("/:%s/analysis", constants.ActiveQuizId), middleware.KratosAuthenticated, quizController.GetQuizAnalysis)
 	return nil
 }
 

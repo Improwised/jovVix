@@ -43,6 +43,21 @@ func NewImageController(goqu *goqu.Database, logger *zap.Logger, event *events.E
 	}, nil
 }
 
+// InsertImage to insert image in s3 bucket
+// swagger:route POST /v1/images FileUpload RequestInsertImage
+//
+// Insert image in s3 bucket.
+//
+//			Consumes:
+//			- multipart/form-data
+//
+//			Schemes: http, https
+//
+//			Responses:
+//			  200: ResponseInsertImage
+//		     400: GenericResFailNotFound
+//	     401: GenericResFailConflict
+//			  500: GenericResError
 func (imgc *ImageController) InsertImage(c *fiber.Ctx) error {
 
 	quizId := c.Query("quiz_id")

@@ -47,10 +47,6 @@ func (hc *HealthController) Overall(ctx *fiber.Ctx) error {
 	return utils.JSONSuccess(ctx, http.StatusOK, "ok")
 }
 
-func (hc *HealthController) Self(ctx *fiber.Ctx) error {
-	return utils.JSONSuccess(ctx, http.StatusOK, "ok")
-}
-
 // Database health check
 // swagger:route GET /healthz/db Healthcheck dbHealthCheck
 //
