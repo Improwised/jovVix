@@ -40,7 +40,7 @@ function handleCountUser(message) {
 </script>
 
 <template>
-  <div class="container">
+  <div class="container" style="max-width: 800px">
     <div class="row justify-content-center">
       <div v-if="usersSubmittedAnswers.length == 0" class="col-7 col-md-4 mt-5">
         <div
@@ -64,25 +64,49 @@ function handleCountUser(message) {
       </div>
     </div>
 
-    <div
+    <v-card
       v-if="usersSubmittedAnswers.length"
-      class="row justify-content-center mt-5"
+      :flat="true"
+      class="mb-2 d-flex flex-wrap justify-content-center"
     >
-      <div class="col-sm-12 col-lg-7 mt-5">
-        <div v-for="(user, index) in usersSubmittedAnswers" :key="index">
-          <h4
-            class="py-3 px-5 border border-1 rounded-pill d-flex justify-content-center"
-          >
-            {{ user.first_name }} ({{ user.username }})
-          </h4>
-        </div>
+      <div
+        v-for="user in usersSubmittedAnswers"
+        :key="user.UserId"
+        class="chip m-2"
+      >
+        <img
+          :src="getAvatarUrlByName(user?.img_key)"
+          alt="Person"
+          width="96"
+          height="96"
+        />
+        {{ user.first_name }} ({{ user.username }})
       </div>
-    </div>
+    </v-card>
   </div>
 </template>
 
 <style scoped>
 .border-radius {
   border-radius: 2rem !important;
+}
+
+.chip {
+  display: inline-block;
+  padding: 0 25px;
+  height: 50px;
+  font-size: 16px;
+  line-height: 50px;
+  border-radius: 25px;
+  max-width: 600px;
+  background-color: #f1f1f1;
+}
+
+.chip img {
+  float: left;
+  margin: 0 10px 0 -25px;
+  height: 50px;
+  width: 50px;
+  border-radius: 50%;
 }
 </style>

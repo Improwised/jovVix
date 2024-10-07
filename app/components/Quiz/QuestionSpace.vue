@@ -223,6 +223,7 @@ function handleSkip(e) {
 }
 
 input[type="radio"]:checked + .option-box {
-  border-color: rgb(24, 255, 0);
+  border-color: #3c3535eb;
+  transform: scale(1.05);
 }
 </style>

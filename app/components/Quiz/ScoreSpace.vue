@@ -169,6 +169,11 @@ const changeAnalysisTab = (tab) => emits("changeAnalysisTab", tab);
                   {{ user.rank }}
                 </td>
                 <td :class="{ 'bg-primary': user.username === props.userName }">
+                  <img
+                    :src="`${getAvatarUrlByName(user?.img_key)}&scale=75`"
+                    alt="Avatar"
+                    height="50px"
+                  />
                   {{ user.firstname }}
                   <span v-if="user.username === props.userName"
                     >&nbsp; ({{ user.username }})</span
@@ -193,8 +198,9 @@ const changeAnalysisTab = (tab) => emits("changeAnalysisTab", tab);
       >
         <AnswerSubmissionChart
           v-if="isAdmin"
-          :options="props.data.data.options"
-          :responses="props.data.data.userResponses"
+          :options="props.data.data?.options"
+          :options-media="props.data.data?.options_media"
+          :responses="props.data.data?.userResponses"
         />
       </div>
     </div>

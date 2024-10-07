@@ -1,24 +1,35 @@
 <template>
-  <v-card class="winner-card text-light">
-    <v-img height="150" :src="`${avatar}&scale=20`" cover></v-img>
-    <v-card-item>
-      <div class="text-center">
-        <span class="badge fs-5 bg-light m-1 text-dark"
-          >Rank {{ props.winner.rank }}</span
-        >
+  <div class="winner-card">
+    <img
+      v-if="props.winner.rank == 1"
+      src="@/assets/images/medal/1.png"
+      class="bg-image"
+      alt="medal"
+    />
+    <img
+      v-if="props.winner.rank == 2"
+      src="@/assets/images/medal/2.png"
+      class="bg-image"
+      alt="medal"
+    />
+    <img
+      v-if="props.winner.rank == 3"
+      src="@/assets/images/medal/3.png"
+      class="bg-image"
+      alt="medal"
+    />
+    <img :src="avatar + '&scale=70'" class="avatar-image overlay" />
+    <div class="winner-details overlay">
+      <div class="card-body text-center py-3">
+        <!-- <span class="badge fs-5 bg-light m-1 text-dark">Rank {{ props.winner.rank }}</span> -->
         <h2 class="mb-0 text-h4 text-light">
           {{ props.winner.firstname.toUpperCase() }}
         </h2>
         <div>{{ props.winner.username }}</div>
-        <v-row class="mt-6">
-          <v-col>
-            <h2 class="mb-0 text-h4 text-light">{{ props.winner.score }}</h2>
-            <div>Score</div>
-          </v-col>
-        </v-row>
+        <h2 class="mb-0 text-h4 text-light">{{ props.winner.score }}</h2>
       </div>
-    </v-card-item>
-  </v-card>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -39,7 +50,39 @@ const avatar = computed(() => {
 
 <style>
 .winner-card {
-  background: #ffffff2b !important;
-  border-radius: 100% !important;
+  position: relative;
+  width: 100%;
+  max-width: 300px;
+  height: 75%;
+  max-width: 500px;
+}
+
+.bg-image {
+  height: 100%;
+  width: 100%;
+}
+
+.avatar-image {
+  display: block;
+  width: 35%;
+  height: 40%;
+}
+
+.overlay {
+  position: absolute;
+  top: 10%;
+  color: #f1f1f1;
+  width: 100%;
+  opacity: 1;
+  color: white;
+  text-align: center;
+}
+
+.winner-details {
+  background-color: rgba(0, 0, 0, 0.45);
+  border-radius: 10px;
+  top: 70%;
+  width: 80%;
+  left: 10%;
 }
 </style>

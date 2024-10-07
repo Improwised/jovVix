@@ -27,9 +27,19 @@
               {{ user.rank }}
             </td>
             <td v-if="props.isAdmin">
+              <img
+                :src="`${getAvatarUrlByName(user?.img_key)}&scale=75`"
+                alt="Avatar"
+                height="50px"
+              />
               {{ user.firstname }} <span>({{ user.username }})</span>
             </td>
             <td v-else>
+              <img
+                :src="`${getAvatarUrlByName(user?.img_key)}&scale=75`"
+                alt="Avatar"
+                height="50px"
+              />
               {{ user.firstname }}
               <span v-if="props?.userName === user.username">
                 &nbsp;({{ user.username }})

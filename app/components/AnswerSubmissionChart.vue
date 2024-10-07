@@ -15,6 +15,11 @@ const props = defineProps({
       return {};
     },
   },
+  optionsMedia: {
+    type: String,
+    required: true,
+    default: "",
+  },
   responses: {
     type: Array,
     required: true,
@@ -90,10 +95,22 @@ const chartOptions = ref({
       ticks: {
         callback: function (value) {
           const val = this.getLabelForValue(value);
-          let xAxisName = props.options[val]?.value || "Not Attempted";
-          if (xAxisName.length > 15) {
-            xAxisName = xAxisName.slice(0, 15) + "...";
+          if (props.optionsMedia == "text") {
+            let xAxisName = props.options[val]?.value || "Not Attempted";
+            if (xAxisName.length > 15) {
+              xAxisName = xAxisName.slice(0, 15) + "...";
+            }
+            return xAxisName;
           }
+          const mapping = {
+            1: "Option A",
+            2: "Option B",
+            3: "Option C",
+            4: "Option D",
+            5: "Option E",
+          };
+          const xAxisName = mapping[val] || "Not Attempted";
+
           return xAxisName;
         },
       },

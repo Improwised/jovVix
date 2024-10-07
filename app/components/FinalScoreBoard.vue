@@ -126,10 +126,7 @@ const changeUI = (value) => {
 </script>
 <template>
   <div v-if="winnerUI == 'true' && props.isAdmin">
-    <video id="myVideo" autoplay muted loop>
-      <source src="@/assets/video/winner.mp4" type="video/mp4" />
-      Your browser does not support HTML5 video.
-    </video>
+    <img id="myVideo" src="@/assets/images/medal/bg.jpg" alt="" />
     <div v-if="requestPending" class="text-center">Loading...</div>
     <div
       v-else
@@ -138,10 +135,7 @@ const changeUI = (value) => {
       <div v-if="scoreboardData.length > 1" class="col-sm-12 col-lg-3 mt-4">
         <WinnerCard :winner="scoreboardData[1]" />
       </div>
-      <div
-        v-if="scoreboardData.length > 0"
-        class="col-sm-12 col-lg-3 mt-4 first-rank"
-      >
+      <div v-if="scoreboardData.length > 0" class="col-sm-12 col-lg-3 mt-4">
         <WinnerCard :winner="scoreboardData[0]" />
       </div>
       <div v-if="scoreboardData.length > 2" class="col-sm-12 col-lg-3 mt-4">
@@ -225,24 +219,12 @@ const changeUI = (value) => {
   bottom: 0;
   min-width: 100%;
   min-height: 100%;
+  width: 100%;
+  height: auto;
 }
 
 .winners-container {
   margin-top: 10rem;
-}
-
-.winner-card {
-  border-radius: 10px;
-  box-shadow: 0px 4px 5px white;
-  transition: transform 1s;
-}
-
-.winner-card:hover {
-  transform: scale(1.1);
-}
-
-.first-rank {
-  transform: scale(1.5);
 }
 
 .change-ui-button {
@@ -250,10 +232,6 @@ const changeUI = (value) => {
 }
 
 @media only screen and (max-width: 1079px) {
-  .first-rank {
-    transform: scale(1);
-  }
-
   .change-ui-button {
     margin-top: 2rem;
   }

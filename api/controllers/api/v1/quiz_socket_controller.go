@@ -39,6 +39,7 @@ type QuizReceiveResponse struct {
 type UserInfo struct {
 	UserId   string
 	UserName string
+	Avatar   string
 	IsAlive  bool
 }
 
@@ -165,14 +166,14 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 	}
 
 	// when user join at that time publish userName to admin
-	publishUserOnJoin(qc, response, user.FirstName, userId, session.ID.String())
+	publishUserOnJoin(qc, response, user.FirstName, userId, user.ImageKey, session.ID.String())
 	response.Action = constants.QuizQuestionStatus
 	onConnectHandleUser(c, qc, &response, session)
 	// userPlayedQuizId := quizUtilsHelper.GetString(c.Locals(constants.CurrentUserQuiz))
 	handleQuestion(c, qc, session, response, isUserConnected)
 }
 
-func publishUserOnJoin(qc *quizSocketController, quizResponse QuizSendResponse, userName string, userId string, sessionId string) {
+func publishUserOnJoin(qc *quizSocketController, quizResponse QuizSendResponse, userName string, userId string, avatar string, sessionId string) {
 	// store data to redis in form of slice
 	var usersData []UserInfo
 	var jsonData []byte
@@ -185,7 +186,7 @@ func publishUserOnJoin(qc *quizSocketController, quizResponse QuizSendResponse, 
 		qc.logger.Error("error while checking if there is any user in redis for the session in publishUserOnJoin", zap.Error(err))
 	}
 	if exists == 0 {
-		newUser := UserInfo{UserId: userId, UserName: userName, IsAlive: true}
+		newUser := UserInfo{UserId: userId, UserName: userName, Avatar: avatar, IsAlive: true}
 		usersData = append(usersData, newUser)
 		// Serialize slice to JSON
 		jsonData, err = json.Marshal(usersData)
@@ -209,7 +210,7 @@ func publishUserOnJoin(qc *quizSocketController, quizResponse QuizSendResponse, 
 				return
 			}
 		}
-		newUser := UserInfo{UserId: userId, UserName: userName, IsAlive: true}
+		newUser := UserInfo{UserId: userId, UserName: userName, Avatar: avatar, IsAlive: true}
 		usersData = append(usersData, newUser)
 		jsonData, err = json.Marshal(usersData)
 		if err != nil {
@@ -635,11 +636,7 @@ func handleConnectedUser(c *websocket.Conn, qc *quizSocketController, sessionId 
 			break
 		}
 
-		usersName := []string{}
-		for _, data := range usersData {
-			usersName = append(usersName, data.UserName)
-		}
-		response.Data = usersName
+		response.Data = usersData
 		err = utils.JSONSuccessWs(c, constants.EventSendInvitationCode, response) // sending the user data to the admin
 		if err != nil {
 			qc.logger.Error("error while sending user data ", zap.Error(err))

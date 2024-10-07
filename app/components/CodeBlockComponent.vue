@@ -4,7 +4,6 @@
       :wrap="true"
       font-size="10px"
       width="98%"
-      height="150px"
       :read-only="true"
       :header="false"
       theme="atom-one-dark"

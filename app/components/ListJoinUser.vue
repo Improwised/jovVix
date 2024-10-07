@@ -4,12 +4,13 @@ import { storeToRefs } from "pinia";
 
 const listUserStore = useListUserstore();
 const { listUsers } = storeToRefs(listUserStore);
+import { getAvatarUrlByName } from "~~/composables/avatar";
 </script>
 
 <template>
-  <div class="container">
-    <div class="row justify-content-center">
-      <div v-if="listUsers.length == 0" class="col-7 col-md-4 mt-5">
+  <div class="container" style="max-width: 800px">
+    <div class="row justify-content-center mb-2">
+      <div v-if="listUsers.length == 0" class="col-7 col-md-4 mt-5 mb-5">
         <div
           class="d-flex border border-1 justify-content-center align-items-center px-3 py-2 py-md-4 gap-3 border-radius"
         >
@@ -30,22 +31,45 @@ const { listUsers } = storeToRefs(listUserStore);
       </div>
     </div>
 
-    <div v-if="listUsers.length" class="row justify-content-center mt-5">
-      <div class="col-sm-12 col-lg-7 mt-5">
-        <div v-for="(user, index) in listUsers" :key="index">
-          <h4
-            class="py-3 px-5 border border-1 rounded-pill d-flex justify-content-center"
-          >
-            {{ user }}
-          </h4>
-        </div>
+    <v-card
+      v-if="listUsers.length"
+      :flat="true"
+      class="mb-2 d-flex flex-wrap justify-content-center"
+    >
+      <div v-for="user in listUsers" :key="user.UserId" class="chip m-2">
+        <img
+          :src="getAvatarUrlByName(user?.Avatar)"
+          alt="Person"
+          width="96"
+          height="96"
+        />
+        {{ user.UserName }}
       </div>
-    </div>
+    </v-card>
   </div>
 </template>
 
 <style scoped>
 .border-radius {
   border-radius: 2rem !important;
+}
+
+.chip {
+  display: inline-block;
+  padding: 0 25px;
+  height: 50px;
+  font-size: 16px;
+  line-height: 50px;
+  border-radius: 25px;
+  max-width: 600px;
+  background-color: #f1f1f1;
+}
+
+.chip img {
+  float: left;
+  margin: 0 10px 0 -25px;
+  height: 50px;
+  width: 50px;
+  border-radius: 50%;
 }
 </style>

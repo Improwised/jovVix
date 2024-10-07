@@ -31,6 +31,15 @@ const handleMouseEnter = (event) => {
 const handleMouseLeave = (event) => {
   event.target.style.transform = "scale(1)"; // Reset scale on leave
 };
+
+const avatar = computed(() => {
+  const rankData = props.data?.filter((item) => item.hasOwnProperty("rank"));
+
+  if (rankData) {
+    return getAvatarUrlByName(rankData[0]?.avatar);
+  }
+  return getAvatarUrlByName("");
+});
 </script>
 
 <template>
@@ -77,11 +86,7 @@ const handleMouseLeave = (event) => {
     <div class="user-stats-box">
       <div class="header">
         <div class="avatar-container">
-          <img
-            class="avatar"
-            src="../../assets/images/avatar.png"
-            alt="Avatar"
-          />
+          <img class="avatar" :src="avatar" alt="Avatar" />
           <div class="name">
             {{ props.data[0].firstname }}
             <span>({{ props.data[0].username }})</span>

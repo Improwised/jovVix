@@ -158,6 +158,7 @@ const getAnalysisJson = async () => {
             rank: data.rank,
             total_score: totalScore,
             response_time: data.response_time,
+            avatar: data.img_key,
           });
         } else {
           console.error(`Key '${key}' not found in userJson.value.`);
@@ -197,21 +198,3 @@ const changeTab = (data) => {
   currentTab.value = data;
 };
 </script>
-
-<style scoped>
-.option-box {
-  min-height: 70px;
-  padding-top: 3px;
-  border-radius: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 5px;
-  margin-top: 3px;
-}
-
-.wrong-option {
-  border: 1px solid var(--bs-light-primary);
-}
-/* Adjust the divider for large screens */
-</style>
