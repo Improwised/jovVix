@@ -18,7 +18,7 @@
       class="bg-image"
       alt="medal"
     />
-    <img :src="avatar + '&scale=70'" class="avatar-image overlay" />
+    <img :src="avatar + '&scale=60'" class="avatar-image overlay" />
     <div class="winner-details overlay">
       <div class="card-body text-center py-3">
         <!-- <span class="badge fs-5 bg-light m-1 text-dark">Rank {{ props.winner.rank }}</span> -->
@@ -70,7 +70,7 @@ const avatar = computed(() => {
 
 .overlay {
   position: absolute;
-  top: 10%;
+  top: 15%;
   color: #f1f1f1;
   width: 100%;
   opacity: 1;
@@ -79,9 +79,9 @@ const avatar = computed(() => {
 }
 
 .winner-details {
-  background-color: rgba(0, 0, 0, 0.45);
+  background-color: rgba(0, 0, 0, 0);
   border-radius: 10px;
-  top: 70%;
+  top: 64%;
   width: 80%;
   left: 10%;
 }

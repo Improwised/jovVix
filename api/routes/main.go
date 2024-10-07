@@ -35,7 +35,7 @@ func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config confi
 	swagger_file_path := "./assets/swagger.json"
 	swagger_new_file_path := "./assets/new_swagger.json"
 
-	err := newSwagger(swagger_file_path, swagger_new_file_path, config.Port)
+	err := newSwagger(swagger_file_path, swagger_new_file_path, config.WebUrl)
 	if err != nil {
 		return err
 	}

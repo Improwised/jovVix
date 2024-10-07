@@ -132,19 +132,29 @@ const changeUI = (value) => {
       v-else
       class="container-fluid justify-content-around row winners-container"
     >
-      <div v-if="scoreboardData.length > 1" class="col-sm-12 col-lg-3 mt-4">
-        <WinnerCard :winner="scoreboardData[1]" />
-      </div>
-      <div v-if="scoreboardData.length > 0" class="col-sm-12 col-lg-3 mt-4">
+      <div
+        v-if="scoreboardData.length > 0"
+        class="col-sm-12 col-lg-3 order-sm-1 order-lg-2"
+      >
         <WinnerCard :winner="scoreboardData[0]" />
       </div>
-      <div v-if="scoreboardData.length > 2" class="col-sm-12 col-lg-3 mt-4">
+      <div
+        v-if="scoreboardData.length > 1"
+        class="col-sm-12 col-lg-3 order-sm-2 order-lg-1"
+      >
+        <WinnerCard :winner="scoreboardData[1]" />
+      </div>
+      <div
+        v-if="scoreboardData.length > 2"
+        class="col-sm-12 col-lg-3 order-sm-3 order-lg-3"
+      >
         <WinnerCard :winner="scoreboardData[2]" />
       </div>
-      <div class="text-center change-ui-button" @click="changeUI(false)">
-        <v-btn rounded color="light" dark x-large class="mt-3 px-7" flat
-          >Next</v-btn
-        >
+      <div
+        class="col-12 order-4 text-center change-ui-button"
+        @click="changeUI(false)"
+      >
+        <v-btn rounded color="light" dark x-large class="px-7" flat>Next</v-btn>
       </div>
     </div>
   </div>
@@ -221,14 +231,6 @@ const changeUI = (value) => {
   min-height: 100%;
   width: 100%;
   height: auto;
-}
-
-.winners-container {
-  margin-top: 10rem;
-}
-
-.change-ui-button {
-  margin-top: 8rem;
 }
 
 @media only screen and (max-width: 1079px) {
