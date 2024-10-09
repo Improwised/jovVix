@@ -199,6 +199,7 @@ definePageMeta({
 </script>
 
 <template>
+  <div class="bg-image"></div>
   <Playground :full-screen-enabled="myRef" @is-full-screen="handleCustomChange">
     <UtilsConfirmModal
       v-if="confirmNeeded.show"
@@ -237,3 +238,24 @@ definePageMeta({
     ></QuizListUserAnswered>
   </Playground>
 </template>
+
+<style scoped>
+.bg-image {
+  background-image: url("@/assets/images/que-web-bg.png");
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  min-width: 100%;
+  min-height: 100%;
+  width: 100%;
+  height: auto;
+  z-index: -1;
+  opacity: 0.2;
+}
+
+@media (max-width: 576px) {
+  .bg-image {
+    background-image: url("@/assets/images/Que-mob-bg.png");
+  }
+}
+</style>

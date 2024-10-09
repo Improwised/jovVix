@@ -4,8 +4,8 @@
   >
     <div class="row align-items-center">
       <div class="col-md-7">
-        <div class="quiz-content text-md-start text-center">
-          <h1 class="text-72px font-weight-bold text-black mb-5">
+        <div class="text-md-start text-center">
+          <h1 class="content-font text-72px text-black mb-5">
             Welcome to the Quiz App
           </h1>
           <p class="text-24px text-black mb-5">Explore, Learn, Quiz!</p>
@@ -25,12 +25,6 @@
           src="../assets/images/shapes/2.svg"
           alt=""
           class="shapes shape-three absolute z--1 left-11% top-35%"
-        />
-        <!-- Birds -->
-        <img
-          src="../assets/images/shapes/3.svg"
-          alt=""
-          class="shapes shape-four absolute z--1 left-10% top-70%"
         />
         <!-- cyan circle -->
         <img
@@ -82,17 +76,6 @@
           src="../assets/images/shapes/2.svg"
           alt=""
           class="shapes shape-fourteen absolute z--1 left-11% top-35%"
-        />
-        <img
-          src="../assets/images/boxes.png"
-          alt=""
-          class="shapes img-boxes absolute z--1 left-11% top-35%"
-        />
-        <!-- 4 box image -->
-        <img
-          src="../assets/images/shapes/3.svg"
-          alt=""
-          class="shapes shape-fifteen absolute z--1 left-10% top-70%"
         />
       </div>
     </div>
@@ -269,5 +252,10 @@ onMounted(async () => {
   .quiz-content p {
     padding-bottom: -50px;
   }
+}
+
+.content-font {
+  font-size: 50px;
+  font-family: Lato, Verdana, Helvetica, sans-serif;
 }
 </style>

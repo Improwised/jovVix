@@ -134,13 +134,13 @@ const changeUI = (value) => {
     >
       <div
         v-if="scoreboardData.length > 0"
-        class="col-sm-12 col-lg-3 order-sm-1 order-lg-2"
+        class="col-sm-12 col-lg-3 order-sm-1 order-lg-2 rank-one"
       >
         <WinnerCard :winner="scoreboardData[0]" />
       </div>
       <div
         v-if="scoreboardData.length > 1"
-        class="col-sm-12 col-lg-3 order-sm-2 order-lg-1"
+        class="col-sm-12 col-lg-3 order-sm-2 order-lg-1 rank-two"
       >
         <WinnerCard :winner="scoreboardData[1]" />
       </div>
@@ -231,6 +231,14 @@ const changeUI = (value) => {
   min-height: 100%;
   width: 100%;
   height: auto;
+}
+
+.rank-one {
+  transform: scale(1.25);
+}
+
+.rank-two {
+  transform: scale(1.1);
 }
 
 @media only screen and (max-width: 1079px) {

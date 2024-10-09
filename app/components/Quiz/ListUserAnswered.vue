@@ -68,6 +68,7 @@ function handleCountUser(message) {
       v-if="usersSubmittedAnswers.length"
       :flat="true"
       class="mb-2 d-flex flex-wrap justify-content-center"
+      color="#00000000"
     >
       <div
         v-for="user in usersSubmittedAnswers"

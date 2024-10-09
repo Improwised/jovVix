@@ -19,7 +19,7 @@ const avatar = computed(() => {
 </script>
 
 <template>
-  <div class="container-fluid">
+  <div class="container-fluid mb-5">
     <div class="row justify-content-center">
       <div class="col-6 col-md-4 mt-5 d-flex justify-content-center">
         <div

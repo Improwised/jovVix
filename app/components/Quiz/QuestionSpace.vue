@@ -215,7 +215,7 @@ function handleSkip(e) {
 }
 
 .wrong-option {
-  border: 1px solid var(--bs-light-primary);
+  border: 2px solid var(--bs-light-primary);
 }
 
 .option-radio {

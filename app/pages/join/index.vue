@@ -101,7 +101,7 @@ const userPlayedQuiz = ref("");
 const sessionId = ref("");
 
 const join_quiz = async () => {
-  username.value = username.value.trim();
+  username.value = username.value.trim().replace(/\s+/g, "");
 
   if (!code.value || code.value.length !== 6) {
     toast.error("Please enter a valid quiz code (6 characters)");

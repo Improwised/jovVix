@@ -167,6 +167,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
+  <div class="bg-image"></div>
   <div>
     <div v-if="showConnectingBar" class="top-bar-red">
       <div class="doodle">&#128641;</div>
@@ -263,5 +264,24 @@ onBeforeUnmount(() => {
 
 .close-button:hover {
   color: #ccc;
+}
+
+.bg-image {
+  background-image: url("@/assets/images/que-web-bg.png");
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  min-width: 100%;
+  min-height: 100%;
+  width: 100%;
+  height: auto;
+  z-index: -1;
+  opacity: 0.2;
+}
+
+@media (max-width: 576px) {
+  .bg-image {
+    background-image: url("@/assets/images/Que-mob-bg.png");
+  }
 }
 </style>

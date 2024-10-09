@@ -4,7 +4,8 @@
     <nav class="navbar-classic navbar navbar-expand-lg">
       <!-- Logo -->
       <NuxtLink class="navbar-brand navbar-logo" style="color: black" to="/">
-        Quiz App
+        <img class="logo" src="@/assets/images/logo.png" alt="" />
+        <!-- Quiz App -->
       </NuxtLink>
       <button
         class="navbar-toggler bg-light"
@@ -130,5 +131,12 @@ onMounted(() => {
   color: #fff;
   background-color: #007bff;
   border-color: #007bff;
+}
+
+.logo {
+  height: 35px;
+  transform: scale(2);
+  margin-top: 4px;
+  margin-left: 45px;
 }
 </style>

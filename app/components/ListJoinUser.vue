@@ -35,6 +35,7 @@ import { getAvatarUrlByName } from "~~/composables/avatar";
       v-if="listUsers.length"
       :flat="true"
       class="mb-2 d-flex flex-wrap justify-content-center"
+      color="#00000000"
     >
       <div v-for="user in listUsers" :key="user.UserId" class="chip m-2">
         <img

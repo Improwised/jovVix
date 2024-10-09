@@ -32,6 +32,7 @@ const props = defineProps({
 const emits = defineEmits(["askSkipTimer", "changeAnalysisTab"]);
 const timer = ref(null);
 const time = ref(0);
+const isSkip = ref(false);
 
 function handleTimer() {
   clearInterval(timer.value);
@@ -49,6 +50,7 @@ handleTimer();
 
 function handleSkipTimer(e) {
   e.preventDefault();
+  isSkip.value = true;
   emits("askSkipTimer");
 }
 
@@ -106,6 +108,7 @@ const changeAnalysisTab = (tab) => emits("changeAnalysisTab", tab);
       v-if="isAdmin"
       type="button"
       class="btn text-white btn-primary mt-3"
+      :disabled="isSkip"
       @click="handleSkipTimer"
     >
       Skip

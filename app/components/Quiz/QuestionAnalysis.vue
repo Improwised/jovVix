@@ -2,17 +2,21 @@
   <div class="row m-2">
     <div class="col-lg-12">
       <div>
-        <strong v-if="props.order !== 0" class="text-primary"
-          >Question: {{ props.order }}
-        </strong>
-        <NuxtLink
-          v-if="quizId"
-          type="button"
-          class="me-0 mx-2"
-          :to="`/admin/quiz/list-quiz/${props.quizId}/${props.question.question_id}`"
-        >
-          <font-awesome-icon :icon="['fas', 'pen-to-square']" />
-        </NuxtLink>
+        <div class="d-flex row">
+          <strong v-if="props.order !== 0" class="text-primary col-6"
+            >Question: {{ props.order }}
+          </strong>
+          <div class="col-6 d-flex justify-content-end">
+            <NuxtLink
+              v-if="quizId"
+              type="button"
+              class="me-5"
+              :to="`/admin/quiz/list-quiz/${props.quizId}/${props.question.question_id}`"
+            >
+              <font-awesome-icon :icon="['fas', 'pen-to-square']" />
+            </NuxtLink>
+          </div>
+        </div>
         <h3 class="font-bold">{{ props.question?.question }}</h3>
       </div>
     </div>

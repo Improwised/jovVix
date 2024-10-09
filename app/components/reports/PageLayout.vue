@@ -1,8 +1,8 @@
 <template>
   <div class="row">
     <div class="col-lg-12 col-md-12 col-12">
-      <h3 class="mb-2 fw-bold">Quiz Analysis</h3>
-      <ul class="nav nav-tabs">
+      <h3 class="mb-2 fw-bold text-center">Quiz Analysis</h3>
+      <ul class="nav nav-tabs justify-content-center">
         <li class="nav-item" @click="changeComponent('report')">
           <NuxtLink
             :class="{ active: props.currentTab === `report` }"
