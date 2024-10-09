@@ -35,3 +35,18 @@ type ResUserPlayedQuizAnalyticsBoard struct {
 	QuestionTypeID   int               `db:"type,omitempty" json:"question_type_id"`
 	QuestionType     string            `db:"omitempty" json:"question_type"`
 }
+
+type ResQuestionAnalytics struct {
+	QuestionId        string            `db:"question_id,omitempty" json:"question_id"`
+	CorrectAnswer     string            `db:"correct_answer,omitempty" json:"correct_answer"`
+	Question          string            `db:"question,omitempty" json:"question"`
+	RawOptions        []byte            `db:"options,omitempty" json:"raw_options"`
+	Options           map[string]string `db:"omitempty" json:"options"`
+	QuestionsMedia    string            `db:"question_media" json:"question_media"`
+	OptionsMedia      string            `db:"options_media" json:"options_media"`
+	Resource          string            `db:"resource" json:"resource"`
+	Points            int               `db:"points,omitempty" json:"points"`
+	QuestionTypeID    int               `db:"type,omitempty" json:"question_type_id"`
+	QuestionType      string            `db:"omitempty" json:"question_type"`
+	DurationInSeconds int               `db:"duration_in_seconds" json:"duration_in_seconds"`
+}

@@ -43,7 +43,16 @@ const props = defineProps({
                 {{ useGetTime(props.details?.created_at) }}
               </small>
             </p>
-            <UtilsStartQuiz :quiz-id="props.details?.id" />
+            <div>
+              <UtilsStartQuiz :quiz-id="props.details?.id" />
+              <NuxtLink
+                type="button"
+                class="btn text-white btn-primary me-0 mx-2"
+                :to="`/admin/quiz/list-quiz/${props.details?.id}`"
+              >
+                View Quiz
+              </NuxtLink>
+            </div>
           </div>
         </div>
       </div>
@@ -54,6 +63,7 @@ const props = defineProps({
 .randomImg {
   object-fit: cover;
 }
+
 img {
   height: auto !important;
   max-height: 120px !important;

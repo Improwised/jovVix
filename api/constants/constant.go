@@ -89,7 +89,8 @@ const (
 	ErrQuestionId               = "question type id not exist"
 
 	// quiz-id
-	QuizId = "quiz_id"
+	QuizId     = "quiz_id"
+	QuestionId = "question_id"
 )
 
 // components

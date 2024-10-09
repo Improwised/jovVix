@@ -234,6 +234,9 @@ func setupQuizController(v1 fiber.Router, db *goqu.Database, logger *zap.Logger,
 	quizzes.Post(fmt.Sprintf("/:%s/upload", constants.QuizTitle), middleware.ValidateCsv, middleware.KratosAuthenticated, quizController.CreateQuizByCsv)
 	quizzes.Get("/list", quizController.GetAdminUploadedQuizzes)
 	quizzes.Get(fmt.Sprintf("/:%s", constants.QuizId), quizController.ListQuestionByQuizId)
+	quizzes.Get(fmt.Sprintf("/question/:%s", constants.QuizId), quizController.ListQuestionsWithAnswerByQuizId)
+	quizzes.Get(fmt.Sprintf("/question/:%s/:%s", constants.QuizId, constants.QuestionId), quizController.GetQuestionById)
+	quizzes.Put(fmt.Sprintf("/question/:%s/:%s", constants.QuizId, constants.QuestionId), quizController.UpdateQuestionById)
 
 	v1.Get(fmt.Sprintf("/socket/admin/arrange/:%s", constants.SessionIDParam), middleware.CheckSessionId, middleware.KratosAuthenticated, websocket.New(quizSocketController.Arrange))
 

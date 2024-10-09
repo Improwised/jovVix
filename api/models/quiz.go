@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/Improwised/quizz-app/api/constants"
+	quizUtilsHelper "github.com/Improwised/quizz-app/api/helpers/utils"
+	"github.com/Improwised/quizz-app/api/pkg/structs"
 	"github.com/doug-martin/goqu/v9"
 	"github.com/google/uuid"
 )
@@ -504,4 +506,121 @@ func (model *QuizModel) ListQuizzesAnalysis(name, order, orderBy, date, userId s
 	err = model.db.ScanStructs(&quizzesAnalysis, sql, args...)
 
 	return quizzesAnalysis, count, err
+}
+
+func (model *QuizModel) ListQuestionsWithAnswerByQuizId(QuizId string) ([]structs.ResQuestionAnalytics, error) {
+	var questionAnalytics []structs.ResQuestionAnalytics
+
+	err := model.db.
+		From(QuestionTable).
+		Select(
+			goqu.I(constants.QuestionsTable+".id").As("question_id"),
+			goqu.I(constants.QuestionsTable+".answers").As("correct_answer"),
+			"question",
+			"options",
+			"question_media",
+			"options_media",
+			"resource",
+			"points",
+			"type",
+		).
+		InnerJoin(goqu.T(constants.QuizQuestionsTable), goqu.On(goqu.I(constants.QuizQuestionsTable+".question_id").Eq(goqu.I(constants.QuestionsTable+".id")))).
+		Where(goqu.Ex{
+			constants.QuizQuestionsTable + ".quiz_id": QuizId,
+		}).
+		ScanStructs(&questionAnalytics)
+
+	if err != nil {
+		return nil, err
+	}
+	for index := 0; index < len(questionAnalytics); index++ {
+		json.Unmarshal(questionAnalytics[index].RawOptions, &questionAnalytics[index].Options)
+
+		questionAnalytics[index].QuestionType, err = quizUtilsHelper.GetQuestionType(questionAnalytics[index].QuestionTypeID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return questionAnalytics, nil
+}
+
+func (model *QuizModel) GetQuestionById(QuizId string) (structs.ResQuestionAnalytics, error) {
+	var questionAnalytics structs.ResQuestionAnalytics
+
+	_, err := model.db.
+		From(QuestionTable).
+		Select(
+			goqu.I(constants.QuestionsTable+".id").As("question_id"),
+			goqu.I(constants.QuestionsTable+".answers").As("correct_answer"),
+			"question",
+			"options",
+			"question_media",
+			"options_media",
+			"resource",
+			"points",
+			"type",
+			"duration_in_seconds",
+		).
+		Where(goqu.Ex{
+			constants.QuestionsTable + ".id": QuizId,
+		}).
+		ScanStruct(&questionAnalytics)
+
+	if err != nil {
+		return questionAnalytics, err
+	}
+
+	err = json.Unmarshal(questionAnalytics.RawOptions, &questionAnalytics.Options)
+	if err != nil {
+		return questionAnalytics, err
+	}
+
+	questionAnalytics.QuestionType, err = quizUtilsHelper.GetQuestionType(questionAnalytics.QuestionTypeID)
+	if err != nil {
+		return questionAnalytics, err
+	}
+
+	return questionAnalytics, nil
+}
+
+func (model *QuizModel) UpdateQuestionById(QuestionId string, question Question) error {
+	options, err := json.Marshal(question.Options)
+	if err != nil {
+		return err
+	}
+
+	answers, err := json.Marshal(question.Answers)
+	if err != nil {
+		return err
+	}
+
+	records := goqu.Record{
+		"question":            question.Question,
+		"type":                question.Type,
+		"options":             string(options),
+		"answers":             string(answers),
+		"points":              question.Points,
+		"duration_in_seconds": question.DurationInSeconds,
+		"question_media":      question.QuestionMedia,
+		"options_media":       question.OptionsMedia,
+		"resource":            question.Resource.String,
+		"updated_at":          goqu.L("now()"),
+	}
+
+	result, err := model.db.Update(QuestionTable).Set(records).Where(goqu.I("id").Eq(QuestionId)).Executor().Exec()
+	if err != nil {
+		return err
+	}
+
+	affectedRow, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if affectedRow == 0 {
+		return sql.ErrNoRows
+	}
+
+	return nil
 }

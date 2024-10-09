@@ -1,6 +1,8 @@
 package structs
 
-import "github.com/google/uuid"
+import (
+	"github.com/google/uuid"
+)
 
 // All request sturcts
 // Request struct have Req prefix
@@ -28,4 +30,16 @@ type ReqAnswerSubmit struct {
 	QuestionId   uuid.UUID `json:"id" validate:"required"`
 	AnswerKeys   []int     `json:"keys" validate:"required"`
 	ResponseTime int       `json:"response_time" validate:"required"`
+}
+
+type ReqUpdateQuestion struct {
+	Question          string            `json:"question" validate:"required"`
+	Type              int               `json:"type" validate:"required"`
+	Options           map[string]string `json:"options" validate:"required"`
+	Answers           []int             `json:"answers" validate:"required"`
+	Points            int16             `json:"points"`
+	DurationInSeconds int               `json:"duration_in_seconds" validate:"required"`
+	QuestionMedia     string            `json:"question_media" validate:"required"`
+	OptionsMedia      string            `json:"options_media" validate:"required"`
+	Resource          string            `json:"resource"`
 }

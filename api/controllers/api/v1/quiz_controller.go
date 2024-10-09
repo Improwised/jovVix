@@ -2,21 +2,25 @@ package v1
 
 import (
 	"database/sql"
+	"encoding/json"
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/Improwised/quizz-app/api/config"
 	"github.com/Improwised/quizz-app/api/constants"
 	quizUtilsHelper "github.com/Improwised/quizz-app/api/helpers/utils"
 	"github.com/Improwised/quizz-app/api/models"
 	"github.com/Improwised/quizz-app/api/pkg/events"
+	"github.com/Improwised/quizz-app/api/pkg/structs"
 	"github.com/Improwised/quizz-app/api/pkg/watermill"
 	"github.com/Improwised/quizz-app/api/services"
 	"github.com/Improwised/quizz-app/api/utils"
 	"github.com/doug-martin/goqu/v9"
 	fiber "github.com/gofiber/fiber/v2"
 	"go.uber.org/zap"
+	validator "gopkg.in/go-playground/validator.v9"
 )
 
 type QuizController struct {
@@ -287,4 +291,91 @@ func (ctrl *QuizController) ListQuestionByQuizId(c *fiber.Ctx) error {
 
 	ctrl.logger.Debug("QuizController.ListQuestionByQuizId success", zap.Any("questions", questions))
 	return utils.JSONSuccess(c, http.StatusOK, questions)
+}
+
+func (ctrl *QuizController) ListQuestionsWithAnswerByQuizId(c *fiber.Ctx) error {
+	QuizId := c.Params(constants.QuizId)
+	ctrl.logger.Debug("QuizController.ListQuestionsWithAnswerByQuizId called", zap.Any(constants.QuizId, QuizId))
+
+	questions, err := ctrl.quizModel.ListQuestionsWithAnswerByQuizId(QuizId)
+	if err != nil {
+		ctrl.logger.Error("error occured while getting questions by admin", zap.Error(err))
+		return utils.JSONError(c, http.StatusInternalServerError, err.Error())
+	}
+
+	services.ProcessAnalyticsData(questions, ctrl.presignedURLSvc, ctrl.logger)
+
+	ctrl.logger.Debug("QuizController.ListQuestionsWithAnswerByQuizId success", zap.Any("questions", questions))
+	return utils.JSONSuccess(c, http.StatusOK, questions)
+}
+
+func (ctrl *QuizController) GetQuestionById(c *fiber.Ctx) error {
+	QuestionId := c.Params(constants.QuestionId)
+	ctrl.logger.Debug("QuizController.GetQuestionById called", zap.Any(constants.QuizId, QuestionId))
+
+	question, err := ctrl.quizModel.GetQuestionById(QuestionId)
+	if err != nil {
+		ctrl.logger.Error("error occured while getting question by admin", zap.Error(err))
+		return utils.JSONError(c, http.StatusInternalServerError, err.Error())
+	}
+
+	if question.QuestionsMedia == "image" {
+		presignedURL, err := ctrl.presignedURLSvc.GetPresignedURL(question.Resource, 5*time.Minute)
+		if err != nil {
+			ctrl.logger.Error("error while getting presigned url", zap.Error(err))
+		}
+		question.Resource = presignedURL
+	}
+
+	if question.OptionsMedia == "image" {
+		for key, value := range question.Options {
+			presignedURL, err := ctrl.presignedURLSvc.GetPresignedURL(value, 1*time.Minute)
+			if err != nil {
+				ctrl.logger.Error("error while getting presigned url", zap.Error(err))
+			}
+			question.Options[key] = presignedURL
+		}
+	}
+
+	ctrl.logger.Debug("QuizController.GetQuestionById success", zap.Any("question", question))
+	return utils.JSONSuccess(c, http.StatusOK, question)
+}
+
+func (ctrl *QuizController) UpdateQuestionById(c *fiber.Ctx) error {
+	QuestionId := c.Params(constants.QuestionId)
+	ctrl.logger.Debug("QuizController.UpdateQuestionById called", zap.Any(constants.QuestionId, QuestionId))
+
+	ctrl.logger.Debug("validate req", zap.Any("Body", c.Body()))
+	var questionReq structs.ReqUpdateQuestion
+	err := json.Unmarshal(c.Body(), &questionReq)
+	if err != nil {
+		ctrl.logger.Error("validate req error", zap.Error(err))
+		return utils.JSONFail(c, http.StatusBadRequest, err.Error())
+	}
+
+	validate := validator.New()
+	err = validate.Struct(questionReq)
+	if err != nil {
+		ctrl.logger.Error("validate req error", zap.Any("questionReq", questionReq))
+		return utils.JSONFail(c, http.StatusBadRequest, utils.ValidatorErrorString(err))
+	}
+
+	err = ctrl.quizModel.UpdateQuestionById(QuestionId, models.Question{
+		Question:          questionReq.Question,
+		Type:              questionReq.Type,
+		Options:           questionReq.Options,
+		Answers:           questionReq.Answers,
+		Points:            questionReq.Points,
+		DurationInSeconds: questionReq.DurationInSeconds,
+		QuestionMedia:     questionReq.QuestionMedia,
+		OptionsMedia:      questionReq.OptionsMedia,
+		Resource:          sql.NullString{String: questionReq.Resource, Valid: true},
+	})
+	if err != nil {
+		ctrl.logger.Error("error occured while update question by admin", zap.Error(err))
+		return utils.JSONError(c, http.StatusInternalServerError, err.Error())
+	}
+
+	ctrl.logger.Debug("QuizController.UpdateQuestionById success", zap.Any("QuestionId", QuestionId))
+	return utils.JSONSuccess(c, http.StatusOK, "question update success")
 }

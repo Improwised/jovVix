@@ -3,8 +3,16 @@
     <div class="col-lg-12">
       <div>
         <strong v-if="props.order !== 0" class="text-primary"
-          >Question: {{ props.order }}</strong
+          >Question: {{ props.order }}
+        </strong>
+        <NuxtLink
+          v-if="quizId"
+          type="button"
+          class="me-0 mx-2"
+          :to="`/admin/quiz/list-quiz/${props.quizId}/${props.question.question_id}`"
         >
+          <font-awesome-icon :icon="['fas', 'pen-to-square']" />
+        </NuxtLink>
         <h3 class="font-bold">{{ props.question?.question }}</h3>
       </div>
     </div>
@@ -95,6 +103,11 @@ const props = defineProps({
     type: Boolean,
     required: false,
     default: false,
+  },
+  quizId: {
+    type: String,
+    required: false,
+    default: "",
   },
 });
 </script>
