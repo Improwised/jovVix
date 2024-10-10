@@ -8,15 +8,7 @@
         :quiz-id="quizId"
         :question-id="questionId"
       />
-      <!-- <QuizEditOptions
-        :options="questionData?.data?.options"
-        :correct-answer="questionData?.data?.correct_answer"
-        :options-media="questionData?.data?.options_media"
-      /> -->
     </div>
-    <!-- <div class="text-right">
-      <button class="btn btn-primary" @click="updateQuestion">Save Changes</button>
-    </div> -->
   </div>
 </template>
 

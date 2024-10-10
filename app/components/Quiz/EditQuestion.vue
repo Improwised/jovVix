@@ -257,10 +257,10 @@ const updateQuestion = async () => {
         credentials: "include",
       }
     );
-    alert("Question updated successfully!");
+    toast.success("Question updated successfully!");
   } catch (error) {
     console.error("Failed to update the question", error);
-    alert("Failed to update the question.");
+    toast.success("Failed to update the question.");
   }
 };
 </script>

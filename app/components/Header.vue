@@ -1,7 +1,7 @@
 <template>
   <div class="header">
     <!-- navbar -->
-    <nav class="navbar-classic navbar navbar-expand-lg">
+    <nav class="navbar navbar-expand-lg">
       <!-- Logo -->
       <NuxtLink class="navbar-brand navbar-logo" style="color: black" to="/">
         <img class="logo" src="@/assets/images/logo.png" alt="" />

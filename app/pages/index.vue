@@ -15,6 +15,7 @@
         <lottie-player
           autoplay
           loop
+          speed="0.5"
           mode="normal"
           src="testimg.json"
           style="width: 100%"
@@ -252,10 +253,5 @@ onMounted(async () => {
   .quiz-content p {
     padding-bottom: -50px;
   }
-}
-
-.content-font {
-  font-size: 50px;
-  font-family: Lato, Verdana, Helvetica, sans-serif;
 }
 </style>

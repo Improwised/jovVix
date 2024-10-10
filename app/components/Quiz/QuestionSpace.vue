@@ -61,7 +61,7 @@ function handleEvent(message) {
     handleTimer();
   } else if (message.event == app.$Counter) {
     question.value = null;
-    count.value = 1;
+    count.value = parseInt(props.data.data.count);
     time.value = 0;
     handleCounter();
   }
@@ -82,8 +82,8 @@ function handleTimer() {
 function handleCounter() {
   clearInterval(counter.value);
   counter.value = setInterval(() => {
-    count.value += 1;
-    if (parseInt(props.data.data.count) <= count.value) {
+    count.value -= 1;
+    if (count.value <= 0) {
       clearInterval(counter.value);
       count.value = app.$ReadyMessage;
       counter.value = null;
@@ -225,5 +225,10 @@ function handleSkip(e) {
 input[type="radio"]:checked + .option-box {
   border-color: #3c3535eb;
   transform: scale(1.05);
+  opacity: 1;
+}
+
+input[type="radio"]:not(checked) + .option-box {
+  opacity: 0.7;
 }
 </style>

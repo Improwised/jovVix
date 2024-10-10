@@ -1,5 +1,8 @@
 <script setup>
 import { useToast } from "vue-toastification";
+import { useListUserstore } from "~/store/userlist";
+const listUserStore = useListUserstore();
+const { removeAllUsers } = listUserStore;
 let urls = useRuntimeConfig().public;
 const router = useRouter();
 const toast = useToast();
@@ -42,6 +45,7 @@ const handleStartDemo = async () => {
     return;
   }
 
+  removeAllUsers();
   setSocketObject(null);
 
   router.push(`/admin/arrange/${activeQuizId.value}`);
