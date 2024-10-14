@@ -14,7 +14,7 @@ const props = defineProps({
 
 const avatar = computed(() => {
   const user = getUserData();
-  return getAvatarUrlByName(user?.avatar);
+  return user?.avatar ? getAvatarUrlByName(user?.avatar) : "";
 });
 </script>
 
@@ -25,7 +25,21 @@ const avatar = computed(() => {
         <div
           class="border border-1 px-7 py-2 py-md-4 border-radius d-flex align-items-center"
         >
-          <img :src="avatar" height="70" width="70" class="me-3" />
+          <!-- its added here beacause avatar value return empty value -->
+          <img
+            v-if="!avatar"
+            src="https://api.dicebear.com/9.x/bottts/svg?seed=Eden"
+            height="70"
+            width="70"
+            class="me-3"
+          />
+          <img
+            v-if="avatar"
+            :src="avatar"
+            height="70"
+            width="70"
+            class="me-3"
+          />
           <h5 class="text-center text-sm fs-5 mb-0">{{ props.userName }}</h5>
         </div>
       </div>

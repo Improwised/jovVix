@@ -2,6 +2,13 @@
 // core dependencies
 import { useNuxtApp } from "nuxt/app";
 import { useToast } from "vue-toastification";
+import { useMusicStore } from "~~/store/music";
+const musicStore = useMusicStore();
+const { getMusic } = musicStore;
+
+const music = computed(() => {
+  return getMusic();
+});
 
 // define nuxt configs
 const app = useNuxtApp();
@@ -54,6 +61,11 @@ watch(
 
 // main function
 function handleEvent(message) {
+  let counterSound = null;
+
+  if (music.value) {
+    counterSound = new Audio("/music/clock.mp3");
+  }
   if (message.event == app.$GetQuestion) {
     question.value = message.data;
     count.value = null;
@@ -63,7 +75,10 @@ function handleEvent(message) {
     question.value = null;
     count.value = parseInt(props.data.data.count);
     time.value = 0;
-    handleCounter();
+    handleCounter(counterSound);
+    if (music.value && counterSound) {
+      counterSound.play();
+    }
   }
 }
 
@@ -79,7 +94,7 @@ function handleTimer() {
   }, 1000);
 }
 
-function handleCounter() {
+function handleCounter(counterSound) {
   clearInterval(counter.value);
   counter.value = setInterval(() => {
     count.value -= 1;
@@ -87,6 +102,9 @@ function handleCounter() {
       clearInterval(counter.value);
       count.value = app.$ReadyMessage;
       counter.value = null;
+      if (counterSound) {
+        counterSound.pause();
+      }
     }
   }, 1000);
 }
@@ -114,6 +132,7 @@ function handleSkip(e) {
     v-if="question != null"
     :page-title="`Question ${question.no} / ${question.totalQuestions}`"
     page-message="Let's Play"
+    :music-component="true"
   >
     <template #sub-title>
       <v-progress-circular

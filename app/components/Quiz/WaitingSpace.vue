@@ -2,6 +2,13 @@
 // core dependencies
 import { useNuxtApp } from "nuxt/app";
 import { useToast } from "vue-toastification";
+import { useMusicStore } from "~~/store/music";
+const musicStore = useMusicStore();
+const { getMusic } = musicStore;
+
+const music = computed(() => {
+  return getMusic();
+});
 
 // define nuxt configs
 const app = useNuxtApp();
@@ -18,6 +25,7 @@ const listUserStore = useListUserstore();
 const { removeAllUsers } = listUserStore;
 
 const startQuiz = ref(false);
+const waitingSound = ref(null);
 
 // define props and emits
 const props = defineProps({
@@ -68,6 +76,7 @@ function handleEvent(message) {
 let copyBtn;
 
 onMounted(() => {
+  initializeSound();
   copyBtn = document.getElementById("OTP-input-container");
   if (process.client && copyBtn) {
     copyBtn.addEventListener("click", () => {
@@ -76,7 +85,21 @@ onMounted(() => {
   }
 });
 
+function initializeSound() {
+  if (process.client) {
+    waitingSound.value = new Audio("/music/waiting_area_music.mp3");
+    if (music.value) {
+      waitingSound.value.play();
+      waitingSound.value.loop = true;
+    }
+  }
+}
+
 onUnmounted(() => {
+  if (waitingSound.value) {
+    waitingSound.value.pause();
+    waitingSound.value = null;
+  }
   if (!startQuiz.value) {
     emits("terminateQuiz");
   }
@@ -85,6 +108,18 @@ onUnmounted(() => {
     removeAllUsers();
   }
 });
+
+watch(
+  music,
+  (newValue) => {
+    if (!newValue && waitingSound.value) {
+      waitingSound.value.pause();
+    } else if (newValue && waitingSound.value) {
+      waitingSound.value.play();
+    }
+  },
+  { deep: true, immediate: true }
+);
 
 function copyToClipboard(text) {
   navigator.clipboard
@@ -103,6 +138,7 @@ function copyToClipboard(text) {
     v-if="isAdmin"
     page-title="Ready Steady Go"
     :page-message="'You Can Start Quiz By Pressing Start Quiz button'"
+    :music-component="true"
   >
     <form @submit="start_quiz">
       <div class="mb-3 pe-3">
@@ -124,7 +160,12 @@ function copyToClipboard(text) {
       </button>
     </form>
   </Frame>
-  <Frame v-else page-title="Ready Steady Go" :page-message="data.data">
+  <Frame
+    v-else
+    :music-component="true"
+    page-title="Ready Steady Go"
+    :page-message="data.data"
+  >
     <div class="text-center homepage">{{ data.data }}</div>
   </Frame>
 </template>

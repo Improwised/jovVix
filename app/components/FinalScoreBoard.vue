@@ -18,6 +18,7 @@ const userAnalysisEndpoint = "/analytics_board/user";
 const requestPending = ref(false);
 const userStatistics = ref({});
 const winnerUI = computed(() => route.query.winner_ui || false);
+const winningSound = ref(null);
 
 const props = defineProps({
   userURL: {
@@ -123,6 +124,27 @@ const showAnalysis = () => {
 const changeUI = (value) => {
   navigateTo({ path: route.path, query: { ...route.query, winner_ui: value } });
 };
+
+watch(
+  winnerUI,
+  (newValue) => {
+    const music = newValue == "true";
+    if (!music && winningSound.value) {
+      winningSound.value.pause();
+    } else if (music && winningSound.value) {
+      winningSound.value.play();
+    }
+  },
+  { deep: true, immediate: true }
+);
+
+onMounted(() => {
+  winningSound.value = new Audio("/music/winning.mp3");
+
+  if (winnerUI.value == "true") {
+    winningSound.value.play();
+  }
+});
 </script>
 <template>
   <div v-if="winnerUI == 'true' && props.isAdmin">

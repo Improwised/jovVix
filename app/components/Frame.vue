@@ -1,6 +1,9 @@
 <script setup>
 import { useRouter } from "nuxt/app";
 import { useToast } from "vue-toastification";
+import { useMusicStore } from "~~/store/music";
+const musicStore = useMusicStore();
+const { getMusic, setMusic } = musicStore;
 
 // Define props using defineProps
 const props = defineProps({
@@ -13,6 +16,11 @@ const props = defineProps({
     type: String,
     required: false,
     default: null,
+  },
+  musicComponent: {
+    type: Boolean,
+    required: false,
+    default: false,
   },
 });
 
@@ -35,6 +43,10 @@ watch(
   () => router.currentRoute.value.query,
   () => toastError()
 );
+
+const music = computed(() => {
+  return getMusic();
+});
 </script>
 
 <template>
@@ -52,6 +64,14 @@ watch(
 
       <hr class="m-2" />
       <slot></slot>
+      <div v-if="props.musicComponent" class="d-flex justify-content-end">
+        <button v-if="music" class="" @click="setMusic(false)">
+          <font-awesome-icon :icon="['fas', 'volume-high']" />
+        </button>
+        <button v-else class="" @click="setMusic(true)">
+          <font-awesome-icon :icon="['fas', 'volume-xmark']" />
+        </button>
+      </div>
     </div>
   </div>
 </template>

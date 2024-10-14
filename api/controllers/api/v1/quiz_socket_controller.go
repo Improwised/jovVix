@@ -308,6 +308,9 @@ func onConnectHandleUser(c *websocket.Conn, qc *quizSocketController, response *
 			"question":       currentQuestion.Question,
 			"options":        currentQuestion.Options,
 			"totalQuestions": totalQuestion,
+			"question_media": currentQuestion.QuestionMedia,
+			"options_media":  currentQuestion.OptionsMedia,
+			"resource":       currentQuestion.Resource.String,
 		}
 		response.Data = responseData
 		response.Component = constants.Question

@@ -58,7 +58,11 @@ const changeAnalysisTab = (tab) => emits("changeAnalysisTab", tab);
 </script>
 
 <template>
-  <Frame page-title="Score Page" page-message="Rank Board">
+  <Frame
+    page-title="Score Page"
+    :music-component="true"
+    page-message="Rank Board"
+  >
     <v-progress-linear
       :striped="true"
       color="blue"

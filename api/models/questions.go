@@ -51,6 +51,9 @@ type QuestionForUser struct {
 	DurationInSeconds int               `json:"duration" db:"duration_in_seconds"`
 	OrderNumber       int               `json:"order" db:"order_no"`
 	Points            int               `json:"points" db:"points"`
+	QuestionMedia     string            `json:"question_media" db:"question_media"`
+	OptionsMedia      string            `json:"options_media" db:"options_media"`
+	Resource          sql.NullString    `json:"resource" db:"resource"`
 }
 
 // QuizModel implements quiz related database operations
@@ -301,6 +304,9 @@ func (model *QuestionModel) GetCurrentQuestion(id uuid.UUID) (QuestionForUser, e
 			"question",
 			"options",
 			"points",
+			"question_media",
+			"options_media",
+			"resource",
 		).InnerJoin(
 		goqu.T(constants.ActiveQuizQuestionsTable), goqu.On(goqu.I(constants.QuestionsTable+".id").Eq(goqu.I(constants.ActiveQuizQuestionsTable+".question_id")))).
 		Where(goqu.Ex{
