@@ -258,7 +258,7 @@ const {
   mode: "cors",
   credentials: "include",
   transform: (quizList) => {
-    if (quizList.data) {
+    if (quizList?.data?.data) {
       return quizList?.data?.data.slice(0, 8);
     }
     return quizList?.data?.data;
