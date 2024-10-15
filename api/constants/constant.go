@@ -24,6 +24,7 @@ const (
 	UserPlayedQuizId = "user_played_quiz_id"
 	Username         = "username"
 	MediaQuery       = "media"
+	ParamTitle       = "title"
 )
 
 // Success messages

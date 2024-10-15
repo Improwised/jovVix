@@ -2,7 +2,7 @@
   <div class="row mt-3">
     <div class="col-sm-12 col-md-6">
       <nav aria-label="Page navigation example">
-        <ul class="pagination pagination-primary justify-content-end">
+        <ul class="pagination pagination-primary">
           <li class="page-item">
             <NuxtLink
               class="page-link"
@@ -25,7 +25,7 @@
           <li class="page-item">
             <NuxtLink
               class="page-link"
-              :class="{ disabled: props.numOfRecords < 10 }"
+              :class="{ disabled: props.page >= numOfRecords }"
               :to="{
                 path: route.path,
                 query: { ...route.query, page: props.page + 1 },

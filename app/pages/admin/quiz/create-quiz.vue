@@ -315,7 +315,7 @@ const imageFileUpload = async (e) => {
         >
           Upload Images
         </div>
-        <UtilsStartQuiz v-if="quizId" :quiz-id="quizId" />
+        <UtilsStartQuiz v-if="quizId && !requestPending" :quiz-id="quizId" />
       </div>
     </form>
   </Frame>

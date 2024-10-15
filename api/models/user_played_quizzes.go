@@ -260,7 +260,7 @@ func (model *UserPlayedQuizModel) GetRank(sessionId uuid.UUID, questionId uuid.U
 	return userRanks, nil
 }
 
-func (model *UserPlayedQuizModel) ListUserPlayedQuizes(userId string) ([]structs.ResUserPlayedQuiz, error) {
+func (model *UserPlayedQuizModel) ListUserPlayedQuizes(userId string, page int, titleSearch string) ([]structs.ResUserPlayedQuiz, int64, error) {
 	var userPlayedQuiz []structs.ResUserPlayedQuiz
 
 	query := model.db.From(UserPlayedQuizTable).
@@ -270,6 +270,7 @@ func (model *UserPlayedQuizModel) ListUserPlayedQuizes(userId string) ([]structs
 			"user_played_quizzes.id",
 			"user_played_quizzes.created_at",
 			goqu.COUNT(goqu.I("quiz_questions.id")).As("total_questions"),
+			goqu.COUNT(goqu.I("user_played_quizzes.id")).Over(goqu.W().PartitionBy()).As("total_count"),
 		).
 		InnerJoin(goqu.T(constants.ActiveQuizzesTable), goqu.On(goqu.I(UserPlayedQuizTable+".active_quiz_id").Eq(goqu.I(constants.ActiveQuizzesTable+".id")))).
 		InnerJoin(goqu.T(constants.QuizzesTable), goqu.On(goqu.I(ActiveQuizzesTable+".quiz_id").Eq(goqu.I(constants.QuizzesTable+".id")))).
@@ -278,16 +279,31 @@ func (model *UserPlayedQuizModel) ListUserPlayedQuizes(userId string) ([]structs
 			UserPlayedQuizTable + ".user_id": userId,
 		}).GroupBy("user_played_quizzes.id", "quizzes.id").Order(goqu.I("user_played_quizzes.created_at").Desc())
 
-	query = query.Limit(constants.DefaultPageSize)
+	if titleSearch != "" {
+		query = query.Where(goqu.I("quizzes.title").ILike("%" + titleSearch + "%"))
+	}
+
+	offset := (page - 1) * constants.DefaultPageSize
+	query = query.
+		Limit(constants.DefaultPageSize).
+		Offset(uint(offset))
 
 	sql, args, err := query.ToSQL()
 	if err != nil {
-		return userPlayedQuiz, err
+		return userPlayedQuiz, 0, err
 	}
 
 	err = model.db.ScanStructs(&userPlayedQuiz, sql, args...)
+	if err != nil {
+		return userPlayedQuiz, 0, err
+	}
 
-	return userPlayedQuiz, err
+	var totalCount int64
+	if len(userPlayedQuiz) > 0 {
+		totalCount = userPlayedQuiz[0].TotalCount
+	}
+
+	return userPlayedQuiz, totalCount, err
 }
 
 func (model *UserPlayedQuizModel) ListUserPlayedQuizesWithQuestionById(UserPlayedQuizId string) ([]structs.ResUserPlayedQuizAnalyticsBoard, error) {

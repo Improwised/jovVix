@@ -145,7 +145,9 @@
           </tbody>
         </table>
       </div>
-      <Pagination :page="page" :num-of-records="quizList?.data?.Count" />
+      <div class="d-flex align-items-center justify-content-center">
+        <Pagination :page="page" :num-of-records="quizList?.data?.Count / 10" />
+      </div>
     </div>
   </div>
 </template>

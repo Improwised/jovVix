@@ -183,7 +183,7 @@
         <div v-else>
           <!-- show quiz list -->
           <div class="mt-4">
-            <div class="card text-center">
+            <div class="card">
               <div class="card-header">
                 <nav class="navbar">
                   <div class="container-fluid p-0">
@@ -199,17 +199,17 @@
               </div>
               <div
                 v-if="quizList == null || quizList.length < 1"
-                class="no-quiz-list d-flex flex-column align-items-center mt-4 mb-2"
+                class="no-quiz-list d-flex flex-column align-items-center my-4"
               >
                 <h2>No Quiz Played By You !</h2>
               </div>
-              <div v-else class="row">
+              <div class="row p-2">
                 <div
                   v-for="(details, index) in quizList"
                   :key="index"
-                  class="card-body col-md-3"
+                  class="col-md-6 mb-5"
                 >
-                  <PlayedQuizListCard :details="details" />
+                  <QuizListCard :details="details" :is-played-quiz="true" />
                 </div>
               </div>
             </div>
@@ -259,9 +259,9 @@ const {
   credentials: "include",
   transform: (quizList) => {
     if (quizList.data) {
-      return quizList.data.slice(0, 8);
+      return quizList?.data?.data.slice(0, 8);
     }
-    return quizList.data;
+    return quizList?.data?.data;
   },
 });
 
@@ -426,10 +426,6 @@ const changePassword = async () => {
 
 .user-info {
   margin-bottom: 20px;
-}
-
-.card-body {
-  padding: 20px;
 }
 
 .form-group {

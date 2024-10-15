@@ -3,12 +3,14 @@ package v1
 import (
 	"database/sql"
 	"net/http"
+	"strconv"
 
 	"github.com/Improwised/quizz-app/api/config"
 	"github.com/Improwised/quizz-app/api/constants"
 	quizUtilsHelper "github.com/Improwised/quizz-app/api/helpers/utils"
 	"github.com/Improwised/quizz-app/api/models"
 	"github.com/Improwised/quizz-app/api/pkg/events"
+	"github.com/Improwised/quizz-app/api/pkg/structs"
 	"github.com/Improwised/quizz-app/api/pkg/watermill"
 	"github.com/Improwised/quizz-app/api/services"
 	"github.com/Improwised/quizz-app/api/utils"
@@ -70,13 +72,22 @@ func (ctrl *UserPlayedQuizeController) ListUserPlayedQuizes(c *fiber.Ctx) error 
 	userId := quizUtilsHelper.GetString(c.Locals(constants.ContextUid))
 	ctrl.logger.Debug("UserPlayedQuizeController.ListUserPlayedQuizes called", zap.Any("userId", userId))
 
-	userPlayedQuizes, err := ctrl.userPlayedQuizModel.ListUserPlayedQuizes(userId)
+	page := c.Query(constants.PageNumberQueryParam, "1")
+	titleSearch := c.Query(constants.ParamTitle)
+
+	pageNumber, err := strconv.Atoi(page)
+	if err != nil || pageNumber < 1 {
+		pageNumber = 1
+	}
+
+	userPlayedQuizes, count, err := ctrl.userPlayedQuizModel.ListUserPlayedQuizes(userId, pageNumber, titleSearch)
 	if err != nil {
+		ctrl.logger.Error("Error fetching user played quizzes", zap.Error(err))
 		return err
 	}
 
 	ctrl.logger.Debug("UserPlayedQuizeController.ListUserPlayedQuizes success", zap.Any("userPlayedQuizes", userPlayedQuizes))
-	return utils.JSONSuccess(c, http.StatusOK, userPlayedQuizes)
+	return utils.JSONSuccess(c, http.StatusOK, structs.ResUserPlayedQuizWithCount{Data: userPlayedQuizes, Count: count})
 }
 
 // ListUserPlayedQuizesWithQuestionById to Analysis of played quiz by user

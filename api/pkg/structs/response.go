@@ -16,6 +16,12 @@ type ResUserPlayedQuiz struct {
 	Description    sql.NullString `json:"description" db:"description"`
 	CreatedAt      string         `json:"created_at" db:"created_at"`
 	TotalQuestions string         `json:"total_questions" db:"total_questions"`
+	TotalCount     int64          `json:"-" db:"total_count"`
+}
+
+type ResUserPlayedQuizWithCount struct {
+	Data  []ResUserPlayedQuiz `json:"data"`
+	Count int64               `json:"count"`
 }
 
 type ResUserPlayedQuizAnalyticsBoard struct {

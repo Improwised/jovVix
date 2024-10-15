@@ -209,35 +209,7 @@ onMounted(() => {
         </button>
       </div>
       <div v-if="!props.isAdmin">
-        <div
-          class="d-flex flex-wrap align-items-center justify-content-around container bg-white rounded p-5"
-        >
-          <span
-            class="badge rounded-pill bg-light-primary text-dark m-2 px-2 fs-5"
-          >
-            Accuracy: {{ userStatistics?.accuracy }}%
-          </span>
-          <span
-            class="badge rounded-pill bg-light-primary text-dark m-2 px-2 fs-5"
-          >
-            Total Score: {{ userStatistics?.totalScore }}
-          </span>
-          <span
-            class="badge rounded-pill bg-light-primary text-dark m-2 px-2 fs-5"
-          >
-            Total Correct: {{ userStatistics?.correctAnwers }}</span
-          >
-          <span
-            class="badge rounded-pill bg-light-secondary text-dark m-2 px-2 fs-5"
-          >
-            Total Incorrect: {{ userStatistics?.wrongAnwers }}
-          </span>
-          <span
-            class="badge rounded-pill bg-light-secondary text-dark m-2 px-2 fs-5"
-          >
-            Total Un-attmpted: {{ userStatistics?.unAttemptedQuestions }}
-          </span>
-        </div>
+        <QuizStatisticsBadges :user-statistics="userStatistics" />
         <QuizAnalysis :data="analysisData" />
       </div>
     </div>

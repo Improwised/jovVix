@@ -1,43 +1,58 @@
 <template>
-  <div class="container">
-    <h3 class="text-center">Played Quiz List</h3>
-    <UtilsQuizListWaiting v-if="quizPending" />
-
-    <div v-else-if="quizError" class="alert alert-danger" role="alert">
-      {{ quizError.data }}
-    </div>
-    <div v-else class="row">
-      <div
-        v-for="(details, index) in quizList.data"
-        :key="index"
-        class="card-body col-md-3 mt-3"
-      >
-        <PlayedQuizListCard :details="details" />
+  <div class="container p-0">
+    <div class="d-flex flex-column justify-content-center">
+      <UtilsQuizListWaiting v-if="quizPending" />
+      <div v-else-if="quizError">{{ quizError.message }}</div>
+      <div v-else>
+        <div
+          v-if="quizList?.data.length < 1"
+          class="no-quiz-list d-flex flex-column align-items-center"
+        >
+          <h1>No Quiz Played By You ! !</h1>
+        </div>
+        <div v-else>
+          <nav class="navbar pb-4">
+            <div class="container-fluid p-0">
+              <h1 class="mb-0">Played Quiz List</h1>
+              <input
+                v-model="titleInput"
+                type="text"
+                placeholder="Search quiz"
+                class="border rounded p-2"
+              />
+            </div>
+          </nav>
+          <div class="d-flex flex-column gap-3">
+            <div class="row">
+              <div
+                v-for="(details, index) in quizList?.data?.data"
+                :key="index"
+                class="col-md-6 mb-5"
+              >
+                <QuizListCard :details="details" :is-played-quiz="true" />
+              </div>
+            </div>
+          </div>
+          <div class="d-flex align-items-center justify-content-center">
+            <Pagination
+              :page="page"
+              :num-of-records="quizList?.data?.count / 10"
+            />
+          </div>
+        </div>
       </div>
-      <!-- list loader -->
-
-      <!-- quiz details -->
-      <!-- show quiz list -->
-      <!-- <div v-else>
-                <div class="card text-center">
-                    <div v-if="quizList.data == null || quizList.data.length < 1"
-                        class="no-quiz-list d-flex flex-column align-items-center mt-4 mb-2">
-                        <h2>No Quiz Played By You !</h2>
-                    </div>
-                    <div v-else class="row">
-                        <div v-for="(details, index) in quizList.data" :key="index" class="card-body col-md-4">
-                            <PlayedQuizListCard :details="details" />
-                        </div>
-                    </div>
-                </div>
-            </div> -->
     </div>
   </div>
 </template>
 
 <script setup>
+import debounce from "lodash/debounce";
 const url = useRuntimeConfig().public;
 const headers = useRequestHeaders(["cookie"]);
+const route = useRoute();
+const page = computed(() => Number(route.query.page) || 1);
+const titleInput = ref(route.query.title);
+const title = computed(() => route.query.title || "");
 
 const {
   data: quizList,
@@ -48,5 +63,29 @@ const {
   headers: headers,
   mode: "cors",
   credentials: "include",
+  query: {
+    page,
+    title,
+  },
+});
+
+const debouncedNavigateTo = debounce((query) => {
+  navigateTo({
+    path: route.path,
+    query: query,
+  });
+}, 500);
+
+watch(titleInput, (newValue) => {
+  debouncedNavigateTo({
+    ...route.query,
+    title: newValue,
+  });
 });
 </script>
+
+<style scoped>
+.max-width {
+  max-width: 922px;
+}
+</style>

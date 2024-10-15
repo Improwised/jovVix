@@ -8,6 +8,11 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  isPlayedQuiz: {
+    type: Boolean,
+    required: false,
+    default: false,
+  },
 });
 </script>
 <template>
@@ -26,7 +31,7 @@ const props = defineProps({
         <div
           class="card-body d-flex flex-column justify-content-between p-0 h-100"
         >
-          <h5 class="card-title mb-0">{{ props.details?.title }}</h5>
+          <h5 class="card-title mb-0">{{ decodeURI(props.details?.title) }}</h5>
           <p class="card-text mb-0">
             {{ props.details?.description?.String }}
           </p>
@@ -44,8 +49,20 @@ const props = defineProps({
               </small>
             </p>
             <div>
-              <UtilsStartQuiz :quiz-id="props.details?.id" />
+              <UtilsStartQuiz
+                v-if="!isPlayedQuiz"
+                :quiz-id="props.details?.id"
+              />
               <NuxtLink
+                v-if="isPlayedQuiz"
+                type="button"
+                class="btn text-white btn-primary me-0 mx-2"
+                :to="`/admin/played_quiz/${props.details?.id}`"
+              >
+                View Quiz
+              </NuxtLink>
+              <NuxtLink
+                v-else
                 type="button"
                 class="btn text-white btn-primary me-0 mx-2"
                 :to="`/admin/quiz/list-quiz/${props.details?.id}`"
