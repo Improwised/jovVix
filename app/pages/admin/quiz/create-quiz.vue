@@ -58,7 +58,7 @@ const uploadQuizAndQuestions = async (e) => {
 
   try {
     await $fetch(
-      encodeURI(`${url.api_url}/admin/quizzes/${quizId.value}?media=image`),
+      encodeURI(`${url.api_url}/quizzes/${quizId.value}/questions?media=image`),
       {
         method: "GET",
         headers: {
@@ -73,7 +73,7 @@ const uploadQuizAndQuestions = async (e) => {
             return;
           }
           if (response.status == 200) {
-            requiredImage.value = response._data.data;
+            requiredImage.value = response._data.data?.data;
             requestPending.value = false;
           }
         },
@@ -184,7 +184,7 @@ const imageFileUpload = async (e) => {
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="value in requiredImage" :key="value.id">
+                <tr v-for="value in requiredImage" :key="value.question_id">
                   <td>{{ value.question }}</td>
                   <td>
                     <v-file-input
@@ -193,7 +193,7 @@ const imageFileUpload = async (e) => {
                       prepend-icon="mdi-camera"
                       type="file"
                       class="form-control"
-                      :name="value.id"
+                      :name="value.question_id"
                       label="Question"
                       accept="image/*"
                       @change="imageFileUpload"
@@ -205,7 +205,7 @@ const imageFileUpload = async (e) => {
                       v-for="index in 5"
                       id="image-attachment-option"
                       :key="index"
-                      :name="index + '_' + value.id"
+                      :name="index + '_' + value.question_id"
                       :label="'Option ' + index"
                       prepend-icon="mdi-camera"
                       type="file"

@@ -6,15 +6,20 @@
           <strong v-if="props.order !== 0" class="text-primary col-6"
             >Question: {{ props.order }}
           </strong>
-          <div class="col-6 d-flex justify-content-end">
-            <NuxtLink
-              v-if="quizId"
+          <div v-if="props.isEditable" class="col-6 d-flex justify-content-end">
+            <button
               type="button"
-              class="me-5"
-              :to="`/admin/quiz/list-quiz/${props.quizId}/${props.question.question_id}`"
+              class="me-5 badge rounded-pill bg-light-info text-dark px-2 fs-5"
+              @click="editQuestion(props.question?.question_id)"
             >
               <font-awesome-icon :icon="['fas', 'pen-to-square']" />
-            </NuxtLink>
+            </button>
+            <button
+              class="badge rounded-pill bg-light-danger text-dark px-2 fs-5"
+              @click="deleteQuestion(props.question?.question_id)"
+            >
+              <font-awesome-icon :icon="['fas', 'trash-can']" />
+            </button>
           </div>
         </div>
         <h3 class="font-bold">{{ props.question?.question }}</h3>
@@ -108,10 +113,24 @@ const props = defineProps({
     required: false,
     default: false,
   },
-  quizId: {
+  isEditable: {
     type: String,
     required: false,
     default: "",
   },
 });
+
+const emits = defineEmits(["deleteQuestion", "editQuestion"]);
+
+const deleteQuestion = (questionId) => {
+  const isconfirm = confirm("are you sure?");
+  console.log(isconfirm);
+  if (isconfirm) {
+    emits("deleteQuestion", questionId);
+  }
+};
+
+const editQuestion = (questionId) => {
+  emits("editQuestion", questionId);
+};
 </script>

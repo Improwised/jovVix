@@ -99,7 +99,17 @@ func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config confi
 		return err
 	}
 
-	err = setupQuizController(v1, goqu, logger, middleware, events, pub, config, redis)
+	err = setupQuizSocketController(v1, goqu, logger, middleware, config, redis)
+	if err != nil {
+		return err
+	}
+
+	err = setupQuizController(v1, goqu, logger, middleware, events, pub, config)
+	if err != nil {
+		return err
+	}
+
+	err = setupQuestionController(v1, goqu, logger, middleware, events, pub, config)
 	if err != nil {
 		return err
 	}
@@ -207,41 +217,56 @@ func setupMetricsController(api fiber.Router, db *goqu.Database, logger *zap.Log
 	return nil
 }
 
-func setupQuizController(v1 fiber.Router, db *goqu.Database, logger *zap.Logger, middleware middlewares.Middleware, events *events.Events, pub *watermill.WatermillPublisher, config config.AppConfig, redis *redis.RedisPubSub) error {
+func setupQuizSocketController(v1 fiber.Router, db *goqu.Database, logger *zap.Logger, middleware middlewares.Middleware, config config.AppConfig, redis *redis.RedisPubSub) error {
 	quizSocketController, err := controller.InitQuizConfig(db, &config, logger, redis)
 	if err != nil {
 		return err
 	}
 
+	v1.Get(fmt.Sprintf("/socket/admin/arrange/:%s", constants.SessionIDParam), middleware.CheckSessionId, middleware.KratosAuthenticated, websocket.New(quizSocketController.Arrange))
+	v1.Get(fmt.Sprintf("/socket/join/:%s", constants.QuizSessionInvitationCode), middleware.CheckSessionCode, middleware.CustomAuthenticated, websocket.New(quizSocketController.Join))
+	v1.Post("/quiz/answer", middleware.Authenticated, middleware.CustomAuthenticated, quizSocketController.SetAnswer)
+	v1.Get("/quiz/terminate", middleware.Authenticated, quizSocketController.Terminate)
+
+	return nil
+}
+
+func setupQuizController(v1 fiber.Router, db *goqu.Database, logger *zap.Logger, middleware middlewares.Middleware, events *events.Events, pub *watermill.WatermillPublisher, config config.AppConfig) error {
 	quizController, err := controller.InitQuizController(db, logger, events, pub, &config)
 	if err != nil {
 		return err
 	}
 
-	v1.Get(fmt.Sprintf("/socket/join/:%s", constants.QuizSessionInvitationCode), middleware.CheckSessionCode, middleware.CustomAuthenticated, websocket.New(quizSocketController.Join))
-
-	v1.Post("/quiz/answer", middleware.Authenticated, middleware.CustomAuthenticated, quizSocketController.SetAnswer)
-
-	v1.Get("/quiz/terminate", middleware.Authenticated, quizController.Terminate)
-
 	admin := v1.Group("/admin")
 	admin.Use(middleware.KratosAuthenticated)
 
 	quizzes := admin.Group("/quizzes")
-	report := admin.Group("/reports")
 
 	quizzes.Post(fmt.Sprintf("/:%s/demo_session", constants.QuizId), quizController.GenerateDemoSession)
 	quizzes.Post(fmt.Sprintf("/:%s/upload", constants.QuizTitle), middleware.ValidateCsv, middleware.KratosAuthenticated, quizController.CreateQuizByCsv)
 	quizzes.Get("/list", quizController.GetAdminUploadedQuizzes)
-	quizzes.Get(fmt.Sprintf("/:%s", constants.QuizId), quizController.ListQuestionByQuizId)
-	quizzes.Get(fmt.Sprintf("/question/:%s", constants.QuizId), quizController.ListQuestionsWithAnswerByQuizId)
-	quizzes.Get(fmt.Sprintf("/question/:%s/:%s", constants.QuizId, constants.QuestionId), quizController.GetQuestionById)
-	quizzes.Put(fmt.Sprintf("/question/:%s/:%s", constants.QuizId, constants.QuestionId), quizController.UpdateQuestionById)
+	quizzes.Delete(fmt.Sprintf("/:%s", constants.QuizId), quizController.DeleteQuizById)
 
-	v1.Get(fmt.Sprintf("/socket/admin/arrange/:%s", constants.SessionIDParam), middleware.CheckSessionId, middleware.KratosAuthenticated, websocket.New(quizSocketController.Arrange))
-
+	report := admin.Group("/reports")
 	report.Get("/list", quizController.ListQuizzesAnalysis)
 	report.Get(fmt.Sprintf("/:%s/analysis", constants.ActiveQuizId), middleware.KratosAuthenticated, quizController.GetQuizAnalysis)
+	return nil
+}
+
+func setupQuestionController(v1 fiber.Router, db *goqu.Database, logger *zap.Logger, middleware middlewares.Middleware, events *events.Events, pub *watermill.WatermillPublisher, config config.AppConfig) error {
+	questionController, err := controller.InitQuestionController(db, logger, events, pub, &config)
+	if err != nil {
+		return err
+	}
+
+	questionRouter := v1.Group(fmt.Sprintf("/quizzes/:%s/questions", constants.QuizId))
+	questionRouter.Use(middleware.KratosAuthenticated)
+
+	questionRouter.Get("/", questionController.ListQuestionsWithAnswerByQuizId)
+	questionRouter.Get(fmt.Sprintf("/:%s", constants.QuestionId), questionController.GetQuestionById)
+	questionRouter.Put(fmt.Sprintf("/:%s", constants.QuestionId), questionController.UpdateQuestionById)
+	questionRouter.Delete(fmt.Sprintf("/:%s", constants.QuestionId), questionController.DeleteQuestionById)
+
 	return nil
 }
 

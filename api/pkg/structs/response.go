@@ -42,7 +42,7 @@ type ResUserPlayedQuizAnalyticsBoard struct {
 	QuestionType     string            `db:"omitempty" json:"question_type"`
 }
 
-type ResQuestionAnalytics struct {
+type QuestionAnalytics struct {
 	QuestionId        string            `db:"question_id,omitempty" json:"question_id"`
 	CorrectAnswer     string            `db:"correct_answer,omitempty" json:"correct_answer"`
 	Question          string            `db:"question,omitempty" json:"question"`
@@ -55,4 +55,10 @@ type ResQuestionAnalytics struct {
 	QuestionTypeID    int               `db:"type,omitempty" json:"question_type_id"`
 	QuestionType      string            `db:"omitempty" json:"question_type"`
 	DurationInSeconds int               `db:"duration_in_seconds" json:"duration_in_seconds"`
+}
+
+type ResQuestionAnalytics struct {
+	Data                []QuestionAnalytics `json:"data"`
+	QuizPlayedCount     int64               `json:"quiz_played_count"`
+	IsActiveQuizPresent bool                `json:"is_active_quiz_present"`
 }

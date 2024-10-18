@@ -8,23 +8,11 @@ import (
 	"time"
 
 	"github.com/Improwised/quizz-app/api/constants"
-	quizUtilsHelper "github.com/Improwised/quizz-app/api/helpers/utils"
-	"github.com/Improwised/quizz-app/api/pkg/structs"
 	"github.com/doug-martin/goqu/v9"
 	"github.com/google/uuid"
 )
 
 const QuizzesTable = "quizzes"
-
-// Quiz model
-type Quiz struct {
-	ID          uuid.UUID      `json:"id" db:"id"`
-	Title       string         `json:"title" db:"title" validate:"required"`
-	Description sql.NullString `json:"description,omitempty" db:"description"`
-	CreatorID   string         `json:"creator_id,omitempty" db:"creator_id"`
-	CreatedAt   time.Time      `json:"created_at,omitempty" db:"created_at,omitempty"`
-	UpdatedAt   time.Time      `json:"updated_at,omitempty" db:"updated_at,omitempty"`
-}
 
 // QuizModel implements quiz related database operations
 type QuizModel struct {
@@ -34,13 +22,6 @@ type QuizModel struct {
 // InitQuizModel initializes the QuizModel
 func InitQuizModel(goquDB *goqu.Database) *QuizModel {
 	return &QuizModel{db: goquDB}
-}
-
-type QuizActivity struct {
-	ID           uuid.UUID `json:"id" db:"id"`
-	Title        string    `json:"title" db:"title" validate:"required"`
-	Description  string    `json:"description,omitempty" db:"description"`
-	UserActivity string    `json:"user_activity" db:"role"`
 }
 
 type QuizAnalysis struct {
@@ -68,76 +49,14 @@ type QuizzesAnalysis struct {
 	CorrectAnswers int            `json:"correct_answers" db:"correct_answers"`
 }
 
-func (model *QuizModel) CreateQuiz(userId string, title string, description string) (uuid.UUID, error) {
-	quizId, err := uuid.NewUUID()
-
-	if err != nil {
-		return quizId, err
-	}
-
-	// register quiz
-	ok, err := model.db.Insert(QuizzesTable).Rows(
-		Quiz{
-			ID:          quizId,
-			Title:       title,
-			Description: sql.NullString{Valid: description != "", String: description},
-			CreatorID:   userId,
-		},
-	).Returning("id").Executor().ScanVal(&quizId)
-
-	if !ok {
-		return quizId, sql.ErrNoRows
-	}
-
-	if err != nil {
-		return quizId, err
-	}
-
-	return quizId, nil
-}
-
-func (model *QuizModel) GetAllQuizzesActivity(user_id string) ([]QuizActivity, error) {
-	var quizzes []QuizActivity = []QuizActivity{}
-
-	// user as a host
-	hostQuizzes := model.db.From(goqu.T("active_quizzes").As("qs")).
-		Select(
-			goqu.C("quiz_id"),
-			goqu.L("'host'").As("user_activity"),
-		).
-		Where(goqu.I("qs.admin_id").Eq(user_id))
-
-	// user as a creator
-	creatorQuizzes := hostQuizzes.Union(
-		model.db.From(goqu.T("quizzes").As("q")).
-			Select(
-				goqu.I("id"),
-				goqu.L("'creator'").As("user_activity"),
-			).
-			Where(goqu.I("q.creator_id").Eq(user_id)),
-	)
-
-	err := model.db.Select("*").From(goqu.T("quizzes").As("q")).Join(
-		creatorQuizzes.As("quiz_activity"),
-		goqu.On(goqu.I("quiz_activity.quiz_id").Eq(goqu.I("q.id"))),
-	).
-		Select(
-			goqu.I("q.id"),
-			goqu.I("q.title"),
-			goqu.I("q.description"),
-			goqu.I("quiz_activity.user_activity"),
-		).Executor().ScanStructs(&quizzes)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return quizzes, nil
-}
-
 type QuizWithQuestions struct {
-	Quiz
-	TotalQuestions int `json:"total_questions" db:"total_questions"`
+	ID             uuid.UUID      `json:"id" db:"id"`
+	Title          string         `json:"title" db:"title" validate:"required"`
+	Description    sql.NullString `json:"description,omitempty" db:"description"`
+	CreatorID      string         `json:"creator_id,omitempty" db:"creator_id"`
+	CreatedAt      time.Time      `json:"created_at,omitempty" db:"created_at,omitempty"`
+	UpdatedAt      time.Time      `json:"updated_at,omitempty" db:"updated_at,omitempty"`
+	TotalQuestions int            `json:"total_questions" db:"total_questions"`
 }
 
 func (model *QuizModel) GetQuizzesByAdmin(creator_id string) ([]QuizWithQuestions, error) {
@@ -508,118 +427,21 @@ func (model *QuizModel) ListQuizzesAnalysis(name, order, orderBy, date, userId s
 	return quizzesAnalysis, count, err
 }
 
-func (model *QuizModel) ListQuestionsWithAnswerByQuizId(QuizId string) ([]structs.ResQuestionAnalytics, error) {
-	var questionAnalytics []structs.ResQuestionAnalytics
-
-	err := model.db.
-		From(QuestionTable).
-		Select(
-			goqu.I(constants.QuestionsTable+".id").As("question_id"),
-			goqu.I(constants.QuestionsTable+".answers").As("correct_answer"),
-			"question",
-			"options",
-			"question_media",
-			"options_media",
-			"resource",
-			"points",
-			"type",
-		).
-		InnerJoin(goqu.T(constants.QuizQuestionsTable), goqu.On(goqu.I(constants.QuizQuestionsTable+".question_id").Eq(goqu.I(constants.QuestionsTable+".id")))).
-		Where(goqu.Ex{
-			constants.QuizQuestionsTable + ".quiz_id": QuizId,
-		}).
-		ScanStructs(&questionAnalytics)
-
+func (model *QuizModel) DeleteQuizFromQuizQuestionById(transaction *goqu.TxDatabase, QuizId string) ([]string, error) {
+	ids := []string{}
+	err := transaction.Delete(constants.QuizQuestionsTable).Where(goqu.Ex{"quiz_id": QuizId}).Returning("question_id").Executor().ScanVals(&ids)
 	if err != nil {
-		return nil, err
-	}
-	for index := 0; index < len(questionAnalytics); index++ {
-		json.Unmarshal(questionAnalytics[index].RawOptions, &questionAnalytics[index].Options)
-
-		questionAnalytics[index].QuestionType, err = quizUtilsHelper.GetQuestionType(questionAnalytics[index].QuestionTypeID)
-		if err != nil {
-			return nil, err
-		}
+		return ids, err
 	}
 
-	return questionAnalytics, nil
+	return ids, nil
 }
 
-func (model *QuizModel) GetQuestionById(QuizId string) (structs.ResQuestionAnalytics, error) {
-	var questionAnalytics structs.ResQuestionAnalytics
+func (model *QuizModel) DeleteQuizById(transaction *goqu.TxDatabase, quizId string) error {
 
-	_, err := model.db.
-		From(QuestionTable).
-		Select(
-			goqu.I(constants.QuestionsTable+".id").As("question_id"),
-			goqu.I(constants.QuestionsTable+".answers").As("correct_answer"),
-			"question",
-			"options",
-			"question_media",
-			"options_media",
-			"resource",
-			"points",
-			"type",
-			"duration_in_seconds",
-		).
-		Where(goqu.Ex{
-			constants.QuestionsTable + ".id": QuizId,
-		}).
-		ScanStruct(&questionAnalytics)
-
-	if err != nil {
-		return questionAnalytics, err
-	}
-
-	err = json.Unmarshal(questionAnalytics.RawOptions, &questionAnalytics.Options)
-	if err != nil {
-		return questionAnalytics, err
-	}
-
-	questionAnalytics.QuestionType, err = quizUtilsHelper.GetQuestionType(questionAnalytics.QuestionTypeID)
-	if err != nil {
-		return questionAnalytics, err
-	}
-
-	return questionAnalytics, nil
-}
-
-func (model *QuizModel) UpdateQuestionById(QuestionId string, question Question) error {
-	options, err := json.Marshal(question.Options)
+	_, err := transaction.Delete(QuizzesTable).Where(goqu.Ex{"id": quizId}).Executor().Exec()
 	if err != nil {
 		return err
-	}
-
-	answers, err := json.Marshal(question.Answers)
-	if err != nil {
-		return err
-	}
-
-	records := goqu.Record{
-		"question":            question.Question,
-		"type":                question.Type,
-		"options":             string(options),
-		"answers":             string(answers),
-		"points":              question.Points,
-		"duration_in_seconds": question.DurationInSeconds,
-		"question_media":      question.QuestionMedia,
-		"options_media":       question.OptionsMedia,
-		"resource":            question.Resource.String,
-		"updated_at":          goqu.L("now()"),
-	}
-
-	result, err := model.db.Update(QuestionTable).Set(records).Where(goqu.I("id").Eq(QuestionId)).Executor().Exec()
-	if err != nil {
-		return err
-	}
-
-	affectedRow, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-
-	if affectedRow == 0 {
-		return sql.ErrNoRows
 	}
 
 	return nil

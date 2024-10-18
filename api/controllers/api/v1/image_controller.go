@@ -100,7 +100,7 @@ func (imgc *ImageController) InsertImage(c *fiber.Ctx) error {
 
 			splitStringArr := strings.Split(fileHeader.Filename, "_")
 			if len(splitStringArr) == 1 {
-				err = imgc.questionModel.UpdateQuestionsResourceById(fileHeader.Filename, filepath.Join(quizId, fileHeader.Filename))
+				err = imgc.questionModel.UpdateResourceOfQuestionById(fileHeader.Filename, filepath.Join(quizId, fileHeader.Filename))
 				if err != nil {
 					errChan <- err
 					return
@@ -108,7 +108,7 @@ func (imgc *ImageController) InsertImage(c *fiber.Ctx) error {
 			}
 
 			if len(splitStringArr) == 2 {
-				err = imgc.questionModel.UpdateQuestionsOptionById(splitStringArr[1], splitStringArr[0], filepath.Join(quizId, fileHeader.Filename))
+				err = imgc.questionModel.UpdateOptionsOfQuestionById(splitStringArr[1], splitStringArr[0], filepath.Join(quizId, fileHeader.Filename))
 				if err != nil {
 					errChan <- err
 					return

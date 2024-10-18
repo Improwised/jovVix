@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/Improwised/quizz-app/api/constants"
+	quizUtilsHelper "github.com/Improwised/quizz-app/api/helpers/utils"
+	"github.com/Improwised/quizz-app/api/pkg/structs"
 	"github.com/doug-martin/goqu/v9"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -67,44 +69,7 @@ func InitQuestionModel(goquDB *goqu.Database, logger *zap.Logger) *QuestionModel
 	return &QuestionModel{db: goquDB, logger: logger}
 }
 
-func (model *QuestionModel) CreateQuestions(quizId uuid.UUID, questions []Question) ([]uuid.UUID, error) {
-	ids := []uuid.UUID{}
-	records := []goqu.Record{}
-
-	for _, question := range questions {
-		options, err := json.Marshal(question.Options)
-		if err != nil {
-			return ids, err
-		}
-
-		answers, err := json.Marshal(question.Answers)
-		if err != nil {
-			return ids, err
-		}
-
-		records = append(records, goqu.Record{
-			"id":                  question.ID,
-			"question":            question.Question,
-			"type":                question.Type,
-			"options":             string(options),
-			"answers":             string(answers),
-			"points":              question.Points,
-			"duration_in_seconds": question.DurationInSeconds,
-		})
-	}
-
-	err := model.db.Insert(QuestionTable).Rows(
-		records,
-	).Returning("id").Executor().ScanVals(&ids)
-
-	if err != nil {
-		return ids, err
-	}
-
-	return ids, nil
-}
-
-func (model *QuestionModel) RegisterQuestions(userId string, title string, description string, questions []Question) (uuid.UUID, error) {
+func (model *QuestionModel) RegisterQuizAndQuestions(userId string, title string, description string, questions []Question) (uuid.UUID, error) {
 
 	isOk := false
 	transaction, err := model.db.Begin()
@@ -263,6 +228,105 @@ func registerQuestionToQuizzes(transaction *goqu.TxDatabase, quizId uuid.UUID, q
 	return nil
 }
 
+func (model *QuestionModel) GetQuestionById(QuestionId string) (structs.QuestionAnalytics, error) {
+	var questionAnalytics structs.QuestionAnalytics
+
+	_, err := model.db.
+		From(QuestionTable).
+		Select(
+			goqu.I(constants.QuestionsTable+".id").As("question_id"),
+			goqu.I(constants.QuestionsTable+".answers").As("correct_answer"),
+			"question",
+			"options",
+			"question_media",
+			"options_media",
+			"resource",
+			"points",
+			"type",
+			"duration_in_seconds",
+		).
+		Where(goqu.Ex{
+			constants.QuestionsTable + ".id": QuestionId,
+		}).
+		ScanStruct(&questionAnalytics)
+
+	if err != nil {
+		return questionAnalytics, err
+	}
+
+	err = json.Unmarshal(questionAnalytics.RawOptions, &questionAnalytics.Options)
+	if err != nil {
+		return questionAnalytics, err
+	}
+
+	questionAnalytics.QuestionType, err = quizUtilsHelper.GetQuestionType(questionAnalytics.QuestionTypeID)
+	if err != nil {
+		return questionAnalytics, err
+	}
+
+	return questionAnalytics, nil
+}
+
+func (model *QuestionModel) ListQuestionsWithAnswerByQuizId(QuizId string, media string) ([]structs.QuestionAnalytics, int64, error) {
+
+	var questionAnalytics []structs.QuestionAnalytics
+	var quizPlayedCount int64
+	found, err := model.db.From(ActiveQuizzesTable).Select(goqu.COUNT(goqu.I("*")).As("count")).Where(goqu.Ex{"quiz_id": QuizId, "activated_to": goqu.Op{"isNot": nil}}).ScanVal(&quizPlayedCount)
+
+	if err != nil {
+		return questionAnalytics, quizPlayedCount, err
+	}
+
+	if !found {
+		return questionAnalytics, quizPlayedCount, sql.ErrNoRows
+	}
+
+	query := model.db.
+		From(QuestionTable).
+		Select(
+			goqu.I(constants.QuestionsTable+".id").As("question_id"),
+			goqu.I(constants.QuestionsTable+".answers").As("correct_answer"),
+			"question",
+			"options",
+			"question_media",
+			"options_media",
+			"resource",
+			"points",
+			"type",
+		).
+		InnerJoin(goqu.T(constants.QuizQuestionsTable), goqu.On(goqu.I(constants.QuizQuestionsTable+".question_id").Eq(goqu.I(constants.QuestionsTable+".id")))).
+		Where(goqu.Ex{
+			constants.QuizQuestionsTable + ".quiz_id": QuizId,
+		})
+
+	if media != "" {
+		query = query.Where(goqu.Or(
+			goqu.I("questions.question_media").Eq(media),
+			goqu.I("questions.options_media").Eq(media),
+		))
+	}
+
+	sql, args, err := query.ToSQL()
+	if err != nil {
+		return questionAnalytics, quizPlayedCount, err
+	}
+
+	err = model.db.ScanStructs(&questionAnalytics, sql, args...)
+	if err != nil {
+		return nil, quizPlayedCount, err
+	}
+	for index := 0; index < len(questionAnalytics); index++ {
+		json.Unmarshal(questionAnalytics[index].RawOptions, &questionAnalytics[index].Options)
+
+		questionAnalytics[index].QuestionType, err = quizUtilsHelper.GetQuestionType(questionAnalytics[index].QuestionTypeID)
+		if err != nil {
+			return nil, quizPlayedCount, err
+		}
+	}
+
+	return questionAnalytics, quizPlayedCount, nil
+}
+
 func (model *QuestionModel) GetAnswersPointsDurationType(QuestionID string) ([]int, int16, int, int, error) {
 
 	var answers []int = []int{}
@@ -332,42 +396,7 @@ func (model *QuestionModel) GetTotalQuestionCount(activeQuizId string) (int64, e
 	}).Count()
 }
 
-func (model *QuestionModel) ListQuestionByQuizId(QuizId string, media string) ([]Question, error) {
-	var questions []Question
-
-	query := model.db.From(QuestionTable).
-		Join(
-			goqu.T(constants.QuizQuestionsTable),
-			goqu.On(goqu.I("quiz_questions.question_id").Eq(goqu.I("questions.id"))),
-		).
-		Where(
-			goqu.I("quiz_questions.quiz_id").Eq(QuizId),
-		).
-		Select(
-			"questions.id",
-			"questions.question",
-			"questions.question_media",
-			"questions.options_media",
-		)
-
-	if media != "" {
-		query = query.Where(goqu.Or(
-			goqu.I("questions.question_media").Eq(media),
-			goqu.I("questions.options_media").Eq(media),
-		))
-	}
-
-	sql, args, err := query.ToSQL()
-	if err != nil {
-		return nil, err
-	}
-
-	err = model.db.ScanStructs(&questions, sql, args...)
-
-	return questions, err
-}
-
-func (model *QuestionModel) UpdateQuestionsResourceById(id, resource string) error {
+func (model *QuestionModel) UpdateResourceOfQuestionById(id, resource string) error {
 
 	result, err := model.db.Update(QuestionTable).Set(goqu.Record{
 		"resource":   resource,
@@ -388,7 +417,7 @@ func (model *QuestionModel) UpdateQuestionsResourceById(id, resource string) err
 	return nil
 }
 
-func (model *QuestionModel) UpdateQuestionsOptionById(id, keyPath, data string) error {
+func (model *QuestionModel) UpdateOptionsOfQuestionById(id, keyPath, data string) error {
 
 	jsonValue := fmt.Sprintf("\"%s\"", data)
 
@@ -407,5 +436,110 @@ func (model *QuestionModel) UpdateQuestionsOptionById(id, keyPath, data string) 
 	if affectedRow == 0 {
 		return sql.ErrNoRows
 	}
+	return nil
+}
+
+func (model *QuestionModel) UpdateQuestionById(QuestionId string, question Question) error {
+	options, err := json.Marshal(question.Options)
+	if err != nil {
+		return err
+	}
+
+	answers, err := json.Marshal(question.Answers)
+	if err != nil {
+		return err
+	}
+
+	records := goqu.Record{
+		"question":            question.Question,
+		"type":                question.Type,
+		"options":             string(options),
+		"answers":             string(answers),
+		"points":              question.Points,
+		"duration_in_seconds": question.DurationInSeconds,
+		"question_media":      question.QuestionMedia,
+		"options_media":       question.OptionsMedia,
+		"resource":            question.Resource.String,
+		"updated_at":          goqu.L("now()"),
+	}
+
+	result, err := model.db.Update(QuestionTable).Set(records).Where(goqu.I("id").Eq(QuestionId)).Executor().Exec()
+	if err != nil {
+		return err
+	}
+
+	affectedRow, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if affectedRow == 0 {
+		return sql.ErrNoRows
+	}
+
+	return nil
+}
+
+func (model *QuestionModel) UpdateNextAndPreviousQuestionById(transaction *goqu.TxDatabase, questionId string) error {
+
+	var nextQuestionId, previousQuestionId sql.NullString
+
+	// Get the `next_question` of the question to be deleted
+	_, err := model.db.From("quiz_questions").
+		Select("next_question").
+		Where(goqu.Ex{"question_id": questionId}).
+		ScanVal(&nextQuestionId)
+	if err != nil {
+		return err
+	}
+
+	// Get the `previos_question` of the question to be deleted
+	_, err = model.db.From("quiz_questions").
+		Select("question_id").
+		Where(goqu.Ex{"next_question": questionId}).
+		ScanVal(&previousQuestionId)
+	if err != nil && err != sql.ErrNoRows {
+		return err
+	}
+
+	if previousQuestionId.Valid && nextQuestionId.Valid {
+		// Deleted question is in the middle, update the previous question's next_question
+		_, err = transaction.Update("quiz_questions").
+			Where(goqu.Ex{"question_id": previousQuestionId.String}).
+			Set(goqu.Record{"next_question": nextQuestionId.String}).
+			Executor().Exec()
+		if err != nil {
+			return err
+		}
+	} else if previousQuestionId.Valid && !nextQuestionId.Valid {
+		// Deleted question is the last one, update the previous question's next_question to NULL
+		_, err = transaction.Update("quiz_questions").
+			Where(goqu.Ex{"question_id": previousQuestionId.String}).
+			Set(goqu.Record{"next_question": nil}).
+			Executor().Exec()
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (model *QuestionModel) DeleteQuestionsByIds(transaction *goqu.TxDatabase, questionIds []string) error {
+	_, err := transaction.Delete(QuestionTable).Where(goqu.Ex{"id": questionIds}).Executor().Exec()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (model *QuestionModel) DeleteQuizQuestionByQuizId(transaction *goqu.TxDatabase, questionId string) error {
+
+	_, err := transaction.Delete(constants.QuizQuestionsTable).Where(goqu.Ex{"question_id": questionId}).Executor().Exec()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

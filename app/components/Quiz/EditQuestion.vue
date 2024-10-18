@@ -56,7 +56,7 @@
               id="image-attachment-option"
               :key="index"
               :name="order + '_' + props.question.question_id"
-              :label="'Option ' + index"
+              :label="'Option ' + order"
               prepend-icon="mdi-camera"
               type="file"
               class="form-control mb-2"
@@ -249,7 +249,7 @@ const updateQuestion = async () => {
     };
 
     await $fetch(
-      `${url.api_url}/admin/quizzes/question/${props.quizId}/${props.questionId}`,
+      `${url.api_url}/quizzes/${props.quizId}/questions/${props.questionId}`,
       {
         method: "PUT",
         headers: headers,
@@ -260,7 +260,7 @@ const updateQuestion = async () => {
     toast.success("Question updated successfully!");
   } catch (error) {
     console.error("Failed to update the question", error);
-    toast.success("Failed to update the question.");
+    toast.error("Failed to update the question.");
   }
 };
 </script>

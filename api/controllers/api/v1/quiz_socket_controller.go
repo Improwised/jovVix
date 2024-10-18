@@ -1114,3 +1114,7 @@ func (qc *quizSocketController) SetAnswer(c *fiber.Ctx) error {
 
 	return utils.JSONSuccess(c, http.StatusAccepted, nil)
 }
+
+func (ctrl *quizSocketController) Terminate(c *fiber.Ctx) error {
+	return utils.JSONSuccess(c, http.StatusOK, nil)
+}

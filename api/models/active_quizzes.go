@@ -350,3 +350,8 @@ func (model *ActiveQuizModel) GetCurrentActiveQuestion(id uuid.UUID) (uuid.UUID,
 
 	return currentQuestion, nil
 }
+
+func (model *ActiveQuizModel) IsActiveQuizPresent(QuizId string) (bool, error) {
+	var activeQuiz ActiveQuiz = ActiveQuiz{}
+	return model.db.Select("*").From(ActiveQuizzesTable).Where(goqu.I("quiz_id").Eq(QuizId)).Limit(1).ScanStruct(&activeQuiz)
+}
