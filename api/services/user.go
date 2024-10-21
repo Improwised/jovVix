@@ -1,39 +1,109 @@
 package services
 
 import (
+	"fmt"
+	"net/http"
+	"strings"
+
+	"github.com/Improwised/quizz-app/api/config"
 	"github.com/Improwised/quizz-app/api/constants"
 	"github.com/Improwised/quizz-app/api/models"
-	"github.com/Improwised/quizz-app/api/pkg/events"
-	"github.com/Improwised/quizz-app/api/pkg/structs"
+	"github.com/doug-martin/goqu/v9"
+	"github.com/go-resty/resty/v2"
+	"go.uber.org/zap"
 )
 
 type UserService struct {
-	userModel *models.UserModel
+	userPlayedQuizModel *models.UserPlayedQuizModel
+	quizModel           *models.QuizModel
+	activeQuizModel     *models.ActiveQuizModel
+	userModel           *models.UserModel
+	db                  *goqu.Database
+	logger              *zap.Logger
+	config              config.AppConfig
 }
 
-func NewUserService(userModel *models.UserModel) *UserService {
-	return &UserService{
-		userModel: userModel,
-	}
-}
-
-func (userSvc *UserService) RegisterUser(user models.User, event events.IEvents) (models.User, error) {
-	user, err := userSvc.userModel.InsertUser(user)
+func NewUserService(db *goqu.Database, logger *zap.Logger, config config.AppConfig) (*UserService, error) {
+	userPlayedQuizModel := models.InitUserPlayedQuizModel(db)
+	quizModel := models.InitQuizModel(db)
+	activeQuizModel := models.InitActiveQuizModel(db, logger)
+	userModel, err := models.InitUserModel(db, logger)
 	if err != nil {
-		return user, err
+		return nil, err
 	}
 
-	event.Publish(constants.EventUserRegistered, structs.EventUserRegistered{Email: user.Email})
-	return user, err
+	return &UserService{
+		userPlayedQuizModel: userPlayedQuizModel,
+		quizModel:           quizModel,
+		activeQuizModel:     activeQuizModel,
+		userModel:           &userModel,
+		db:                  db,
+		logger:              logger,
+		config:              config,
+	}, nil
 }
 
-func (userSvc *UserService) GetUser(userId string) (models.User, error) {
-	user, err := userSvc.userModel.GetById(userId)
-	return user, err
-}
+// This function is delete all user data from database
+func (userSvc *UserService) DeleteUserDataById(userId, kratosId string) error {
+	isOk := false
+	transaction, err := userSvc.db.Begin()
+	if err != nil {
+		return err
+	}
 
-// Authenticate verify identity using email, and password.
-// On successful validation it'll return the user
-func (userSvc *UserService) Authenticate(email, password string) (models.User, error) {
-	return userSvc.userModel.GetUserByEmailAndPassword(email, password)
+	defer func() {
+		if isOk {
+			err := transaction.Commit()
+			if err != nil {
+				userSvc.logger.Error("error during commit in delete user", zap.Error(err))
+			}
+		} else {
+			err := transaction.Rollback()
+			if err != nil {
+				userSvc.logger.Error("error during rollback in delete user", zap.Error(err))
+			}
+		}
+	}()
+
+	// Delete played quizzes
+	err = userSvc.userPlayedQuizModel.DeleteUserPlayedQuizzesAndReponseByUserId(transaction, userId)
+	if err != nil {
+		return err
+	}
+
+	// Delete active quizzes
+	err = userSvc.activeQuizModel.DeleteActiveQuizzesAndRelatedDataByUserId(transaction, userId)
+	if err != nil {
+		return err
+	}
+
+	// Delete created quizzes
+	err = userSvc.quizModel.DeleteCreatedQuizzesByUserId(transaction, userId)
+	if err != nil {
+		return err
+	}
+
+	// Delete user from users table
+	deletedkratosId, err := userSvc.userModel.DeleteUserById(transaction, userId)
+	if err != nil {
+		return err
+	}
+
+	if strings.TrimSpace(deletedkratosId) != kratosId {
+		userSvc.logger.Error(constants.Unauthenticated)
+		return fmt.Errorf(constants.Unauthenticated)
+	}
+
+	// delete user data from kratos database
+	kratosClient := resty.New().SetBaseURL(userSvc.config.Kratos.BaseUrl+"/admin/identities").SetHeader("accept", "application/json")
+
+	res, err := kratosClient.R().Delete(fmt.Sprintf("/%s", kratosId))
+	if err != nil || res.StatusCode() != http.StatusNoContent {
+		userSvc.logger.Error("unauthenticated registration", zap.Any("response from kratos", res.RawResponse), zap.Error(err), zap.Any("kratos response", res))
+		return fmt.Errorf("failed to delete user from kratos for %s", kratosId)
+	}
+
+	isOk = true
+
+	return nil
 }

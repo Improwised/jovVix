@@ -358,3 +358,18 @@ func (model *UserPlayedQuizModel) GetCountOfTotalJoinUsers(activeQuizId string) 
 		"active_quiz_id": activeQuizId,
 	}).Count()
 }
+
+// Deletes all user-played quizzes and associated responses for a specific user (userId)
+func (model *UserPlayedQuizModel) DeleteUserPlayedQuizzesAndReponseByUserId(transaction *goqu.TxDatabase, userId string) error {
+
+	subquery := transaction.From(UserPlayedQuizTable).Select("id").Where(goqu.Ex{"user_id": userId})
+
+	_, err := transaction.Delete(UserQuizResponsesTable).Where(goqu.Ex{"user_played_quiz_id": goqu.Op{"in": subquery}}).Executor().Exec()
+	if err != nil {
+		return err
+	}
+
+	_, err = transaction.Delete(UserPlayedQuizTable).Where(goqu.Ex{"user_id": userId}).Executor().Exec()
+
+	return err
+}

@@ -35,12 +35,18 @@ func InitQuizController(db *goqu.Database, logger *zap.Logger, event *events.Eve
 	questionModel := models.InitQuestionModel(db, logger)
 	activeQuizModel := models.InitActiveQuizModel(db, logger)
 
+	presignedURLSvc, err := services.NewFileUploadServices(appConfig.AWS.BucketName)
+	if err != nil {
+		return nil, err
+	}
+
 	quizSvc := services.NewQuizService(db, logger)
 
 	return &QuizController{
 		quizModel:       quizModel,
 		questionModel:   questionModel,
 		activeQuizModel: activeQuizModel,
+		presignedURLSvc: presignedURLSvc,
 		quizSvc:         quizSvc,
 		logger:          logger,
 		event:           event,
@@ -48,7 +54,7 @@ func InitQuizController(db *goqu.Database, logger *zap.Logger, event *events.Eve
 }
 
 // GetAdminUploadedQuizzes for getting quiz details uploaded by Admin
-// swagger:route GET /v1/admin/quizzes/list Quiz none
+// swagger:route GET /v1/quizzes Quiz GetAdminUploadedQuizzes
 //
 // Get details of quizzes uploaded by Admin.
 //
@@ -158,7 +164,7 @@ func (qc *QuizController) ListQuizzesAnalysis(c *fiber.Ctx) error {
 }
 
 // CreateQuizByCsv a new quiz by uploading a CSV file
-// swagger:route POST /v1/admin/quizzes/{quiz_title}/upload Quiz RequestQuizCreated
+// swagger:route POST /v1/quizzes/{quiz_title}/upload Quiz RequestQuizCreated
 //
 // Create a new quiz by uploading a CSV file.
 //
@@ -215,7 +221,7 @@ func (ctrl *QuizController) CreateQuizByCsv(c *fiber.Ctx) error {
 }
 
 // GenerateDemoSession to create quiz active for user.
-// swagger:route POST /v1/admin/quizzes/{quiz_id}/demo_session Quiz RequestGenerateDemoSession
+// swagger:route POST /v1/quizzes/{quiz_id}/demo_session Quiz RequestGenerateDemoSession
 //
 // Create quiz active for user.
 //
@@ -248,17 +254,30 @@ func (ctrl *QuizController) GenerateDemoSession(c *fiber.Ctx) error {
 	return utils.JSONSuccess(c, http.StatusAccepted, sessionId)
 }
 
+// DeleteQuizById to delete quiz that created by user (if no active quiz is present).
+// swagger:route DELETE /v1/quizzes/{quiz_id} Quiz DeleteQuizById
+//
+// Delete quiz that created by user (if no active quiz is present).
+//
+//		Consumes:
+//		- application/json
+//
+//		Schemes: http, https
+//
+//		Responses:
+//		  200: ResponseOkWithMessage
+//	     400: GenericResFailNotFound
+//		  500: GenericResError
 func (ctrl *QuizController) DeleteQuizById(c *fiber.Ctx) error {
 	quizId := c.Params(constants.QuizId)
 	ctrl.logger.Debug("QuizController.DeleteQuizById called", zap.Any(constants.QuizId, quizId))
 
 	isActiveQuizPresent, err := ctrl.activeQuizModel.IsActiveQuizPresent(quizId)
 	if err != nil {
-		ctrl.logger.Error("error occured while getting questions by admin", zap.Error(err))
+		ctrl.logger.Error("error occured while getting is active quiz is present or not", zap.Error(err))
 		return utils.JSONError(c, http.StatusInternalServerError, err.Error())
 	}
 	if isActiveQuizPresent {
-		ctrl.logger.Error("error occured while getting questions by admin", zap.Error(err))
 		return utils.JSONError(c, http.StatusBadRequest, constants.InvalidCredentials)
 	}
 
@@ -268,6 +287,6 @@ func (ctrl *QuizController) DeleteQuizById(c *fiber.Ctx) error {
 		return utils.JSONError(c, http.StatusInternalServerError, err.Error())
 	}
 
-	ctrl.logger.Debug("QuizController.ListQuestionsWithAnswerByQuizId success", zap.Any(constants.QuizId, quizId))
+	ctrl.logger.Debug("QuizController.DeleteQuizById success", zap.Any(constants.QuizId, quizId))
 	return utils.JSONSuccess(c, http.StatusOK, "success")
 }

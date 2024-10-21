@@ -321,3 +321,15 @@ func UpdateUserMetadata(transaction *goqu.TxDatabase, user User) error {
 
 	return err
 }
+
+// Delete user from user table and also returns the Kratos ID associated with the user
+func (model *UserModel) DeleteUserById(transaction *goqu.TxDatabase, id string) (string, error) {
+
+	var kratosId string
+	_, err := transaction.Delete(UserTable).Where(goqu.Ex{"id": id}).Returning("kratos_id").Executor().ScanVal(&kratosId)
+	if err != nil {
+		return kratosId, err
+	}
+
+	return kratosId, nil
+}

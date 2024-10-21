@@ -480,7 +480,8 @@ func (model *QuestionModel) UpdateQuestionById(QuestionId string, question Quest
 	return nil
 }
 
-func (model *QuestionModel) UpdateNextAndPreviousQuestionById(transaction *goqu.TxDatabase, questionId string) error {
+// Update previous question's next_question pointer (column) by using `next_question` and `previos_question` id
+func (model *QuestionModel) UpdatePreviousQuestionById(transaction *goqu.TxDatabase, questionId string) error {
 
 	var nextQuestionId, previousQuestionId sql.NullString
 
@@ -525,8 +526,15 @@ func (model *QuestionModel) UpdateNextAndPreviousQuestionById(transaction *goqu.
 	return nil
 }
 
-func (model *QuestionModel) DeleteQuestionsByIds(transaction *goqu.TxDatabase, questionIds []string) error {
-	_, err := transaction.Delete(QuestionTable).Where(goqu.Ex{"id": questionIds}).Executor().Exec()
+// Delete question's reference from `quiz_questions` table and from `questions` table also
+func (model *QuestionModel) DeleteQuestionById(transaction *goqu.TxDatabase, questionId string) error {
+
+	_, err := transaction.Delete(constants.QuizQuestionsTable).Where(goqu.Ex{"question_id": questionId}).Executor().Exec()
+	if err != nil {
+		return err
+	}
+
+	err = deleteQuestionsByIds(transaction, []string{questionId})
 	if err != nil {
 		return err
 	}
@@ -534,9 +542,9 @@ func (model *QuestionModel) DeleteQuestionsByIds(transaction *goqu.TxDatabase, q
 	return nil
 }
 
-func (model *QuestionModel) DeleteQuizQuestionByQuizId(transaction *goqu.TxDatabase, questionId string) error {
-
-	_, err := transaction.Delete(constants.QuizQuestionsTable).Where(goqu.Ex{"question_id": questionId}).Executor().Exec()
+// Delete questions by id (delete multiple question at a time)
+func deleteQuestionsByIds(transaction *goqu.TxDatabase, questionIds []string) error {
+	_, err := transaction.Delete(QuestionTable).Where(goqu.Ex{"id": questionIds}).Executor().Exec()
 	if err != nil {
 		return err
 	}

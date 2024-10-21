@@ -38,6 +38,7 @@ func NewFileUploadServices(bucket string) (*PresignURLService, error) {
 	}, nil
 }
 
+// Generate presigned url using s3 client
 func (fuSvc *PresignURLService) GetPresignedURL(objectKey string, expiration time.Duration) (string, error) {
 	presignClient := s3.NewPresignClient(fuSvc.s3Client)
 
@@ -53,6 +54,8 @@ func (fuSvc *PresignURLService) GetPresignedURL(objectKey string, expiration tim
 	return req.URL, nil
 }
 
+// Processes a slice of analytics data items, fetching presigned URLs for media fields (if "QuestionsMedia" or "OptionsMedia" are image)
+// and updating the respective fields in the data (update image_id to presigned url for display the image in UI)
 func ProcessAnalyticsData[T any](data []T, presignedURLSvc *PresignURLService, logger *zap.Logger) {
 	var wg sync.WaitGroup
 	urlChan := make(chan URLResult, len(data)*2)
@@ -111,5 +114,4 @@ func ProcessAnalyticsData[T any](data []T, presignedURLSvc *PresignURLService, l
 			logger.Error("Failed to update URL", zap.Error(result.err))
 		}
 	}
-
 }

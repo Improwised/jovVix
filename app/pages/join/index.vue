@@ -125,7 +125,7 @@ const join_quiz = async () => {
 
     try {
       await $fetch(
-        `${api_url}/quick_users/${username.value}?avatar_name=${avatarName}`,
+        `${api_url}/user/${username.value}?avatar_name=${avatarName}`,
         {
           method: "POST",
           credentials: "include",

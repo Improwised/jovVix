@@ -41,6 +41,7 @@ const (
 	ErrGetUser             = "error while get user"
 	ErrLoginUser           = "error while login user"
 	ErrInsertUser          = "error while creating user, please try after sometime"
+	ErrDeleteUser          = "error while deleting user, please try after sometime"
 	ErrHealthCheckDb       = "error while checking health of database"
 	ErrUnauthenticated     = "error verifying user identity"
 	ErrKratosAuth          = "error while fetching user from kratos"

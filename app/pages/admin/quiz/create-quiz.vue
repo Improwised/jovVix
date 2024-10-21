@@ -27,29 +27,26 @@ const uploadQuizAndQuestions = async (e) => {
   formData.append(description.name, description.value);
   formData.append(attachment.name, attachment.files[0]);
   try {
-    await $fetch(
-      encodeURI(`${url.api_url}/admin/quizzes/${title.value}/upload`),
-      {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-        },
-        body: formData,
-        mode: "cors",
-        credentials: "include",
-        onResponse({ response }) {
-          if (response.status != 202) {
-            requestPending.value = false;
-            toast.error("error while create quiz");
-            return;
-          }
-          if (response.status == 202) {
-            quizId.value = response._data?.data;
-            toast.success(app.$CsvUploadSuccess);
-          }
-        },
-      }
-    );
+    await $fetch(encodeURI(`${url.api_url}/quizzes/${title.value}/upload`), {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+      },
+      body: formData,
+      mode: "cors",
+      credentials: "include",
+      onResponse({ response }) {
+        if (response.status != 202) {
+          requestPending.value = false;
+          toast.error("error while create quiz");
+          return;
+        }
+        if (response.status == 202) {
+          quizId.value = response._data?.data;
+          toast.success(app.$CsvUploadSuccess);
+        }
+      },
+    });
   } catch (error) {
     toast.error(error.message);
     requestPending.value = false;

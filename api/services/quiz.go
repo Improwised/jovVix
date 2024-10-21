@@ -24,6 +24,7 @@ func NewQuizService(db *goqu.Database, logger *zap.Logger) *QuizService {
 	}
 }
 
+// This function will delete quiz only if no active quiz is present
 func (quizSvc *QuizService) DeleteQuizById(quizId string) error {
 	isOk := false
 	transaction, err := quizSvc.db.Begin()
@@ -45,21 +46,9 @@ func (quizSvc *QuizService) DeleteQuizById(quizId string) error {
 		}
 	}()
 
-	questionIds, err := quizSvc.quizModel.DeleteQuizFromQuizQuestionById(transaction, quizId)
-	if err != nil {
-		quizSvc.logger.Debug("error in DeleteQuizFromQuizQuestionById", zap.Error(err))
-		return err
-	}
-
 	err = quizSvc.quizModel.DeleteQuizById(transaction, quizId)
 	if err != nil {
-		quizSvc.logger.Debug("error in DeleteQuizById", zap.Error(err))
-		return err
-	}
-
-	err = quizSvc.questionModel.DeleteQuestionsByIds(transaction, questionIds)
-	if err != nil {
-		quizSvc.logger.Debug("error in DeleteQuestionByQuizId", zap.Error(err))
+		quizSvc.logger.Debug("error in DeleteQuizFromQuizQuestionById", zap.Error(err))
 		return err
 	}
 
@@ -68,6 +57,7 @@ func (quizSvc *QuizService) DeleteQuizById(quizId string) error {
 	return nil
 }
 
+// This function will delete question
 func (quizSvc *QuizService) DeleteQuestionById(questionId string) error {
 	isOk := false
 	transaction, err := quizSvc.db.Begin()
@@ -89,21 +79,17 @@ func (quizSvc *QuizService) DeleteQuestionById(questionId string) error {
 		}
 	}()
 
-	err = quizSvc.questionModel.UpdateNextAndPreviousQuestionById(transaction, questionId)
+	// Update previous question's next_question pointer (column)
+	err = quizSvc.questionModel.UpdatePreviousQuestionById(transaction, questionId)
 	if err != nil {
 		quizSvc.logger.Debug("error in DeleteQuizFromQuizQuestionById", zap.Error(err))
 		return err
 	}
 
-	err = quizSvc.questionModel.DeleteQuizQuestionByQuizId(transaction, questionId)
+	// Delete the question
+	err = quizSvc.questionModel.DeleteQuestionById(transaction, questionId)
 	if err != nil {
 		quizSvc.logger.Debug("error in DeleteQuizFromQuizQuestionById", zap.Error(err))
-		return err
-	}
-
-	err = quizSvc.questionModel.DeleteQuestionsByIds(transaction, []string{questionId})
-	if err != nil {
-		quizSvc.logger.Debug("error in DeleteQuestionByQuizId", zap.Error(err))
 		return err
 	}
 

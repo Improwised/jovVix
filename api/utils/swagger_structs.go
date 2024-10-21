@@ -249,8 +249,8 @@ type ResponseListQuestionByQuizId struct {
 	// in:body
 	Body struct {
 		Status string `json:"status"`
-		Data   []struct {
-			models.Question
+		Data   struct {
+			structs.ResQuestionAnalytics
 		} `json:"data"`
 	} `json:"body"`
 }
@@ -292,9 +292,59 @@ type ResponsePlayedQuizValidation struct {
 	} `json:"body"`
 }
 
+// swagger:parameters RequestGetQuestionById
+type RequestGetQuestionById struct {
+	// in:path
+	// required: true
+	QuizId string `json:"quiz_id"`
+	// in:path
+	// required: true
+	QuestionId string `json:"question_id"`
+}
+
+// swagger:response ResponseGetQuestionById
+type ResponseGetQuestionById struct {
+	// in:body
+	Body struct {
+		Status string `json:"status"`
+		Data   struct {
+			structs.QuestionAnalytics
+		} `json:"data"`
+	} `json:"body"`
+}
+
+// swagger:parameters RequestUpdateQuestionById
+type RequestUpdateQuestionById struct {
+	// in:path
+	// required: true
+	QuizId string `json:"quiz_id"`
+	// in:path
+	// required: true
+	QuestionId string `json:"question_id"`
+}
+
+// swagger:parameters RequestDeleteQuestionById
+type RequestDeleteQuestionById struct {
+	// in:path
+	// required: true
+	QuizId string `json:"quiz_id"`
+	// in:path
+	// required: true
+	QuestionId string `json:"question_id"`
+}
+
 ////////////////////
 // --- GENERIC ---//
 ////////////////////
+
+// swagger:response ResponseOkWithMessage
+type ResponseOkWithMessage struct {
+	// in:body
+	Body struct {
+		Status  string `json:"status"`
+		Message string `json:"message"`
+	} `json:"body"`
+}
 
 // Response is okay
 // swagger:response GenericResOk

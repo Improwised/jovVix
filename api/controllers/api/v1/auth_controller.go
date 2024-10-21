@@ -11,7 +11,6 @@ import (
 	"github.com/Improwised/quizz-app/api/constants"
 	quizUtilsHelper "github.com/Improwised/quizz-app/api/helpers/utils"
 	"github.com/Improwised/quizz-app/api/models"
-	jwt "github.com/Improwised/quizz-app/api/pkg/jwt"
 	"github.com/Improwised/quizz-app/api/pkg/structs"
 	"github.com/Improwised/quizz-app/api/services"
 	"github.com/Improwised/quizz-app/api/utils"
@@ -24,10 +23,10 @@ import (
 )
 
 type AuthController struct {
-	userService *services.UserService
-	userModel   *models.UserModel
-	logger      *zap.Logger
-	config      config.AppConfig
+	userModel *models.UserModel
+	userSvc   *services.UserService
+	logger    *zap.Logger
+	config    config.AppConfig
 }
 
 func NewAuthController(goqu *goqu.Database, logger *zap.Logger, config config.AppConfig) (*AuthController, error) {
@@ -36,18 +35,21 @@ func NewAuthController(goqu *goqu.Database, logger *zap.Logger, config config.Ap
 		return nil, err
 	}
 
-	userSvc := services.NewUserService(&userModel)
+	userSvc, err := services.NewUserService(goqu, logger, config)
+	if err != nil {
+		return nil, err
+	}
 
 	return &AuthController{
-		userService: userSvc,
-		userModel:   &userModel,
-		logger:      logger,
-		config:      config,
+		userModel: &userModel,
+		userSvc:   userSvc,
+		logger:    logger,
+		config:    config,
 	}, nil
 }
 
 // DoKratosAuth authenticate user with kratos session id
-// swagger:route GET /v1/kratos/auth Auth none
+// swagger:route GET /v1/kratos/auth Auth DoKratosAuth
 //
 // Authenticate user with kratos session id.
 //
@@ -137,97 +139,8 @@ func (ctrl *AuthController) DoKratosAuth(c *fiber.Ctx) error {
 	return c.Redirect(ctrl.config.WebUrl)
 }
 
-// Create Quick user to play for quiz directly without login
-// swagger:route POST /v1/quick_users/{username} User RequestCreateQuickUser
-//
-// Create Quick user to play for quiz directly without login.
-//
-//		Consumes:
-//		- application/json
-//
-//		Schemes: http, https
-//
-//		Responses:
-//		  200: ResponseUserDetails
-//	     400: GenericResFailNotFound
-//		  500: GenericResError
-func (ctrl *AuthController) CreateQuickUser(c *fiber.Ctx) error {
-	username := c.Params(constants.Username)
-
-	avatarName := c.Query("avatar_name")
-	if username == "" || avatarName == "" {
-		return utils.JSONError(c, http.StatusBadRequest, "please provide username and avatar name")
-	}
-
-	userObj := models.User{
-		FirstName: username,
-		Username:  username,
-		Roles:     "user",
-		ImageKey:  avatarName,
-	}
-	user, err := ctrl.userModel.InsertUser(userObj)
-	if err != nil {
-		pqErr, ok := quizUtilsHelper.ConvertType[*pq.Error](err)
-		retrying := 0
-
-		if !ok {
-			ctrl.logger.Debug("unable to convert postgres error")
-			return utils.JSONError(c, http.StatusInternalServerError, constants.ErrorTypeConversion)
-		}
-
-		if pqErr.Code == "23505" {
-
-			if pqErr.Constraint != constants.UserUkey {
-				ctrl.logger.Debug("user wants to use the username which is already registered")
-				return utils.JSONError(c, http.StatusInternalServerError, fmt.Sprintf("username (%s) already registered", user.Username))
-			}
-
-			for {
-				if retrying > 30 {
-					break
-				} else {
-					user.Username = quizUtilsHelper.GenerateNewStringHavingSuffixName(user.Username, 5, 12)
-					user, err = ctrl.userModel.InsertUser(user)
-					if err != nil {
-						retrying++
-					} else {
-						break
-					}
-				}
-			}
-		}
-
-		if err != nil {
-			ctrl.logger.Error("unable to insert the user registered with kratos into the database and username is - "+user.Username, zap.Error(err))
-			return utils.JSONError(c, http.StatusInternalServerError, constants.ErrKratosDataInsertion)
-		}
-	}
-
-	cookieExpirationTime, err := time.ParseDuration(ctrl.config.Kratos.CookieExpirationTime)
-	if err != nil {
-		ctrl.logger.Debug("unable to parse the duration for the cookie expiration", zap.Error(err))
-		return utils.JSONError(c, http.StatusInternalServerError, constants.ErrKratosCookieTime)
-	}
-
-	token, err := jwt.CreateToken(ctrl.config, user.ID, time.Now().Add(time.Hour*2))
-	if err != nil {
-		ctrl.logger.Error("error while creating token", zap.Error(err), zap.Any("id", user.ID))
-		return utils.JSONFail(c, http.StatusInternalServerError, constants.ErrLoginUser)
-	}
-
-	userCookie := &fiber.Cookie{
-		Name:    constants.CookieUser,
-		Value:   token,
-		Expires: time.Now().Add(cookieExpirationTime),
-	}
-
-	c.Cookie(userCookie)
-
-	return utils.JSONSuccess(c, http.StatusOK, user)
-}
-
 // Get Details of Register user
-// swagger:route GET /v1/kratos/whoami User none
+// swagger:route GET /v1/kratos/whoami User GetRegisteredUser
 //
 // Get Details of Register user.
 //
@@ -253,10 +166,10 @@ func (ctrl *AuthController) GetRegisteredUser(c *fiber.Ctx) error {
 	if err != nil || res.StatusCode() != http.StatusOK {
 		ctrl.logger.Debug("unauthenticated registration", zap.Any("response from kratos", res.RawResponse), zap.Error(err), zap.Any("kratos response", res))
 		return utils.JSONError(c, res.StatusCode(), constants.ErrKratosAuth)
-	} else {
-		ctrl.logger.Debug("AuthController.GetRegisteredUser success", zap.Any("kratosUser", kratosUser))
-		return utils.JSONSuccess(c, http.StatusOK, kratosUser)
 	}
+
+	ctrl.logger.Debug("AuthController.GetRegisteredUser success", zap.Any("kratosUser", kratosUser))
+	return utils.JSONSuccess(c, http.StatusOK, kratosUser)
 }
 
 // Update user Details
@@ -330,4 +243,38 @@ func (ctrl *AuthController) UpadateRegisteredUser(c *fiber.Ctx) error {
 	ctrl.logger.Debug("userModel.GetById success", zap.Any("user", user))
 
 	return utils.JSONSuccess(c, http.StatusOK, user)
+}
+
+// Delete user Details
+// swagger:route DELETE /v1/kratos/user User DeleteRegisteredUser
+//
+// Delete user Details and all its related data.
+//
+//		Consumes:
+//		- application/json
+//
+//		Schemes: http, https
+//
+//		Responses:
+//		  200: ResponseOkWithMessage
+//	     401: GenericResFailConflict
+//		  500: GenericResError
+func (ctrl *AuthController) DeleteRegisteredUser(c *fiber.Ctx) error {
+	userId := quizUtilsHelper.GetString(c.Locals(constants.ContextUid))
+	kratosId := quizUtilsHelper.GetString(c.Locals(constants.KratosID))
+	ctrl.logger.Debug("AuthController.DeleteRegisteredUser called", zap.Any("userID", userId), zap.Any("kratosID", kratosId))
+
+	if kratosId == "<nil>" || userId == "<nil>" {
+		ctrl.logger.Error(constants.ErrUnauthenticated)
+		return utils.JSONError(c, http.StatusUnauthorized, constants.ErrUnauthenticated)
+	}
+
+	err := ctrl.userSvc.DeleteUserDataById(userId, kratosId)
+	if err != nil {
+		ctrl.logger.Error(constants.ErrDeleteUser, zap.Error(err))
+		return utils.JSONError(c, http.StatusInternalServerError, constants.ErrDeleteUser)
+	}
+	ctrl.logger.Debug("AuthController.DeleteRegisteredUser success", zap.Any("userID", userId), zap.Any("kratosID", kratosId))
+
+	return utils.JSONSuccess(c, http.StatusOK, "user deleted succesfully!")
 }

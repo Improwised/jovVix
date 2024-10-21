@@ -88,7 +88,7 @@ const deleteQuiz = async () => {
   const isconfirm = confirm("are you sure?");
   if (isconfirm) {
     try {
-      await $fetch(`${url.api_url}/admin/quizzes/${quizId.value}`, {
+      await $fetch(`${url.api_url}/quizzes/${quizId.value}`, {
         method: "DELETE",
         headers: headers,
         credentials: "include",
@@ -103,7 +103,6 @@ const deleteQuiz = async () => {
 };
 
 const deleteQuestion = async (questionId) => {
-  console.log(questionId);
   try {
     await $fetch(
       `${url.api_url}/quizzes/${quizId.value}/questions/${questionId}`,

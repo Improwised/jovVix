@@ -95,11 +95,18 @@
             <h5 class="card-title">{{ profile.email }}</h5>
             <div
               type="button"
-              class="btn btn-primary btn-sm text-white"
+              class="btn btn-primary btn-sm text-white mx-1"
               data-bs-toggle="modal"
               data-bs-target="#exampleModal"
             >
               Change Password
+            </div>
+            <div
+              type="button"
+              class="btn btn-danger btn-sm text-white mx-1"
+              @click="deleteAccount"
+            >
+              Delete Account
             </div>
           </div>
         </div>
@@ -223,8 +230,10 @@
 <script setup>
 import { useUsersStore } from "~~/store/users";
 import { getAvatarUrlByName } from "~~/composables/avatar";
+import { useToast } from "vue-toastification";
+const toast = useToast();
 const userStore = useUsersStore();
-const { getUserData } = userStore;
+const { getUserData, setUserData } = userStore;
 const url = useRuntimeConfig().public;
 const headers = useRequestHeaders(["cookie"]);
 const updateuserError = ref(false);
@@ -415,6 +424,25 @@ const changePassword = async () => {
   } catch (error) {
     console.error("Error during password change:", error.message);
     passwordRequestError.value = error.message;
+  }
+};
+
+const deleteAccount = async () => {
+  const isconfirm = confirm("are you sure?");
+  if (isconfirm) {
+    try {
+      await $fetch(`${url.api_url}/kratos/user`, {
+        method: "DELETE",
+        headers: headers,
+        credentials: "include",
+      });
+      toast.success("Question delete successfully!");
+      setUserData(null);
+      navigateTo("/");
+    } catch (error) {
+      console.error("Failed to update the question", error);
+      toast.error("Failed to update the question.");
+    }
   }
 };
 </script>

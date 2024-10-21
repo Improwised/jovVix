@@ -94,7 +94,7 @@ func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config confi
 		return err
 	}
 
-	err = setupUserController(v1, goqu, logger, middleware, events, pub)
+	err = setupUserController(v1, goqu, logger, middleware, events, config)
 	if err != nil {
 		return err
 	}
@@ -169,21 +169,18 @@ func setupAuthController(v1 fiber.Router, goqu *goqu.Database, logger *zap.Logge
 		return err
 	}
 
-	// quick user route
-	quickUsersRouter := v1.Group("/quick_users")
-	quickUsersRouter.Post(fmt.Sprintf("/:%s", constants.Username), authController.CreateQuickUser)
-
 	if config.Kratos.IsEnabled {
 		kratos := v1.Group("/kratos")
 		kratos.Get("/auth", authController.DoKratosAuth)
 		kratos.Get("/whoami", authController.GetRegisteredUser)
 		kratos.Put("/user", middlewares.KratosAuthenticated, authController.UpadateRegisteredUser)
+		kratos.Delete("/user", middlewares.KratosAuthenticated, authController.DeleteRegisteredUser)
 	}
 	return nil
 }
 
-func setupUserController(v1 fiber.Router, goqu *goqu.Database, logger *zap.Logger, middlewares middlewares.Middleware, events *events.Events, pub *watermill.WatermillPublisher) error {
-	userController, err := controller.NewUserController(goqu, logger, events, pub)
+func setupUserController(v1 fiber.Router, goqu *goqu.Database, logger *zap.Logger, middlewares middlewares.Middleware, events *events.Events, config config.AppConfig) error {
+	userController, err := controller.NewUserController(goqu, logger, events, config)
 	if err != nil {
 		return err
 	}
@@ -191,6 +188,7 @@ func setupUserController(v1 fiber.Router, goqu *goqu.Database, logger *zap.Logge
 	// user route
 	userRouter := v1.Group("/user")
 	userRouter.Get("/who", middlewares.Authenticated, userController.GetUserMeta)
+	userRouter.Post(fmt.Sprintf("/:%s", constants.Username), userController.CreateGuestUser)
 
 	return nil
 }
@@ -240,11 +238,12 @@ func setupQuizController(v1 fiber.Router, db *goqu.Database, logger *zap.Logger,
 	admin := v1.Group("/admin")
 	admin.Use(middleware.KratosAuthenticated)
 
-	quizzes := admin.Group("/quizzes")
+	quizzes := v1.Group("/quizzes")
+	quizzes.Use(middleware.KratosAuthenticated)
 
 	quizzes.Post(fmt.Sprintf("/:%s/demo_session", constants.QuizId), quizController.GenerateDemoSession)
 	quizzes.Post(fmt.Sprintf("/:%s/upload", constants.QuizTitle), middleware.ValidateCsv, middleware.KratosAuthenticated, quizController.CreateQuizByCsv)
-	quizzes.Get("/list", quizController.GetAdminUploadedQuizzes)
+	quizzes.Get("/", quizController.GetAdminUploadedQuizzes)
 	quizzes.Delete(fmt.Sprintf("/:%s", constants.QuizId), quizController.DeleteQuizById)
 
 	report := admin.Group("/reports")

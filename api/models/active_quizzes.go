@@ -355,3 +355,31 @@ func (model *ActiveQuizModel) IsActiveQuizPresent(QuizId string) (bool, error) {
 	var activeQuiz ActiveQuiz = ActiveQuiz{}
 	return model.db.Select("*").From(ActiveQuizzesTable).Where(goqu.I("quiz_id").Eq(QuizId)).Limit(1).ScanStruct(&activeQuiz)
 }
+
+// This function will delete all quizzes and their related data (user responses, played quizzes)
+// associated with the given user (admin) identified by userId.
+func (model *ActiveQuizModel) DeleteActiveQuizzesAndRelatedDataByUserId(transaction *goqu.TxDatabase, userId string) error {
+
+	activeQuizSubquery := transaction.From(ActiveQuizzesTable).Select("id").Where(goqu.Ex{"admin_id": userId})
+
+	userPlayedQuizSubquery := transaction.From(UserPlayedQuizTable).Select("id").Where(goqu.Ex{"active_quiz_id": goqu.Op{"in": activeQuizSubquery}})
+
+	_, err := transaction.Delete(UserQuizResponsesTable).Where(goqu.Ex{"user_played_quiz_id": goqu.Op{"in": userPlayedQuizSubquery}}).Executor().Exec()
+	if err != nil {
+		return err
+	}
+
+	_, err = transaction.Delete(UserPlayedQuizTable).Where(goqu.Ex{"active_quiz_id": goqu.Op{"in": activeQuizSubquery}}).Executor().Exec()
+	if err != nil {
+		return err
+	}
+
+	_, err = transaction.Delete(ActiveQuizQuestionsTable).Where(goqu.Ex{"active_quiz_id": goqu.Op{"in": activeQuizSubquery}}).Executor().Exec()
+	if err != nil {
+		return err
+	}
+
+	_, err = transaction.Delete(ActiveQuizzesTable).Where(goqu.Ex{"admin_id": userId}).Executor().Exec()
+
+	return err
+}

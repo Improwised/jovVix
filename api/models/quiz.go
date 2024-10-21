@@ -427,17 +427,26 @@ func (model *QuizModel) ListQuizzesAnalysis(name, order, orderBy, date, userId s
 	return quizzesAnalysis, count, err
 }
 
-func (model *QuizModel) DeleteQuizFromQuizQuestionById(transaction *goqu.TxDatabase, QuizId string) ([]string, error) {
-	ids := []string{}
-	err := transaction.Delete(constants.QuizQuestionsTable).Where(goqu.Ex{"quiz_id": QuizId}).Returning("question_id").Executor().ScanVals(&ids)
+// Delete quiz and and their question using `quiz_id`
+func (model *QuizModel) DeleteQuizById(transaction *goqu.TxDatabase, QuizId string) error {
+	questionIds := []string{}
+	err := transaction.Delete(constants.QuizQuestionsTable).Where(goqu.Ex{"quiz_id": QuizId}).Returning("question_id").Executor().ScanVals(&questionIds)
 	if err != nil {
-		return ids, err
+		return err
 	}
 
-	return ids, nil
+	err = deleteQuestionsByIds(transaction, questionIds)
+	if err != nil {
+		return err
+	}
+
+	err = deleteQuizById(transaction, QuizId)
+
+	return err
 }
 
-func (model *QuizModel) DeleteQuizById(transaction *goqu.TxDatabase, quizId string) error {
+// Delete Quiz by Id (only if no active quiz is present)
+func deleteQuizById(transaction *goqu.TxDatabase, quizId string) error {
 
 	_, err := transaction.Delete(QuizzesTable).Where(goqu.Ex{"id": quizId}).Executor().Exec()
 	if err != nil {
@@ -445,4 +454,26 @@ func (model *QuizModel) DeleteQuizById(transaction *goqu.TxDatabase, quizId stri
 	}
 
 	return nil
+}
+
+// Deletes all quizzes created by a user and their related questions.
+// It deletes from the QuizQuestionsTable, removes related questions, and finally deletes the quizzes themselves.
+func (model *QuizModel) DeleteCreatedQuizzesByUserId(transaction *goqu.TxDatabase, userId string) error {
+
+	quizSubquery := transaction.From(QuizzesTable).Select("id").Where(goqu.Ex{"creator_id": userId})
+
+	questionIds := []string{}
+	err := transaction.Delete(constants.QuizQuestionsTable).Where(goqu.Ex{"quiz_id": goqu.Op{"in": quizSubquery}}).Returning("question_id").Executor().ScanVals(&questionIds)
+	if err != nil {
+		return err
+	}
+
+	err = deleteQuestionsByIds(transaction, questionIds)
+	if err != nil {
+		return err
+	}
+
+	_, err = transaction.Delete(QuizzesTable).Where(goqu.Ex{"id": goqu.Op{"in": quizSubquery}}).Executor().Exec()
+
+	return err
 }

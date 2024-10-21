@@ -72,7 +72,7 @@ func (m *Middleware) Authenticated(c *fiber.Ctx) error {
 func (m *Middleware) KratosAuthenticated(c *fiber.Ctx) error {
 	kratosId := c.Cookies("ory_kratos_session")
 	if kratosId == "" {
-		return utils.JSONError(c, http.StatusBadRequest, constants.ErrKratosIDEmpty)
+		return utils.JSONError(c, http.StatusUnauthorized, constants.ErrKratosIDEmpty)
 	}
 
 	kratosUser := config.KratosUserDetails{}

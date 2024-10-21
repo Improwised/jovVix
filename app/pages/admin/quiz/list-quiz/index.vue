@@ -6,7 +6,7 @@ const {
   data: quizList,
   pending: quizPending,
   error: quizError,
-} = useFetch(url.api_url + "/admin/quizzes/list", {
+} = useFetch(url.api_url + "/quizzes", {
   method: "GET",
   headers: headers,
   mode: "cors",

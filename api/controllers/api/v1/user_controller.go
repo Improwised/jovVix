@@ -2,44 +2,43 @@ package v1
 
 import (
 	"database/sql"
+	"fmt"
 	"net/http"
+	"time"
 
+	"github.com/Improwised/quizz-app/api/config"
 	"github.com/Improwised/quizz-app/api/constants"
 	quizUtilsHelper "github.com/Improwised/quizz-app/api/helpers/utils"
 	"github.com/Improwised/quizz-app/api/models"
 	"github.com/Improwised/quizz-app/api/pkg/events"
-	"github.com/Improwised/quizz-app/api/pkg/watermill"
-	"github.com/Improwised/quizz-app/api/services"
+	"github.com/Improwised/quizz-app/api/pkg/jwt"
 	"github.com/Improwised/quizz-app/api/utils"
 	goqu "github.com/doug-martin/goqu/v9"
 	fiber "github.com/gofiber/fiber/v2"
+	"github.com/lib/pq"
 	"go.uber.org/zap"
 )
 
 // UserController for user controllers
 type UserController struct {
-	userService *services.UserService
-	userModel   *models.UserModel
-	logger      *zap.Logger
-	event       *events.Events
-	pub         *watermill.WatermillPublisher
+	userModel *models.UserModel
+	logger    *zap.Logger
+	event     *events.Events
+	config    config.AppConfig
 }
 
 // NewUserController returns a user
-func NewUserController(goqu *goqu.Database, logger *zap.Logger, event *events.Events, pub *watermill.WatermillPublisher) (*UserController, error) {
+func NewUserController(goqu *goqu.Database, logger *zap.Logger, event *events.Events, config config.AppConfig) (*UserController, error) {
 	userModel, err := models.InitUserModel(goqu, logger)
 	if err != nil {
 		return nil, err
 	}
 
-	userSvc := services.NewUserService(&userModel)
-
 	return &UserController{
-		userService: userSvc,
-		userModel:   &userModel,
-		logger:      logger,
-		event:       event,
-		pub:         pub,
+		userModel: &userModel,
+		logger:    logger,
+		event:     event,
+		config:    config,
 	}, nil
 }
 
@@ -104,4 +103,93 @@ func (ctrl *UserController) GetUserMeta(c *fiber.Ctx) error {
 		"role":      "guest-user",
 		"avatar":    user.ImageKey,
 	})
+}
+
+// Create Guest user to play for quiz directly without login
+// swagger:route POST /v1/user/{username} User RequestCreateQuickUser
+//
+// Create Guest user to play for quiz directly without login.
+//
+//		Consumes:
+//		- application/json
+//
+//		Schemes: http, https
+//
+//		Responses:
+//		  200: ResponseUserDetails
+//	     400: GenericResFailNotFound
+//		  500: GenericResError
+func (ctrl *UserController) CreateGuestUser(c *fiber.Ctx) error {
+	username := c.Params(constants.Username)
+
+	avatarName := c.Query("avatar_name")
+	if username == "" || avatarName == "" {
+		return utils.JSONError(c, http.StatusBadRequest, "please provide username and avatar name")
+	}
+
+	userObj := models.User{
+		FirstName: username,
+		Username:  username,
+		Roles:     "user",
+		ImageKey:  avatarName,
+	}
+	user, err := ctrl.userModel.InsertUser(userObj)
+	if err != nil {
+		pqErr, ok := quizUtilsHelper.ConvertType[*pq.Error](err)
+		retrying := 0
+
+		if !ok {
+			ctrl.logger.Debug("unable to convert postgres error")
+			return utils.JSONError(c, http.StatusInternalServerError, constants.ErrorTypeConversion)
+		}
+
+		if pqErr.Code == "23505" {
+
+			if pqErr.Constraint != constants.UserUkey {
+				ctrl.logger.Debug("user wants to use the username which is already registered")
+				return utils.JSONError(c, http.StatusInternalServerError, fmt.Sprintf("username (%s) already registered", user.Username))
+			}
+
+			for {
+				if retrying > 30 {
+					break
+				} else {
+					user.Username = quizUtilsHelper.GenerateNewStringHavingSuffixName(user.Username, 5, 12)
+					user, err = ctrl.userModel.InsertUser(user)
+					if err != nil {
+						retrying++
+					} else {
+						break
+					}
+				}
+			}
+		}
+
+		if err != nil {
+			ctrl.logger.Error("unable to insert the user registered with kratos into the database and username is - "+user.Username, zap.Error(err))
+			return utils.JSONError(c, http.StatusInternalServerError, constants.ErrKratosDataInsertion)
+		}
+	}
+
+	cookieExpirationTime, err := time.ParseDuration(ctrl.config.Kratos.CookieExpirationTime)
+	if err != nil {
+		ctrl.logger.Debug("unable to parse the duration for the cookie expiration", zap.Error(err))
+		return utils.JSONError(c, http.StatusInternalServerError, constants.ErrKratosCookieTime)
+	}
+
+	token, err := jwt.CreateToken(ctrl.config, user.ID, time.Now().Add(time.Hour*2))
+	if err != nil {
+		ctrl.logger.Error("error while creating token", zap.Error(err), zap.Any("id", user.ID))
+		return utils.JSONFail(c, http.StatusInternalServerError, constants.ErrLoginUser)
+	}
+
+	userCookie := &fiber.Cookie{
+		Name:    constants.CookieUser,
+		Value:   token,
+		Expires: time.Now().Add(cookieExpirationTime),
+	}
+
+	c.Cookie(userCookie)
+
+	return utils.JSONSuccess(c, http.StatusOK, user)
 }

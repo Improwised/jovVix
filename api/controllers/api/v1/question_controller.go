@@ -51,10 +51,10 @@ func InitQuestionController(db *goqu.Database, logger *zap.Logger, event *events
 	}, nil
 }
 
-// ListQuestionByQuizId to list all questions of quiz.
+// ListQuestionByQuizId to list all questions of quiz with `is_active_quiz_present` and `quiz_played_count`.
 // swagger:route GET /v1/quizzes/{quiz_id}/questions Question RequestListQuestionByQuizId
 //
-// List all questions of quiz.
+// List all questions of quiz with `is_active_quiz_present` and `quiz_played_count`.
 //
 //		Consumes:
 //		- application/json
@@ -68,7 +68,7 @@ func InitQuestionController(db *goqu.Database, logger *zap.Logger, event *events
 func (ctrl *QuestionController) ListQuestionsWithAnswerByQuizId(c *fiber.Ctx) error {
 	QuizId := c.Params(constants.QuizId)
 	Query := c.Queries()
-	ctrl.logger.Debug("QuizController.ListQuestionsWithAnswerByQuizId called", zap.Any(constants.QuizId, QuizId), zap.Any("Query", Query))
+	ctrl.logger.Debug("QuestionController.ListQuestionsWithAnswerByQuizId called", zap.Any(constants.QuizId, QuizId), zap.Any("Query", Query))
 
 	isActiveQuizPresent, err := ctrl.activeQuizModel.IsActiveQuizPresent(QuizId)
 	if err != nil {
@@ -84,13 +84,27 @@ func (ctrl *QuestionController) ListQuestionsWithAnswerByQuizId(c *fiber.Ctx) er
 
 	services.ProcessAnalyticsData(questions, ctrl.presignedURLSvc, ctrl.logger)
 
-	ctrl.logger.Debug("QuizController.ListQuestionsWithAnswerByQuizId success", zap.Any("questions", structs.ResQuestionAnalytics{Data: questions, QuizPlayedCount: quizPlayedcount}), zap.Any("quizPlayedcount", quizPlayedcount))
+	ctrl.logger.Debug("QuestionController.ListQuestionsWithAnswerByQuizId success", zap.Any("questions", structs.ResQuestionAnalytics{Data: questions, QuizPlayedCount: quizPlayedcount}), zap.Any("quizPlayedcount", quizPlayedcount))
 	return utils.JSONSuccess(c, http.StatusOK, structs.ResQuestionAnalytics{Data: questions, QuizPlayedCount: quizPlayedcount, IsActiveQuizPresent: isActiveQuizPresent})
 }
 
+// GetQuestionById to get question and thier options with answer.
+// swagger:route GET /v1/quizzes/{quiz_id}/questions/{question_id} Question RequestGetQuestionById
+//
+// Get question and thier options with answer.
+//
+//		Consumes:
+//		- application/json
+//
+//		Schemes: http, https
+//
+//		Responses:
+//		  200: ResponseGetQuestionById
+//	     401: GenericResFailConflict
+//		  500: GenericResError
 func (ctrl *QuestionController) GetQuestionById(c *fiber.Ctx) error {
 	QuestionId := c.Params(constants.QuestionId)
-	ctrl.logger.Debug("QuizController.GetQuestionById called", zap.Any(constants.QuizId, QuestionId))
+	ctrl.logger.Debug("QuestionController.GetQuestionById called", zap.Any(constants.QuestionId, QuestionId))
 
 	question, err := ctrl.questionModel.GetQuestionById(QuestionId)
 	if err != nil {
@@ -108,7 +122,7 @@ func (ctrl *QuestionController) GetQuestionById(c *fiber.Ctx) error {
 
 	if question.OptionsMedia == "image" {
 		for key, value := range question.Options {
-			presignedURL, err := ctrl.presignedURLSvc.GetPresignedURL(value, 1*time.Minute)
+			presignedURL, err := ctrl.presignedURLSvc.GetPresignedURL(value, 5*time.Minute)
 			if err != nil {
 				ctrl.logger.Error("error while getting presigned url", zap.Error(err))
 			}
@@ -116,10 +130,25 @@ func (ctrl *QuestionController) GetQuestionById(c *fiber.Ctx) error {
 		}
 	}
 
-	ctrl.logger.Debug("QuizController.GetQuestionById success", zap.Any("question", question))
+	ctrl.logger.Debug("QuestionController.GetQuestionById success", zap.Any("question", question))
 	return utils.JSONSuccess(c, http.StatusOK, question)
 }
 
+// UpdateQuestionById to update question and thier options with answer.
+// swagger:route PUT /v1/quizzes/{quiz_id}/questions/{question_id} Question RequestUpdateQuestionById
+//
+// Update question and thier options with answer.
+//
+//		Consumes:
+//		- application/json
+//
+//		Schemes: http, https
+//
+//		Responses:
+//		  200: ResponseOkWithMessage
+//	     401: GenericResFailConflict
+//		  500: GenericResError
+//	     400: GenericResFailNotFound
 func (ctrl *QuestionController) UpdateQuestionById(c *fiber.Ctx) error {
 	QuestionId := c.Params(constants.QuestionId)
 	ctrl.logger.Debug("QuizController.UpdateQuestionById called", zap.Any(constants.QuestionId, QuestionId))
@@ -159,6 +188,21 @@ func (ctrl *QuestionController) UpdateQuestionById(c *fiber.Ctx) error {
 	return utils.JSONSuccess(c, http.StatusOK, "question update success")
 }
 
+// DeleteQuestionById to delete question only if no active quiz is present.
+// swagger:route DELETE /v1/quizzes/{quiz_id}/questions/{question_id} Question RequestDeleteQuestionById
+//
+// Delete question only if no active quiz is present.
+//
+//		Consumes:
+//		- application/json
+//
+//		Schemes: http, https
+//
+//		Responses:
+//		  200: ResponseOkWithMessage
+//	     401: GenericResFailConflict
+//		  500: GenericResError
+//	     400: GenericResFailNotFound
 func (ctrl *QuestionController) DeleteQuestionById(c *fiber.Ctx) error {
 	quizId := c.Params(constants.QuizId)
 	ctrl.logger.Debug("QuizController.DeleteQuizById called", zap.Any(constants.QuizId, quizId))

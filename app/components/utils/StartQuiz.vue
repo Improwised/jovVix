@@ -21,7 +21,7 @@ const props = defineProps({
 const handleStartDemo = async () => {
   try {
     requestPending.value = true;
-    await $fetch(`${urls.api_url}/admin/quizzes/${props.quizId}/demo_session`, {
+    await $fetch(`${urls.api_url}/quizzes/${props.quizId}/demo_session`, {
       method: "POST",
       credentials: "include",
       headers: {
