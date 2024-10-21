@@ -28,6 +28,18 @@ services:
       - REDIS_PORT=6379
       - REDIS_DATABASES=0
 
+  minio:
+    image: quay.io/minio/minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - ~/minio/data:/data
+    environment:
+      MINIO_ROOT_USER: ROOTNAME
+      MINIO_ROOT_PASSWORD: CHANGEME123
+    command: server /data --console-address ":9001"
+
   kratos_migrate:
     image: oryd/kratos:v1.0.0
     profiles: [kratos]

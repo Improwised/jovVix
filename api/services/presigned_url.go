@@ -6,8 +6,11 @@ import (
 	"sync"
 	"time"
 
+	aws_config "github.com/Improwised/quizz-app/api/config"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
+
+	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"go.uber.org/zap"
 )
@@ -24,8 +27,24 @@ type PresignURLService struct {
 	bucket   string
 }
 
-func NewFileUploadServices(bucket string) (*PresignURLService, error) {
-	cfg, err := config.LoadDefaultConfig(context.TODO())
+func NewFileUploadServices(awsConfig *aws_config.AWSConfig) (*PresignURLService, error) {
+	customResolver := aws.EndpointResolverWithOptionsFunc(func(service, region string, options ...interface{}) (aws.Endpoint, error) {
+		if service == s3.ServiceID {
+			return aws.Endpoint{
+				URL:               awsConfig.S3BucketEndpoint,
+				SigningRegion:     awsConfig.Region,
+				HostnameImmutable: true,
+			}, nil
+		}
+		return aws.Endpoint{}, &aws.EndpointNotFoundError{}
+	})
+
+	cfg, err := config.LoadDefaultConfig(context.TODO(),
+		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(awsConfig.AwsAccessKeyId, awsConfig.AWSSecretAccessKey, "")),
+		config.WithRegion(awsConfig.Region),
+		config.WithEndpointResolverWithOptions(customResolver),
+	)
+
 	if err != nil {
 		return nil, err
 	}
@@ -34,7 +53,7 @@ func NewFileUploadServices(bucket string) (*PresignURLService, error) {
 
 	return &PresignURLService{
 		s3Client: s3Client,
-		bucket:   bucket,
+		bucket:   awsConfig.BucketName,
 	}, nil
 }
 

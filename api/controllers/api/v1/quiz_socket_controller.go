@@ -64,7 +64,7 @@ func InitQuizConfig(db *goqu.Database, appConfig *config.AppConfig, logger *zap.
 	questionModel := models.InitQuestionModel(db, logger)
 	userQuizResponseModel := models.InitUserQuizResponseModel(db)
 
-	presignedURLSvc, err := services.NewFileUploadServices(appConfig.AWS.BucketName)
+	presignedURLSvc, err := services.NewFileUploadServices(&appConfig.AWS)
 	if err != nil {
 		return nil, err
 	}

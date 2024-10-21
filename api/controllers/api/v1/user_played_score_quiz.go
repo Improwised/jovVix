@@ -38,7 +38,7 @@ func NewUserPlayedQuizeController(goqu *goqu.Database, logger *zap.Logger, event
 
 	userQuizResponseModel := models.InitUserQuizResponseModel(goqu)
 
-	presignedURLSvc, err := services.NewFileUploadServices(appConfig.AWS.BucketName)
+	presignedURLSvc, err := services.NewFileUploadServices(&appConfig.AWS)
 	if err != nil {
 		return nil, err
 	}

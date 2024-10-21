@@ -34,7 +34,7 @@ func InitQuestionController(db *goqu.Database, logger *zap.Logger, event *events
 	questionModel := models.InitQuestionModel(db, logger)
 	activeQuizModel := models.InitActiveQuizModel(db, logger)
 
-	presignedURLSvc, err := services.NewFileUploadServices(appConfig.AWS.BucketName)
+	presignedURLSvc, err := services.NewFileUploadServices(&appConfig.AWS)
 	if err != nil {
 		return nil, err
 	}

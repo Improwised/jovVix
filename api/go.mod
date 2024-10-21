@@ -15,6 +15,10 @@ require (
 	github.com/ThreeDotsLabs/watermill-kafka/v2 v2.5.0
 	github.com/ThreeDotsLabs/watermill-redisstream v1.2.2
 	github.com/asaskevich/EventBus v0.0.0-20200907212545-49d423059eef
+	github.com/aws/aws-sdk-go-v2 v1.20.0
+	github.com/aws/aws-sdk-go-v2/config v1.18.32
+	github.com/aws/aws-sdk-go-v2/credentials v1.13.31
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.38.1
 	github.com/doug-martin/goqu/v9 v9.18.0
 	github.com/getsentry/sentry-go v0.27.0
 	github.com/go-resty/resty/v2 v2.7.0
@@ -46,10 +50,7 @@ require (
 
 require (
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
-	github.com/aws/aws-sdk-go-v2 v1.20.0 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.4.11 // indirect
-	github.com/aws/aws-sdk-go-v2/config v1.18.32 // indirect
-	github.com/aws/aws-sdk-go-v2/credentials v1.13.31 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.13.7 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.11.76 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.37 // indirect
@@ -60,7 +61,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.1.32 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.31 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.15.0 // indirect
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.38.1 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sso v1.13.1 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.15.1 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.21.1 // indirect

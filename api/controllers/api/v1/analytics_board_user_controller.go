@@ -28,7 +28,7 @@ func NewAnalyticsBoardUserController(goqu *goqu.Database, logger *zap.Logger, ev
 		return nil, err
 	}
 
-	presignedURLSvc, err := services.NewFileUploadServices(appConfig.AWS.BucketName)
+	presignedURLSvc, err := services.NewFileUploadServices(&appConfig.AWS)
 	if err != nil {
 		return nil, err
 	}
