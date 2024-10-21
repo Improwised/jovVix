@@ -3,6 +3,7 @@
 import { useNuxtApp } from "nuxt/app";
 import { useToast } from "vue-toastification";
 import { useMusicStore } from "~~/store/music";
+const { base_url } = useRuntimeConfig().public;
 const musicStore = useMusicStore();
 const { getMusic } = musicStore;
 
@@ -17,6 +18,7 @@ const toast = useToast();
 import { useInvitationCodeStore } from "~/store/invitationcode.js";
 import { useListUserstore } from "~/store/userlist";
 import { storeToRefs } from "pinia";
+import usecopyToClipboard from "~~/composables/copy_to_clipboard";
 
 const invitationCodeStore = useInvitationCodeStore();
 const { invitationCode } = storeToRefs(invitationCodeStore);
@@ -80,7 +82,7 @@ onMounted(() => {
   copyBtn = document.getElementById("OTP-input-container");
   if (process.client && copyBtn) {
     copyBtn.addEventListener("click", () => {
-      copyToClipboard(code.value);
+      usecopyToClipboard(code.value);
     });
   }
 });
@@ -120,17 +122,6 @@ watch(
   },
   { deep: true, immediate: true }
 );
-
-function copyToClipboard(text) {
-  navigator.clipboard
-    .writeText(text)
-    .then(() => {
-      toast.success("Code copied to clipboard");
-    })
-    .catch((error) => {
-      toast.warning("Error copying to clipboard", error);
-    });
-}
 </script>
 
 <template>
@@ -144,7 +135,7 @@ function copyToClipboard(text) {
       <div class="mb-3 pe-3">
         <label for="code" class="form-label">Invitation Code</label>
         <div class="d-flex align-items-center justify-content-center gap-2">
-          <span id="code" class="code display-2">{{ code }}</span>
+          <h2 class="display-4 code">{{ code }}</h2>
           <font-awesome-icon
             id="OTP-input-container"
             icon="fa-solid fa-copy"
@@ -153,6 +144,10 @@ function copyToClipboard(text) {
             class="copy-icon"
             role="button"
           />
+        </div>
+        <div class="divider mb-5">OR</div>
+        <div class="d-flex align-items-center justify-content-center">
+          <QrCode :scan-u-r-l="`${base_url}/join`" :quiz-code="code" />
         </div>
       </div>
       <button type="submit" class="btn btn-primary btn-lg bg-primary">
@@ -177,21 +172,6 @@ function copyToClipboard(text) {
 }
 
 .code {
-  color: #000000;
-  padding: 20px;
-  letter-spacing: 1rem;
-}
-
-@media (max-width: 768px) {
-  .code {
-    letter-spacing: 0.4rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .code {
-    padding: 15px;
-    letter-spacing: 0.3rem;
-  }
+  letter-spacing: 0.5rem;
 }
 </style>

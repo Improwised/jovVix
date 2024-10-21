@@ -86,9 +86,11 @@ import { getRandomAvatarName } from "~~/composables/avatar";
 const userData = useUsersStore();
 const { setUserData } = userData;
 const pageLoading = ref(true);
+const route = useRoute();
 
 // Assuming these are imported from external libraries or mixins
-const code = ref("");
+const codeparam = computed(() => route.query.code || "");
+const code = ref(codeparam.value);
 const username = ref("");
 const firstname = ref({});
 const isUserLoggedIn = ref(false);
