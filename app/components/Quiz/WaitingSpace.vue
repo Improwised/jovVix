@@ -3,7 +3,7 @@
 import { useNuxtApp } from "nuxt/app";
 import { useToast } from "vue-toastification";
 import { useMusicStore } from "~~/store/music";
-const { base_url } = useRuntimeConfig().public;
+const { kratos_url } = useRuntimeConfig().public;
 const musicStore = useMusicStore();
 const { getMusic } = musicStore;
 
@@ -147,7 +147,7 @@ watch(
         </div>
         <div class="divider mb-5">OR</div>
         <div class="d-flex align-items-center justify-content-center">
-          <QrCode :scan-u-r-l="`${base_url}/join`" :quiz-code="code" />
+          <QrCode :scan-u-r-l="`${kratos_url}/join`" :quiz-code="code" />
         </div>
       </div>
       <button type="submit" class="btn btn-primary btn-lg bg-primary">
