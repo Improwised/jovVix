@@ -181,6 +181,7 @@ function handleSkip(e) {
           name="answer"
           :value="{ key }"
           :disabled="isSubmitted"
+          @change="handleSubmit"
         />
         <label :for="`${key}`" class="option-box wrong-option">
           <Option
@@ -191,15 +192,6 @@ function handleSkip(e) {
         </label>
       </div>
     </div>
-    <button
-      v-if="!isAdmin"
-      type="button"
-      class="btn text-white btn-primary mt-3"
-      :disabled="isSubmitted"
-      @click="handleSubmit"
-    >
-      submit
-    </button>
     <button
       v-if="isAdmin"
       type="button"

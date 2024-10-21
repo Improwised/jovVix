@@ -1,4 +1,7 @@
 import constants from "~~/config/constants";
+import { useSessionStore } from "~~/store/session";
+const sessionStore = useSessionStore();
+const { setSession } = sessionStore;
 
 export default class QuizHandler {
   constructor(socket_url, identifier, componentHandler, others) {
@@ -233,6 +236,7 @@ export default class QuizHandler {
   }
 
   async handleTerminate() {
+    setSession(null);
     let error;
     try {
       const response = await useFetch(this.api_url + "/quiz/terminate", {

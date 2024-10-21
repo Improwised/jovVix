@@ -1,6 +1,9 @@
 <script setup>
 import { useToast } from "vue-toastification";
 import { useListUserstore } from "~/store/userlist";
+import { useSessionStore } from "~~/store/session";
+const sessionStore = useSessionStore();
+const { setSession } = sessionStore;
 const listUserStore = useListUserstore();
 const { removeAllUsers } = listUserStore;
 let urls = useRuntimeConfig().public;
@@ -49,6 +52,11 @@ const handleStartDemo = async () => {
   setSocketObject(null);
 
   router.push(`/admin/arrange/${activeQuizId.value}`);
+
+  // add session in store after 1 second
+  setTimeout(() => {
+    setSession(activeQuizId.value);
+  }, 1000);
 };
 </script>
 <template>
