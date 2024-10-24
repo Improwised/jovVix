@@ -443,11 +443,6 @@ func (qc *quizSocketController) Arrange(c *websocket.Conn) {
 	defer func() {
 		isConnected = false
 		time.Sleep(1 * time.Second)
-		qc.logger.Debug("deactivating quiz - " + session.ID.String())
-		err := qc.activeQuizModel.Deactivate(session.ID)
-		if err != nil {
-			qc.logger.Error("error while deactivating quiz", zap.Error(err))
-		}
 		c.Close()
 		qc.logger.Info("connection closed by admin")
 	}()

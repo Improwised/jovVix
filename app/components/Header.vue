@@ -91,7 +91,7 @@
     </nav>
   </div>
   <div
-    v-if="activeSession"
+    v-if="activeSession && isKratosUser"
     class="alert bg-danger text-black d-flex justify-content-center align-items-center"
     role="alert"
   >
