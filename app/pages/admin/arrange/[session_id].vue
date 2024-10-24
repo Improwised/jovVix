@@ -42,8 +42,8 @@ const confirmNeeded = reactive({
 const currentComponent = ref("Loading");
 const adminOperationHandler = ref();
 const analysisTab = ref("ranking");
-
 const session_id = route.params.session_id;
+const runningQuizJoinUser = ref(0);
 
 // event handlers
 const handleCustomChange = (isFullScreenEvent) => {
@@ -108,6 +108,9 @@ const handleQuizEvents = async (message) => {
     message.action === app.$ActionAnserSubmittedByUser
   ) {
     addUserSubmittedAnswer(message.data);
+  } else if (message.component === "Running") {
+    runningQuizJoinUser.value = message.data;
+    toast.info("user join the quiz");
   } else {
     if (message.component != "Question") {
       resetUsersSubmittedAnswers();
@@ -235,6 +238,8 @@ definePageMeta({
     <QuizListUserAnswered
       v-if="currentComponent == 'Question' && data?.event !== '5_sec_counter'"
       :data="data"
+      :running-quiz-join-user="runningQuizJoinUser"
+      @auto-skip="askSkip"
     ></QuizListUserAnswered>
   </Playground>
 </template>

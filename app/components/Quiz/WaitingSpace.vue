@@ -128,7 +128,7 @@ watch(
 
 <template>
   <div
-    id="waitinspace"
+    id="waitingspace"
     class="modal fade"
     tabindex="-1"
     aria-labelledby="exampleModalLabel"
@@ -145,27 +145,15 @@ watch(
     <form @submit="start_quiz">
       <div class="mb-3 pe-3">
         <div class="d-flex justify-content-between">
-          <label for="code" class="form-label">Invitation Code</label>
+          <label for="code" class="form-label">Link</label>
           <button
             type="button"
             data-bs-toggle="modal"
-            data-bs-target="#waitinspace"
+            data-bs-target="#waitingspace"
           >
             <font-awesome-icon :icon="['fas', 'expand']" />
           </button>
         </div>
-        <div class="d-flex align-items-center justify-content-center gap-2">
-          <h2 class="display-4 code">{{ code }}</h2>
-          <font-awesome-icon
-            id="OTP-input-container"
-            icon="fa-solid fa-copy"
-            size="xl"
-            style="color: #0c6efd"
-            class="copy-icon"
-            role="button"
-          />
-        </div>
-        <div class="divider my-3 text-dark">Link</div>
         <div class="d-flex align-items-center justify-content-center gap-2">
           <div class="fs-1 text-dark text-decoration-underline">
             quiz.i8d.in/join
@@ -179,9 +167,21 @@ watch(
             role="button"
           />
         </div>
+        <div class="divider my-3 text-dark">Invitation Code</div>
+        <div class="d-flex align-items-center justify-content-center gap-2">
+          <h2 class="display-4 code">{{ code }}</h2>
+          <font-awesome-icon
+            id="OTP-input-container"
+            icon="fa-solid fa-copy"
+            size="xl"
+            style="color: #0c6efd"
+            class="copy-icon"
+            role="button"
+          />
+        </div>
         <div class="divider my-3">QR</div>
         <div class="d-flex align-items-center justify-content-center">
-          <QrCode :scan-u-r-l="`${kratos_url}/join`" :quiz-code="code" />
+          <QrCode :scan-u-r-l="`${base_url}/join`" :quiz-code="code" />
         </div>
       </div>
       <button type="submit" class="btn btn-primary btn-lg bg-primary">

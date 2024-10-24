@@ -101,6 +101,7 @@ const (
 	Question = "Question"
 	Score    = "Score"
 	Loading  = "Loading"
+	Running  = "Running"
 
 	ToUser  = 1
 	ToAdmin = 2
@@ -153,6 +154,7 @@ const (
 	ActiveQuizObj                 = "current active quiz obj"
 	NoPlayerFound                 = "no player found"
 	StartQuizByAdminNoPlayerFound = "start quiz by admin but no player found"
+	JoinUserOnRunningQuiz         = "join_user_on_running_quiz"
 
 	// Event 5. Join quiz <User>
 	EventJoinQuiz                  = "invitation_code_validation"
@@ -256,6 +258,7 @@ const (
 
 // Channel name for redis pubsub
 const (
-	ChannelUserJoin  = "user_joined"
-	ChannelSetAnswer = "set_answer"
+	ChannelUserJoin       = "user_joined"
+	ChannelUserDisconnect = "user_disconnect"
+	ChannelSetAnswer      = "set_answer"
 )

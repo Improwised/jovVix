@@ -9,6 +9,8 @@ const usersThatSubmittedAnswer = useUserThatSubmittedAnswer();
 const { usersSubmittedAnswers } = usersThatSubmittedAnswer;
 const totalUser = ref(0);
 
+const emits = defineEmits(["autoSkip"]);
+
 const props = defineProps({
   data: {
     default: () => {
@@ -16,6 +18,11 @@ const props = defineProps({
     },
     type: Object,
     required: true,
+  },
+  runningQuizJoinUser: {
+    type: Number,
+    required: false,
+    default: 0,
   },
 });
 
@@ -37,6 +44,28 @@ function handleCountUser(message) {
     totalUser.value = message.data.totalJoinUser;
   }
 }
+
+// automatically skip the question when all users have submitted their answers.
+watch(
+  [totalUser, usersSubmittedAnswers],
+  () => {
+    if (totalUser.value <= usersSubmittedAnswers.length) {
+      emits("autoSkip");
+    }
+  },
+  { immediate: true, deep: true }
+);
+
+// change the total user if new user is join
+watch(
+  () => props.runningQuizJoinUser,
+  (message) => {
+    if (message && totalUser.value < message) {
+      totalUser.value = message;
+    }
+  },
+  { deep: true, immediate: true }
+);
 </script>
 
 <template>

@@ -5,7 +5,7 @@ export default function usecopyToClipboard(text) {
   navigator.clipboard
     .writeText(text)
     .then(() => {
-      toast.success("Code copied to clipboard");
+      toast.success("Copied to clipboard");
     })
     .catch((error) => {
       toast.warning("Error copying to clipboard", error);
