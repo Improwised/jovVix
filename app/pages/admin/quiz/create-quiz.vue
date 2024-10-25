@@ -70,7 +70,10 @@ const uploadQuizAndQuestions = async (e) => {
             return;
           }
           if (response.status == 200) {
-            requiredImage.value = response._data.data?.data;
+            const data = response._data.data?.data;
+            if (data) {
+              requiredImage.value = data;
+            }
             requestPending.value = false;
           }
         },

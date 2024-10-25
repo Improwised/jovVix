@@ -1,7 +1,8 @@
 <template>
+  <div class="bg-image z-1"></div>
   <div class="modal-dialog modal-fullscreen modal-dialog-centered">
     <div class="modal-content">
-      <div class="modal-header">
+      <div class="modal-header z-2">
         <h1 id="exampleModalLabel" class="modal-title fs-3">Join Quiz</h1>
         <button
           type="button"
@@ -10,8 +11,8 @@
           aria-label="Close"
         ></button>
       </div>
-      <div class="modal-body">
-        <div class="row mt-5">
+      <div class="modal-body d-flex align-items-center justify-content-center">
+        <div class="row w-100 z-2">
           <div
             class="col-md-6 p-5 d-flex align-items-center justify-content-center"
           >
@@ -50,10 +51,10 @@
               </div>
             </form>
           </div>
-          <div class="col-md-6">
-            <div
-              class="d-flex align-items-center justify-content-center qr-scale-down"
-            >
+          <div
+            class="col-md-6 d-flex align-items-center justify-content-center"
+          >
+            <div class="qr-scale-down">
               <QrCode
                 :scan-u-r-l="props.joinURL"
                 :quiz-code="code"
@@ -100,6 +101,24 @@ onMounted(() => {
 <style scoped>
 .scale-modal {
   transform: scale(2);
+}
+
+.bg-image {
+  background-image: url("@/assets/images/que-web-bg.png");
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  min-width: 100%;
+  min-height: 100%;
+  width: 100%;
+  height: auto;
+  opacity: 0.2;
+}
+
+@media (max-width: 576px) {
+  .bg-image {
+    background-image: url("@/assets/images/Que-mob-bg.png");
+  }
 }
 
 .code {

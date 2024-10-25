@@ -26,7 +26,7 @@
           <!-- join quiz button -->
           <li class="nav-item mb-1">
             <button
-              class="btn p-2 border border-danger btn-light nav-link btn-link mx-2"
+              class="btn px-4 border border-danger btn-light nav-link btn-link mx-2"
               @click="navigate('/join')"
             >
               Join Quiz
@@ -35,7 +35,7 @@
           <!-- create quiz button -->
           <li v-if="isKratosUser" class="nav-item mb-1">
             <button
-              class="btn p-2 border border-danger btn-light nav-link btn-link mx-2"
+              class="btn px-4 border border-danger btn-light nav-link btn-link mx-2"
               @click="navigate('/admin/quiz/list-quiz')"
             >
               Create Quiz
@@ -44,7 +44,7 @@
           <!-- Reports -->
           <li v-if="isKratosUser" class="nav-item mb-1">
             <button
-              class="btn p-2 border bg-light-primary nav-link btn-link mx-2"
+              class="btn px-4 border bg-light-primary nav-link btn-link mx-2"
               @click="navigate('/admin/reports')"
             >
               Reports
@@ -54,14 +54,14 @@
           <li class="nav-item mb-1">
             <button
               v-if="!isKratosUser"
-              class="btn p-2 border bg-light-primary nav-link btn-link mx-2"
+              class="btn px-4 border bg-light-primary nav-link btn-link mx-2"
               @click="navigate('/account/login')"
             >
               Log in
             </button>
             <button
               v-else
-              class="btn p-2 border bg-light-primary nav-link btn-link mx-2"
+              class="btn px-4 border bg-light-primary nav-link btn-link mx-2"
               @click="navigate('/admin')"
             >
               My Profile
@@ -71,7 +71,7 @@
           <li class="nav-item mb-1">
             <button
               v-if="!isKratosUser"
-              class="btn p-2 border bg-primary nav-link btn-link mx-2"
+              class="btn px-4 border bg-primary nav-link btn-link mx-2"
               @click="navigate('/account/register')"
             >
               Sign up
@@ -80,7 +80,7 @@
           <!-- Log out button -->
           <li v-if="isKratosUser" class="nav-item mb-1">
             <button
-              class="btn p-2 border bg-primary nav-link btn-link mx-2"
+              class="btn px-4 border bg-primary nav-link btn-link mx-2"
               @click="handleLogout()"
             >
               Log Out
@@ -96,24 +96,31 @@
     role="alert"
   >
     <div class="doodle">&#128641;</div>
-    <span> Your quiz is still runnig... check it out! </span>
-    <span
-      type="button"
-      class="text-end ml-2"
-      @click="navigateTo(`/admin/arrange/${activeSession}`)"
-    >
-      <font-awesome-icon :icon="['fas', 'arrow-up-right-from-square']" />
-    </span>
-    <span class="text-end ml-5">
-      <span>If you want to stop the running quiz please click here</span>
+    <div class="row w-100">
+      <div class="col-6 text-end">
+        <span>
+          <span>Your quiz is still runnig... check it out!</span>
+          <font-awesome-icon
+            type="button"
+            class="ml-2 scale-110"
+            :icon="['fas', 'arrow-up-right-from-square']"
+            @click="navigateTo(`/admin/arrange/${activeSession}`)"
+          />
+        </span>
+      </div>
+      <div class="col-6">
+        <span class="ml-5">
+          <span>If you want to stop the running quiz please click here</span>
 
-      <font-awesome-icon
-        type="button"
-        class="ml-2"
-        :icon="['fas', 'ban']"
-        @click="stopQuiz"
-      />
-    </span>
+          <font-awesome-icon
+            type="button"
+            class="ml-2 scale-110"
+            :icon="['fas', 'ban']"
+            @click="stopQuiz"
+          />
+        </span>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -166,6 +173,10 @@ const stopQuiz = () => {
   100% {
     left: -50px;
   }
+}
+
+.scale-110 {
+  transform: scale(1.2);
 }
 
 .doodle {

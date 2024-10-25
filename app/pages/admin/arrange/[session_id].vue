@@ -11,6 +11,9 @@ import { useInvitationCodeStore } from "~/store/invitationcode";
 import { useListUserstore } from "~/store/userlist";
 import { useUserThatSubmittedAnswer } from "~/store/userSubmittedAnswer";
 import { storeToRefs } from "pinia";
+import { useSessionStore } from "~~/store/session";
+const sessionStore = useSessionStore();
+const { setSession } = sessionStore;
 
 const invitationCodeStore = useInvitationCodeStore();
 const { invitationCode } = storeToRefs(invitationCodeStore);
@@ -90,6 +93,7 @@ const handleQuizEvents = async (message) => {
   } else if (message.event == app.$TerminateQuiz) {
     invitationCode.value = undefined;
     removeAllUsers();
+    setSession(null);
     return await router.push(
       "/admin/scoreboard?winner_ui=true&aqi=" + session_id
     );
