@@ -51,7 +51,7 @@ func ValidateCSVFileFormat(fileName string) ([]Question, error) {
 	return questions, nil
 }
 
-func ExtractQuestionsFromCSV(questions []Question) ([]models.Question, error) {
+func ExtractQuestionsFromCSV(questions []Question, questionTimeLimit string) ([]models.Question, error) {
 	typeMapping := map[string]int{
 		"single answer": 1,
 		"survey":        2,
@@ -97,14 +97,10 @@ func ExtractQuestionsFromCSV(questions []Question) ([]models.Question, error) {
 			fmt.Sscanf(u.Points, "%d", &points)
 		}
 
-		var duration int
-		durationFromEnv := os.Getenv("QUESTION_TIME_LIMIT")
-		if durationFromEnv == "" {
-			duration = 30
-		} else {
-			duration, err = strconv.Atoi(durationFromEnv)
-			if err != nil {
-				duration = 30
+		duration := 30
+		if questionTimeLimit != "" {
+			if parsedDuration, err := strconv.Atoi(questionTimeLimit); err == nil {
+				duration = parsedDuration
 			}
 		}
 

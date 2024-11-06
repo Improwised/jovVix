@@ -36,9 +36,9 @@
           <li v-if="isKratosUser" class="nav-item mb-1">
             <button
               class="btn px-4 border border-danger btn-light nav-link btn-link mx-2"
-              @click="navigate('/admin/quiz/list-quiz')"
+              @click="navigate('/admin/quiz')"
             >
-              Create Quiz
+              Quizzes
             </button>
           </li>
           <!-- Reports -->

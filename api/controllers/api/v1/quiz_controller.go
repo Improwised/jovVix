@@ -25,6 +25,7 @@ type QuizController struct {
 	activeQuizModel *models.ActiveQuizModel
 	presignedURLSvc *services.PresignURLService
 	quizSvc         *services.QuizService
+	appConfig       *config.AppConfig
 	logger          *zap.Logger
 	event           *events.Events
 }
@@ -48,6 +49,7 @@ func InitQuizController(db *goqu.Database, logger *zap.Logger, event *events.Eve
 		activeQuizModel: activeQuizModel,
 		presignedURLSvc: presignedURLSvc,
 		quizSvc:         quizSvc,
+		appConfig:       appConfig,
 		logger:          logger,
 		event:           event,
 	}, nil
@@ -205,7 +207,7 @@ func (ctrl *QuizController) CreateQuizByCsv(c *fiber.Ctx) error {
 		return utils.JSONFail(c, http.StatusBadRequest, err.Error())
 	}
 
-	validQuestions, err := utils.ExtractQuestionsFromCSV(questions)
+	validQuestions, err := utils.ExtractQuestionsFromCSV(questions, ctrl.appConfig.Quiz.QuestionTimeLimit)
 	if err != nil {
 		ctrl.logger.Error("file validation failed", zap.Error(err))
 		return utils.JSONFail(c, http.StatusBadRequest, constants.ErrParsingFile)

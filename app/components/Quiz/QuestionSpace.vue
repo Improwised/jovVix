@@ -41,9 +41,7 @@ const time = ref(0);
 const progressValue = computed(() => {
   return (time.value * 100) / question.value.duration;
 });
-const progressQuiz = computed(() =>
-  ((question.value.no / question.value.totalQuestions) * 100).toFixed(0)
-);
+
 const isSubmitted = ref(false);
 
 // watchers
@@ -145,18 +143,6 @@ function handleSkip(e) {
         {{ question.duration - time }}
       </v-progress-circular>
     </template>
-    <div>
-      <div class="progress">
-        <div
-          class="progress-bar"
-          role="progressbar"
-          :aria-valuenow="progressQuiz"
-          aria-valuemin="0"
-          aria-valuemax="100"
-          :style="{ width: ` ${progressQuiz}%` }"
-        ></div>
-      </div>
-    </div>
 
     <!-- Question -->
     <QuizQuestionAnalysis
@@ -176,8 +162,8 @@ function handleSkip(e) {
           v-if="!isAdmin"
           :id="`${key}`"
           v-model="answer"
-          class="option-radio"
           type="radio"
+          class="option"
           name="answer"
           :value="{ key }"
           :disabled="isSubmitted"
@@ -229,10 +215,6 @@ function handleSkip(e) {
   border: 2px solid var(--bs-light-primary);
 }
 
-.option-radio {
-  -webkit-appearance: none;
-}
-
 input[type="radio"]:checked + .option-box {
   border-color: #3c3535eb;
   transform: scale(1.05);
@@ -241,5 +223,9 @@ input[type="radio"]:checked + .option-box {
 
 input[type="radio"]:not(checked) + .option-box {
   opacity: 0.7;
+}
+
+.option {
+  display: none;
 }
 </style>

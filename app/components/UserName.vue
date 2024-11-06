@@ -23,7 +23,7 @@ const avatar = computed(() => {
     <div class="row justify-content-center">
       <div class="col-6 col-md-4 mt-5 d-flex justify-content-center">
         <div
-          class="border border-1 px-7 py-2 py-md-4 border-radius d-flex align-items-center"
+          class="border border-1 p-1 border-radius d-flex align-items-center"
         >
           <!-- its added here beacause avatar value return empty value -->
           <img

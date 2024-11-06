@@ -108,7 +108,6 @@ onUnmounted(() => {
     emits("terminateQuiz");
   }
   if (props.isAdmin) {
-    invitationCode.value = null;
     removeAllUsers();
   }
 });

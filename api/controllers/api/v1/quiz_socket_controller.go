@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"sync"
 	"time"
 
@@ -943,6 +944,15 @@ func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.Wa
 		qc.logger.Error("error during get userResponses", zap.Error(err))
 	}
 
+	scoreboardMaxDurationEnv := qc.appConfig.Quiz.ScoreboardMaxDuration
+	scoreboardMaxDuration := 20
+
+	if scoreboardMaxDurationEnv != "" {
+		if parsedDuration, err := strconv.Atoi(scoreboardMaxDurationEnv); err == nil {
+			scoreboardMaxDuration = parsedDuration
+		}
+	}
+
 	response.Data = map[string]any{
 		"quiz_id":        question.QuizId,
 		"rankList":       userRankBoard,
@@ -952,7 +962,7 @@ func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.Wa
 		"question_media": question.QuestionMedia,
 		"options_media":  question.OptionsMedia,
 		"resource":       question.Resource.String,
-		"duration":       20,
+		"duration":       scoreboardMaxDuration,
 		"totalQuestions": totalQuestions,
 		"userResponses":  userResponses,
 	}
@@ -967,7 +977,7 @@ func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.Wa
 		"question_media": question.QuestionMedia,
 		"options_media":  question.OptionsMedia,
 		"resource":       question.Resource.String,
-		"duration":       20,
+		"duration":       scoreboardMaxDuration,
 		"totalQuestions": totalQuestions,
 	}
 	shareEvenWithUser(c, qc, response, constants.EventShowScore, session.ID.String(), int(session.InvitationCode.Int32), constants.ToUser)
@@ -975,8 +985,8 @@ func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.Wa
 	wgForSkipTimer := &sync.WaitGroup{}
 	wgForSkipTimer.Add(1)
 
-	// skip 20 sec timer
-	go handleSkipTimer(wgForSkipTimer, chanSkipTimer)
+	// skip timer
+	go handleSkipTimer(wgForSkipTimer, chanSkipTimer, scoreboardMaxDuration)
 	wgForSkipTimer.Wait()
 }
 
@@ -1004,16 +1014,16 @@ func terminateQuiz(c *websocket.Conn, qc *quizSocketController, response *QuizSe
 	}
 }
 
-func handleSkipTimer(wg *sync.WaitGroup, chanSkipTimer chan bool) {
+func handleSkipTimer(wg *sync.WaitGroup, chanSkipTimer chan bool, scoreboardMaxDuration int) {
 	defer wg.Done()
 
-	isTimeout := time.NewTicker(time.Duration(20) * time.Second)
+	isTimeout := time.NewTicker(time.Duration(scoreboardMaxDuration) * time.Second)
 
 	for {
 		select {
 		case <-isTimeout.C:
 			return
-		case isSkip := <-chanSkipTimer: // skip 20 sec if admin clicks on skip button
+		case isSkip := <-chanSkipTimer: // skip if admin clicks on skip button
 			if isSkip {
 				return
 			}
