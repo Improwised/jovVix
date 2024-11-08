@@ -1,6 +1,6 @@
 <template>
   <div
-    class="d-flex justify-content-center align-items-center flex-wrap min-vh-100"
+    class="d-flex justify-content-center align-items-center flex-wrap quiz-container"
   >
     <ActionCard
       action-title="Create New Quiz"
@@ -29,5 +29,9 @@ import ActionCard from "~~/components/Quiz/ActionCard.vue";
   height: 250px;
   width: 200px;
   border: none;
+}
+
+.quiz-container {
+  min-height: 90vh;
 }
 </style>

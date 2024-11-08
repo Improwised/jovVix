@@ -33,6 +33,7 @@ const userPlayedQuiz = computed(() => route.query.user_played_quiz);
 const sessionId = computed(() => route.query.session_id);
 
 const selectedAnswer = ref(0);
+const quizState = ref(app.$Running);
 
 // event handlers
 const handleCustomChange = (isFullScreenEvent) => {
@@ -83,6 +84,12 @@ const handleQuizEvents = async (message) => {
     );
   } else if (message.data == app.$AdminDisconnected) {
     toast.warning(app.$AdminDisconnectedMessage);
+  } else if (message.data == app.$PauseQuiz) {
+    quizState.value = app.$Pause;
+    toast.info(app.$PauseQuizMessage);
+  } else if (message.data == app.$ResumeQuiz) {
+    quizState.value = app.$Running;
+    toast.success(app.$ResumeQuizMessage);
   } else if (
     message.status == app.$Fail &&
     message.event == app.$InvitationCodeValidation
@@ -105,6 +112,7 @@ const handleQuizEvents = async (message) => {
     );
   } else {
     if (message?.component === "Question") {
+      quizState.value = app.$Running;
       selectedAnswer.value = 0;
     }
     data.value = message;
@@ -209,6 +217,7 @@ onBeforeUnmount(() => {
         :user-name="username"
         :is-admin="false"
         :selected-answer="selectedAnswer"
+        :quiz-state="quizState"
       ></QuizScoreSpace>
     </Playground>
   </div>

@@ -47,6 +47,10 @@ const adminOperationHandler = ref();
 const analysisTab = ref("ranking");
 const session_id = route.params.session_id;
 const runningQuizJoinUser = ref(0);
+const isPauseQuiz = ref(false);
+const quizState = computed(() =>
+  isPauseQuiz.value ? app.$Pause : app.$Running
+);
 
 // event handlers
 const handleCustomChange = (isFullScreenEvent) => {
@@ -180,7 +184,13 @@ const askSkip = () => {
 
 // askFor20SecTimerToSkip
 const askSkipTimer = () => {
+  isPauseQuiz.value = false;
   adminOperationHandler.value.requestSkipTimer();
+};
+
+const handlePauseQuiz = () => {
+  isPauseQuiz.value = !isPauseQuiz.value;
+  adminOperationHandler.value.requestPauseQuiz(isPauseQuiz.value);
 };
 
 const confirmSkip = (message) => {
@@ -208,8 +218,26 @@ definePageMeta({
 <template>
   <div class="bg-image"></div>
   <Playground :full-screen-enabled="myRef" @is-full-screen="handleCustomChange">
-    <div v-if="currentComponent !== 'Waiting'" class="code-display">
-      <div class="digit-box">Code: {{ invitationCode }}</div>
+    <div
+      v-if="currentComponent !== 'Waiting'"
+      class="code-display p-3 d-flex align-items-center justify-content-end"
+    >
+      <div class="d-flex align-items-center gap-2 me-3">
+        <span class="text-muted fw-bold fs-2">Code:</span>
+        <span class="fw-bold fs-2">{{ invitationCode }}</span>
+      </div>
+      <div v-if="currentComponent == 'Score'">
+        <button
+          v-if="isPauseQuiz"
+          class="btn btn-danger"
+          @click="handlePauseQuiz"
+        >
+          START
+        </button>
+        <button v-else class="btn btn-danger" @click="handlePauseQuiz">
+          STOP
+        </button>
+      </div>
     </div>
     <UtilsConfirmModal
       v-if="confirmNeeded.show"
@@ -238,6 +266,7 @@ definePageMeta({
       :data="data"
       :is-admin="true"
       :analysis-tab="analysisTab"
+      :quiz-state="quizState"
       @change-analysis-tab="handleAnalysisTabChange"
       @ask-skip-timer="askSkipTimer"
     ></QuizScoreSpace>
@@ -269,29 +298,5 @@ definePageMeta({
   .bg-image {
     background-image: url("@/assets/images/Que-mob-bg.png");
   }
-}
-.code-display {
-  display: flex;
-  justify-content: end;
-  align-items: center;
-  gap: 8px;
-  padding: 20px;
-}
-
-/* Individual digit box styling */
-.digit-box {
-  padding: 10px;
-  font-size: 2rem;
-  font-weight: bold;
-  border-radius: 10px;
-  border: 1px solid rgb(212, 212, 212);
-  background-color: #ffffff;
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-/* Optional hover effect */
-.digit-box:hover {
-  transform: scale(1.05);
-  transition: 0.2s;
 }
 </style>

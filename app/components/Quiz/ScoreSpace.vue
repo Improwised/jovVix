@@ -1,4 +1,5 @@
 <script setup>
+const app = useNuxtApp();
 import AnswerSubmissionChart from "../AnswerSubmissionChart.vue";
 const props = defineProps({
   data: {
@@ -27,6 +28,11 @@ const props = defineProps({
     type: String,
     default: "",
   },
+  quizState: {
+    type: String,
+    required: false,
+    default: "",
+  },
 });
 
 const emits = defineEmits(["askSkipTimer", "changeAnalysisTab"]);
@@ -37,11 +43,14 @@ const isSkip = ref(false);
 function handleTimer() {
   clearInterval(timer.value);
   timer.value = setInterval(() => {
-    time.value += 0.1;
-    if (time.value == props.data.data.duration + 1) {
-      clearInterval(timer.value);
-      time.value = -1;
-      timer.value = null;
+    const isPauseQuiz = props.quizState === app.$Pause;
+    if (!isPauseQuiz) {
+      time.value += 0.1;
+      if (time.value == props.data.data.duration + 1) {
+        clearInterval(timer.value);
+        time.value = -1;
+        timer.value = null;
+      }
     }
   }, 100);
 }

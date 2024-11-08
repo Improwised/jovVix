@@ -200,10 +200,12 @@ const (
 	ErrPublishAnswer          = "error while publish answer in redis"
 
 	// Event skip
-	EventSkipAsked = "ask_skip" // use by web
-	WarnSkip       = "some player didn't submit their answer yet. would you want to skip?"
-	EventForceSkip = "ask_force_skip"
-	EventSkipTimer = "skip_timer"
+	EventSkipAsked  = "ask_skip" // use by web
+	WarnSkip        = "some player didn't submit their answer yet. would you want to skip?"
+	EventForceSkip  = "ask_force_skip"
+	EventSkipTimer  = "skip_timer"
+	EventPauseQuiz  = "pause_quiz"
+	EventResumeQuiz = "resume_quiz"
 
 	// Event 8. Get score page
 	EventShowScore  = "show_score"

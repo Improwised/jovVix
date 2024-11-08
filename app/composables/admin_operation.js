@@ -91,4 +91,8 @@ export default class AdminOperations extends QuizHandler {
     super.onClose(event);
     setSocketObject(null);
   }
+
+  requestPauseQuiz(isPause) {
+    this.sendMessage(this.currentComponent, constants.PauseQuiz, isPause);
+  }
 }

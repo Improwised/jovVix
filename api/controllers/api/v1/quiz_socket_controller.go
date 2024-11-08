@@ -772,9 +772,10 @@ func questionAndScoreHandler(c *websocket.Conn, qc *quizSocketController, respon
 	chanNextEvent := make(chan bool)
 	chanSkipEvent := make(chan bool)
 	chanSkipTimer := make(chan bool)
+	chanPauseQuiz := make(chan bool)
 	var isQuizEnd bool = false
 
-	go listenAllEvents(c, qc, response, session, chanNextEvent, chanSkipEvent, chanSkipTimer, isQuizEnd)
+	go listenAllEvents(c, qc, response, session, chanNextEvent, chanSkipEvent, chanSkipTimer, chanPauseQuiz, isQuizEnd)
 
 	// handle question
 	var isFirst bool = lastQuestionDeliveryTime.Valid
@@ -783,9 +784,9 @@ func questionAndScoreHandler(c *websocket.Conn, qc *quizSocketController, respon
 		wg.Add(1)
 		if isFirst { // handle running question
 			isFirst = false
-			sendSingleQuestion(c, qc, &wg, response, session, question, lastQuestionDeliveryTime, chanSkipEvent, chanSkipTimer, totalQuestion)
+			sendSingleQuestion(c, qc, &wg, response, session, question, lastQuestionDeliveryTime, chanSkipEvent, chanSkipTimer, chanPauseQuiz, totalQuestion)
 		} else { // handle new question
-			sendSingleQuestion(c, qc, &wg, response, session, question, sql.NullTime{}, chanSkipEvent, chanSkipTimer, totalQuestion)
+			sendSingleQuestion(c, qc, &wg, response, session, question, sql.NullTime{}, chanSkipEvent, chanSkipTimer, chanPauseQuiz, totalQuestion)
 		}
 		err := utils.JSONSuccessWs(c, constants.EventNextQuestionAsked, response)
 
@@ -808,7 +809,7 @@ func questionAndScoreHandler(c *websocket.Conn, qc *quizSocketController, respon
 	}
 }
 
-func listenAllEvents(c *websocket.Conn, qc *quizSocketController, response *QuizSendResponse, session models.ActiveQuiz, chanNextEvent chan bool, chanSkipEvent chan bool, chanSkipTimer chan bool, isQuizEnd bool) {
+func listenAllEvents(c *websocket.Conn, qc *quizSocketController, response *QuizSendResponse, session models.ActiveQuiz, chanNextEvent chan bool, chanSkipEvent chan bool, chanSkipTimer chan bool, chanPauseQuiz chan bool, isQuizEnd bool) {
 	for {
 		message := QuizReceiveResponse{}
 		err := c.ReadJSON(&message)
@@ -828,6 +829,9 @@ func listenAllEvents(c *websocket.Conn, qc *quizSocketController, response *Quiz
 			chanNextEvent <- true
 		case constants.EventSkipTimer:
 			chanSkipTimer <- true
+		case constants.EventPauseQuiz:
+			isPauseQuiz := message.Data.(bool)
+			chanPauseQuiz <- isPauseQuiz
 		}
 	}
 
@@ -839,7 +843,7 @@ func listenAllEvents(c *websocket.Conn, qc *quizSocketController, response *Quiz
 	}
 }
 
-func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.WaitGroup, response *QuizSendResponse, session models.ActiveQuiz, question models.Question, lastQuestionTimeStamp sql.NullTime, chanSkipEvent chan bool, chanSkipTimer chan bool, totalQuestions int64) {
+func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.WaitGroup, response *QuizSendResponse, session models.ActiveQuiz, question models.Question, lastQuestionTimeStamp sql.NullTime, chanSkipEvent chan bool, chanSkipTimer chan bool, chanPauseQuiz chan bool, totalQuestions int64) {
 
 	defer wg.Done()
 
@@ -986,7 +990,7 @@ func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.Wa
 	wgForSkipTimer.Add(1)
 
 	// skip timer
-	go handleSkipTimer(wgForSkipTimer, chanSkipTimer, scoreboardMaxDuration)
+	go handleSkipTimer(c, qc, wgForSkipTimer, response, session, chanSkipTimer, chanPauseQuiz, scoreboardMaxDuration)
 	wgForSkipTimer.Wait()
 }
 
@@ -1014,18 +1018,50 @@ func terminateQuiz(c *websocket.Conn, qc *quizSocketController, response *QuizSe
 	}
 }
 
-func handleSkipTimer(wg *sync.WaitGroup, chanSkipTimer chan bool, scoreboardMaxDuration int) {
+func handleSkipTimer(c *websocket.Conn, qc *quizSocketController, wg *sync.WaitGroup, response *QuizSendResponse, session models.ActiveQuiz, chanSkipTimer chan bool, chanPauseQuiz chan bool, scoreboardMaxDuration int) {
 	defer wg.Done()
 
-	isTimeout := time.NewTicker(time.Duration(scoreboardMaxDuration) * time.Second)
+	remainingTime := time.Duration(scoreboardMaxDuration) * time.Second
+	startTime := time.Now()
+	isTimeout := time.NewTimer(remainingTime)
+	timerPaused := false
 
 	for {
 		select {
 		case <-isTimeout.C:
-			return
-		case isSkip := <-chanSkipTimer: // skip if admin clicks on skip button
+			if !timerPaused {
+				return
+			}
+		case isSkip := <-chanSkipTimer:
 			if isSkip {
 				return
+			}
+		case isPause := <-chanPauseQuiz:
+			if isPause {
+				// Stop the timer and calculate the remaining time
+				if !isTimeout.Stop() {
+					// drain the channel if the timer has expired
+					<-isTimeout.C
+				}
+				remainingTime -= time.Since(startTime)
+				timerPaused = true
+
+				// send event to the user
+				response.Component = constants.Score
+				response.Data = constants.EventPauseQuiz
+				shareEvenWithUser(c, qc, response, constants.EventPauseQuiz, session.ID.String(), int(session.InvitationCode.Int32), constants.ToUser)
+			} else {
+				// Resume with the remaining time
+				if timerPaused {
+					startTime = time.Now()
+					isTimeout.Reset(remainingTime)
+					timerPaused = false
+
+					// send event to the user
+					response.Component = constants.Score
+					response.Data = constants.EventResumeQuiz
+					shareEvenWithUser(c, qc, response, constants.EventResumeQuiz, session.ID.String(), int(session.InvitationCode.Int32), constants.ToUser)
+				}
 			}
 		}
 	}

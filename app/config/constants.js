@@ -16,6 +16,10 @@ export default {
   Success: "success",
   Error: "error",
 
+  // Quiz State
+  Running: "running",
+  Pause: "pause",
+
   // Components
   Question: "Question",
   Score: "Score",
@@ -39,6 +43,10 @@ export default {
   SkipTimer: "skip_timer",
   EventAnswerSubmittedByUser: "answer submitted by user",
   EventPing: "ping",
+  PauseQuiz: "pause_quiz",
+  PauseQuizMessage: "quiz is pause, please wait...",
+  ResumeQuiz: "resume_quiz",
+  ResumeQuizMessage: "quiz is now resume, play now...",
 
   // Actions
   ActionAnserSubmittedByUser: "answer submitted by user",
