@@ -436,12 +436,12 @@ const deleteAccount = async () => {
         headers: headers,
         credentials: "include",
       });
-      toast.success("Question delete successfully!");
+      toast.success("user deleted succesfully!");
       setUserData(null);
       navigateTo("/");
     } catch (error) {
-      console.error("Failed to update the question", error);
-      toast.error("Failed to update the question.");
+      console.error("Failed to delete the user", error);
+      toast.error("Failed to delete the user.");
     }
   }
 };

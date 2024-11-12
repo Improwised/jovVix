@@ -9,17 +9,24 @@
           <div v-if="props.isEditable" class="col-6 d-flex justify-content-end">
             <button
               type="button"
-              class="me-5 badge rounded-pill bg-light-info text-dark px-2 fs-5"
+              class="me-5 badge rounded-pill bg-warning"
+              title="Edit question"
               @click="editQuestion(props.question?.question_id)"
             >
               <font-awesome-icon :icon="['fas', 'pen-to-square']" />
             </button>
             <button
-              class="badge rounded-pill bg-light-danger text-dark px-2 fs-5"
-              @click="deleteQuestion(props.question?.question_id)"
+              class="badge rounded-pill bg-danger"
+              title="Delete question"
+              data-bs-toggle="modal"
+              data-bs-target="#deleteQuestion"
             >
               <font-awesome-icon :icon="['fas', 'trash-can']" />
             </button>
+            <DeleteDialog
+              id="deleteQuestion"
+              @confirm-delete="deleteQuestion(props.question?.question_id)"
+            />
           </div>
         </div>
         <h3 class="font-bold">{{ props.question?.question }}</h3>
@@ -123,11 +130,7 @@ const props = defineProps({
 const emits = defineEmits(["deleteQuestion", "editQuestion"]);
 
 const deleteQuestion = (questionId) => {
-  const isconfirm = confirm("are you sure?");
-  console.log(isconfirm);
-  if (isconfirm) {
-    emits("deleteQuestion", questionId);
-  }
+  emits("deleteQuestion", questionId);
 };
 
 const editQuestion = (questionId) => {

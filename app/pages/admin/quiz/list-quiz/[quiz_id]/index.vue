@@ -7,27 +7,31 @@
         class="d-flex flex-wrap align-items-center justify-content-around bg-white rounded p-5"
       >
         <span
-          class="badge rounded-pill bg-light-primary text-dark m-2 px-2 fs-5"
+          class="badge rounded-pill bg-light-primary text-dark m-1 px-2 fs-4"
         >
           Played Quiz : {{ quizData?.data?.quiz_played_count }}
         </span>
         <span
-          class="badge rounded-pill bg-light-primary text-dark m-2 px-2 fs-5"
+          class="badge rounded-pill bg-light-primary text-dark m-1 px-2 fs-4"
         >
           Total Questions: {{ quizData?.data?.data.length }}
         </span>
         <span
-          class="badge rounded-pill bg-light-primary text-dark m-2 px-2 fs-5"
+          class="badge rounded-pill bg-light-primary text-dark m-1 px-2 fs-4"
         >
           Survey Questions: {{ totalSurveyQuestion }}</span
         >
         <button
           v-if="!quizData?.data?.is_active_quiz_present"
-          class="badge rounded-pill bg-light-danger text-dark m-2 px-2 fs-5"
-          @click="deleteQuiz"
+          type="button"
+          class="btn btn-outline-danger"
+          data-bs-toggle="modal"
+          data-bs-target="#deleteQuiz"
         >
-          <font-awesome-icon :icon="['fas', 'trash-can']" />
+          <font-awesome-icon :icon="['fas', 'trash-can']" class="pr-2" />Delete
+          Quiz
         </button>
+        <DeleteDialog id="deleteQuiz" @confirm-delete="deleteQuiz" />
       </div>
     </div>
     <div
@@ -55,6 +59,7 @@
 
 <script setup>
 import { useToast } from "vue-toastification";
+import DeleteDialog from "~~/components/DeleteDialog.vue";
 const toast = useToast();
 const url = useRuntimeConfig().public;
 const headers = useRequestHeaders(["cookie"]);
@@ -85,20 +90,17 @@ const navagateToEditQuestion = (questionId) => {
 };
 
 const deleteQuiz = async () => {
-  const isconfirm = confirm("are you sure?");
-  if (isconfirm) {
-    try {
-      await $fetch(`${url.api_url}/quizzes/${quizId.value}`, {
-        method: "DELETE",
-        headers: headers,
-        credentials: "include",
-      });
-      toast.success("Question delete successfully!");
-      navigateTo("/admin/quiz/list-quiz");
-    } catch (error) {
-      console.error("Failed to update the question", error);
-      toast.error("Failed to update the question.");
-    }
+  try {
+    await $fetch(`${url.api_url}/quizzes/${quizId.value}`, {
+      method: "DELETE",
+      headers: headers,
+      credentials: "include",
+    });
+    toast.success("Question delete successfully!");
+    navigateTo("/admin/quiz/list-quiz");
+  } catch (error) {
+    console.error("Failed to update the question", error);
+    toast.error("Failed to update the question.");
   }
 };
 
