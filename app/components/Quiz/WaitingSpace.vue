@@ -126,68 +126,64 @@ watch(
 </script>
 
 <template>
-  <div
-    id="waitingspace"
-    class="modal fade"
-    tabindex="-1"
-    aria-labelledby="exampleModalLabel"
-    aria-hidden="true"
-  >
-    <QuizJoinModal :join-u-r-l="`${base_url}/join`" :code="code" />
-  </div>
-  <Frame
-    v-if="isAdmin"
-    page-title="Ready Steady Go"
-    :page-message="'You Can Start Quiz By Pressing Start Quiz button'"
-    :music-component="true"
-  >
-    <form @submit="start_quiz">
-      <div class="mb-3 pe-3">
-        <div class="d-flex justify-content-between">
-          <label for="code" class="form-label">Link</label>
-          <button
-            type="button"
-            data-bs-toggle="modal"
-            data-bs-target="#waitingspace"
-          >
-            <font-awesome-icon :icon="['fas', 'expand']" />
-          </button>
-        </div>
-        <div class="d-flex align-items-center justify-content-center gap-2">
-          <div class="fs-1 text-dark text-decoration-underline">
-            quiz.i8d.in/join
+  <div v-if="isAdmin" class="container-fluid mt-2">
+    <div class="flex-grow-1 text-center">
+      <h1 class="join-page-title">Ready Steady Go</h1>
+      <h6>You Can Start Quiz By Pressing Start Quiz button</h6>
+    </div>
+    <div class="row">
+      <div class="col-md-7">
+        <form @submit="start_quiz">
+          <div class="mb-3 pe-3">
+            <div class="divider my-3 text-dark">Link</div>
+            <div class="d-flex align-items-center justify-content-center gap-2">
+              <div class="fs-1 text-dark text-decoration-underline">
+                quiz.i8d.in/join
+              </div>
+              <font-awesome-icon
+                id="URL-input-container"
+                icon="fa-solid fa-copy"
+                size="xl"
+                style="color: #0c6efd"
+                class="copy-icon"
+                role="button"
+              />
+            </div>
+            <div class="divider my-3 text-dark">Invitation Code</div>
+            <div class="d-flex align-items-center justify-content-center gap-2">
+              <h2 class="display-4 code">{{ code }}</h2>
+              <font-awesome-icon
+                id="OTP-input-container"
+                icon="fa-solid fa-copy"
+                size="xl"
+                style="color: #0c6efd"
+                class="copy-icon"
+                role="button"
+              />
+            </div>
+            <div class="divider my-3">QR</div>
+            <div
+              class="d-flex align-items-center justify-content-center qr-scale-down"
+            >
+              <QrCode
+                :scan-u-r-l="`${base_url}/join`"
+                :quiz-code="code"
+                :size="450"
+              />
+            </div>
           </div>
-          <font-awesome-icon
-            id="URL-input-container"
-            icon="fa-solid fa-copy"
-            size="xl"
-            style="color: #0c6efd"
-            class="copy-icon"
-            role="button"
-          />
-        </div>
-        <div class="divider my-3 text-dark">Invitation Code</div>
-        <div class="d-flex align-items-center justify-content-center gap-2">
-          <h2 class="display-4 code">{{ code }}</h2>
-          <font-awesome-icon
-            id="OTP-input-container"
-            icon="fa-solid fa-copy"
-            size="xl"
-            style="color: #0c6efd"
-            class="copy-icon"
-            role="button"
-          />
-        </div>
-        <div class="divider my-3">QR</div>
-        <div class="d-flex align-items-center justify-content-center">
-          <QrCode :scan-u-r-l="`${base_url}/join`" :quiz-code="code" />
-        </div>
+          <div class="d-flex justify-content-center align-items-center">
+            <button type="submit" class="btn btn-primary btn-lg bg-primary">
+              Start Quiz
+            </button>
+          </div>
+        </form>
       </div>
-      <button type="submit" class="btn btn-primary btn-lg bg-primary">
-        Start Quiz
-      </button>
-    </form>
-  </Frame>
+      <div class="col-md-5">
+        <ListJoinUser></ListJoinUser>
+      </div>
+    </div>
+  </div>
   <Frame
     v-else
     :music-component="true"
@@ -206,5 +202,15 @@ watch(
 
 .code {
   letter-spacing: 0.5rem;
+}
+
+.join-page-title {
+  color: #663399;
+}
+
+@media (max-width: 768px) {
+  .qr-scale-down {
+    transform: scale(0.8);
+  }
 }
 </style>

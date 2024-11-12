@@ -270,7 +270,6 @@ definePageMeta({
       @change-analysis-tab="handleAnalysisTabChange"
       @ask-skip-timer="askSkipTimer"
     ></QuizScoreSpace>
-    <ListJoinUser v-if="currentComponent == 'Waiting'"></ListJoinUser>
     <QuizListUserAnswered
       v-if="currentComponent == 'Question' && data?.event !== '5_sec_counter'"
       :data="data"
