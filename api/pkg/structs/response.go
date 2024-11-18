@@ -69,6 +69,6 @@ type ResUserWithQuizPermission struct {
 	SharedTo   string         `json:"shared_to" db:"shared_to"`
 	FirstName  sql.NullString `json:"first_name" db:"first_name"`
 	LastName   sql.NullString `json:"last_name" db:"last_name"`
-	ImageKey   string         `json:"img_key" db:"img_key"`
+	ImageKey   sql.NullString `json:"img_key" db:"img_key"`
 	Permission string         `json:"permission" db:"permission"`
 }

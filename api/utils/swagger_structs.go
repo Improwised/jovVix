@@ -381,6 +381,31 @@ type ResponseListSharedQuizzes struct {
 	} `json:"body"`
 }
 
+// swagger:parameters RequestUpdateUserPermissionOfQuiz
+type RequestUpdateUserPermissionOfQuiz struct {
+	// in:query
+	// required: true
+	SharedQuizId string `json:"shared_quiz_id"`
+	// in:path
+	// required: true
+	QuizId string `json:"quiz_id"`
+	// in:body
+	// required: true
+	Body struct {
+		structs.ReqShareQuiz
+	}
+}
+
+// swagger:parameters RequestDeleteUserPermissionOfQuiz
+type RequestDeleteUserPermissionOfQuiz struct {
+	// in:query
+	// required: true
+	SharedQuizId string `json:"shared_quiz_id"`
+	// in:path
+	// required: true
+	QuizId string `json:"quiz_id"`
+}
+
 ////////////////////
 // --- GENERIC ---//
 ////////////////////

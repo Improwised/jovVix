@@ -347,5 +347,7 @@ func setupSharedQuizzesController(v1 fiber.Router, goqu *goqu.Database, logger *
 	sharedQuizzesRouter.Get("/", sharedQuizzesController.ListSharedQuizzes)
 	sharedQuizzesRouter.Post(fmt.Sprintf("/:%s", constants.QuizId), middlewares.QuizPermission, middlewares.VerifyQuizShareAccess, sharedQuizzesController.ShareQuiz)
 	sharedQuizzesRouter.Get(fmt.Sprintf("/:%s", constants.QuizId), middlewares.QuizPermission, middlewares.VerifyQuizShareAccess, sharedQuizzesController.ListQuizAuthorizedUsers)
+	sharedQuizzesRouter.Put(fmt.Sprintf("/:%s", constants.QuizId), middlewares.QuizPermission, middlewares.VerifyQuizShareAccess, sharedQuizzesController.UpdateUserPermissionOfQuiz)
+	sharedQuizzesRouter.Delete(fmt.Sprintf("/:%s", constants.QuizId), middlewares.QuizPermission, middlewares.VerifyQuizShareAccess, sharedQuizzesController.DeleteUserPermissionOfQuiz)
 	return nil
 }

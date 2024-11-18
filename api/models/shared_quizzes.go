@@ -72,6 +72,25 @@ func (model *SharedQuizzesModel) ListQuizAuthorizedUsersByQuizId(quizId string) 
 	return usersWithAccess, err
 }
 
+// Update authorized user permission for perticular quiz
+func (model *SharedQuizzesModel) UpdateUserPermissionById(id string, reqUpdatePermission structs.ReqShareQuiz) error {
+
+	_, err := model.db.Update(SharedQuizzesTable).Set(goqu.Record{
+		"permission": reqUpdatePermission.Permission,
+		"updated_at": goqu.L("now()"),
+	}).Where(goqu.Ex{"id": id}).Executor().Exec()
+
+	return err
+}
+
+// Delete authorized user permission for perticular quiz
+func (model *SharedQuizzesModel) DeleteUserPermissionById(id string) error {
+
+	_, err := model.db.Delete(SharedQuizzesTable).Where(goqu.Ex{"id": id}).Executor().Exec()
+
+	return err
+}
+
 // List shared quiz for perticular user (only shared with the user or shared by the user)
 func (model *SharedQuizzesModel) ListSharedQuizzes(sharedBy, sharedTo string) ([]QuizWithQuestions, error) {
 

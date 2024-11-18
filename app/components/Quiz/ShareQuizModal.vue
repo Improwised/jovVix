@@ -27,14 +27,30 @@
           <!-- Authorized Users with Permission -->
           <VCard v-else elevation="0" class="overflow-hidden">
             <v-card-text class="pa-0">
-              <h5 class="text-subtitle-1">People with access</h5>
+              <div class="d-flex justify-content-between">
+                <h5 class="text-subtitle-1">People with access</h5>
+                <button
+                  type="buutton"
+                  title="Add People"
+                  @click="() => (component = 'give-permission')"
+                >
+                  <font-awesome-icon
+                    class="fs-4"
+                    :icon="['fas', 'user-plus']"
+                  />
+                </button>
+              </div>
               <div>
                 <v-list>
                   <v-list-item
                     v-for="(user, i) in quizAuthorizedUsersData.data"
                     :key="i"
                   >
-                    <ShareQuizAuthorizeUser :user="user" />
+                    <ShareQuizAuthorizeUser
+                      :user="user"
+                      @show-edit-form="showEditForm"
+                      @delete-user-permission="deleteUserPermission"
+                    />
                   </v-list-item>
                 </v-list>
               </div>
@@ -42,44 +58,21 @@
           </VCard>
 
           <!-- Form for share quiz permission-->
-          <h5 class="text-subtitle-1">Add People</h5>
-          <form @submit.prevent="handleSubmit">
-            <!-- Email -->
-            <div class="mb-3">
-              <label for="email" class="form-label">Email</label>
-              <input
-                id="email"
-                v-model="email"
-                type="email"
-                name="identifier"
-                class="form-control"
-                required
-              />
-            </div>
-            <!-- Permission -->
-            <div class="mb-3">
-              <label for="permission" class="form-label">Permission</label>
-              <select
-                id="permission"
-                v-model="permission"
-                class="form-select"
-                required
-              >
-                <option value="" disabled>Select permission level</option>
-                <option value="read">Read</option>
-                <option value="write">Write</option>
-                <option value="share">Share</option>
-              </select>
-            </div>
-            <div>
-              <!-- Button -->
-              <div class="d-grid">
-                <button type="submit" class="btn btn-primary text-white">
-                  Submit
-                </button>
-              </div>
-            </div>
-          </form>
+          <ShareQuizForm
+            v-if="component === 'give-permission'"
+            :form-title="'Add People'"
+            @share-quiz="shareQuiz"
+          />
+
+          <!-- Form for update user permission for quiz-->
+          <ShareQuizForm
+            v-if="component === 'edit-permission'"
+            :id="id"
+            :form-title="'Edit Permission'"
+            :email="email"
+            :permission="permission"
+            @update-user-permission="updateUserPermission"
+          />
         </div>
       </div>
     </div>
@@ -87,12 +80,17 @@
 </template>
 
 <script setup>
+import { useToast } from "vue-toastification";
 import ShareQuizAuthorizeUser from "./ShareQuizAuthorizeUser.vue";
+import ShareQuizForm from "./ShareQuizForm.vue";
+const toast = useToast();
 const url = useRuntimeConfig().public;
 const headers = useRequestHeaders(["cookie"]);
 
+const id = ref("");
 const email = ref("");
 const permission = ref("");
+const component = ref("");
 
 // define props and emits
 const props = defineProps({
@@ -104,20 +102,16 @@ const props = defineProps({
 });
 const emits = defineEmits(["shareQuiz"]);
 
-// emits the shareQuiz and close the modal
-const handleSubmit = () => {
-  emits(
-    "shareQuiz",
-    email.value,
-    permission.value,
-    quizAuthorizedUsersDataRefresh
-  );
-  email.value = "";
-  permission.value = "";
+// emits the shareQuiz
+const shareQuiz = (emailVal, permissionVal) => {
+  emits("shareQuiz", emailVal, permissionVal, quizAuthorizedUsersDataRefresh);
+};
 
-  // close the modal
-  var closeModalButton = document.getElementById("share-quiz-btn-close");
-  closeModalButton.click();
+const showEditForm = (idVal, emailVal, permissionVal) => {
+  id.value = idVal;
+  email.value = emailVal;
+  permission.value = permissionVal;
+  component.value = "edit-permission";
 };
 
 // Get authorized users data for perticular quiz
@@ -132,4 +126,47 @@ const {
   mode: "cors",
   credentials: "include",
 });
+
+const updateUserPermission = async (idVal, emailVal, permissionVal) => {
+  try {
+    const payload = {
+      email: emailVal,
+      permission: permissionVal,
+    };
+
+    await $fetch(
+      `${url.api_url}/shared_quizzes/${props.quizId}?shared_quiz_id=${idVal}`,
+      {
+        method: "PUT",
+        headers: headers,
+        body: payload,
+        credentials: "include",
+      }
+    );
+    toast.success("User permission updated successfully!");
+    quizAuthorizedUsersDataRefresh();
+    component.value = "give-permission";
+  } catch (error) {
+    console.error("Failed to update user permission.", error);
+    toast.error("Failed to update user permission.");
+  }
+};
+
+const deleteUserPermission = async (idVal) => {
+  try {
+    await $fetch(
+      `${url.api_url}/shared_quizzes/${props.quizId}?shared_quiz_id=${idVal}`,
+      {
+        method: "DELETE",
+        headers: headers,
+        credentials: "include",
+      }
+    );
+    toast.success("User permission deleted successfully!");
+    quizAuthorizedUsersDataRefresh();
+  } catch (error) {
+    console.error("Failed to delete user permission.", error);
+    toast.error("Failed to delete user permission.");
+  }
+};
 </script>

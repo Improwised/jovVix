@@ -900,6 +900,106 @@
             "$ref": "#/responses/GenericResError"
           }
         }
+      },
+      "put": {
+        "consumes": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "ShareQuiz"
+        ],
+        "summary": "Update authorized user permission for perticular quiz.",
+        "operationId": "RequestUpdateUserPermissionOfQuiz",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "SharedQuizId",
+            "name": "shared_quiz_id",
+            "in": "query",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "QuizId",
+            "name": "quiz_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "x-go-name": "Email"
+                },
+                "permission": {
+                  "type": "string",
+                  "x-go-name": "Permission"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/ResponseOkWithMessage"
+          },
+          "400": {
+            "$ref": "#/responses/GenericResFailNotFound"
+          },
+          "500": {
+            "$ref": "#/responses/GenericResError"
+          }
+        }
+      },
+      "delete": {
+        "consumes": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "ShareQuiz"
+        ],
+        "summary": "Delete authorized user permission for perticular quiz.",
+        "operationId": "RequestDeleteUserPermissionOfQuiz",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "SharedQuizId",
+            "name": "shared_quiz_id",
+            "in": "query",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "QuizId",
+            "name": "quiz_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/ResponseOkWithMessage"
+          },
+          "400": {
+            "$ref": "#/responses/GenericResFailNotFound"
+          },
+          "500": {
+            "$ref": "#/responses/GenericResError"
+          }
+        }
       }
     },
     "/v1/user/who": {
@@ -1929,8 +2029,7 @@
                   "x-go-name": "Id"
                 },
                 "img_key": {
-                  "type": "string",
-                  "x-go-name": "ImageKey"
+                  "$ref": "#/definitions/NullString"
                 },
                 "last_name": {
                   "$ref": "#/definitions/NullString"

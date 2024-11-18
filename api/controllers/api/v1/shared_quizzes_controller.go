@@ -149,6 +149,82 @@ func (sqctrl *SharedQuizzes) ListQuizAuthorizedUsers(c *fiber.Ctx) error {
 	return utils.JSONSuccess(c, http.StatusOK, quizAuthorizedUsers)
 }
 
+// UpdateUserPermissionOfQuiz to Update authorized user permission for perticular quiz.
+// swagger:route PUT /v1/shared_quizzes/{quiz_id} ShareQuiz RequestUpdateUserPermissionOfQuiz
+//
+// Update authorized user permission for perticular quiz.
+//
+//		Consumes:
+//		- application/json
+//
+//		Schemes: http, https
+//
+//		Responses:
+//		  200: ResponseOkWithMessage
+//	     400: GenericResFailNotFound
+//		  500: GenericResError
+func (sqctrl *SharedQuizzes) UpdateUserPermissionOfQuiz(c *fiber.Ctx) error {
+	sharedQuizId := c.Query(constants.SharedQuizId)
+	sqctrl.logger.Debug("SharedQuizzes.UpdateUserPermissionOfQuiz called", zap.Any(constants.SharedQuizId, sharedQuizId))
+	if sharedQuizId == "" {
+		return utils.JSONError(c, http.StatusBadRequest, constants.BadRequestSharedQuizIdNotFound)
+	}
+
+	sqctrl.logger.Debug("validate req", zap.Any("Body", c.Body()))
+	var shareQuizReq structs.ReqShareQuiz
+	err := json.Unmarshal(c.Body(), &shareQuizReq)
+	if err != nil {
+		return utils.JSONFail(c, http.StatusBadRequest, err.Error())
+	}
+
+	validate := validator.New()
+	err = validate.Struct(shareQuizReq)
+	if err != nil {
+		return utils.JSONFail(c, http.StatusBadRequest, utils.ValidatorErrorString(err))
+	}
+	sqctrl.logger.Debug("validate req success", zap.Any("shareQuizReq", shareQuizReq))
+
+	err = sqctrl.sharedQuizzesModel.UpdateUserPermissionById(sharedQuizId, shareQuizReq)
+	if err != nil {
+		sqctrl.logger.Error(constants.ErrUpdateUserPermissionForQuiz, zap.Error(err))
+		return utils.JSONError(c, http.StatusInternalServerError, constants.ErrUpdateUserPermissionForQuiz)
+	}
+	sqctrl.logger.Debug("SharedQuizzes.UpdateUserPermissionOfQuiz success", zap.Any("shareQuizReq", shareQuizReq))
+
+	return utils.JSONSuccess(c, http.StatusOK, "User permission updated successfully!")
+}
+
+// DeleteUserPermissionOfQuiz to Delete authorized user permission for perticular quiz.
+// swagger:route DELETE /v1/shared_quizzes/{quiz_id} ShareQuiz RequestDeleteUserPermissionOfQuiz
+//
+// Delete authorized user permission for perticular quiz.
+//
+//		Consumes:
+//		- application/json
+//
+//		Schemes: http, https
+//
+//		Responses:
+//		  200: ResponseOkWithMessage
+//	     400: GenericResFailNotFound
+//		  500: GenericResError
+func (sqctrl *SharedQuizzes) DeleteUserPermissionOfQuiz(c *fiber.Ctx) error {
+	sharedQuizId := c.Query(constants.SharedQuizId)
+	sqctrl.logger.Debug("SharedQuizzes.DeleteUserPermissionOfQuiz called", zap.Any("sharedQuizId", sharedQuizId))
+	if sharedQuizId == "" {
+		return utils.JSONError(c, http.StatusBadRequest, constants.BadRequestSharedQuizIdNotFound)
+	}
+
+	err := sqctrl.sharedQuizzesModel.DeleteUserPermissionById(sharedQuizId)
+	if err != nil {
+		sqctrl.logger.Error(constants.ErrDeleteUserPermissionForQuiz, zap.Error(err))
+		return utils.JSONError(c, http.StatusInternalServerError, constants.ErrDeleteUserPermissionForQuiz)
+	}
+	sqctrl.logger.Debug("SharedQuizzes.DeleteUserPermissionOfQuiz success", zap.Any("sharedQuizId", sharedQuizId))
+
+	return utils.JSONSuccess(c, http.StatusOK, "User permission deleted successfully!")
+}
+
 // ListSharedQuizzes to List shared quiz for perticular user (only shared with the user or shared by the user).
 // swagger:route GET /v1/shared_quizzes ShareQuiz RequestListSharedQuizzes
 //
