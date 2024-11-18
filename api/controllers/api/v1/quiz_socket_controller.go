@@ -1188,8 +1188,25 @@ func (qc *quizSocketController) SetAnswer(c *fiber.Ctx) error {
 	// calculate points
 	points, score := utils.CalculatePointsAndScore(answer, answers, answerPoints, answerDurationInSeconds, questionType)
 
+	qc.logger.Debug("userPlayedQuizModel.GetStreakCount called", zap.Any("currentQuizId", currentQuizId))
+	streakCount, err := qc.userPlayedQuizModel.GetStreakCount(currentQuizId, answer.QuestionId)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			qc.logger.Error(constants.ErrGetStreakCount, zap.Error(err))
+			return utils.JSONError(c, http.StatusBadRequest, constants.ErrQuizNotFound)
+		}
+		qc.logger.Error(constants.ErrGetStreakCount, zap.Error(err))
+		return utils.JSONError(c, http.StatusInternalServerError, constants.ErrGetStreakCount)
+	}
+	qc.logger.Debug("userQuizResponseModel.GetStreakCount success", zap.Any("streakCount", streakCount))
+
+	// add streak score and update streak also
+	qc.logger.Debug("CalculateStreakScore called", zap.Any("streakCount", streakCount), zap.Any("score", score))
+	finalScore, newSreakCount := utils.CalculateStreakScore(streakCount, score)
+	qc.logger.Debug("CalculateStreakScore success", zap.Any("newSreakCount", newSreakCount), zap.Any("finalScore", finalScore))
+
 	// Submit answer
-	if err := qc.userQuizResponseModel.SubmitAnswer(currentQuizId, answer, points, score); err != nil {
+	if err := qc.userQuizResponseModel.SubmitAnswer(currentQuizId, answer, points, finalScore, newSreakCount); err != nil {
 		if err == sql.ErrNoRows {
 			return utils.JSONFail(c, http.StatusBadRequest, constants.ErrAnswerAlreadySubmitted)
 		}

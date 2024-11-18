@@ -74,6 +74,7 @@ const (
 	ErrGetQuizPermission           = "error while get quiz pemrmission for user"
 	ErrUpdateUserPermissionForQuiz = "error while update user permission for perticular quiz"
 	ErrDeleteUserPermissionForQuiz = "error while delete user permission for perticular quiz"
+	ErrGetStreakCount              = "error while get streak count"
 )
 
 // Bad Request Message
@@ -142,6 +143,7 @@ const (
 	MaxInvitationCode = 999999
 	Counter           = 5
 	Count             = 3
+	StreakBaseScore   = 100
 )
 
 // Quiz Events

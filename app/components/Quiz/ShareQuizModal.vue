@@ -60,7 +60,7 @@
           <!-- Form for share quiz permission-->
           <ShareQuizForm
             v-if="component === 'give-permission'"
-            :form-title="'Add People'"
+            form-title="Add People"
             @share-quiz="shareQuiz"
           />
 
@@ -68,7 +68,7 @@
           <ShareQuizForm
             v-if="component === 'edit-permission'"
             :id="id"
-            :form-title="'Edit Permission'"
+            form-title="Edit Permission"
             :email="email"
             :permission="permission"
             @update-user-permission="updateUserPermission"

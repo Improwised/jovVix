@@ -195,6 +195,7 @@ type UserRank struct {
 	UserName     string `json:"username" db:"username"`
 	FirstName    string `json:"firstname" db:"first_name"`
 	ImageKey     string `json:"img_key" db:"img_key"`
+	StreakCount  int    `json:"streak_count" db:"streak_count"`
 }
 
 func (model *UserPlayedQuizModel) GetRank(sessionId uuid.UUID, questionId uuid.UUID) ([]UserRank, error) {
@@ -207,7 +208,7 @@ func (model *UserPlayedQuizModel) GetRank(sessionId uuid.UUID, questionId uuid.U
 	// Define the common table expressions (CTEs)
 	core := mainQuery.
 		With("core", goqu.
-			Select("uqr.calculated_score", "uqr.calculated_points", "uqr.question_id", "uqr.response_time", "uqr.is_attend", "upq.user_id").
+			Select("uqr.calculated_score", "uqr.calculated_points", "uqr.question_id", "uqr.response_time", "uqr.is_attend", "upq.user_id", "uqr.streak_count").
 			From(goqu.T(UserPlayedQuizTable).As("upq")).
 			Join(goqu.T("user_quiz_responses").As("uqr"), goqu.On(goqu.Ex{
 				"upq.id":             goqu.I("uqr.user_played_quiz_id"),
@@ -223,7 +224,7 @@ func (model *UserPlayedQuizModel) GetRank(sessionId uuid.UUID, questionId uuid.U
 		)
 	getQuestionInfo := getSum.
 		With("get_question_info", goqu.
-			Select("is_attend", "user_id", "response_time").
+			Select("is_attend", "user_id", "response_time", "streak_count").
 			From("core").
 			Where(goqu.Ex{
 				"question_id": questionId,
@@ -237,6 +238,7 @@ func (model *UserPlayedQuizModel) GetRank(sessionId uuid.UUID, questionId uuid.U
 		goqu.I("u.username"),
 		goqu.I("u.first_name"),
 		goqu.I("u.img_key"),
+		goqu.I("gqi.streak_count"),
 	)
 
 	// Define the main query to filter by rank
@@ -250,7 +252,7 @@ func (model *UserPlayedQuizModel) GetRank(sessionId uuid.UUID, questionId uuid.U
 	userRanks := []UserRank{}
 	for rows.Next() {
 		var userRank UserRank
-		err := rows.Scan(&userRank.Rank, &userRank.Score, &userRank.Points, &userRank.ResponseTime, &userRank.UserName, &userRank.FirstName, &userRank.ImageKey)
+		err := rows.Scan(&userRank.Rank, &userRank.Score, &userRank.Points, &userRank.ResponseTime, &userRank.UserName, &userRank.FirstName, &userRank.ImageKey, &userRank.StreakCount)
 		if err != nil {
 			return userRanks, err
 		}
@@ -372,4 +374,48 @@ func (model *UserPlayedQuizModel) DeleteUserPlayedQuizzesAndReponseByUserId(tran
 	_, err = transaction.Delete(UserPlayedQuizTable).Where(goqu.Ex{"user_id": userId}).Executor().Exec()
 
 	return err
+}
+
+// Get streak count using userPlayedQuizId and questionId
+// use previous questionId to get previous streak count
+func (model *UserPlayedQuizModel) GetStreakCount(userPlayedQuizId, questionId uuid.UUID) (int, error) {
+
+	var previuosQuestionId string
+	var streakCount int
+
+	// Get previous questionId
+	previuosQuestionFound, err := model.db.From(constants.QuizQuestionsTable).
+		Select("question_id").
+		Where(
+			goqu.Ex{
+				"next_question": questionId,
+			},
+		).ScanVal(&previuosQuestionId)
+	if err != nil {
+		return streakCount, err
+	}
+
+	// streak count is 0 if previous question is not found
+	if !previuosQuestionFound {
+		return streakCount, nil
+	}
+
+	found, err := model.db.From(UserQuizResponsesTable).
+		Select("streak_count").
+		Where(
+			goqu.Ex{
+				"user_played_quiz_id": userPlayedQuizId,
+				"question_id":         previuosQuestionId,
+			},
+		).ScanVal(&streakCount)
+
+	if err != nil {
+		return streakCount, err
+	}
+
+	if !found {
+		return streakCount, sql.ErrNoRows
+	}
+
+	return streakCount, nil
 }

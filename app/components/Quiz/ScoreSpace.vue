@@ -198,6 +198,15 @@ const changeAnalysisTab = (tab) => emits("changeAnalysisTab", tab);
                 <td :class="{ 'bg-primary': user.username === props.userName }">
                   {{ user.score }}
                 </td>
+                <td :class="{ 'bg-primary': user.username === props.userName }">
+                  <div class="d-flex align-items-center justify-content-center">
+                    <font-awesome-icon
+                      class="text-warning fs-1 mr-2"
+                      :icon="['fas', 'fire']"
+                    />
+                    {{ user.streak_count }}
+                  </div>
+                </td>
               </tr>
             </tbody>
             <tfoot></tfoot>

@@ -81,3 +81,22 @@ func CalculatePointsAndScore(userAnswer structs.ReqAnswerSubmit, answers []int, 
 	points.Int16 = int16(noOfMatches) * answerPoints
 	return points, finalScore
 }
+
+func CalculateStreakScore(streakCount, score int) (int, int) {
+
+	// reset streak if score is 0
+	if score <= 0 {
+		return score, 0
+	}
+
+	// dont add bonus if streak is 0
+	if streakCount <= 0 {
+		return score, streakCount + 1
+	}
+
+	// Add streak count score in final score
+	streakScore := (constants.StreakBaseScore * streakCount * 10) / 100
+	finalScore := score + constants.StreakBaseScore + streakScore
+
+	return finalScore, streakCount + 1
+}
