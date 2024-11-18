@@ -132,7 +132,7 @@ watch(
       <h6>You Can Start Quiz By Pressing Start Quiz button</h6>
     </div>
     <div class="row">
-      <div class="col-md-7">
+      <div class="col-md-8">
         <form @submit="start_quiz">
           <div class="mb-3 pe-3">
             <div class="divider my-3 text-dark">Link</div>
@@ -179,7 +179,7 @@ watch(
           </div>
         </form>
       </div>
-      <div class="col-md-5">
+      <div class="col-md-4">
         <ListJoinUser></ListJoinUser>
       </div>
     </div>

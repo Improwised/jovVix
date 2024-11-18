@@ -333,6 +333,54 @@ type RequestDeleteQuestionById struct {
 	QuestionId string `json:"question_id"`
 }
 
+// swagger:parameters RequestShareQuiz
+type RequestShareQuiz struct {
+	// in:path
+	// required: true
+	QuizId string `json:"quiz_id"`
+	// in:body
+	// required: true
+	Body struct {
+		structs.ReqShareQuiz
+	}
+}
+
+// swagger:parameters RequestListQuizAuthorizedUsers
+type RequestListQuizAuthorizedUsers struct {
+	// in:path
+	// required: true
+	QuizId string `json:"quiz_id"`
+}
+
+// swagger:response ResponseListQuizAuthorizedUsers
+type ResponseListQuizAuthorizedUsers struct {
+	// in:body
+	Body struct {
+		Status string `json:"status"`
+		Data   []struct {
+			structs.ResUserWithQuizPermission
+		} `json:"data"`
+	} `json:"body"`
+}
+
+// swagger:parameters RequestListSharedQuizzes
+type RequestListSharedQuizzes struct {
+	// in:query
+	// required: true
+	Type string `json:"type"`
+}
+
+// swagger:response ResponseListSharedQuizzes
+type ResponseListSharedQuizzes struct {
+	// in:body
+	Body struct {
+		Status string `json:"status"`
+		Data   []struct {
+			models.QuizWithQuestions
+		} `json:"data"`
+	} `json:"body"`
+}
+
 ////////////////////
 // --- GENERIC ---//
 ////////////////////

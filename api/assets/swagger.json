@@ -778,6 +778,130 @@
         }
       }
     },
+    "/v1/shared_quizzes": {
+      "get": {
+        "consumes": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "ShareQuiz"
+        ],
+        "summary": "List shared quiz for perticular user (only shared with the user or shared by the user).",
+        "operationId": "RequestListSharedQuizzes",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Type",
+            "name": "type",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/ResponseListSharedQuizzes"
+          },
+          "400": {
+            "$ref": "#/responses/GenericResFailNotFound"
+          },
+          "500": {
+            "$ref": "#/responses/GenericResError"
+          }
+        }
+      },
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "ShareQuiz"
+        ],
+        "summary": "share quiz to other user.",
+        "operationId": "RequestShareQuiz",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "QuizId",
+            "name": "quiz_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "x-go-name": "Email"
+                },
+                "permission": {
+                  "type": "string",
+                  "x-go-name": "Permission"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/ResponseOkWithMessage"
+          },
+          "400": {
+            "$ref": "#/responses/GenericResFailNotFound"
+          },
+          "500": {
+            "$ref": "#/responses/GenericResError"
+          }
+        }
+      }
+    },
+    "/v1/shared_quizzes/{quiz_id}": {
+      "get": {
+        "consumes": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "ShareQuiz"
+        ],
+        "summary": "List authorized users for perticular quiz.",
+        "operationId": "RequestListQuizAuthorizedUsers",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "QuizId",
+            "name": "quiz_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/ResponseListQuizAuthorizedUsers"
+          },
+          "400": {
+            "$ref": "#/responses/GenericResFailNotFound"
+          },
+          "500": {
+            "$ref": "#/responses/GenericResError"
+          }
+        }
+      }
+    },
     "/v1/user/who": {
       "get": {
         "consumes": [
@@ -1764,14 +1888,111 @@
                 },
                 "x-go-name": "Data"
               },
-              "is_active_quiz_present": {
+              "is_quiz_editable": {
                 "type": "boolean",
-                "x-go-name": "IsActiveQuizPresent"
+                "x-go-name": "IsQuizEditable"
+              },
+              "permission": {
+                "type": "string",
+                "x-go-name": "Permission"
               },
               "quiz_played_count": {
                 "type": "integer",
                 "format": "int64",
                 "x-go-name": "QuizPlayedCount"
+              }
+            },
+            "x-go-name": "Data"
+          },
+          "status": {
+            "type": "string",
+            "x-go-name": "Status"
+          }
+        }
+      }
+    },
+    "ResponseListQuizAuthorizedUsers": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "first_name": {
+                  "$ref": "#/definitions/NullString"
+                },
+                "id": {
+                  "type": "string",
+                  "x-go-name": "Id"
+                },
+                "img_key": {
+                  "type": "string",
+                  "x-go-name": "ImageKey"
+                },
+                "last_name": {
+                  "$ref": "#/definitions/NullString"
+                },
+                "permission": {
+                  "type": "string",
+                  "x-go-name": "Permission"
+                },
+                "shared_to": {
+                  "type": "string",
+                  "x-go-name": "SharedTo"
+                }
+              }
+            },
+            "x-go-name": "Data"
+          },
+          "status": {
+            "type": "string",
+            "x-go-name": "Status"
+          }
+        }
+      }
+    },
+    "ResponseListSharedQuizzes": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "created_at": {
+                  "type": "string",
+                  "format": "date-time",
+                  "x-go-name": "CreatedAt"
+                },
+                "creator_id": {
+                  "type": "string",
+                  "x-go-name": "CreatorID"
+                },
+                "description": {
+                  "$ref": "#/definitions/NullString"
+                },
+                "id": {
+                  "$ref": "#/definitions/UUID"
+                },
+                "title": {
+                  "type": "string",
+                  "x-go-name": "Title"
+                },
+                "total_questions": {
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "TotalQuestions"
+                },
+                "updated_at": {
+                  "type": "string",
+                  "format": "date-time",
+                  "x-go-name": "UpdatedAt"
+                }
               }
             },
             "x-go-name": "Data"

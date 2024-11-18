@@ -68,6 +68,7 @@ func InitQuestionController(db *goqu.Database, logger *zap.Logger, event *events
 func (ctrl *QuestionController) ListQuestionsWithAnswerByQuizId(c *fiber.Ctx) error {
 	QuizId := c.Params(constants.QuizId)
 	Query := c.Queries()
+	permission := c.Locals(constants.ContextQuizPermission).(string)
 	ctrl.logger.Debug("QuestionController.ListQuestionsWithAnswerByQuizId called", zap.Any(constants.QuizId, QuizId), zap.Any("Query", Query))
 
 	isActiveQuizPresent, err := ctrl.activeQuizModel.IsActiveQuizPresent(QuizId)
@@ -85,7 +86,7 @@ func (ctrl *QuestionController) ListQuestionsWithAnswerByQuizId(c *fiber.Ctx) er
 	services.ProcessAnalyticsData(questions, ctrl.presignedURLSvc, ctrl.logger)
 
 	ctrl.logger.Debug("QuestionController.ListQuestionsWithAnswerByQuizId success", zap.Any("questions", structs.ResQuestionAnalytics{Data: questions, QuizPlayedCount: quizPlayedcount}), zap.Any("quizPlayedcount", quizPlayedcount))
-	return utils.JSONSuccess(c, http.StatusOK, structs.ResQuestionAnalytics{Data: questions, QuizPlayedCount: quizPlayedcount, IsActiveQuizPresent: isActiveQuizPresent})
+	return utils.JSONSuccess(c, http.StatusOK, structs.ResQuestionAnalytics{Data: questions, QuizPlayedCount: quizPlayedcount, IsQuizEditable: !isActiveQuizPresent, Permission: permission})
 }
 
 // GetQuestionById to get question and thier options with answer.

@@ -1,5 +1,8 @@
 <template>
   <div v-if="quizPending">Pending...</div>
+  <div v-else-if="quizError?.data?.code == 401">
+    {{ navigateTo("/account/login") }}
+  </div>
   <div v-else-if="quizError">{{ quizError }}</div>
   <div v-else class="container mt-3">
     <div class="card mb-3 row">
@@ -21,8 +24,10 @@
         >
           Survey Questions: {{ totalSurveyQuestion }}</span
         >
+
+        <!-- Delete quiz button -->
         <button
-          v-if="!quizData?.data?.is_active_quiz_present"
+          v-if="canEditQuiz"
           type="button"
           class="btn btn-outline-danger"
           data-bs-toggle="modal"
@@ -32,6 +37,18 @@
           Quiz
         </button>
         <DeleteDialog id="deleteQuiz" @confirm-delete="deleteQuiz" />
+
+        <!-- Share quiz buttion -->
+        <button
+          v-if="quizData?.data?.permission === 'share'"
+          class="badge rounded-pill bg-light-info text-dark m-1 px-2 fs-4"
+          data-bs-toggle="modal"
+          data-bs-target="#shareQuizModal"
+          title="Share Quiz"
+        >
+          <font-awesome-icon :icon="['fas', 'share-from-square']" />
+        </button>
+        <ShareQuizModal :quiz-id="quizId" @share-quiz="shareQuiz" />
       </div>
     </div>
     <div
@@ -44,7 +61,7 @@
         :order="index + 1"
         :is-admin-analysis="true"
         :is-for-quiz="true"
-        :is-editable="!quizData?.data?.is_active_quiz_present"
+        :is-editable="canEditQuiz"
         @delete-question="deleteQuestion"
         @edit-question="navagateToEditQuestion"
       />
@@ -60,6 +77,7 @@
 <script setup>
 import { useToast } from "vue-toastification";
 import DeleteDialog from "~~/components/DeleteDialog.vue";
+import ShareQuizModal from "~~/components/Quiz/ShareQuizModal.vue";
 const toast = useToast();
 const url = useRuntimeConfig().public;
 const headers = useRequestHeaders(["cookie"]);
@@ -73,6 +91,13 @@ const totalSurveyQuestion = computed(() => {
     return item.question_type === "survey" ? count + 1 : count;
   }, 0);
 });
+
+const canEditQuiz = computed(() => {
+  const permission = quizData.value?.data?.permission;
+  const isEditable = quizData.value?.data?.is_quiz_editable;
+  return (permission === "write" || permission === "share") && isEditable;
+});
+
 const {
   refresh,
   data: quizData,
@@ -119,6 +144,27 @@ const deleteQuestion = async (questionId) => {
   } catch (error) {
     console.error("Failed to update the question", error);
     toast.error("Failed to update the question.");
+  }
+};
+
+const shareQuiz = async (email, permission, quizAuthorizedUsersDataRefresh) => {
+  try {
+    const payload = {
+      email: email,
+      permission: permission,
+    };
+
+    await $fetch(`${url.api_url}/shared_quizzes/${quizId.value}`, {
+      method: "POST",
+      headers: headers,
+      body: payload,
+      credentials: "include",
+    });
+    toast.success("Quiz shared successfully!");
+    quizAuthorizedUsersDataRefresh();
+  } catch (error) {
+    console.error("Failed to share the quiz.", error);
+    toast.error("Failed to share the quiz.");
   }
 };
 </script>

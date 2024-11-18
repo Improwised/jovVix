@@ -43,3 +43,8 @@ type ReqUpdateQuestion struct {
 	OptionsMedia      string            `json:"options_media" validate:"required"`
 	Resource          string            `json:"resource"`
 }
+
+type ReqShareQuiz struct {
+	Email      string `json:"email" validate:"required,email"`
+	Permission string `json:"permission" validate:"required"`
+}

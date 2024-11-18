@@ -8,8 +8,9 @@ const (
 
 // fiber contexts
 const (
-	ContextUid  = "userId"
-	ContextUser = "userContext"
+	ContextUid            = "userId"
+	ContextUser           = "userContext"
+	ContextQuizPermission = "quiz_permission"
 )
 
 // kratos
@@ -27,6 +28,18 @@ const (
 	ParamTitle       = "title"
 )
 
+// Permissions
+const (
+	ReadPermission  = "read"
+	WritePermission = "write"
+	SharePermission = "share"
+)
+
+// Email templetes
+const (
+	QuizEmailSubject = "you have been invited for quiz"
+)
+
 // Success messages
 // ...
 
@@ -38,20 +51,27 @@ const (
 
 // Error messages
 const (
-	ErrGetUser             = "error while get user"
-	ErrLoginUser           = "error while login user"
-	ErrInsertUser          = "error while creating user, please try after sometime"
-	ErrDeleteUser          = "error while deleting user, please try after sometime"
-	ErrHealthCheckDb       = "error while checking health of database"
-	ErrUnauthenticated     = "error verifying user identity"
-	ErrKratosAuth          = "error while fetching user from kratos"
-	ErrKratosDataInsertion = "error while inserting user data came from kratos"
-	ErrKratosIDEmpty       = "error no session_id found in kratos cookie"
-	ErrKratosCookieTime    = "error while parsing the expiration time of the cookie"
-	ErrRegisterQuiz        = "error while creating quiz"
-	ErrCreatingDemoQuiz    = "error while creating demo quiz"
-	ErrGetTotalJoinUser    = "error while get count of user join in quiz"
-	ErrInsertImage         = "error while insert image"
+	ErrGetUser                   = "error while get user"
+	ErrLoginUser                 = "error while login user"
+	ErrInsertUser                = "error while creating user, please try after sometime"
+	ErrDeleteUser                = "error while deleting user, please try after sometime"
+	ErrConvertTypeUser           = "Unable to convert to user-model type from locals"
+	ErrHealthCheckDb             = "error while checking health of database"
+	ErrUnauthenticated           = "error verifying user identity"
+	ErrUnauthorized              = "access denied. You do not have the necessary permissions."
+	ErrKratosAuth                = "error while fetching user from kratos"
+	ErrKratosDataInsertion       = "error while inserting user data came from kratos"
+	ErrKratosIDEmpty             = "error no session_id found in kratos cookie"
+	ErrKratosCookieTime          = "error while parsing the expiration time of the cookie"
+	ErrRegisterQuiz              = "error while creating quiz"
+	ErrCreatingDemoQuiz          = "error while creating demo quiz"
+	ErrGetTotalJoinUser          = "error while get count of user join in quiz"
+	ErrInsertImage               = "error while insert image"
+	ErrShareQuiz                 = "error while share quiz"
+	ErrListShareQuiz             = "error while list share quizzes"
+	ErrFetchAuthorizedUsersError = "Error fetching authorized users for the selected quiz."
+	ErrCheckQuizCreatorExists    = "error while check quiz creator exists or not"
+	ErrGetQuizPermission         = "error while get quiz pemrmission for user"
 )
 
 // default Events

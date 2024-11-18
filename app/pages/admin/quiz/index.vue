@@ -18,6 +18,22 @@
         <img src="@/assets/images/list.gif" class="card-image" />
       </template>
     </ActionCard>
+    <ActionCard
+      action-title="Shared Quizzes"
+      @card-click="navigateTo('/admin/quiz/shared-quiz')"
+    >
+      <template #image>
+        <img src="@/assets/images/shared-file.gif" class="card-image" />
+      </template>
+    </ActionCard>
+    <ActionCard
+      action-title="Shared With Me"
+      @card-click="navigateTo('/admin/quiz/share-with-me')"
+    >
+      <template #image>
+        <img src="@/assets/images/share-with-me.gif" class="card-image" />
+      </template>
+    </ActionCard>
   </div>
 </template>
 <script setup>

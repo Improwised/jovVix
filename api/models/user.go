@@ -43,15 +43,6 @@ func InitUserModel(goqu *goqu.Database, logger *zap.Logger) (UserModel, error) {
 	}, nil
 }
 
-// GetUsers list all users
-func (model *UserModel) GetUsers() ([]User, error) {
-	var users []User
-	if err := model.db.From(UserTable).ScanStructs(&users); err != nil {
-		return nil, err
-	}
-	return users, nil
-}
-
 // GetUser get user by id
 func (model *UserModel) GetById(id string) (User, error) {
 	user := User{}
@@ -139,45 +130,8 @@ func (model *UserModel) InsertKratosUser(user User) error {
 	return nil
 }
 
-func (model *UserModel) GetUserByEmailAndPassword(email string, password string) (User, error) {
-	user := User{}
-	found, err := model.db.From(UserTable).Where(goqu.Ex{
-		"email":    email,
-		"password": password,
-	}).Select(
-		"id",
-		"first_name",
-		"last_name",
-		"email",
-	).ScanStruct(&user)
-
-	if err != nil {
-		return user, err
-	}
-
-	if !found {
-		return user, sql.ErrNoRows
-	}
-
-	return user, err
-}
-
 func (model *UserModel) CountUsers() (int64, error) {
 	return model.db.From(UserTable).Count()
-}
-
-func (model *UserModel) IsUniqueEmail(email string) (bool, error) {
-	query := model.db.From("users").Select(goqu.I("id")).Where(goqu.Ex{"email": email}).Limit(1)
-
-	// Execute the query
-	rows, err := query.Executor().Query()
-	if err != nil {
-		return false, err
-	}
-	defer rows.Close()
-
-	// Check if any rows were returned
-	return !rows.Next(), err
 }
 
 func (model *UserModel) IsUniqueEmailExceptId(userId, email string) (bool, error) {
@@ -195,26 +149,6 @@ func (model *UserModel) IsUniqueEmailExceptId(userId, email string) (bool, error
 
 	// Check if any rows were returned
 	return !rows.Next(), err
-}
-
-func (model *UserModel) GetUserRole(userID string) (string, error) {
-	var role string = "not found"
-
-	found, err := model.db.From(UserTable).Where(goqu.Ex{
-		"id": userID,
-	}).Select(
-		"roles",
-	).ScanStruct(&role)
-
-	if err != nil {
-		return role, err
-	}
-
-	if !found {
-		return role, sql.ErrNoRows
-	}
-
-	return role, err
 }
 
 func (model *UserModel) GetUserByKratosID(kratosID string) (User, error) {

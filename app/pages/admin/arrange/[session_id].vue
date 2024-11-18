@@ -235,7 +235,7 @@ definePageMeta({
           START
         </button>
         <button v-else class="btn btn-danger" @click="handlePauseQuiz">
-          STOP
+          PAUSE
         </button>
       </div>
     </div>

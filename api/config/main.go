@@ -34,6 +34,7 @@ type AppConfig struct {
 	MQ            MQConfig
 	AWS           AWSConfig
 	Quiz          QuizConfig
+	SMTP          SMTPConfig
 }
 
 // GetConfig Collects all configs

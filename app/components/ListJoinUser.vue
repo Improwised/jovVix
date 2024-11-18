@@ -10,18 +10,21 @@ import { getAvatarUrlByName } from "~~/composables/avatar";
 <template>
   <div class="container" style="max-width: 800px">
     <div class="row justify-content-center mb-2">
-      <div v-if="listUsers.length == 0" class="col-7 col-md-4 mt-5 mb-5">
+      <div
+        v-if="listUsers.length == 0"
+        class="col-7 col-md-4 mt-5 mb-5 border border-radius"
+      >
         <div
-          class="d-flex border border-1 justify-content-center align-items-center px-3 py-2 py-md-4 gap-3 border-radius"
+          class="d-flex justify-content-center align-items-center px-3 py-2 py-md-4 gap-3"
         >
           <font-awesome-icon icon="fa-solid fa-users" size="xl" />
           <h5 class="text-center mb-0">Waiting for Participants..</h5>
         </div>
       </div>
 
-      <div v-else class="col-6 col-md-4 mt-5">
+      <div v-else class="col-6 col-md-4 mt-5 border border-radius">
         <div
-          class="d-flex border border-1 justify-content-center align-items-center px-3 py-2 py-md-4 gap-3 border-radius"
+          class="d-flex justify-content-center align-items-center px-3 py-2 py-md-4 gap-3"
         >
           <font-awesome-icon icon="fa-solid fa-users" size="xl" />
           <h5 class="text-center text-sm fs-5 mb-0">

@@ -124,6 +124,11 @@ func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config confi
 		return err
 	}
 
+	err = setupSharedQuizzesController(v1, goqu, logger, middleware, events, pub, config)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -244,7 +249,7 @@ func setupQuizController(v1 fiber.Router, db *goqu.Database, logger *zap.Logger,
 	quizzes.Post(fmt.Sprintf("/:%s/demo_session", constants.QuizId), quizController.GenerateDemoSession)
 	quizzes.Post(fmt.Sprintf("/:%s/upload", constants.QuizTitle), middleware.ValidateCsv, middleware.KratosAuthenticated, quizController.CreateQuizByCsv)
 	quizzes.Get("/", quizController.GetAdminUploadedQuizzes)
-	quizzes.Delete(fmt.Sprintf("/:%s", constants.QuizId), quizController.DeleteQuizById)
+	quizzes.Delete(fmt.Sprintf("/:%s", constants.QuizId), middleware.QuizPermission, middleware.VerifyQuizEditAccess, quizController.DeleteQuizById)
 
 	report := admin.Group("/reports")
 	report.Get("/list", quizController.ListQuizzesAnalysis)
@@ -259,12 +264,12 @@ func setupQuestionController(v1 fiber.Router, db *goqu.Database, logger *zap.Log
 	}
 
 	questionRouter := v1.Group(fmt.Sprintf("/quizzes/:%s/questions", constants.QuizId))
-	questionRouter.Use(middleware.KratosAuthenticated)
+	questionRouter.Use(middleware.KratosAuthenticated, middleware.QuizPermission)
 
 	questionRouter.Get("/", questionController.ListQuestionsWithAnswerByQuizId)
-	questionRouter.Get(fmt.Sprintf("/:%s", constants.QuestionId), questionController.GetQuestionById)
-	questionRouter.Put(fmt.Sprintf("/:%s", constants.QuestionId), questionController.UpdateQuestionById)
-	questionRouter.Delete(fmt.Sprintf("/:%s", constants.QuestionId), questionController.DeleteQuestionById)
+	questionRouter.Get(fmt.Sprintf("/:%s", constants.QuestionId), middleware.VerifyQuizEditAccess, questionController.GetQuestionById)
+	questionRouter.Put(fmt.Sprintf("/:%s", constants.QuestionId), middleware.VerifyQuizEditAccess, questionController.UpdateQuestionById)
+	questionRouter.Delete(fmt.Sprintf("/:%s", constants.QuestionId), middleware.VerifyQuizEditAccess, questionController.DeleteQuestionById)
 
 	return nil
 }
@@ -327,5 +332,20 @@ func setupImageController(v1 fiber.Router, goqu *goqu.Database, logger *zap.Logg
 
 	imageRouter := v1.Group("/images")
 	imageRouter.Post("/", middlewares.KratosAuthenticated, imageController.InsertImage)
+	return nil
+}
+
+func setupSharedQuizzesController(v1 fiber.Router, goqu *goqu.Database, logger *zap.Logger, middlewares middlewares.Middleware, events *events.Events, pub *watermill.WatermillPublisher, config config.AppConfig) error {
+	sharedQuizzesController, err := controller.NewSharedQuizzesController(goqu, logger, events, pub, &config)
+	if err != nil {
+		return err
+	}
+
+	sharedQuizzesRouter := v1.Group("/shared_quizzes")
+	sharedQuizzesRouter.Use(middlewares.KratosAuthenticated)
+
+	sharedQuizzesRouter.Get("/", sharedQuizzesController.ListSharedQuizzes)
+	sharedQuizzesRouter.Post(fmt.Sprintf("/:%s", constants.QuizId), middlewares.QuizPermission, middlewares.VerifyQuizShareAccess, sharedQuizzesController.ShareQuiz)
+	sharedQuizzesRouter.Get(fmt.Sprintf("/:%s", constants.QuizId), middlewares.QuizPermission, middlewares.VerifyQuizShareAccess, sharedQuizzesController.ListQuizAuthorizedUsers)
 	return nil
 }
