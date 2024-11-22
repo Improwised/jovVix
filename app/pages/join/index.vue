@@ -94,7 +94,7 @@ const code = ref(codeparam.value);
 const username = ref("");
 const firstname = ref({});
 const isUserLoggedIn = ref(false);
-const { api_url } = useRuntimeConfig().public;
+const { apiUrl } = useRuntimeConfig().public;
 const router = useRouter();
 const toast = useToast();
 const userError = ref(false);
@@ -127,7 +127,7 @@ const join_quiz = async () => {
 
     try {
       await $fetch(
-        `${api_url}/user/${username.value}?avatar_name=${avatarName}`,
+        `${apiUrl}/user/${username.value}?avatar_name=${avatarName}`,
         {
           method: "POST",
           credentials: "include",
@@ -157,7 +157,7 @@ const join_quiz = async () => {
 
   try {
     quickUserPending.value = true;
-    await $fetch(`${api_url}/user_played_quizes/${code.value}`, {
+    await $fetch(`${apiUrl}/user_played_quizes/${code.value}`, {
       method: "POST",
       credentials: "include",
       headers: {
@@ -192,7 +192,7 @@ const join_quiz = async () => {
 // get user data
 (async () => {
   try {
-    await $fetch(api_url + "/user/who", {
+    await $fetch(apiUrl + "/user/who", {
       method: "GET",
       credentials: "include",
       headers: {

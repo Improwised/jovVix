@@ -10,7 +10,7 @@ const {
   data: quizList,
   pending: quizPending,
   error: quizError,
-} = useFetch(`${url.api_url}/user_played_quizes/${played_quiz_id.value}`, {
+} = useFetch(`${url.apiUrl}/user_played_quizes/${played_quiz_id.value}`, {
   method: "GET",
   headers: headers,
   mode: "cors",

@@ -2,12 +2,15 @@
 import vuetify, { transformAssetUrls } from "vite-plugin-vuetify";
 
 export default defineNuxtConfig({
+  // please refer https://nuxt.com/docs/guide/going-further/runtime-config#environment-variables for setting up environment variables.
   runtimeConfig: {
     public: {
-      base_url: process.env.BASE_URL,
-      api_url: process.env.API_URL,
-      socket_url: process.env.API_SOCKET_URL,
-      kratos_url: process.env.KRATOS_URL,
+      baseUrl: process.env.NUXT_PUBLIC_BASE_URL || "http://127.0.0.1:3001",
+      apiUrl: process.env.NUXT_PUBLIC_API_URL || "http://127.0.0.1:3000/api/v1",
+      apiSocketUrl:
+        process.env.NUXT_PUBLIC_API_SOCKET_URL ||
+        "ws://127.0.0.1:3000/api/v1/socket",
+      kratosUrl: process.env.NUXT_PUBLIC_KRATOS_URL || "http://127.0.0.1:4433",
     },
   },
   app: {

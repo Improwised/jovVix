@@ -195,7 +195,7 @@ const onImageChange = async (e) => {
   imageForm.append("image-attachment", e.target.files[0], e.target.name);
 
   try {
-    await $fetch(encodeURI(`${url.api_url}/images?quiz_id=${props.quizId}`), {
+    await $fetch(encodeURI(`${url.apiUrl}/images?quiz_id=${props.quizId}`), {
       method: "POST",
       headers: {
         Accept: "application/json",
@@ -249,7 +249,7 @@ const updateQuestion = async () => {
     };
 
     await $fetch(
-      `${url.api_url}/quizzes/${props.quizId}/questions/${props.questionId}`,
+      `${url.apiUrl}/quizzes/${props.quizId}/questions/${props.questionId}`,
       {
         method: "PUT",
         headers: headers,

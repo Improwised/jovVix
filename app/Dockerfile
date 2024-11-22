@@ -6,7 +6,6 @@ RUN apk add --no-cache nginx supervisor wget curl
 RUN mkdir -p /run/nginx
 COPY ./docker/nginx.conf /etc/nginx/nginx.conf
 COPY ./s6-overlay /etc/s6-overlay
-COPY .env.docker .env
 COPY . ./
 RUN npm run build
 EXPOSE 5000

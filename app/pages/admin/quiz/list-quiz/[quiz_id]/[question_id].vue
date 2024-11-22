@@ -23,7 +23,7 @@ const {
   pending: questionPending,
   error: questionError,
 } = useFetch(
-  `${url.api_url}/quizzes/${quizId.value}/questions/${questionId.value}`,
+  `${url.apiUrl}/quizzes/${quizId.value}/questions/${questionId.value}`,
   {
     method: "GET",
     headers: headers,

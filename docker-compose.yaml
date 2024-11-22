@@ -37,10 +37,11 @@ services:
       - ./api/redis/redis.conf:/usr/local/etc/redis/redis.conf
 
   api:
-    image: golang:1.22.0-alpine3.19
+    build:
+      context: ./api/
+      dockerfile: Dockerfile
     ports:
-      - "3300:3300"
-    platform: linux/amd64
+      - "3000:3000"
     restart: on-failure
     env_file:
       - ./api/.env.docker
@@ -48,30 +49,27 @@ services:
       - postgresdb
       - migration
       - redis
-    command: go run app.go api
-    volumes:
-      - ./api:/go/
+      - kratos
+    command: ["./api", "api"]
 
   web:
     build:
       context: ./app/
       dockerfile: Dockerfile
     ports:
-      - "5000:4000"
+      - "3001:5000"
     restart: on-failure
     env_file:
       - ./app/.env.docker
-    volumes:
-      - ./app/:/usr/src/app/
     depends_on:
       - api
 
   kratos_migrate:
     image: oryd/kratos:v1.0.0
-    profiles: [kratos]
     environment:
       - DSN=postgres://quiz-app:quiz-app@postgresdb:5432/quiz-app?sslmode=disable&search_path=kratos
       - LOG_LEVEL=trace
+
     command: migrate sql -e --yes
     restart: on-failure
     depends_on:
@@ -79,21 +77,54 @@ services:
 
   kratos:
     image: oryd/kratos:v1.0.0
-    profiles: [kratos]
     ports:
-      - '4433:${SERVE_PUBLIC_PORT:-4433}' # public
-      - '4434:${SERVE_ADMIN_PORT:-4434}' # admin
+      - "4433:${SERVE_PUBLIC_PORT:-4433}" # public
+      - "4434:${SERVE_ADMIN_PORT:-4434}" # admin
     environment:
       - LOG_LEVEL=trace
-    env_file:
-      - .env
-    command: serve -c /etc/config/kratos/kratos.yml
+      - DSN=postgres://quiz-app:quiz-app@postgresdb:5432/quiz-app?sslmode=disable&search_path=kratos
+      - SERVE_PUBLIC_HOST=0.0.0.0
+      - SERVE_PUBLIC_PORT=4433
+      - COURIER_SMTP_CONNECTION_URI=smtp://mailpit:1025?skip_ssl_verify=true&disable_starttls=true
+
+    # env_file:
+    #   - .env
+    command: serve -c /etc/config/kratos/kratos.yml --watch-courier
     restart: always
     depends_on:
       - postgresdb
       - kratos_migrate
     volumes:
       - "./api/pkg/kratos:/etc/config/kratos"
+
+  minio:
+    image: quay.io/minio/minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - ~/minio/data:/data
+    environment:
+      MINIO_ROOT_USER: ROOTNAME
+      MINIO_ROOT_PASSWORD: CHANGEME123
+    command: server /data --console-address ":9001"
+
+  mailpit:
+    image: axllent/mailpit
+    container_name: mailpit
+    restart: unless-stopped
+    volumes:
+      - ./data:/data
+    ports:
+      - 8025:8025
+      - 1025:1025
+    environment:
+      MP_MAX_MESSAGES: 5000
+      MP_DATABASE: /data/mailpit.db
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+      MP_SENDMAIL_SMTP_ADDR: mailpit:1025
+      MP_SENDMAIL_FROM: test@test.com
 
 volumes:
   pgdata:

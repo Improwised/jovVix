@@ -64,7 +64,7 @@ definePageMeta({
   layout: "default",
 });
 
-const { api_url } = useRuntimeConfig().public;
+const { apiUrl } = useRuntimeConfig().public;
 const headers = useRequestHeaders(["cookie"]);
 const route = useRoute();
 const activeQuizId = computed(() => route.params.id);
@@ -74,7 +74,7 @@ const {
   data: quizAnalysis,
   error: quizAnalysisError,
   pending: quizAnalysisPending,
-} = useFetch(`${api_url}/admin/reports/${activeQuizId.value}/analysis`, {
+} = useFetch(`${apiUrl}/admin/reports/${activeQuizId.value}/analysis`, {
   transform: (quizAnalysis) => {
     quizAnalysis.data?.map((quiz) => {
       quiz.userParticipants = Object.keys(quiz.selected_answers).length;
@@ -118,7 +118,7 @@ const getAnalysisJson = async () => {
   try {
     quizUserAnalysispending.value = true;
     const response = await fetch(
-      `${api_url}/analytics_board/admin?active_quiz_id=${activeQuizId.value}`,
+      `${apiUrl}/analytics_board/admin?active_quiz_id=${activeQuizId.value}`,
       {
         method: "GET",
         headers: headers.value,
@@ -128,7 +128,7 @@ const getAnalysisJson = async () => {
     );
 
     const ranksResponse = await fetch(
-      `${api_url}/final_score/admin?active_quiz_id=${activeQuizId.value}`,
+      `${apiUrl}/final_score/admin?active_quiz_id=${activeQuizId.value}`,
       {
         method: "GET",
         headers: headers.value,

@@ -159,7 +159,7 @@ definePageMeta({
   layout: "default",
 });
 
-const { api_url } = useRuntimeConfig().public;
+const { apiUrl } = useRuntimeConfig().public;
 const headers = useRequestHeaders(["cookie"]);
 const route = useRoute();
 const page = computed(() => Number(route.query.page) || 1);
@@ -173,7 +173,7 @@ const {
   data: quizList,
   error: quizListError,
   pending: quizListPending,
-} = useFetch(`${api_url}/admin/reports/list`, {
+} = useFetch(`${apiUrl}/admin/reports/list`, {
   transform: (quizList) => {
     quizList.data.Data = quizList.data?.Data?.map((quiz) => {
       quiz.activated_from.Time = format(

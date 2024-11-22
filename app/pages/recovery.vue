@@ -50,7 +50,7 @@
 import { ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
 const config = useRuntimeConfig();
-const { kratos_url } = config.public;
+const { kratosUrl } = config.public;
 definePageMeta({
   layout: false,
 });
@@ -75,7 +75,7 @@ const fetchFlowIdAndCsrfToken = async () => {
 
     // Example endpoint to fetch CSRF token (replace with your actual endpoint)
     const response = await fetch(
-      `${kratos_url}/self-service/recovery/browser?aal=&refresh=&return_to=`,
+      `${kratosUrl}/self-service/recovery/browser?aal=&refresh=&return_to=`,
       {
         method: "GET",
         headers: {
@@ -110,7 +110,7 @@ const verifyOTP = async () => {
 
     // Perform OTP verification request
     const otpVerificationResponse = await fetch(
-      `${kratos_url}/self-service/recovery?flow=${flow.value}`,
+      `${kratosUrl}/self-service/recovery?flow=${flow.value}`,
       {
         method: "POST",
         headers: {

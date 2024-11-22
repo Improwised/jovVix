@@ -103,7 +103,7 @@ const {
   data: quizData,
   pending: quizPending,
   error: quizError,
-} = useFetch(`${url.api_url}/quizzes/${quizId.value}/questions`, {
+} = useFetch(`${url.apiUrl}/quizzes/${quizId.value}/questions`, {
   method: "GET",
   headers: headers,
   mode: "cors",
@@ -116,7 +116,7 @@ const navagateToEditQuestion = (questionId) => {
 
 const deleteQuiz = async () => {
   try {
-    await $fetch(`${url.api_url}/quizzes/${quizId.value}`, {
+    await $fetch(`${url.apiUrl}/quizzes/${quizId.value}`, {
       method: "DELETE",
       headers: headers,
       credentials: "include",
@@ -132,7 +132,7 @@ const deleteQuiz = async () => {
 const deleteQuestion = async (questionId) => {
   try {
     await $fetch(
-      `${url.api_url}/quizzes/${quizId.value}/questions/${questionId}`,
+      `${url.apiUrl}/quizzes/${quizId.value}/questions/${questionId}`,
       {
         method: "DELETE",
         headers: headers,
@@ -154,7 +154,7 @@ const shareQuiz = async (email, permission, quizAuthorizedUsersDataRefresh) => {
       permission: permission,
     };
 
-    await $fetch(`${url.api_url}/shared_quizzes/${quizId.value}`, {
+    await $fetch(`${url.apiUrl}/shared_quizzes/${quizId.value}`, {
       method: "POST",
       headers: headers,
       body: payload,

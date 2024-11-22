@@ -36,7 +36,7 @@
 <script setup>
 import { useToast } from "vue-toastification";
 
-const { kratos_url } = useRuntimeConfig().public;
+const { kratosUrl } = useRuntimeConfig().public;
 const route = useRoute("");
 const toast = useToast();
 
@@ -52,7 +52,7 @@ const fetchFlowIdAndCsrfToken = async () => {
   try {
     // Example endpoint to fetch CSRF token (replace with your actual endpoint)
     const response = await fetch(
-      `${kratos_url}/self-service/verification/flows?id=${route.query.flow}`,
+      `${kratosUrl}/self-service/verification/flows?id=${route.query.flow}`,
       {
         method: "GET",
         headers: {
@@ -89,6 +89,6 @@ const fetchFlowIdAndCsrfToken = async () => {
 
 const verificationUrl = computed(
   () =>
-    `${kratos_url}/self-service/verification?token=${code.value}&flow=${route.query.flow}`
+    `${kratosUrl}/self-service/verification?token=${code.value}&flow=${route.query.flow}`
 );
 </script>

@@ -6,10 +6,14 @@ export default class AdminOperations extends QuizHandler {
     const url = useRuntimeConfig().public;
 
     // Initialize object
-    super(url.socket_url + "/admin/arrange/" + session_id, session_id, handler);
+    super(
+      url.apiSocketUrl + "/admin/arrange/" + session_id,
+      session_id,
+      handler
+    );
 
     // Initialize custom attribute
-    this.api_url = url.api_url;
+    this.apiUrl = url.apiUrl;
     this.errorHandler = errorHandler;
     this.skipHandler = skipConfirmHandler;
     this.pingIntervalTime = 45000;

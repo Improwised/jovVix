@@ -120,7 +120,7 @@ const {
   data: quizAuthorizedUsersData,
   pending: quizAuthorizedUsersPending,
   error: quizAuthorizedUsersError,
-} = useFetch(`${url.api_url}/shared_quizzes/${props.quizId}`, {
+} = useFetch(`${url.apiUrl}/shared_quizzes/${props.quizId}`, {
   method: "GET",
   headers: headers,
   mode: "cors",
@@ -135,7 +135,7 @@ const updateUserPermission = async (idVal, emailVal, permissionVal) => {
     };
 
     await $fetch(
-      `${url.api_url}/shared_quizzes/${props.quizId}?shared_quiz_id=${idVal}`,
+      `${url.apiUrl}/shared_quizzes/${props.quizId}?shared_quiz_id=${idVal}`,
       {
         method: "PUT",
         headers: headers,
@@ -155,7 +155,7 @@ const updateUserPermission = async (idVal, emailVal, permissionVal) => {
 const deleteUserPermission = async (idVal) => {
   try {
     await $fetch(
-      `${url.api_url}/shared_quizzes/${props.quizId}?shared_quiz_id=${idVal}`,
+      `${url.apiUrl}/shared_quizzes/${props.quizId}?shared_quiz_id=${idVal}`,
       {
         method: "DELETE",
         headers: headers,

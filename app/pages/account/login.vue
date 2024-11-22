@@ -18,7 +18,7 @@ const errors = ref({
   password: "",
   code: "",
 });
-const kratos_url = urls.kratos_url;
+const kratosUrl = urls.kratosUrl;
 console.log();
 
 (async () => {
@@ -30,7 +30,7 @@ console.log();
     }
     if (route.query.flow) {
       try {
-        await $fetch(kratos_url + "/self-service/login/flows", {
+        await $fetch(kratosUrl + "/self-service/login/flows", {
           method: "GET",
           credentials: "include",
           headers: {
@@ -84,7 +84,7 @@ console.log();
 async function setFlowIDAndCSRFToken() {
   try {
     const kratosResponse = await $fetch(
-      kratos_url + "/self-service/login/browser?refresh=true",
+      kratosUrl + "/self-service/login/browser?refresh=true",
       {
         method: "GET",
         headers: {
@@ -116,7 +116,7 @@ const handleForgotPassword = async () => {
     return;
   }
   const recoveryResponse = await fetch(
-    `${kratos_url}/self-service/recovery/browser`,
+    `${kratosUrl}/self-service/recovery/browser`,
     {
       headers: {
         Accept: "application/json",
@@ -154,7 +154,7 @@ const handleEmailVerification = async () => {
   try {
     // Request email verification flow from Kratos
     const verificationResponse = await fetch(
-      `${kratos_url}/self-service/verification/browser`,
+      `${kratosUrl}/self-service/verification/browser`,
       {
         method: "GET",
         headers: {
@@ -198,7 +198,7 @@ const verifyCode = async () => {
 
   try {
     const response = await fetch(
-      `${kratos_url}/self-service/verification?flow=${flowID.value}`,
+      `${kratosUrl}/self-service/verification?flow=${flowID.value}`,
       {
         method: "POST",
         credentials: "include",

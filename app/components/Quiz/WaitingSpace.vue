@@ -3,7 +3,7 @@
 import { useNuxtApp } from "nuxt/app";
 import { useToast } from "vue-toastification";
 import { useMusicStore } from "~~/store/music";
-const { base_url } = useRuntimeConfig().public;
+const { baseUrl } = useRuntimeConfig().public;
 const musicStore = useMusicStore();
 const { getMusic } = musicStore;
 
@@ -84,7 +84,7 @@ onMounted(() => {
       usecopyToClipboard(code.value);
     });
     urlCopyBtn.addEventListener("click", () => {
-      usecopyToClipboard(`${base_url}/join?code=${code.value}`);
+      usecopyToClipboard(`${baseUrl}/join?code=${code.value}`);
     });
   }
 });
@@ -166,7 +166,7 @@ watch(
               class="d-flex align-items-center justify-content-center qr-scale-down"
             >
               <QrCode
-                :scan-u-r-l="`${base_url}/join`"
+                :scan-u-r-l="`${baseUrl}/join`"
                 :quiz-code="code"
                 :size="450"
               />

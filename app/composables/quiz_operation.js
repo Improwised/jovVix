@@ -239,7 +239,7 @@ export default class QuizHandler {
     setSession(null);
     let error;
     try {
-      const response = await useFetch(this.api_url + "/quiz/terminate", {
+      const response = await useFetch(this.apiUrl + "/quiz/terminate", {
         method: "GET",
         credentials: "include",
         mode: "cors",

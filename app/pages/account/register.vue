@@ -12,7 +12,7 @@ const email = ref();
 const password = ref();
 const csrfToken = ref();
 const component = ref("waiting");
-const urls = useRuntimeConfig().public;
+const { kratosUrl } = useRuntimeConfig().public;
 const errors = ref({
   email: "",
   password: "",
@@ -20,7 +20,6 @@ const errors = ref({
   lastname: "",
 });
 const registerURLWithFlowQuery = ref("");
-const kratos_url = urls.kratos_url;
 console.log(); // this console.log is required because without this, nuxt will give 5xx error as async function is called afterwards
 
 (async () => {
@@ -32,7 +31,7 @@ console.log(); // this console.log is required because without this, nuxt will g
     }
     if (route.query.flow) {
       try {
-        await $fetch(kratos_url + "/self-service/registration/flows", {
+        await $fetch(kratosUrl + "/self-service/registration/flows", {
           method: "GET",
           credentials: "include",
           headers: {
@@ -98,7 +97,7 @@ console.log(); // this console.log is required because without this, nuxt will g
 async function setFlowIDAndCSRFToken() {
   try {
     const kratosResponse = await $fetch(
-      kratos_url + "/self-service/registration/browser",
+      kratosUrl + "/self-service/registration/browser",
       {
         method: "GET",
         headers: {

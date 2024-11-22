@@ -7,3 +7,4 @@ Makefile
 api-logs.json
 api/data/mailpit.db-shm
 api/data/mailpit.db-wal
+data/mailpit.db

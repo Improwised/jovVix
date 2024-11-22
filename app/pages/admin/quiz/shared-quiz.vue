@@ -7,7 +7,7 @@ const {
   data: quizList,
   pending: quizPending,
   error: quizError,
-} = useFetch(url.api_url + "/shared_quizzes?type=shared_by_me", {
+} = useFetch(url.apiUrl + "/shared_quizzes?type=shared_by_me", {
   method: "GET",
   headers: headers,
   mode: "cors",

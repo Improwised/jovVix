@@ -46,7 +46,7 @@ const props = defineProps({
 const getFinalScoreboardDetails = async (endpoint) => {
   try {
     requestPending.value = true;
-    await $fetch(`${url.api_url}${endpoint}`, {
+    await $fetch(`${url.apiUrl}${endpoint}`, {
       method: "GET",
       credentials: "include",
       headers: {
@@ -88,7 +88,7 @@ if (!props.isAdmin) {
   async function getAnalysisDetails() {
     const { data, error } = await useFetch(
       () =>
-        `${url.api_url}${userAnalysisEndpoint}?user_played_quiz=${props.userPlayedQuiz}`,
+        `${url.apiUrl}${userAnalysisEndpoint}?user_played_quiz=${props.userPlayedQuiz}`,
       {
         method: "GET",
         headers: headers,

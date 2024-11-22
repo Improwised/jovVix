@@ -7,13 +7,13 @@ export default class UserOperation extends QuizHandler {
   constructor(code, username, handler, errorHandler, successHandler) {
     const url = useRuntimeConfig().public;
     super(
-      url.socket_url + "/join/" + code + "?username=" + username,
+      url.apiSocketUrl + "/join/" + code + "?username=" + username,
       code,
       handler
     );
     this.errorHandler = errorHandler;
     this.successHandler = successHandler;
-    this.api_url = url.api_url;
+    this.apiUrl = url.apiUrl;
     this.pingInterval = null;
     this.isWaiting = false;
 
@@ -79,7 +79,7 @@ export default class UserOperation extends QuizHandler {
     const responseTime = this.getAnswerResponseTime();
     try {
       const response = await fetch(
-        `${this.api_url}/quiz/answer?user_played_quiz=${user_played_quiz}&session_id=${session_id}`,
+        `${this.apiUrl}/quiz/answer?user_played_quiz=${user_played_quiz}&session_id=${session_id}`,
         {
           method: "POST",
           body: JSON.stringify({

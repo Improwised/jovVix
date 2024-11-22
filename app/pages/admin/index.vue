@@ -250,7 +250,7 @@ const {
   data: user,
   pending: userPending,
   error: userError,
-} = useFetch(url.api_url + "/kratos/whoami", {
+} = useFetch(url.apiUrl + "/kratos/whoami", {
   method: "GET",
   headers: headers,
   mode: "cors",
@@ -261,7 +261,7 @@ const {
   data: quizList,
   pending: quizPending,
   error: quizError,
-} = useFetch(url.api_url + "/user_played_quizes", {
+} = useFetch(url.apiUrl + "/user_played_quizes", {
   method: "GET",
   headers: headers,
   mode: "cors",
@@ -312,7 +312,7 @@ watch(
 
 const changeUserMetaData = async () => {
   updateuserPending.value = true;
-  const { data, error } = await useFetch(url.api_url + "/kratos/user", {
+  const { data, error } = await useFetch(url.apiUrl + "/kratos/user", {
     method: "PUT",
     headers: headers,
     mode: "cors",
@@ -355,7 +355,7 @@ const csrfToken = ref("");
 const fetchFlowIdAndCsrfToken = async () => {
   try {
     const response = await fetch(
-      `${url.kratos_url}/self-service/settings/browser?aal=&refresh=&return_to=`,
+      `${url.kratosUrl}/self-service/settings/browser?aal=&refresh=&return_to=`,
       {
         method: "GET",
         headers: {
@@ -388,7 +388,7 @@ const changePassword = async () => {
     await fetchFlowIdAndCsrfToken();
 
     const response = await fetch(
-      `${url.kratos_url}/self-service/settings?flow=${flow.value}`,
+      `${url.kratosUrl}/self-service/settings?flow=${flow.value}`,
       {
         method: "POST",
         headers: {
@@ -431,7 +431,7 @@ const deleteAccount = async () => {
   const isconfirm = confirm("are you sure?");
   if (isconfirm) {
     try {
-      await $fetch(`${url.api_url}/kratos/user`, {
+      await $fetch(`${url.apiUrl}/kratos/user`, {
         method: "DELETE",
         headers: headers,
         credentials: "include",

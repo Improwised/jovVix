@@ -27,7 +27,7 @@ const uploadQuizAndQuestions = async (e) => {
   formData.append(description.name, description.value);
   formData.append(attachment.name, attachment.files[0]);
   try {
-    await $fetch(encodeURI(`${url.api_url}/quizzes/${title.value}/upload`), {
+    await $fetch(encodeURI(`${url.apiUrl}/quizzes/${title.value}/upload`), {
       method: "POST",
       headers: {
         Accept: "application/json",
@@ -55,7 +55,7 @@ const uploadQuizAndQuestions = async (e) => {
 
   try {
     await $fetch(
-      encodeURI(`${url.api_url}/quizzes/${quizId.value}/questions?media=image`),
+      encodeURI(`${url.apiUrl}/quizzes/${quizId.value}/questions?media=image`),
       {
         method: "GET",
         headers: {
@@ -121,7 +121,7 @@ const imageFileUpload = async (e) => {
 
   imageRequestPending.value = true;
   try {
-    await $fetch(encodeURI(`${url.api_url}/images?quiz_id=${quizId.value}`), {
+    await $fetch(encodeURI(`${url.apiUrl}/images?quiz_id=${quizId.value}`), {
       method: "POST",
       headers: {
         Accept: "application/json",

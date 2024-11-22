@@ -58,7 +58,7 @@ const {
   data: quizList,
   pending: quizPending,
   error: quizError,
-} = useFetch(url.api_url + "/user_played_quizes", {
+} = useFetch(url.apiUrl + "/user_played_quizes", {
   method: "GET",
   headers: headers,
   mode: "cors",
