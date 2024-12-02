@@ -18,6 +18,7 @@ type UserService struct {
 	quizModel           *models.QuizModel
 	activeQuizModel     *models.ActiveQuizModel
 	userModel           *models.UserModel
+	sharedQuizzesModel  *models.SharedQuizzesModel
 	db                  *goqu.Database
 	logger              *zap.Logger
 	config              config.AppConfig
@@ -27,6 +28,7 @@ func NewUserService(db *goqu.Database, logger *zap.Logger, config config.AppConf
 	userPlayedQuizModel := models.InitUserPlayedQuizModel(db)
 	quizModel := models.InitQuizModel(db)
 	activeQuizModel := models.InitActiveQuizModel(db, logger)
+	sharedQuizzesModel := models.InitSharedQuizzesModel(db, logger)
 	userModel, err := models.InitUserModel(db, logger)
 	if err != nil {
 		return nil, err
@@ -36,6 +38,7 @@ func NewUserService(db *goqu.Database, logger *zap.Logger, config config.AppConf
 		userPlayedQuizModel: userPlayedQuizModel,
 		quizModel:           quizModel,
 		activeQuizModel:     activeQuizModel,
+		sharedQuizzesModel:  sharedQuizzesModel,
 		userModel:           &userModel,
 		db:                  db,
 		logger:              logger,
@@ -64,6 +67,12 @@ func (userSvc *UserService) DeleteUserDataById(userId, kratosId string) error {
 			}
 		}
 	}()
+
+	// Delete shared quizzes and shared with me quizzes also
+	err = userSvc.sharedQuizzesModel.RemoveSharedQuizPermissionsByUserId(transaction, userId)
+	if err != nil {
+		return err
+	}
 
 	// Delete played quizzes
 	err = userSvc.userPlayedQuizModel.DeleteUserPlayedQuizzesAndReponseByUserId(transaction, userId)

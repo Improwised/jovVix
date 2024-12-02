@@ -30,10 +30,10 @@ func InitSharedQuizzesModel(goquDB *goqu.Database, logger *zap.Logger) *SharedQu
 }
 
 // Insert the data for share quiz
-func (model *SharedQuizzesModel) InsertSharedQuiz(sharedQuizzes SharedQuizzes) error {
+func (model *SharedQuizzesModel) InsertSharedQuiz(sharedQuizzes SharedQuizzes) (uuid.UUID, error) {
 	Id, err := uuid.NewUUID()
 	if err != nil {
-		return err
+		return Id, err
 	}
 
 	_, err = model.db.Insert(SharedQuizzesTable).Rows(
@@ -45,11 +45,8 @@ func (model *SharedQuizzesModel) InsertSharedQuiz(sharedQuizzes SharedQuizzes) e
 			"permission": sharedQuizzes.Permission,
 		},
 	).Executor().Exec()
-	if err != nil {
-		return err
-	}
 
-	return nil
+	return Id, err
 }
 
 // List authorized users for perticular quiz
@@ -201,4 +198,18 @@ func (model *SharedQuizzesModel) GetPermissionByQuizAndUser(quizID, sharedTo str
 	}
 
 	return permission, nil
+}
+
+// It removes entries from the SharedQuizzesTable where the user is either the creator (shared_by) or the recipient (shared_to) based on the userID or their associated email.
+func (model *SharedQuizzesModel) RemoveSharedQuizPermissionsByUserId(transaction *goqu.TxDatabase, userId string) error {
+	emailSubquery := transaction.From(UserTable).
+		Select("email").
+		Where(
+			goqu.Ex{"id": userId},
+		)
+
+	_, err := transaction.Delete(SharedQuizzesTable).
+		Where(goqu.Or(goqu.C("shared_by").Eq(userId), goqu.C("shared_to").Eq(emailSubquery))).Executor().Exec()
+
+	return err
 }

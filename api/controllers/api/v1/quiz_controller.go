@@ -132,8 +132,8 @@ func (qc *QuizController) GetQuizAnalysis(c *fiber.Ctx) error {
 func (qc *QuizController) ListQuizzesAnalysis(c *fiber.Ctx) error {
 
 	type resQuizAnalysisList struct {
-		Data  []models.QuizzesAnalysis
-		Count int64
+		Data  []models.QuizzesAnalysis `json:"data"`
+		Count int64                    `json:"count"`
 	}
 
 	userID := quizUtilsHelper.GetString(c.Locals(constants.ContextUid))

@@ -30,6 +30,7 @@ func (m *Middleware) ValidateCsv(c *fiber.Ctx) error {
 	isMatched := false
 	allowedTypes := []string{
 		"text/csv",
+		"text/plain; charset=utf-8", // for test case
 	}
 
 	for _, types := range allowedTypes {

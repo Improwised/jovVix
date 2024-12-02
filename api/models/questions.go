@@ -544,6 +544,12 @@ func (model *QuestionModel) DeleteQuestionById(transaction *goqu.TxDatabase, que
 
 // Delete questions by id (delete multiple question at a time)
 func deleteQuestionsByIds(transaction *goqu.TxDatabase, questionIds []string) error {
+
+	// why ? if questionIds len is 0 then sql query return syntax error so here handle this error
+	if len(questionIds) <= 0 {
+		return nil
+	}
+
 	_, err := transaction.Delete(QuestionTable).Where(goqu.Ex{"id": questionIds}).Executor().Exec()
 	if err != nil {
 		return err

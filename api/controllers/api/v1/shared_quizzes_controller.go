@@ -94,7 +94,7 @@ func (sqctrl *SharedQuizzes) ShareQuiz(c *fiber.Ctx) error {
 	sqctrl.logger.Debug("validate req success", zap.Any("shareQuizReq", shareQuizReq))
 
 	// Insert for share quiz
-	err = sqctrl.sharedQuizzesModel.InsertSharedQuiz(models.SharedQuizzes{
+	id, err := sqctrl.sharedQuizzesModel.InsertSharedQuiz(models.SharedQuizzes{
 		QuizId:     quizId,
 		SharedTo:   shareQuizReq.Email,
 		SharedBy:   user.ID,
@@ -115,7 +115,7 @@ func (sqctrl *SharedQuizzes) ShareQuiz(c *fiber.Ctx) error {
 	}
 	sqctrl.logger.Debug("SharedQuizzes.ShareQuiz success", zap.Any("quizId", quizId), zap.Any("userId", user.ID))
 
-	return utils.JSONSuccess(c, http.StatusOK, "Quiz shared successfully!")
+	return utils.JSONSuccess(c, http.StatusOK, id)
 }
 
 // ListQuizAuthorizedUsers to List authorized users for perticular quiz.

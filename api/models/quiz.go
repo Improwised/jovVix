@@ -404,6 +404,10 @@ func (model *QuizModel) ListQuizzesAnalysis(name, order, orderBy, date, userId s
 		return quizzesAnalysis, 0, err
 	}
 
+	if orderBy == "" {
+		orderBy = "activated_to"
+	}
+
 	if order == "desc" {
 		query = query.Order(goqu.I(orderBy).Desc())
 	} else {

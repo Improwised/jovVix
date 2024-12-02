@@ -183,10 +183,10 @@ type RsponseListQuizzesAnalysis struct {
 	// in:body
 	Body struct {
 		Status string `json:"status"`
-		Data   []struct {
-			models.QuizzesAnalysis
+		Data   struct {
+			Data  []models.QuizzesAnalysis `json:"data"`
+			Count int64                    `json:"count"`
 		} `json:"data"`
-		Count int64 `json:"count"`
 	} `json:"body"`
 }
 
@@ -255,6 +255,25 @@ type ResponseListQuestionByQuizId struct {
 	} `json:"body"`
 }
 
+// swagger:parameters RequestListUserPlayedQuizes
+type RequestListUserPlayedQuizes struct {
+	// in:query
+	Page string `json:"page"`
+	// in:query
+	Title string `json:"title"`
+}
+
+// swagger:response ResponseListUserPlayedQuizes
+type ResponseListUserPlayedQuizes struct {
+	// in:body
+	Body struct {
+		Status string `json:"status"`
+		Data   struct {
+			structs.ResUserPlayedQuizWithCount
+		} `json:"data"`
+	} `json:"body"`
+}
+
 // swagger:parameters RequestListUserPlayedQuizesWithQuestionById
 type RequestListUserPlayedQuizesWithQuestionById struct {
 	// in:path
@@ -285,7 +304,7 @@ type ResponsePlayedQuizValidation struct {
 	// in:body
 	Body struct {
 		Status string `json:"status"`
-		Data   []struct {
+		Data   struct {
 			UserPlayedQuizId string `json:"user_played_quiz"`
 			SessionId        string `json:"session_id"`
 		} `json:"data"`

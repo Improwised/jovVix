@@ -112,9 +112,9 @@
             </tr>
           </thead>
           <tbody>
-            <div v-if="quizList?.data?.Count <= 0">No quiz found....</div>
+            <div v-if="quizList?.data?.count <= 0">No quiz found....</div>
             <tr
-              v-for="(quiz, index) in quizList?.data.Data"
+              v-for="(quiz, index) in quizList?.data.data"
               v-else
               :key="index"
               role="button"
@@ -146,7 +146,7 @@
         </table>
       </div>
       <div class="d-flex align-items-center justify-content-center">
-        <Pagination :page="page" :num-of-records="quizList?.data?.Count / 10" />
+        <Pagination :page="page" :num-of-records="quizList?.data?.count / 10" />
       </div>
     </div>
   </div>
@@ -175,7 +175,7 @@ const {
   pending: quizListPending,
 } = useFetch(`${apiUrl}/admin/reports/list`, {
   transform: (quizList) => {
-    quizList.data.Data = quizList.data?.Data?.map((quiz) => {
+    quizList.data.data = quizList.data?.data?.map((quiz) => {
       quiz.activated_from.Time = format(
         formatISO(quiz.activated_from.Time),
         "dd-MMM-yyyy HH:mm:ss"

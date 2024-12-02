@@ -1,0 +1,15 @@
+Question Text,Question Type,Points,Option 1,Option 2,Option 3,Option 4,Option 5,Correct Answer,Question Media,Options Media,Resource
+Which city is known as the Eternal City?,single answer,1,Paris,Rome,Athens,Cairo,,2,text,text,
+What features of a travel destination are most important to you when planning a vacation?,survey,1,Scenic landscapes,Cultural experiences,Local cuisine,Historical sites,Adventure activities,1|2|3|4|5,text,text,
+Identify the country represented by this flag.,single answer,1,France,Italy,Netherlands,Russia,,1,image,text,
+what is the output of this code?,single answer,1,10,120,240,20,,2,code,text,"function factorial(n) { 
+    let ans = 1; 
+    
+    if(n === 0)
+        return 1;
+    for (let i = 2; i <= n; i++) 
+        ans = ans * i; 
+    return ans; 
+}
+console.log(factorial(5));"
+Which company is known for its Think Different slogan?,single answer,1,Microsoft,Google,Apple,Amazon,,3,text,image,

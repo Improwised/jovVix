@@ -55,7 +55,7 @@ func NewUserPlayedQuizeController(goqu *goqu.Database, logger *zap.Logger, event
 }
 
 // ListUserPlayedQuizes to List played quiz by user
-// swagger:route GET /v1/user_played_quizes UserPlayedQuiz UserPlayedQuiz
+// swagger:route GET /v1/user_played_quizes UserPlayedQuiz RequestListUserPlayedQuizes
 //
 // List played quiz by user.
 //
