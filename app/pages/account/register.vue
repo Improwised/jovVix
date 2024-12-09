@@ -53,6 +53,15 @@ console.log(); // this console.log is required because without this, nuxt will g
             component.value = "form";
           },
           onResponse({ response }) {
+            response?._data?.ui?.messages?.forEach((message) => {
+              if (message.type === "error") {
+                if (message.id === 4000007) {
+                  toast.error("An account with the same email exists already!");
+                } else {
+                  toast.error(message.text);
+                }
+              }
+            });
             response?._data?.ui?.nodes?.forEach((node) => {
               if (node.attributes.name === "traits.email") {
                 errors.value.email = node.messages
@@ -120,83 +129,6 @@ async function setFlowIDAndCSRFToken() {
     console.error(error);
   }
 }
-
-// async function register_user(e) {
-// e.preventDefault();
-
-// if (password.value !== confirmPassword.value) {
-//   toast.error("password and confirmPassword are not equal, please try again")
-//   return
-// }
-
-// if (email.value.trim() == "" || password.value.trim() == "" || confirmPassword.value.trim() == "" || firstname.value.trim() == "") {
-//   toast.error(app.$IncorrectCredentials);
-//   return;
-// }
-
-// console.log(route.query.flow);
-// const formdata = new FormData();
-// formdata.append("csrf_token", csrfToken.value)
-// formdata.append("traits.email", email.value)
-// formdata.append("traits.name.first", firstname.value)
-// formdata.append("traits.name.last", lastname.value)
-// formdata.append("password", password.value)
-// formdata.append("method", "password")
-
-// const { error: error } = await useFetch(register_url, {
-//   method: "POST",
-//   credentials: "include",
-//   query:{
-//     flow: route.query.flow
-//   },
-//   headers: {
-//     // "Access-Control-Allow-Origin": "127.0.0.1:3000",
-//     "Content-Type": "application/json",
-//     Accept: "application/json",
-//   },
-
-//   body: {
-//     csrf_token: csrfToken.value,
-//     traits: {
-//       email: email.value,
-//       name: {
-//         first: firstname.value,
-//         last: lastname.value
-//       }
-//     },
-//     password: password.value,
-//     method: "password",
-//   },
-//   // body: formdata,
-
-//   // mode: "cors",
-//   onResponseError: function ({ request, response }) {
-//     status = response.status;
-//     console.log(response);
-//     console.log(request.headers);
-//     response?._data?.ui?.nodes?.forEach(node => {
-//       if (node.attributes.name === "traits.email") {
-//         errors.value.email = node.messages.map(message => message.text).join(", ");
-//       }
-//       if (node.attributes.name === "password") {
-//         errors.value.password = node.messages.map(message => message.text).join(", ");
-//       }
-//       if (node.attributes.name === "traits.name.first") {
-//         errors.value.firstname = node.messages.map(message => message.text).join(", ");
-//       }
-//       if (node.attributes.name === "traits.name.last") {
-//         errors.value.lastname = node.messages.map(message => message.text).join(", ");
-//       }
-//     });
-
-//   },
-//   onResponse: function (response, request){
-//     console.log(response);
-//     console.log(request);
-//   }
-// });
-
-// }
 </script>
 
 <template>

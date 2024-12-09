@@ -84,7 +84,7 @@ export default class AdminOperations extends QuizHandler {
       this.stopPing();
       this.isWaiting = false;
     }
-    super.handler(message, preventAssignment);
+    super.handler(message);
   }
 
   requestTerminateQuiz() {
