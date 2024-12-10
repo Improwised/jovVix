@@ -7,8 +7,8 @@ serve:
     cors:
       enabled: true
       allowed_origins:
-        - http://127.0.0.1:3001
-        - http://localhost:3001
+        - http://127.0.0.1:5000
+        - http://localhost:5000
       allowed_methods:
         - POST
         - GET
@@ -28,9 +28,9 @@ serve:
     port: 4434
 
 selfservice:
-  default_browser_return_url: http://127.0.0.1:3001
+  default_browser_return_url: http://127.0.0.1:5000
   allowed_return_urls:
-    - http://127.0.0.1:3001
+    - http://127.0.0.1:5000
 
   methods:
     password:
@@ -65,31 +65,31 @@ selfservice:
 
   flows:
     error:
-      ui_url: http://127.0.0.1:3001/error
+      ui_url: http://127.0.0.1:5000/error
 
     settings:
-      ui_url: http://127.0.0.1:3001/settings
+      ui_url: http://127.0.0.1:5000/settings
       privileged_session_max_age: 15m
       required_aal: highest_available
 
     recovery:
       enabled: true
-      ui_url: http://127.0.0.1:3001/recovery
+      ui_url: http://127.0.0.1:5000/recovery
       use: code
 
     verification:
       enabled: true
-      ui_url: http://127.0.0.1:3001/verification
+      ui_url: http://127.0.0.1:5000/verification
       use: code
       after:
         default_browser_return_url: http://127.0.0.1:3000/api/v1/kratos/auth
 
     logout:
       after:
-        default_browser_return_url: http://127.0.0.1:3001/login
+        default_browser_return_url: http://127.0.0.1:5000/login
 
     login:
-      ui_url: http://127.0.0.1:3001/account/login
+      ui_url: http://127.0.0.1:5000/account/login
       # http://127.0.0.1:4433/self-service/login/browser?aal=&refresh=&return_to=
       after:
         default_browser_return_url: http://127.0.0.1:3000/api/v1/kratos/auth
@@ -99,7 +99,7 @@ selfservice:
 
     registration:
       lifespan: 10m
-      ui_url: http://127.0.0.1:3001/account/register
+      ui_url: http://127.0.0.1:5000/account/register
       after:
         default_browser_return_url: http://127.0.0.1:3000/api/v1/kratos/auth
         password:

@@ -1,8 +1,8 @@
 version: "3.8"
 services:
-  postgresdb:
+  db:
     image: postgres:15.2-alpine
-    container_name: quiz-app-postgresdb
+    container_name: quiz-app-db
     environment:
       POSTGRES_USER: quiz-app
       POSTGRES_PASSWORD: quiz-app
@@ -18,7 +18,7 @@ services:
     restart: on-failure
     platform: linux/amd64
     depends_on:
-      - postgresdb
+      - db
     env_file:
       - ./api/.env.docker
     command: go run app.go migrate up
@@ -46,7 +46,7 @@ services:
     env_file:
       - ./api/.env.docker
     depends_on:
-      - postgresdb
+      - db
       - migration
       - redis
       - kratos
@@ -57,7 +57,7 @@ services:
       context: ./app/
       dockerfile: Dockerfile
     ports:
-      - "3001:5000"
+      - "5000:5000"
     restart: on-failure
     env_file:
       - ./app/.env.docker
@@ -67,32 +67,26 @@ services:
   kratos_migrate:
     image: oryd/kratos:v1.0.0
     environment:
-      - DSN=postgres://quiz-app:quiz-app@postgresdb:5432/quiz-app?sslmode=disable&search_path=kratos
+      - DSN=postgres://quiz-app:quiz-app@db:5432/quiz-app?sslmode=disable&search_path=kratos
       - LOG_LEVEL=trace
 
     command: migrate sql -e --yes
     restart: on-failure
     depends_on:
-      - postgresdb
+      - db
 
   kratos:
     image: oryd/kratos:v1.0.0
     ports:
       - "4433:${SERVE_PUBLIC_PORT:-4433}" # public
       - "4434:${SERVE_ADMIN_PORT:-4434}" # admin
-    environment:
-      - LOG_LEVEL=trace
-      - DSN=postgres://quiz-app:quiz-app@postgresdb:5432/quiz-app?sslmode=disable&search_path=kratos
-      - SERVE_PUBLIC_HOST=0.0.0.0
-      - SERVE_PUBLIC_PORT=4433
-      - COURIER_SMTP_CONNECTION_URI=smtp://mailpit:1025?skip_ssl_verify=true&disable_starttls=true
 
-    # env_file:
-    #   - .env
+    env_file:
+      - ./api/.env.kratos
     command: serve -c /etc/config/kratos/kratos.yml --watch-courier
     restart: always
     depends_on:
-      - postgresdb
+      - db
       - kratos_migrate
     volumes:
       - "./api/pkg/kratos:/etc/config/kratos"

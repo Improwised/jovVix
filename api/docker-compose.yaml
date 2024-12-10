@@ -9,7 +9,7 @@ services:
       POSTGRES_DB: quiz-app
       POSTGRES_MULTIPLE_DATABASES: '"kratos-db", "quiz-app-testing"'
     ports:
-    - 5432:5432
+      - 5432:5432
     volumes:
       - ./pkg/kratos/kratos-pg-init-script:/docker-entrypoint-initdb.d
       - pgdata1:/var/lib/postgresql/data
@@ -55,12 +55,12 @@ services:
     image: oryd/kratos:v1.0.0
     profiles: [kratos]
     ports:
-      - '4433:${SERVE_PUBLIC_PORT:-4433}' # public
-      - '4434:${SERVE_ADMIN_PORT:-4434}' # admin
+      - "4433:${SERVE_PUBLIC_PORT:-4433}" # public
+      - "4434:${SERVE_ADMIN_PORT:-4434}" # admin
     environment:
       - LOG_LEVEL=trace
     env_file:
-      - .env
+      - .env.kratos
     command: serve -c /etc/config/kratos/kratos.yml --watch-courier
     restart: always
     depends_on:
@@ -68,7 +68,7 @@ services:
       - kratos_migrate
     volumes:
       - "./pkg/kratos:/etc/config/kratos"
-  
+
   mailpit:
     image: axllent/mailpit
     container_name: mailpit
@@ -85,7 +85,7 @@ services:
       MP_SMTP_AUTH_ALLOW_INSECURE: 1
       MP_SENDMAIL_SMTP_ADDR: mailpit:1025
       MP_SENDMAIL_FROM: test@test.com
-      
+
 networks:
   host:
     external: true
