@@ -184,6 +184,7 @@ const (
 	ActiveQuizObj                 = "current active quiz obj"
 	NoPlayerFound                 = "no player found"
 	StartQuizByAdminNoPlayerFound = "start quiz by admin but no player found"
+	ActionSendUserData            = "send user join data"
 	JoinUserOnRunningQuiz         = "join_user_on_running_quiz"
 
 	// Event 5. Join quiz <User>
@@ -251,6 +252,7 @@ const (
 
 	// Event 11. ping
 	EventPing = "ping"
+	EventPong = "pong"
 )
 
 // final scoreboard cookie for user

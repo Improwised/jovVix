@@ -588,7 +588,7 @@ func handleCodeGeneration(c *websocket.Conn, qc *quizSocketController, session m
 				isBreak := handleStartQuiz(c, qc.logger, isConnected, response.Action, &qc.mu)
 
 				if isBreak == constants.EventPing {
-					err := utils.JSONSuccessWs(c, "pong", "")
+					err := utils.JSONSuccessWs(c, constants.EventPong, "")
 					if err != nil {
 						qc.logger.Error("error while sending pong message", zap.Error(err))
 					}
@@ -650,7 +650,7 @@ func handleInvitationCodeSend(c *websocket.Conn, response *QuizSendResponse, log
 // when user connect at that time send data to admin
 func handleConnectedUser(c *websocket.Conn, qc *quizSocketController, sessionId string, adminDisconnected chan bool) {
 	response := QuizSendResponse{}
-	response.Action = "send user join data"
+	response.Action = constants.ActionSendUserData
 	response.Component = constants.Waiting
 
 	pubsub := qc.redis.PubSubModel.Client.Subscribe(qc.redis.PubSubModel.Ctx, fmt.Sprintf("%s-%s", constants.ChannelUserJoin, sessionId), fmt.Sprintf("%s-%s", constants.ChannelUserDisconnect, sessionId), constants.EventTerminateQuiz, constants.EventStartQuizByAdmin, constants.StartQuizByAdminNoPlayerFound)

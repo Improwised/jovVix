@@ -25,6 +25,8 @@ var userclient *resty.Client = nil
 var db *goqu.Database = nil
 var sessionCookie string
 var userId string
+var guestUserName = "testcaseuser"
+var guestUserAvatarName = "Chase"
 
 func TestMain(m *testing.M) {
 	err := os.Chdir("../../../")
@@ -109,9 +111,7 @@ func TestMain(m *testing.M) {
 	}
 	userId = user.ID
 
-	username := "testcaseuser"
-	avatarName := "Chase"
-	err = createGuestUser(username, avatarName)
+	err = createGuestUser(guestUserName, guestUserAvatarName)
 	if err != nil {
 		logger.Fatal("failed to create guest user", zap.Error(err))
 	}
@@ -122,7 +122,7 @@ func TestMain(m *testing.M) {
 		logger.Fatal("failed to delete identity", zap.Error(err))
 	}
 
-	if err := deleteGuestUser(username); err != nil {
+	if err := deleteGuestUser(guestUserName); err != nil {
 		logger.Fatal("failed to delete identity", zap.Error(err))
 	}
 
