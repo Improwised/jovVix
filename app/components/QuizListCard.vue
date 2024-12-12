@@ -2,11 +2,8 @@
 // define props and emits
 const props = defineProps({
   details: {
-    default: () => {
-      return [];
-    },
     type: Object,
-    required: true,
+    default: () => ({}), 
   },
   isPlayedQuiz: {
     type: Boolean,

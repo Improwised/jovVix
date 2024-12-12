@@ -51,8 +51,8 @@ const (
 
 // Error messages
 const (
-	ErrGetUser                     = "error while get user"
-	ErrLoginUser                   = "error while login user"
+	ErrGetUser                     = "error while getting user"
+	ErrLoginUser                   = "error while logging in the user"
 	ErrInsertUser                  = "error while creating user, please try after sometime"
 	ErrDeleteUser                  = "error while deleting user, please try after sometime"
 	ErrConvertTypeUser             = "Unable to convert to user-model type from locals"
@@ -65,16 +65,16 @@ const (
 	ErrKratosCookieTime            = "error while parsing the expiration time of the cookie"
 	ErrRegisterQuiz                = "error while creating quiz"
 	ErrCreatingDemoQuiz            = "error while creating demo quiz"
-	ErrGetTotalJoinUser            = "error while get count of user join in quiz"
-	ErrInsertImage                 = "error while insert image"
-	ErrShareQuiz                   = "error while share quiz"
-	ErrListShareQuiz               = "error while list share quizzes"
+	ErrGetTotalJoinUser            = "error while getting count of user join in quiz"
+	ErrInsertImage                 = "error while inserting image"
+	ErrShareQuiz                   = "error while sharing quiz"
+	ErrListShareQuiz               = "error while list of share quizzes"
 	ErrFetchAuthorizedUsersError   = "Error fetching authorized users for the selected quiz."
-	ErrCheckQuizCreatorExists      = "error while check quiz creator exists or not"
-	ErrGetQuizPermission           = "error while get quiz pemrmission for user"
-	ErrUpdateUserPermissionForQuiz = "error while update user permission for perticular quiz"
-	ErrDeleteUserPermissionForQuiz = "error while delete user permission for perticular quiz"
-	ErrGetStreakCount              = "error while get streak count"
+	ErrCheckQuizCreatorExists      = "error while checking quiz creator exists or not"
+	ErrGetQuizPermission           = "error while getting quiz pemrmission for user"
+	ErrUpdateUserPermissionForQuiz = "error while updating user permission for perticular quiz"
+	ErrDeleteUserPermissionForQuiz = "error while deleting user permission for perticular quiz"
+	ErrGetStreakCount              = "error while getting streak count"
 )
 
 // Bad Request Message
@@ -107,7 +107,7 @@ const (
 	QuizTitle                   = "quiz_title"
 	QuizTitleRequired           = "quiz-title is required"
 	ErrGettingAttachment        = "error in getting file"
-	ErrFileSizeExceed           = "file size exceed"
+	ErrFileSizeExceed           = "file size exceeded"
 	ErrFileIsNotInSupportedType = "file has no supported type"
 	ErrProblemInUploadFile      = "there was some error in file upload"
 	ErrValidatingColumns        = "file columns not in proper format"
@@ -116,7 +116,7 @@ const (
 	ErrSurveyAnswerLength       = "in survey correct answer should contain all the options as correct"
 	ErrSingleAnswerLength       = "in single answer there should be only one correct answer"
 	ErrQuestionType             = "please provide a proper question type"
-	ErrQuestionId               = "question type id not exist"
+	ErrQuestionId               = "question type id not exists"
 
 	// quiz-id
 	QuizId       = "quiz_id"
@@ -211,7 +211,7 @@ const (
 	ActionSendQuestion             = "send single question to user"
 	QuizQuestionStatus             = "quiz question status"
 	GetQuestions                   = "get quiz questions"
-	NextQuestionWillServeSoon      = "Next question will coming soon"
+	NextQuestionWillServeSoon      = "Next question will be coming soon"
 	ErrInGettingQuestion           = "error during getting question"
 	ErrInGettingTotalQuestionCount = "error during getting total question count"
 
@@ -228,7 +228,7 @@ const (
 	ErrAnswerSubmit           = "error malfunction in inputs"
 	ErrAnswerAlreadySubmitted = "answer already submitted"
 	ErrQuestionNotActive      = "question can not receive answers anymore"
-	ErrPublishAnswer          = "error while publish answer in redis"
+	ErrPublishAnswer          = "error while publishing answer in redis"
 
 	// Event skip
 	EventSkipAsked  = "ask_skip" // use by web
