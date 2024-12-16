@@ -34,6 +34,7 @@ export default defineNuxtConfig({
 
   css: ["@/assets/scss/theme.scss"], // add
   modules: [
+    "@nuxt/test-utils/module",
     [
       "@pinia/nuxt",
       {
@@ -61,7 +62,15 @@ export default defineNuxtConfig({
   },
 
   build: {
-    transpile: ["vue-toastification", "vuetify"],
+    transpile: [
+      "vue-toastification",
+      "vuetify",
+      "@fortawesome/vue-fontawesome",
+      "@fortawesome/fontawesome-svg-core",
+      "@fortawesome/pro-solid-svg-icons",
+      "@fortawesome/pro-regular-svg-icons",
+      "@fortawesome/free-brands-svg-icons",
+    ],
   },
 
   plugins: ["@/plugins/chart.js"],

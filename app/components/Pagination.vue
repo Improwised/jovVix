@@ -44,7 +44,6 @@
 
 <script setup>
 const route = useRoute();
-// const props = defineProps(["page", "numOfRecords"]);
 const props = defineProps({
   page: {
     type: Number,

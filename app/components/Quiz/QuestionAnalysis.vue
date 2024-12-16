@@ -112,7 +112,7 @@ const props = defineProps({
   },
   isAdminAnalysis: {
     type: Boolean,
-    required: true,
+    required: false,
     default: false,
   },
   isForQuiz: {

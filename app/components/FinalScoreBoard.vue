@@ -139,10 +139,12 @@ watch(
 );
 
 onMounted(() => {
-  winningSound.value = new Audio("/music/winning.mp3");
+  if (process.client) {
+    winningSound.value = new Audio("/music/winning.mp3");
 
-  if (winnerUI.value == "true") {
-    winningSound.value.play();
+    if (winnerUI.value == "true") {
+      winningSound.value.play();
+    }
   }
 });
 </script>

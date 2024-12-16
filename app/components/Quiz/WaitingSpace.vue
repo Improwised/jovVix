@@ -77,17 +77,11 @@ function handleEvent(message) {
 
 onMounted(() => {
   initializeSound();
-  const copyBtn = document.getElementById("OTP-input-container");
-  const urlCopyBtn = document.getElementById("URL-input-container");
-  if (process.client && copyBtn && urlCopyBtn) {
-    copyBtn.addEventListener("click", () => {
-      usecopyToClipboard(code.value);
-    });
-    urlCopyBtn.addEventListener("click", () => {
-      usecopyToClipboard(`${baseUrl}/join?code=${code.value}`);
-    });
-  }
 });
+
+const copyToClipBoard = (text) => {
+  usecopyToClipboard(text);
+};
 
 function initializeSound() {
   if (process.client) {
@@ -138,7 +132,7 @@ watch(
             <div class="divider my-3 text-dark">Link</div>
             <div class="d-flex align-items-center justify-content-center gap-2">
               <div class="fs-1 text-dark text-decoration-underline">
-                quiz.i8d.in/join
+                {{ `${baseUrl}/join` }}
               </div>
               <font-awesome-icon
                 id="URL-input-container"
@@ -147,6 +141,7 @@ watch(
                 style="color: #0c6efd"
                 class="copy-icon"
                 role="button"
+                @click="copyToClipBoard(`${baseUrl}/join?code=${code}`)"
               />
             </div>
             <div class="divider my-3 text-dark">Invitation Code</div>
@@ -159,6 +154,7 @@ watch(
                 style="color: #0c6efd"
                 class="copy-icon"
                 role="button"
+                @click="copyToClipBoard(code)"
               />
             </div>
             <div class="divider my-3">QR</div>

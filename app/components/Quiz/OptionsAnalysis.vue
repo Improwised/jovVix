@@ -56,7 +56,7 @@ const props = defineProps({
     },
   },
   correctAnswer: {
-    type: Array,
+    type: String,
     required: true,
     default: () => {
       return [];
