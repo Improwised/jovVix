@@ -3,7 +3,7 @@
 const props = defineProps({
   details: {
     type: Object,
-    default: () => ({}), 
+    default: () => ({}),
     required: true,
   },
   isPlayedQuiz: {
