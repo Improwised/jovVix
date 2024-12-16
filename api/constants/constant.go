@@ -65,16 +65,16 @@ const (
 	ErrKratosCookieTime            = "error while parsing the expiration time of the cookie"
 	ErrRegisterQuiz                = "error while creating quiz"
 	ErrCreatingDemoQuiz            = "error while creating demo quiz"
-	ErrGetTotalJoinUser            = "error while getting count of user join in quiz"
+	ErrGetTotalJoinUser            = "error while getting count of user joined in quiz"
 	ErrInsertImage                 = "error while inserting image"
 	ErrShareQuiz                   = "error while sharing quiz"
-	ErrListShareQuiz               = "error while list of share quizzes"
+	ErrListShareQuiz               = "error while getting list of shared quizzes"
 	ErrFetchAuthorizedUsersError   = "Error fetching authorized users for the selected quiz."
 	ErrCheckQuizCreatorExists      = "error while checking quiz creator exists or not"
 	ErrGetQuizPermission           = "error while getting quiz pemrmission for user"
-	ErrUpdateUserPermissionForQuiz = "error while updating user permission for perticular quiz"
-	ErrDeleteUserPermissionForQuiz = "error while deleting user permission for perticular quiz"
-	ErrGetStreakCount              = "error while getting streak count"
+	ErrUpdateUserPermissionForQuiz = "error while updating user permission for particular quiz"
+	ErrDeleteUserPermissionForQuiz = "error while deleting user permission for particular quiz"
+	ErrGetStreakCount              = "error while getting streaks count"
 )
 
 // Bad Request Message
@@ -232,7 +232,7 @@ const (
 
 	// Event skip
 	EventSkipAsked  = "ask_skip" // use by web
-	WarnSkip        = "some player didn't submit their answer yet. would you want to skip?"
+	WarnSkip        = "Some players haven't submitted their answers yet. Would you like to skip?"
 	EventForceSkip  = "ask_force_skip"
 	EventSkipTimer  = "skip_timer"
 	EventPauseQuiz  = "pause_quiz"
@@ -248,7 +248,7 @@ const (
 
 	// Event 10. unhandled event
 	UnknownError  = "unknown_error"
-	ErrJWTExpired = "JWT token expired, Please try again"
+	ErrJWTExpired = "JWT token expired, Please try again later"
 
 	// Event 11. ping
 	EventPing = "ping"

@@ -4,6 +4,7 @@ const props = defineProps({
   details: {
     type: Object,
     default: () => ({}), 
+    required: true,
   },
   isPlayedQuiz: {
     type: Boolean,
