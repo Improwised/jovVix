@@ -9,6 +9,30 @@ on:
       - ".github/workflows/build-push-app.yaml"
       - "!**.md"
 jobs:
+  frontend-tests:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        timeout-minutes: 5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20.17.0'
+        timeout-minutes: 5
+
+      - name: Install Frontend Dependencies
+        run: npm install
+        working-directory: ./app
+        timeout-minutes: 5
+
+      - name: Run Frontend Tests
+        run: npm run test
+        working-directory: ./app
+        timeout-minutes: 5
+
   build:
     name: Build and Push Image
     runs-on: ubuntu-latest
