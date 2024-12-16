@@ -8,6 +8,11 @@ on:
       - "app/**"
       - ".github/workflows/build-push-app.yaml"
       - "!**.md"
+  pull_request:
+    types: ["opened", "reopened", "synchronize", "ready_for_review"]
+    branches:
+      - develop
+      - main
 jobs:
   frontend-tests:
     name: Frontend Tests
