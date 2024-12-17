@@ -44,9 +44,9 @@ export default {
   EventAnswerSubmittedByUser: "answer submitted by user",
   EventPing: "ping",
   PauseQuiz: "pause_quiz",
-  PauseQuizMessage: "quiz is pause, please wait...",
+  PauseQuizMessage: "quiz is paused by admin, please wait",
   ResumeQuiz: "resume_quiz",
-  ResumeQuizMessage: "quiz is now resume, play now...",
+  ResumeQuizMessage: "quiz is resumed, you could play now",
 
   // Actions
   ActionAnserSubmittedByUser: "answer submitted by user",
@@ -61,5 +61,5 @@ export default {
   NoAnswerFound: "please select an answer",
 
   // Messages
-  CsvUploadSuccess: "file upload successfully",
+  CsvUploadSuccess: "file uploaded successfully",
 };
