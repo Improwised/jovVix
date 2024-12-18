@@ -1,155 +1,294 @@
-# Quizz App
 
-Description of the quizz app.
+# Quiz app
 
-## Table of Contents
+- The Quiz App is a fun and interactive platform where users can enjoy playing quizzes while admins have the ability to create engaging and diverse quizzes.
+- Designed to provide a fun and educational experience while ensuring smooth admin management, our Quiz App is the perfect solution for interactive quiz-based learning, competitions, or corporate events.
 
-- [System Information](#system-information)
-    - [Roles](#roles)
-- [Features](#features)
-    - [Login](#login)
-- [Quick installation and run](#installation)
-    - [Prerequisite](#prerequisite)
-    - [Run the Project](#run-the-project)
-- [Setup development environment](#setup-development-environment)
-- [Commands](#commands)
-    1. [Create](#create)
-        - [Admin](#admin)
+- App is an interactive, real-time platform that supports diverse
+  question types like
+- App provides instant feedback and live ranks and leaderboards.
+  With features like
+   - In-depth analytics
+   - real dynamic avatars
+   - customizable csv with different question types like: Image based, code based, survey based questions
+<br><br>
 
-## System Information
+## Key Attributes:
+- Cloud-Based: The application can be deployed on cloud platforms, providing high availability and scalability for users and organizations.
+- Environment Agnostic: Compatible with multiple environments (local, development, staging, and production) for seamless deployment across setups.
+- Cross-Platform: Designed for a smooth experience across devices and operating systems.
+- Modular Architecture: Built with a component-based architecture, enabling high code reusability and scalability.
+- Real-Time Features: Uses WebSockets for real-time communication and user interaction.
 
-This section provides an understanding of the architecture of the application.
+### Development and Quality
+- Linting: Utilizes ESLint to maintain code quality and consistency.
+- Authentication: Ory Kratos manages secure user authentication and session management.
+- Third-Party Integrations: Includes S3 for image handling, as well as other integrations as required.
+- SMTP Services: Configured for email services, supporting verification and password recovery.
+- Testing: We have performed the unit testing in this application
+- Containerization: Packaged with Docker for streamlined deployment and environment consistency.
+- RESTful API: Offers a RESTful API for integration and easy access to app functionality.
+- Environment Variables: Follows the 12-factor app principles with environment variable configuration.
 
-### Roles
+### User Experience 
+- Intuitive UI/UX: Designed for a user-friendly and engaging interface.
+- Gamification: Includes elements like points, ranks, and leaderboards to boost user engagement.
 
-- Currently, our system has two roles:
-    1. Admin
-    2. User
-- Currently, our system only provides a way to create an admin user via the command [Admin](#admin).
-- Currently, we cannot create a user.
+
+
+<br><br>
 
 ## Features
 
-### Login
+- **Real-time Interaction:** Supports real-time quizzes with instant feedback and live leaderboards, ensuring a highly engaging user experience.
+- **Multiple Question Types:** Allows admins to create quizzes with different question formats:
+  - Multiple-choice questions
+  - Survey-based questions
+  - Code-based challenges
+  - Image-based questions
+- **In-Depth Analytics:** Provides detailed insights and analytics for both users and admins, including answer breakdowns and performance tracking.
+- **Reports-Dashboard:** Provides an in depth metrices of user's response to admin and user analysis statistics
+- **Dynamic Avatars:** Real-time avatar updates for users in various stages:
+  - When joining and waiting for a quiz
+  - During the quiz at each question
+  - After the quiz, showcasing winners and individual performance
+- **Customization Options:** Offers customizable quiz features for educators, workshop hosts, and event organizers to suit their needs.
+- **Share quiz feature** Users can share their quiz to other users through email and can grant their preferred permission while sharing to the other one 
+- **CSV Uploads:**  Enables efficient quiz creation through CSV file uploads, allowing users to preview, edit, and allowing users to seamlessly create quizzes
+- **Mobile-Friendly Design:** Fully responsive and works seamlessly on mobile and desktop devices.
+- **Admin Tools:** Advanced admin panel for managing quizzes, participants, and results.
+- **API Documentation with Swagger:** Provides a visual interface for exploring API endpoints and testing requests, Useful for developers working with the API
+- **Open Source:** Fully open-source platform, allowing developers to contribute, customize, and extend the app.
 
-| Subject | Details |
-| ------------- |:-------------:|
-| Description | The login page accepts an email and password. |
-| Route | /account/login |
-| Roles | Admin, User |
 
 
-## Quick installation and run
-
-Follow these steps to install and run the project:
-
-### Prerequisite
-
-Ensure that Docker is installed on your system.
-
-### Run the Project
-
-To run this project, execute the following command from the root of the project:
+<br><br>
 
 
+## Table of Contents: 
+
+- [About quiz app](#quiz-app)
+  - [Quickstart](#quickstart)
+- [Features of Quiz app](#features)
+- [Getting started](#getting-started-for-local-setup-from-source)
+  - [Local setup](#prerequisites-1)
+- [Documentation](#architecture-overview)
+  - [Architecture Overview](#architecture-overview)
+  - [Overview of API documentation](#api-overview)
+  - [Upgrading and changelog](#upgrading-and-changelog)
+- [Contributing to Quiz app](#contributing-to-quiz-app)
+- [Code Of Conduct](#code-of-conduct)
+- [Develop]()
+  - [Guide](#guide)
+  - [Collaborators](#collaborators)
+  - [Dependencies](#dependencies)
+    
+
+<br><br>
+
+# Prerequisites
+- Docker latest version installed in your system
+
+# Quickstart
+
+> **Important:**
+>  Ensure all the tools mentioned in the prerequisites are installed before proceeding.
+
+
+- First clone the repository on your terminal using command given below
 ```
-    docker-compose up
-```
-
-## Setup development environment
-
-1. Ensure that you have [Go](https://go.dev/) and [Node.js](https://nodejs.org/en) installed on your system. Add Go and Node.js to your system's PATH for global access.
-
-2. A database is required; the current code is written to work with [PostgreSQL](https://www.postgresql.org/).
-
-3. Run the following commands to install necessary packages. (Assuming you are in the root of the project)
-
-~~~
-cd api && go mod tidy
-cd app && npm install
-~~~
-
-4. Change .env.local to .env and update necessary configurations. '.env' file is already in .gitignore. If you need to add some new key-value pairs, you need to update .env.example as well.
-
-5. For hot-reload functionality in Golang, we will use the [air](https://github.com/cosmtrek/air) package.
-   - Install it as mentioned in the repository and add the air library to your system's PATH for global access. Add the path of the bin ($GOPATH/bin or $HOME/go/bin) folder if it doesn't exist.
-   - Run the following command to start the server and enable hot reload:
-
-~~~
-cd api && air
-~~~
-
-6. We use Nuxt3 in our project, its development server provides hot reload by default.
-    - Run the following command to start nuxt3 server
-
-~~~
-cd app && npm run dev
-~~~
-
-6. [Hooks](https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks) are triggers that are executed based on specific events. We will use these hooks in our project for various checks like spell-checking, linting, and testing.
-   - We will use the [Python virtual environment](https://docs.python.org/3/library/venv.html) to create a virtual environment.
-
-~~~
-python -m venv venv
-source ./venv/bin/activate
-~~~
-   > Note: You can ignore this step if you want to install it directly on your system. If you create a virtual environment, ensure to add it to your .gitignore file..
-
-   - We will use the Python library [pre-commit](https://pre-commit.com/) to handle these hooks. Hooks are associated with Git, and the pre-commit hook is activated when you have already staged your changes with `git add ...` and are about to commit. You can run it manually by typing `pre-commit` into the terminal.
-
-~~~
-source ./venv/bin/activate
-pip install pre-commit
-
-git add README.md
-pre-commit
-~~~
-
-   - Our Node project is configured with Node.js and [husky](https://typicode.github.io/husky/get-started.html). In that case, all configurations are written within the package.json file itself..
-
-
-## Commands
-
-- Commands are quick way to do some occasional or manual task.
-- You can get more details from [/api/README.md](https://github.com/Improwised/quizz-app/blob/develop/api/README.md) file
-- commands are made with [cobra library](https://pkg.go.dev/github.com/spf13/cobra) which written in go.
-- change .env.example to .env if you haven't already.
-- to run command, first go to **/api** folder (which have go.mod file, so you can run `go run file.go`).
-- Use `make up` command to run database migration before running this command (once when you write new migration, make sure database is running).
-
-### Create
-
-- This command is used for the creation of a sub-command.
-- It's made to reduce UI integration in some cases and directly create entities.
-
-
-**command**: `go run . create [subcommand]`
-```
-# examples
-go run . create admin [sub-command]
-
-# sub-commands
-- This command needs one subcommand
+  git clone https://github.com/Improwised/quizz-app.git
 ```
 
-Here is the list of sub-commands which supported by **create** command
+- Navigate to the project directory using: 
 
-#### Admin
-- Create admin user
-
-**command**: `go run . create admin <username> <email> <first-name> <last-name> <-f>`
-explain:
 ```
-# examples
-go run . create admin adminxyz123 adminxyz@gmail.com admin xyz -f
-
-# arguments
-- username: required, string, unique* (see #flags section)
-- email: required, string, unique
-- first-name: required, string
-- last-name: required, string
-
-# flags
-- force: bool, default-true
-    - It will make your given username unique by modifying last some characters.
+   cd quizz-app
 ```
+
+- Configure your env settings into .env.docker if you want to integrate any changes otherwise keep the default ones
+
+- Then build and run the docker compose file in your environment by following command 
+```
+  docker-compose up --build 
+```
+
+- Your app is now running successfully and you can access it on the ip:port as :  
+```
+  127.0.0.1:3001 
+```
+- For verification of email go to mailpit localhost and port
+```
+  127.0.0.1:8025
+```
+<br><br>
+
+# Getting Started For local setup from source 
+
+
+# Prerequisites 
+
+
+| Package | Version |
+| --- | --- |
+| [Node.js](https://nodejs.org/en/) | v18.0+ |
+| [Nuxt](https://nuxt.com/) | v3.0.0 |
+| [Go](https://golang.org/) | v1.21+ |
+
+
+
+
+# Installation steps
+
+> **Important:**
+>  Ensure all the tools mentioned in the prerequisites are installed before proceeding.
+
+
+
+- First clone the repository using 
+```
+  git clone https://github.com/Improwised/quizz-app.git
+```
+
+
+- Navigate to the project directory:
+```
+   cd quiz-app
+```
+
+
+- Then Copy environment files of both app and api folders  using:
+``` 
+   cp api/.env.example api/.env
+   cp app/.env.example app/.env
+```
+
+
+- Start backend services:
+```
+  cd api
+  docker-compose --profile kratos up
+  go run app.go migrate
+  go run app.go api
+```
+
+
+> **Warning**
+> Install all tools and technologies we have mentioned above in prerequisites 
+
+
+- Then Install frontend dependencies:
+
+```
+  cd ../app
+  npm install
+```
+- Afterwards run the frontend development server:
+
+```
+  npm i 
+  npm run dev
+```
+- Then you have setup quiz app succesfully in you local environment 
+
+
+<br><br>
+
+
+# Documentation
+  
+  ## Architecture Overview:
+
+### System Architecture
+
+- **Backend:** The quiz app uses a Golang backend to handle the server-side logic.
+- **Frontend:** Vue.js and nuxt framework is employed for a single-page application (SPA) architecture and component-based development.
+- **Database:** PostgreSQL is used to handle concurrent requests and manage data efficiently.
+- **Caching:** Redis is utilized for caching and manipulating users' data and requests, improving performance.
+- **Authentication:** The app leverages Ory Kratos for user authentication and uses SMTP services for password recovery and email verification flows.
+- **Real-Time Communication:** WebSockets are implemented for handling multiple sessions and managing cookies effectively.
+- **S3 bucket:** We have used s3 bucket for storing images into object storage, you can setup the minio for local development
+
+ ### API Overview:
+- locally you could start your API server by running the following command : 
+```
+http://127.0.0.1:3000/api/v1/docs
+```
+- This would open the swagger documentation
+ 
+
+ ### Upgrading and changelog:
+
+  - It's being managed in this file: CHANGELOG.md
+
+
+<br><br>
+
+# Contributing to Quiz app: 
+- You can see the contribution guidelines here : [CONTRIBUTING.md](./CONTRIBUTING.md)
+
+<br><br>
+
+# Code of Conduct: 
+- This platforms also provides the [Code of Conduct](./CODE_OF_CONDUCT.md)
+
+
+<br><br>
+
+# Developer
+  
+  ## Guide:
+ If you're a developer looking to contribute or modify the quiz app, here is a brief guide to get started: 
+  [Getting started](#getting-started-for-local-setup-from-source) OR, you could just docker-compose up 
+
+  ### Code Structure Overview:
+
+- app/: Contains Vue.js components for the quiz interface and holds frontend pages and all
+- api/: Contains Golang source code for the server-side logic.
+
+## Setting Up MinIO for Local Development:
+- MinIO is used in our quiz app for object storage, enabling features like storing and serving images. Below is a guide to setting up a bucket in MinIO for local development.
+
+- We already have added the minio service into our docker-compose file so you just have to start the service 
+- Then open your browser and navigate to http://127.0.0.1:9001.
+- Log in using the credentials defined in our docker-compose.yml (you can change with your own afterwards)
+- Once logged in, click the Buckets tab on the left menu and you can create bucket there
+- For more detailed information, refer to the [MinIO Documentation](https://min.io/docs/minio/linux/index.html)
+
+## Collaborators:
+- Thanks to all the people who already contributed!
+
+<a href="https://github.com/your-username/your-repo/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=your-username/your-repo" />
+</a>
+ 
+
+  ## Dependencies: 
+
+  This project uses the following key dependencies:
+
+  - Frontend:
+
+    - Vue.js: For building reactive user interfaces.
+    - Nuxt 3: Framework for server-side rendering and static site generation.
+
+  - Backend:
+
+    - Go (Golang): High-performance backend logic.
+    - PostgreSQL: Relational database management.
+
+  - Other Tools:
+
+    - Redis: Used for caching and session management.
+    - Ory Kratos: For user authentication. 
+    - Minio setup locally for bucket storage instead of aws S3 
+    - mailpit setup locally for the SMTP like server 
+
+<br><br>
+
+# License: 
+
+Our quiz app is put under a dual-licensing scheme: In general
+all of the provided code is open source via [GNU/AGPL
+3.0](https://www.gnu.org/licenses/agpl-3.0.en.html), please see the
+[LICENSE](LICENSE.txt) file for more details. 
