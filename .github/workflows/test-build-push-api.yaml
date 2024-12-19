@@ -40,37 +40,69 @@ jobs:
           --health-interval 5s
           --health-timeout 10s
           --health-retries 5
+      kratos:
+        image: oryd/kratos:v0.8.0 
+        ports:
+          - 4433:4433 
+          - 4434:4434
+        env:
+          KRATOS_DATABASE_URL: postgres://test_user:test_password@localhost/test_db?sslmode=disable
+          KRATOS_ADMIN_PORT: 4434
+          KRATOS_PUBLIC_PORT: 4433
+        options: >
+          --health-cmd="curl -f http://localhost:4433/health" \
+          --health-interval=10s \
+          --health-timeout=5s \
+          --health-retries=5
+
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v3
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        timeout-minutes: 5
 
-    - name: Set up Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: '1.21'
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+        timeout-minutes: 5
 
-    - name: Install Backend Dependencies
-      run: go mod tidy
-      working-directory: ./api
+      - name: Install Backend Dependencies
+        run: go mod tidy
+        working-directory: ./api
+        timeout-minutes: 5
 
-    - name: Wait for PostgreSQL
-      run: |
-        for i in {1..10}; do
-          pg_isready -h localhost -p 5432 -U test_user && break
-          sleep 3
-        done
-    - name: Install Dependencies
-      run: |
-        go mod tidy
-        go mod vendor
-    - name: Run Backend Tests
-      env:
-        POSTGRES_USER: test_user
-        POSTGRES_PASSWORD: test_password
-        POSTGRES_DB: test_db
-        POSTGRES_HOST: localhost
-      run: go test ./... -v
-      working-directory: ./api
+      - name: Wait for PostgreSQL
+        run: |
+          for i in {1..10}; do
+            pg_isready -h localhost -p 5432 -U test_user && break
+            sleep 3
+          done
+        timeout-minutes: 5
+
+      - name: Wait for Ory Kratos to be Ready
+        run: |
+          for i in {1..10}; do
+            curl -f http://localhost:4433/health && break || sleep 3
+          done
+        timeout-minutes: 5
+
+      - name: Install Dependencies
+        run: |
+          go mod tidy
+          go mod vendor
+        working-directory: ./api
+        timeout-minutes: 5
+
+      - name: Run Backend Tests
+        env:
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: test_db
+          POSTGRES_HOST: localhost
+        run: go test ./... -v
+        working-directory: ./api
+        timeout-minutes: 5
+
   build:
     name: Build and Push Image
     runs-on: self-hosted
