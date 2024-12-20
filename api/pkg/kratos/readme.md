@@ -89,6 +89,5 @@ After successful authentication, it will redirect to the backend Endpoint using 
 And for further transactions with backend endpoints, Cookie will be there.
 
 
-
 #### Reference Image
 ![Alt text](image.png)
