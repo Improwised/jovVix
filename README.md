@@ -115,7 +115,7 @@
 
 - Your app is now running successfully and you can access it on the ip:port as :  
 ```
-  127.0.0.1:3001 
+  127.0.0.1:5000
 ```
 - For verification of email go to mailpit localhost and port
 ```
