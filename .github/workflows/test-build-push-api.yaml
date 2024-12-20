@@ -8,8 +8,101 @@ on:
       - "api/**"
       - ".github/workflows/build-push-api.yaml"
       - "!**.md"
-
+  pull_request:
+    types: ["opened", "reopened", "synchronize", "ready_for_review"]
+    branches:
+      - develop
+      - main
 jobs:
+  backend-tests:
+    name: Run Backend Tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15.2-alpine
+        env:
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >
+          --health-cmd="pg_isready -U test_user" \
+          --health-interval=10s \
+          --health-timeout=5s \
+          --health-retries=5
+      redis:
+        image: redis:alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 10s
+          --health-retries 5
+      kratos:
+        image: oryd/kratos:v0.8.0 
+        ports:
+          - 4433:4433 
+          - 4434:4434
+        env:
+          KRATOS_DATABASE_URL: postgres://test_user:test_password@localhost/test_db?sslmode=disable
+          KRATOS_ADMIN_PORT: 4434
+          KRATOS_PUBLIC_PORT: 4433
+        options: >
+          --health-cmd="curl -f http://localhost:4433/health" \
+          --health-interval=10s \
+          --health-timeout=5s \
+          --health-retries=5
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        timeout-minutes: 5
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.22'
+        timeout-minutes: 5
+
+      - name: Install Backend Dependencies
+        run: go mod tidy
+        working-directory: ./api
+        timeout-minutes: 5
+
+      - name: Wait for PostgreSQL
+        run: |
+          for i in {1..10}; do
+            pg_isready -h localhost -p 5432 -U test_user && break
+            sleep 2
+          done
+        timeout-minutes: 5
+
+      - name: Wait for Ory Kratos to be Ready
+        run: |
+          for i in {1..10}; do
+            curl -f http://localhost:4433/health && break || sleep 2
+          done
+        timeout-minutes: 5
+
+      - name: Install Dependencies
+        run: |
+          go mod tidy
+          go mod vendor
+        working-directory: ./api
+        timeout-minutes: 5
+
+      - name: Run Backend Tests
+        env:
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: test_db
+          POSTGRES_HOST: localhost
+        run: go test ./... -v
+        working-directory: ./api
+        timeout-minutes: 5
+
   build:
     name: Build and Push Image
     runs-on: self-hosted
