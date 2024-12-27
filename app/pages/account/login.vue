@@ -336,7 +336,7 @@ const verifyCode = async () => {
                 </div>
                 <div>
                   <button
-                    class="text-inherit mb-2 fs-5"
+                    class="text-primary mb-2 fs-5"
                     @click.prevent="handleForgotPassword"
                   >
                     Forgot your password?

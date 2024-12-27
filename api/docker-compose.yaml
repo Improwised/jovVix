@@ -42,7 +42,6 @@ services:
 
   kratos_migrate:
     image: oryd/kratos:v1.0.0
-    profiles: [kratos]
     environment:
       - DSN=postgres://quiz-app:quiz-app@db:5432/quiz-app?sslmode=disable&search_path=kratos
       - LOG_LEVEL=trace
@@ -53,7 +52,6 @@ services:
 
   kratos:
     image: oryd/kratos:v1.0.0
-    profiles: [kratos]
     ports:
       - "4433:${SERVE_PUBLIC_PORT:-4433}" # public
       - "4434:${SERVE_ADMIN_PORT:-4434}" # admin

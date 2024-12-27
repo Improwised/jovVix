@@ -26,7 +26,7 @@
           <!-- join quiz button -->
           <li class="nav-item mb-1">
             <button
-              class="btn px-4 border border-danger btn-light nav-link btn-link mx-2"
+              class="btn px-4 bg-primary btn-light nav-link btn-link mx-2"
               @click="navigate('/join')"
             >
               Join Quiz
@@ -35,7 +35,7 @@
           <!-- create quiz button -->
           <li v-if="isKratosUser" class="nav-item mb-1">
             <button
-              class="btn px-4 border border-danger btn-light nav-link btn-link mx-2"
+              class="btn px-4 bg-light-primary btn-light nav-link btn-link mx-2"
               @click="navigate('/admin/quiz')"
             >
               Quizzes
@@ -52,16 +52,16 @@
           </li>
           <!-- Login button -->
           <li class="nav-item mb-1">
-            <button
-              v-if="!isKratosUser"
-              class="btn px-4 border bg-light-primary nav-link btn-link mx-2"
-              @click="navigate('/account/login')"
-            >
-              Log in
-            </button>
+            <div v-if="!isKratosUser" @click="navigate('/account/login')">
+              <button
+                class="btn px-4 border bg-light-primary nav-link btn-link mx-2"
+              >
+                Log in
+              </button>
+            </div>
             <button
               v-else
-              class="btn px-4 border bg-light-primary nav-link btn-link mx-2"
+              class="btn px-4 border nav-link btn-link mx-2"
               @click="navigate('/admin')"
             >
               My Profile
@@ -80,7 +80,7 @@
           <!-- Log out button -->
           <li v-if="isKratosUser" class="nav-item mb-1">
             <button
-              class="btn px-4 border bg-primary nav-link btn-link mx-2"
+              class="btn px-4 border nav-link btn-link mx-2"
               @click="handleLogout()"
             >
               Log Out

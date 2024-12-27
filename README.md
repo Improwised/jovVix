@@ -167,7 +167,7 @@
 - Start backend services:
 ```
   cd api
-  docker-compose --profile kratos up
+  docker-compose up
   go run app.go migrate
   go run app.go api
 ```
