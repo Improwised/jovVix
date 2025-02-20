@@ -1126,7 +1126,6 @@ func handleAnswerSubmission(c *websocket.Conn, qc *quizSocketController, session
 func (qc *quizSocketController) SetAnswer(c *fiber.Ctx) error {
 	currentQuiz := c.Query(constants.CurrentUserQuiz)
 	sessionId := c.Query(constants.SessionIDParam)
-	qc.logger.Debug("quizSocketController.SetAnswer called", zap.Any("currentQuiz", currentQuiz), zap.Any("sessionid", sessionId))
 
 	// validations
 	if currentQuiz == "" {
@@ -1160,7 +1159,6 @@ func (qc *quizSocketController) SetAnswer(c *fiber.Ctx) error {
 	}
 
 	// check for question is active or not to receive answers
-	qc.logger.Debug("userPlayedQuizModel.GetCurrentActiveQuestion called", zap.Any("currentQuizId", currentQuizId))
 	currentQuestion, err := qc.userPlayedQuizModel.GetCurrentActiveQuestion(sessionId)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -1170,25 +1168,21 @@ func (qc *quizSocketController) SetAnswer(c *fiber.Ctx) error {
 		qc.logger.Error("error during answer submit", zap.Error(err))
 		return utils.JSONFail(c, http.StatusBadRequest, constants.UnknownError)
 	}
-	qc.logger.Debug("userPlayedQuizModel.GetCurrentActiveQuestion success", zap.Any("currentQuestion", currentQuestion))
 
 	if currentQuestion != answer.QuestionId {
 		qc.logger.Error(constants.ErrQuestionNotActive)
 		return utils.JSONFail(c, http.StatusBadRequest, constants.ErrQuestionNotActive)
 	}
 
-	qc.logger.Debug("questionModel.GetAnswersPointsDurationType called", zap.Any("QuestionId", answer.QuestionId.String()))
 	answers, answerPoints, answerDurationInSeconds, questionType, err := qc.questionModel.GetAnswersPointsDurationType(answer.QuestionId.String())
 	if err != nil {
 		qc.logger.Error("error while get answer, points, duration and type")
 		return utils.JSONFail(c, http.StatusBadRequest, "error while get answer, points, duration and type")
 	}
-	qc.logger.Debug("questionModel.GetAnswersPointsDurationType success", zap.Any("answers", answers))
 
 	// calculate points
 	points, score := utils.CalculatePointsAndScore(answer, answers, answerPoints, answerDurationInSeconds, questionType)
 
-	qc.logger.Debug("userPlayedQuizModel.GetStreakCount called", zap.Any("currentQuizId", currentQuizId))
 	streakCount, err := qc.userPlayedQuizModel.GetStreakCount(currentQuizId, answer.QuestionId)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -1198,12 +1192,9 @@ func (qc *quizSocketController) SetAnswer(c *fiber.Ctx) error {
 		qc.logger.Error(constants.ErrGetStreakCount, zap.Error(err))
 		return utils.JSONError(c, http.StatusInternalServerError, constants.ErrGetStreakCount)
 	}
-	qc.logger.Debug("userQuizResponseModel.GetStreakCount success", zap.Any("streakCount", streakCount))
 
 	// add streak score and update streak also
-	qc.logger.Debug("CalculateStreakScore called", zap.Any("streakCount", streakCount), zap.Any("score", score))
 	finalScore, newSreakCount := utils.CalculateStreakScore(streakCount, score)
-	qc.logger.Debug("CalculateStreakScore success", zap.Any("newSreakCount", newSreakCount), zap.Any("finalScore", finalScore))
 
 	// Submit answer
 	if err := qc.userQuizResponseModel.SubmitAnswer(currentQuizId, answer, points, finalScore, newSreakCount); err != nil {

@@ -90,7 +90,6 @@ func (model *UserModel) InsertUser(user User) (User, error) {
 		return user, err
 	}
 
-	user, err = model.GetById(user.ID)
 	return user, err
 }
 
