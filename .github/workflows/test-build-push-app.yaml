@@ -6,7 +6,7 @@ on:
       - develop
     paths:
       - "app/**"
-      - ".github/workflows/build-push-app.yaml"
+      - ".github/workflows/test-build-push-app.yaml"
       - "!**.md"
   pull_request:
     types: ["opened", "reopened", "synchronize", "ready_for_review"]
