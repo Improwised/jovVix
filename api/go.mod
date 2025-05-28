@@ -20,6 +20,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/credentials v1.13.31
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.38.1
 	github.com/doug-martin/goqu/v9 v9.18.0
+	github.com/fasthttp/websocket v1.5.7
 	github.com/getsentry/sentry-go v0.27.0
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/go-sql-driver/mysql v1.7.1
@@ -28,7 +29,6 @@ require (
 	github.com/gofiber/fiber/v2 v2.51.0
 	github.com/gofiber/storage/s3 v1.4.5
 	github.com/google/uuid v1.6.0
-	github.com/gorilla/websocket v1.5.3
 	github.com/joho/godotenv v1.5.1
 	github.com/jszwec/csvutil v1.10.0
 	github.com/kelseyhightower/envconfig v1.4.0
@@ -65,7 +65,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.15.1 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.21.1 // indirect
 	github.com/aws/smithy-go v1.14.0 // indirect
-	github.com/fasthttp/websocket v1.5.7 // indirect
 	github.com/go-openapi/analysis v0.21.4 // indirect
 	github.com/go-openapi/errors v0.20.3 // indirect
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect

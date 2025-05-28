@@ -7,13 +7,13 @@
       alt="medal"
     />
     <img
-      v-if="props.winner.rank == 2"
+      v-else-if="props.winner.rank == 2"
       src="@/assets/images/medal/2.png"
       class="bg-image"
       alt="medal"
     />
     <img
-      v-if="props.winner.rank == 3"
+      v-else
       src="@/assets/images/medal/3.png"
       class="bg-image"
       alt="medal"
