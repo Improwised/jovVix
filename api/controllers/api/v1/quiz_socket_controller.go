@@ -54,7 +54,6 @@ type quizSocketController struct {
 	appConfig             *config.AppConfig
 	logger                *zap.Logger
 	redis                 *redis.RedisPubSub
-	mu                    sync.Mutex
 }
 
 func InitQuizConfig(db *goqu.Database, appConfig *config.AppConfig, logger *zap.Logger, redis *redis.RedisPubSub) (*quizSocketController, error) {
@@ -85,6 +84,8 @@ func InitQuizConfig(db *goqu.Database, appConfig *config.AppConfig, logger *zap.
 
 // for user Join
 func (qc *quizSocketController) Join(c *websocket.Conn) {
+	var JoinMu sync.Mutex
+
 	response := QuizSendResponse{
 		Component: constants.Waiting,
 		Action:    constants.ActionAuthentication,
@@ -146,7 +147,13 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 			}
 
 			if quizResponse.Event == constants.EventPing {
-				err := utils.JSONSuccessWs(c, "pong", "")
+
+				err := func() error {
+					JoinMu.Lock()
+					defer JoinMu.Unlock()
+					return utils.JSONSuccessWs(c, "pong", "")
+				}()
+
 				if err != nil {
 					qc.logger.Error("error while sending pong message", zap.Error(err))
 				}
@@ -158,7 +165,12 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 	if userId == session.AdminID {
 		response.Action = constants.ActionCurrentUserIsAdmin
 		response.Data = map[string]string{"sessionId": session.ID.String()}
-		err := utils.JSONSuccessWs(c, constants.EventRedirectToAdmin, response)
+
+		err := func() error {
+			JoinMu.Lock()
+			defer JoinMu.Unlock()
+			return utils.JSONSuccessWs(c, constants.EventRedirectToAdmin, response)
+		}()
 
 		if err != nil {
 			qc.logger.Error(fmt.Sprintf("socket redirect current user is admin: %s event, %s action, %s code", constants.EventRedirectToAdmin, response.Action, invitationCode), zap.Error(err))
@@ -169,9 +181,9 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 	// when user join at that time publish userName to admin
 	publishUserOnJoin(qc, response, user.FirstName, userId, user.ImageKey, session.ID.String())
 	response.Action = constants.QuizQuestionStatus
-	onConnectHandleUser(c, qc, &response, session)
+	onConnectHandleUser(c, qc, &response, session, &JoinMu)
 	// userPlayedQuizId := quizUtilsHelper.GetString(c.Locals(constants.CurrentUserQuiz))
-	handleQuestion(c, qc, session, response, isUserConnected)
+	handleQuestion(c, qc, session, response, isUserConnected, &JoinMu)
 }
 
 func publishUserOnJoin(qc *quizSocketController, quizResponse QuizSendResponse, userName string, userId string, avatar string, sessionId string) {
@@ -237,7 +249,7 @@ func publishUserOnJoin(qc *quizSocketController, quizResponse QuizSendResponse, 
 	}
 }
 
-func handleQuestion(c *websocket.Conn, qc *quizSocketController, session models.ActiveQuiz, response QuizSendResponse, isUserConnected chan bool) {
+func handleQuestion(c *websocket.Conn, qc *quizSocketController, session models.ActiveQuiz, response QuizSendResponse, isUserConnected chan bool, joinMu *sync.Mutex) {
 	pubsub := qc.redis.PubSubModel.Client.Subscribe(qc.redis.PubSubModel.Ctx, session.ID.String())
 	defer func() {
 		if pubsub != nil {
@@ -265,7 +277,13 @@ func handleQuestion(c *websocket.Conn, qc *quizSocketController, session models.
 			}
 
 			event := quizUtilsHelper.GetString(message["event"])
-			err = utils.JSONSuccessWs(c, event, message["response"])
+
+			err = func() error {
+				joinMu.Lock()
+				defer joinMu.Unlock()
+				return utils.JSONSuccessWs(c, event, message["response"])
+			}()
+
 			if err != nil {
 				qc.logger.Error(fmt.Sprintf("socket error send waiting message: %s event, %s action", event, response.Action), zap.Error(err))
 			}
@@ -277,7 +295,7 @@ func handleQuestion(c *websocket.Conn, qc *quizSocketController, session models.
 	}
 }
 
-func onConnectHandleUser(c *websocket.Conn, qc *quizSocketController, response *QuizSendResponse, session models.ActiveQuiz) {
+func onConnectHandleUser(c *websocket.Conn, qc *quizSocketController, response *QuizSendResponse, session models.ActiveQuiz, joinMu *sync.Mutex) {
 	if session.CurrentQuestion.Valid {
 
 		totalQuestion, err := qc.questionModel.GetTotalQuestionCount(session.ID.String())
@@ -316,13 +334,24 @@ func onConnectHandleUser(c *websocket.Conn, qc *quizSocketController, response *
 		response.Data = responseData
 		response.Component = constants.Question
 
-		err = utils.JSONSuccessWs(c, constants.EventSendQuestion, response)
+		err = func() error {
+			joinMu.Lock()
+			defer joinMu.Unlock()
+			return utils.JSONSuccessWs(c, constants.EventSendQuestion, response)
+		}()
+
 		if err != nil {
 			qc.logger.Error(fmt.Sprintf("socket error send current question on connect: %s event, %s action", constants.EventSendQuestion, response.Action), zap.Error(err))
 		}
 	} else {
 		response.Data = constants.QuizStartsSoon
-		err := utils.JSONSuccessWs(c, constants.EventJoinQuiz, response)
+
+		err := func() error {
+			joinMu.Lock()
+			defer joinMu.Unlock()
+			return utils.JSONSuccessWs(c, constants.EventJoinQuiz, response)
+		}()
+
 		if err != nil {
 			qc.logger.Error(fmt.Sprintf("socket error send waiting message: %s event, %s action", constants.EventJoinQuiz, response.Action), zap.Error(err))
 		}
@@ -385,9 +414,6 @@ func updateUserData(qc *quizSocketController, userId string, sessionId string, i
 // filter user data and publish only alive user to the channel
 func filterPublishUsers(qc *quizSocketController, usersData []UserInfo, functionName string) (publishData []byte) {
 
-	qc.mu.Lock()
-	defer qc.mu.Unlock()
-
 	// Filter out elements where IsAlive is false
 	var filteredData []UserInfo
 	for _, data := range usersData {
@@ -407,6 +433,7 @@ func filterPublishUsers(qc *quizSocketController, usersData []UserInfo, function
 
 // for admin join
 func (qc *quizSocketController) Arrange(c *websocket.Conn) {
+	var arrangeMu sync.Mutex
 
 	isConnected := true
 	adminDisconnected := make(chan bool, 1)
@@ -423,7 +450,13 @@ func (qc *quizSocketController) Arrange(c *websocket.Conn) {
 
 	if !ok {
 		qc.logger.Error("socket user-model type conversion")
-		err := utils.JSONFailWs(c, constants.EventSessionValidation, constants.UnknownError)
+
+		err := func() error {
+			arrangeMu.Lock()
+			defer arrangeMu.Unlock()
+			return utils.JSONFailWs(c, constants.EventSessionValidation, constants.UnknownError)
+		}()
+
 		if err != nil {
 			qc.logger.Error("socket user-model type conversion")
 		}
@@ -431,11 +464,17 @@ func (qc *quizSocketController) Arrange(c *websocket.Conn) {
 	}
 
 	// activate session
-	session, err := ActivateAndGetSession(c, qc.activeQuizModel, qc.logger, sessionId, user.ID)
+	session, err := ActivateAndGetSession(c, qc.activeQuizModel, qc.logger, sessionId, user.ID, &arrangeMu)
 
 	if err != nil {
 		qc.logger.Error("get active session", zap.Error(err))
-		err := utils.JSONFailWs(c, constants.EventSessionValidation, constants.UnknownError)
+
+		err := func() error {
+			arrangeMu.Lock()
+			defer arrangeMu.Unlock()
+			return utils.JSONFailWs(c, constants.EventSessionValidation, constants.UnknownError)
+		}()
+
 		if err != nil {
 			qc.logger.Error("get active session", zap.Error(err))
 		}
@@ -451,28 +490,28 @@ func (qc *quizSocketController) Arrange(c *websocket.Conn) {
 	}()
 
 	// handle code sharing with admin
-	handleCodeGeneration(c, qc, session, &isConnected, &response, adminDisconnected)
+	handleCodeGeneration(c, qc, session, &isConnected, &response, adminDisconnected, &arrangeMu)
 
 	// if connection lost during waiting of start event
 	if !(isConnected) {
 		response.Component = constants.Loading
 		response.Data = constants.AdminDisconnected
-		shareEvenWithUser(c, qc, &response, constants.AdminDisconnected, sessionId, int(session.InvitationCode.Int32), constants.ToUser)
+		shareEvenWithUser(c, qc, &response, constants.AdminDisconnected, sessionId, int(session.InvitationCode.Int32), constants.ToUser, &arrangeMu)
 
 		qc.logger.Error("admin disconnected")
 		return
 	}
 
 	// handle when user join during running quiz
-	go handleRunningQuizUserJoin(c, qc, adminDisconnected, session.ID.String())
+	go handleRunningQuizUserJoin(c, qc, adminDisconnected, session.ID.String(), &arrangeMu)
 
 	// question and score handler
-	questionAndScoreHandler(c, qc, &response, session, &isConnected)
+	questionAndScoreHandler(c, qc, &response, session, &isConnected, &arrangeMu)
 }
 
 // handleRunningQuizUserJoin listens for users joining a running quiz and sends the updated count of users to the client.
 // It also listens for admin disconnection and gracefully terminates if the admin is disconnected.
-func handleRunningQuizUserJoin(c *websocket.Conn, qc *quizSocketController, adminDisconnected chan bool, sessionId string) {
+func handleRunningQuizUserJoin(c *websocket.Conn, qc *quizSocketController, adminDisconnected chan bool, sessionId string, arrangeMu *sync.Mutex) {
 	response := QuizSendResponse{}
 	response.Action = constants.JoinUserOnRunningQuiz
 	response.Component = constants.Running
@@ -507,7 +546,12 @@ func handleRunningQuizUserJoin(c *websocket.Conn, qc *quizSocketController, admi
 			}
 			response.Data = totalUserJoin
 
-			err = utils.JSONSuccessWs(c, constants.JoinUserOnRunningQuiz, response)
+			err = func() error {
+				arrangeMu.Lock()
+				defer arrangeMu.Unlock()
+				return utils.JSONSuccessWs(c, constants.JoinUserOnRunningQuiz, response)
+			}()
+
 			if err != nil {
 				qc.logger.Error("error while sending user data ", zap.Error(err))
 			}
@@ -515,7 +559,7 @@ func handleRunningQuizUserJoin(c *websocket.Conn, qc *quizSocketController, admi
 	}
 }
 
-func ActivateAndGetSession(c *websocket.Conn, activeQuizModel *models.ActiveQuizModel, logger *zap.Logger, sessionId string, userId string) (models.ActiveQuiz, error) {
+func ActivateAndGetSession(c *websocket.Conn, activeQuizModel *models.ActiveQuizModel, logger *zap.Logger, sessionId string, userId string, arrangeMu *sync.Mutex) (models.ActiveQuiz, error) {
 
 	response := QuizSendResponse{
 		Component: constants.Waiting,
@@ -529,7 +573,13 @@ func ActivateAndGetSession(c *websocket.Conn, activeQuizModel *models.ActiveQuiz
 		if err.Error() == constants.Unauthenticated {
 			response.Action = constants.ActionSessionValidation
 			response.Data = constants.Unauthorized
-			err = utils.JSONFailWs(c, constants.EventAuthorization, response)
+
+			err = func() error {
+				arrangeMu.Lock()
+				defer arrangeMu.Unlock()
+				return utils.JSONFailWs(c, constants.EventAuthorization, response)
+			}()
+
 			if err != nil {
 				logger.Error(fmt.Sprintf("socket error authentication host: %s event, %s action", constants.EventAuthorization, response.Action), zap.Error(err))
 			}
@@ -537,7 +587,13 @@ func ActivateAndGetSession(c *websocket.Conn, activeQuizModel *models.ActiveQuiz
 		} else if err.Error() == constants.ErrSessionWasCompleted {
 			response.Action = constants.ActionSessionActivation
 			response.Data = constants.ErrSessionWasCompleted
-			err = utils.JSONFailWs(c, constants.EventAuthorization, response)
+
+			err = func() error {
+				arrangeMu.Lock()
+				defer arrangeMu.Unlock()
+				return utils.JSONFailWs(c, constants.EventAuthorization, response)
+			}()
+
 			if err != nil {
 				logger.Error(fmt.Sprintf("socket error authentication host: %s event, %s action", constants.EventAuthorization, response.Action), zap.Error(err))
 			}
@@ -547,7 +603,13 @@ func ActivateAndGetSession(c *websocket.Conn, activeQuizModel *models.ActiveQuiz
 		response.Action = constants.ActionSessionActivation
 		response.Data = constants.UnknownError
 		logger.Debug("unknown error was triggered from ActivateAndGetSession")
-		err = utils.JSONErrorWs(c, constants.EventActivateSession, response)
+
+		err = func() error {
+			arrangeMu.Lock()
+			defer arrangeMu.Unlock()
+			return utils.JSONErrorWs(c, constants.EventActivateSession, response)
+		}()
+
 		if err != nil {
 			logger.Error(fmt.Sprintf("socket error get or activate session: %s event, %s action", constants.EventActivateSession, response.Action), zap.Error(err))
 		}
@@ -559,7 +621,7 @@ func ActivateAndGetSession(c *websocket.Conn, activeQuizModel *models.ActiveQuiz
 	return session, nil
 }
 
-func handleCodeGeneration(c *websocket.Conn, qc *quizSocketController, session models.ActiveQuiz, isConnected *bool, response *QuizSendResponse, adminDisconnected chan bool) {
+func handleCodeGeneration(c *websocket.Conn, qc *quizSocketController, session models.ActiveQuiz, isConnected *bool, response *QuizSendResponse, adminDisconnected chan bool, arrangeMu *sync.Mutex) {
 	// is isQuestionActive true -> quiz started
 	isInvitationCodeSent := session.CurrentQuestion.Valid
 
@@ -567,28 +629,31 @@ func handleCodeGeneration(c *websocket.Conn, qc *quizSocketController, session m
 		// handle Waiting page
 		for {
 
-			qc.mu.Lock()
 			if !(*isConnected) {
-				qc.mu.Unlock()
 				break
 			}
 
 			// if code not sent then sent it
 			if !isInvitationCodeSent {
 				// send code to client
-				handleInvitationCodeSend(c, response, qc.logger, session.InvitationCode.Int32)
+				handleInvitationCodeSend(c, response, qc.logger, session.InvitationCode.Int32, arrangeMu)
 				isInvitationCodeSent = true
-				go handleConnectedUser(c, qc, session.ID.String(), adminDisconnected)
+				go handleConnectedUser(c, qc, session.ID.String(), adminDisconnected, arrangeMu)
 
 			}
-			qc.mu.Unlock()
 
 			// once code sent receive start signal
 			if isInvitationCodeSent {
-				isBreak := handleStartQuiz(c, qc.logger, isConnected, response.Action, &qc.mu)
+				isBreak := handleStartQuiz(c, qc.logger, isConnected, response.Action)
 
 				if isBreak == constants.EventPing {
-					err := utils.JSONSuccessWs(c, constants.EventPong, "")
+
+					err := func() error {
+						arrangeMu.Lock()
+						defer arrangeMu.Unlock()
+						return utils.JSONSuccessWs(c, constants.EventPong, "")
+					}()
+
 					if err != nil {
 						qc.logger.Error("error while sending pong message", zap.Error(err))
 					}
@@ -619,7 +684,12 @@ func handleCodeGeneration(c *websocket.Conn, qc *quizSocketController, session m
 						}
 						response.Data = constants.NoPlayerFound
 
-						err = utils.JSONFailWs(c, constants.EventStartQuiz, response)
+						err = func() error {
+							arrangeMu.Lock()
+							defer arrangeMu.Unlock()
+							return utils.JSONFailWs(c, constants.EventStartQuiz, response)
+						}()
+
 						if err != nil {
 							qc.logger.Error(fmt.Sprintf("socket error middleware: %s event, %s action", constants.EventAuthentication, response.Action), zap.Error(err))
 						}
@@ -632,13 +702,17 @@ func handleCodeGeneration(c *websocket.Conn, qc *quizSocketController, session m
 }
 
 // handle waiting page
-func handleInvitationCodeSend(c *websocket.Conn, response *QuizSendResponse, logger *zap.Logger, invitationCode int32) bool {
+func handleInvitationCodeSend(c *websocket.Conn, response *QuizSendResponse, logger *zap.Logger, invitationCode int32, arrangeMu *sync.Mutex) bool {
 
 	// send code to client
 	response.Action = constants.ActionSessionActivation
 	response.Data = map[string]int{"code": int(invitationCode)}
 
-	err := utils.JSONSuccessWs(c, constants.EventSendInvitationCode, response)
+	err := func() error {
+		arrangeMu.Lock()
+		defer arrangeMu.Unlock()
+		return utils.JSONSuccessWs(c, constants.EventSendInvitationCode, response)
+	}()
 
 	if err != nil {
 		logger.Error(fmt.Sprintf("socket error sent code: %s event, %s action", constants.EventSendInvitationCode, response.Action), zap.Error(err))
@@ -648,7 +722,7 @@ func handleInvitationCodeSend(c *websocket.Conn, response *QuizSendResponse, log
 }
 
 // when user connect at that time send data to admin
-func handleConnectedUser(c *websocket.Conn, qc *quizSocketController, sessionId string, adminDisconnected chan bool) {
+func handleConnectedUser(c *websocket.Conn, qc *quizSocketController, sessionId string, adminDisconnected chan bool, arrangeMu *sync.Mutex) {
 	response := QuizSendResponse{}
 	response.Action = constants.ActionSendUserData
 	response.Component = constants.Waiting
@@ -692,7 +766,13 @@ func handleConnectedUser(c *websocket.Conn, qc *quizSocketController, sessionId 
 			}
 
 			response.Data = usersData
-			err = utils.JSONSuccessWs(c, constants.EventSendInvitationCode, response) // sending the user data to the admin
+
+			err = func() error {
+				arrangeMu.Lock()
+				defer arrangeMu.Unlock()
+				return utils.JSONSuccessWs(c, constants.EventSendInvitationCode, response)
+			}()
+			// sending the user data to the admin
 			if err != nil {
 				qc.logger.Error("error while sending user data ", zap.Error(err))
 			}
@@ -701,14 +781,12 @@ func handleConnectedUser(c *websocket.Conn, qc *quizSocketController, sessionId 
 }
 
 // start quiz by message event from admin
-func handleStartQuiz(c *websocket.Conn, logger *zap.Logger, isConnected *bool, action string, mu *sync.Mutex) string {
+func handleStartQuiz(c *websocket.Conn, logger *zap.Logger, isConnected *bool, action string) string {
 	message := QuizReceiveResponse{}
 	err := c.ReadJSON(&message)
 	if err != nil {
 		logger.Error(fmt.Sprintf("socket error start event handling: %s event, %s action", constants.EventStartQuiz, action), zap.Error(err))
-		mu.Lock()
 		*isConnected = false
-		mu.Unlock()
 		return constants.UnknownError
 	}
 
@@ -723,7 +801,7 @@ func handleStartQuiz(c *websocket.Conn, logger *zap.Logger, isConnected *bool, a
 	return constants.UnknownError
 }
 
-func shareEvenWithUser(c *websocket.Conn, qc *quizSocketController, response *QuizSendResponse, event string, sessionId string, invitationCode int, sentToWhom int) {
+func shareEvenWithUser(c *websocket.Conn, qc *quizSocketController, response *QuizSendResponse, event string, sessionId string, invitationCode int, sentToWhom int, arrangeMu *sync.Mutex) {
 	payload := map[string]any{"event": event, "response": response}
 	data, err := json.Marshal(payload)
 	if err != nil {
@@ -741,21 +819,33 @@ func shareEvenWithUser(c *websocket.Conn, qc *quizSocketController, response *Qu
 
 	if sentToWhom == constants.ToAdmin || sentToWhom == constants.ToAll {
 		// send event to admin
-		err = utils.JSONSuccessWs(c, event, response)
+
+		err := func() error {
+			arrangeMu.Lock()
+			defer arrangeMu.Unlock()
+			return utils.JSONSuccessWs(c, event, response)
+		}()
+
 		if err != nil {
 			qc.logger.Error(fmt.Sprintf("socket error sending event: %s event, %s action %v code", constants.EventSendQuestion, response.Action, invitationCode), zap.Error(err))
 		}
 	}
 }
 
-func questionAndScoreHandler(c *websocket.Conn, qc *quizSocketController, response *QuizSendResponse, session models.ActiveQuiz, isConnected *bool) {
+func questionAndScoreHandler(c *websocket.Conn, qc *quizSocketController, response *QuizSendResponse, session models.ActiveQuiz, isConnected *bool, arrangeMu *sync.Mutex) {
 	// get questions/remaining question
 	response.Component = constants.Question
 	questions, lastQuestionDeliveryTime, err := qc.quizModel.GetSharedQuestions(int(session.InvitationCode.Int32))
 	if err != nil {
 		response.Action = constants.ErrInGettingQuestion
 		qc.logger.Error(fmt.Sprintf("socket error get remaining questions: %s event, %s action %v code", constants.EventStartQuiz, response.Action, session.InvitationCode), zap.Error(err))
-		err := utils.JSONFailWs(c, constants.EventSendQuestion, response)
+
+		err := func() error {
+			arrangeMu.Lock()
+			defer arrangeMu.Unlock()
+			return utils.JSONFailWs(c, constants.EventSendQuestion, response)
+		}()
+
 		if err != nil {
 			qc.logger.Error("error during get remaining question", zap.Error(err))
 		}
@@ -775,7 +865,7 @@ func questionAndScoreHandler(c *websocket.Conn, qc *quizSocketController, respon
 	chanPauseQuiz := make(chan bool)
 	var isQuizEnd bool = false
 
-	go listenAllEvents(c, qc, response, session, chanNextEvent, chanSkipEvent, chanSkipTimer, chanPauseQuiz, isQuizEnd)
+	go listenAllEvents(c, qc, response, session, chanNextEvent, chanSkipEvent, chanSkipTimer, chanPauseQuiz, isQuizEnd, arrangeMu)
 
 	// handle question
 	var isFirst bool = lastQuestionDeliveryTime.Valid
@@ -784,11 +874,16 @@ func questionAndScoreHandler(c *websocket.Conn, qc *quizSocketController, respon
 		wg.Add(1)
 		if isFirst { // handle running question
 			isFirst = false
-			sendSingleQuestion(c, qc, &wg, response, session, question, lastQuestionDeliveryTime, chanSkipEvent, chanSkipTimer, chanPauseQuiz, totalQuestion)
+			sendSingleQuestion(c, qc, &wg, response, session, question, lastQuestionDeliveryTime, chanSkipEvent, chanSkipTimer, chanPauseQuiz, totalQuestion, arrangeMu)
 		} else { // handle new question
-			sendSingleQuestion(c, qc, &wg, response, session, question, sql.NullTime{}, chanSkipEvent, chanSkipTimer, chanPauseQuiz, totalQuestion)
+			sendSingleQuestion(c, qc, &wg, response, session, question, sql.NullTime{}, chanSkipEvent, chanSkipTimer, chanPauseQuiz, totalQuestion, arrangeMu)
 		}
-		err := utils.JSONSuccessWs(c, constants.EventNextQuestionAsked, response)
+
+		err := func() error {
+			arrangeMu.Lock()
+			defer arrangeMu.Unlock()
+			return utils.JSONSuccessWs(c, constants.EventNextQuestionAsked, response)
+		}()
 
 		if err != nil {
 			qc.logger.Error("socket error during asking for next question", zap.Error(err))
@@ -804,12 +899,12 @@ func questionAndScoreHandler(c *websocket.Conn, qc *quizSocketController, respon
 
 	// termination of quiz
 	if session.ActivatedFrom.Valid && *isConnected {
-		terminateQuiz(c, qc, response, session)
+		terminateQuiz(c, qc, response, session, arrangeMu)
 		// isQuizEnd = false
 	}
 }
 
-func listenAllEvents(c *websocket.Conn, qc *quizSocketController, response *QuizSendResponse, session models.ActiveQuiz, chanNextEvent chan bool, chanSkipEvent chan bool, chanSkipTimer chan bool, chanPauseQuiz chan bool, isQuizEnd bool) {
+func listenAllEvents(c *websocket.Conn, qc *quizSocketController, response *QuizSendResponse, session models.ActiveQuiz, chanNextEvent chan bool, chanSkipEvent chan bool, chanSkipTimer chan bool, chanPauseQuiz chan bool, isQuizEnd bool, arrangeMu *sync.Mutex) {
 	for {
 		message := QuizReceiveResponse{}
 		err := c.ReadJSON(&message)
@@ -839,11 +934,11 @@ func listenAllEvents(c *websocket.Conn, qc *quizSocketController, response *Quiz
 	if !isQuizEnd {
 		response.Component = constants.Loading
 		response.Data = constants.AdminDisconnected
-		shareEvenWithUser(c, qc, response, constants.AdminDisconnected, session.ID.String(), int(session.InvitationCode.Int32), constants.ToUser)
+		shareEvenWithUser(c, qc, response, constants.AdminDisconnected, session.ID.String(), int(session.InvitationCode.Int32), constants.ToUser, arrangeMu)
 	}
 }
 
-func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.WaitGroup, response *QuizSendResponse, session models.ActiveQuiz, question models.Question, lastQuestionTimeStamp sql.NullTime, chanSkipEvent chan bool, chanSkipTimer chan bool, chanPauseQuiz chan bool, totalQuestions int64) {
+func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.WaitGroup, response *QuizSendResponse, session models.ActiveQuiz, question models.Question, lastQuestionTimeStamp sql.NullTime, chanSkipEvent chan bool, chanSkipTimer chan bool, chanPauseQuiz chan bool, totalQuestions int64, arrangeMu *sync.Mutex) {
 
 	defer wg.Done()
 
@@ -876,7 +971,7 @@ func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.Wa
 		response.Component = constants.Question
 		response.Action = constants.ActionCounter
 		response.Data = map[string]int{"counter": constants.Counter, "count": constants.Count}
-		shareEvenWithUser(c, qc, response, constants.EventStartCount5, session.ID.String(), int(session.InvitationCode.Int32), constants.ToAll)
+		shareEvenWithUser(c, qc, response, constants.EventStartCount5, session.ID.String(), int(session.InvitationCode.Int32), constants.ToAll, arrangeMu)
 		time.Sleep(time.Duration(constants.Counter) * time.Second)
 
 		// update question status to activate
@@ -907,11 +1002,11 @@ func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.Wa
 	if !lastQuestionTimeStamp.Valid { // handling new question
 		responseData["question_time"] = ""
 		response.Data = responseData
-		shareEvenWithUser(c, qc, response, constants.EventSendQuestion, session.ID.String(), int(session.InvitationCode.Int32), constants.ToAll)
+		shareEvenWithUser(c, qc, response, constants.EventSendQuestion, session.ID.String(), int(session.InvitationCode.Int32), constants.ToAll, arrangeMu)
 	} else { // handling running question
 		responseData["duration"] = question.DurationInSeconds - int(time.Since(lastQuestionTimeStamp.Time).Seconds())
 		response.Data = responseData
-		shareEvenWithUser(c, qc, response, constants.EventSendQuestion, session.ID.String(), int(session.InvitationCode.Int32), constants.ToAdmin)
+		shareEvenWithUser(c, qc, response, constants.EventSendQuestion, session.ID.String(), int(session.InvitationCode.Int32), constants.ToAdmin, arrangeMu)
 	}
 
 	wgForQuestion := &sync.WaitGroup{}
@@ -925,7 +1020,7 @@ func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.Wa
 			duration = 1
 		}
 	}
-	go handleAnswerSubmission(c, qc, session, question.ID, duration, wgForQuestion, chanSkipEvent, response)
+	go handleAnswerSubmission(c, qc, session, question.ID, duration, wgForQuestion, chanSkipEvent, response, arrangeMu)
 	wgForQuestion.Wait()
 
 	// update current status to deactivate
@@ -970,7 +1065,7 @@ func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.Wa
 		"totalQuestions": totalQuestions,
 		"userResponses":  userResponses,
 	}
-	shareEvenWithUser(c, qc, response, constants.EventShowScore, session.ID.String(), int(session.InvitationCode.Int32), constants.ToAdmin)
+	shareEvenWithUser(c, qc, response, constants.EventShowScore, session.ID.String(), int(session.InvitationCode.Int32), constants.ToAdmin, arrangeMu)
 
 	response.Data = map[string]any{
 		"quiz_id":        question.QuizId,
@@ -984,24 +1079,21 @@ func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.Wa
 		"duration":       scoreboardMaxDuration,
 		"totalQuestions": totalQuestions,
 	}
-	shareEvenWithUser(c, qc, response, constants.EventShowScore, session.ID.String(), int(session.InvitationCode.Int32), constants.ToUser)
+	shareEvenWithUser(c, qc, response, constants.EventShowScore, session.ID.String(), int(session.InvitationCode.Int32), constants.ToUser, arrangeMu)
 
 	wgForSkipTimer := &sync.WaitGroup{}
 	wgForSkipTimer.Add(1)
 
 	// skip timer
-	go handleSkipTimer(c, qc, wgForSkipTimer, response, session, chanSkipTimer, chanPauseQuiz, scoreboardMaxDuration)
+	go handleSkipTimer(c, qc, wgForSkipTimer, response, session, chanSkipTimer, chanPauseQuiz, scoreboardMaxDuration, arrangeMu)
 	wgForSkipTimer.Wait()
 }
 
-func terminateQuiz(c *websocket.Conn, qc *quizSocketController, response *QuizSendResponse, session models.ActiveQuiz) {
-
-	qc.mu.Lock()
-	defer qc.mu.Unlock()
+func terminateQuiz(c *websocket.Conn, qc *quizSocketController, response *QuizSendResponse, session models.ActiveQuiz, arrangeMu *sync.Mutex) {
 
 	response.Component = constants.Score
 	response.Data = constants.ActionTerminateQuiz
-	shareEvenWithUser(c, qc, response, constants.EventTerminateQuiz, session.ID.String(), int(session.InvitationCode.Int32), constants.ToAll)
+	shareEvenWithUser(c, qc, response, constants.EventTerminateQuiz, session.ID.String(), int(session.InvitationCode.Int32), constants.ToAll, arrangeMu)
 
 	err := qc.activeQuizModel.Deactivate(session.ID)
 	if err != nil {
@@ -1018,7 +1110,7 @@ func terminateQuiz(c *websocket.Conn, qc *quizSocketController, response *QuizSe
 	}
 }
 
-func handleSkipTimer(c *websocket.Conn, qc *quizSocketController, wg *sync.WaitGroup, response *QuizSendResponse, session models.ActiveQuiz, chanSkipTimer chan bool, chanPauseQuiz chan bool, scoreboardMaxDuration int) {
+func handleSkipTimer(c *websocket.Conn, qc *quizSocketController, wg *sync.WaitGroup, response *QuizSendResponse, session models.ActiveQuiz, chanSkipTimer chan bool, chanPauseQuiz chan bool, scoreboardMaxDuration int, arrangeMu *sync.Mutex) {
 	defer wg.Done()
 
 	remainingTime := time.Duration(scoreboardMaxDuration) * time.Second
@@ -1049,7 +1141,7 @@ func handleSkipTimer(c *websocket.Conn, qc *quizSocketController, wg *sync.WaitG
 				// send event to the user
 				response.Component = constants.Score
 				response.Data = constants.EventPauseQuiz
-				shareEvenWithUser(c, qc, response, constants.EventPauseQuiz, session.ID.String(), int(session.InvitationCode.Int32), constants.ToUser)
+				shareEvenWithUser(c, qc, response, constants.EventPauseQuiz, session.ID.String(), int(session.InvitationCode.Int32), constants.ToUser, arrangeMu)
 			} else {
 				// Resume with the remaining time
 				if timerPaused {
@@ -1060,14 +1152,14 @@ func handleSkipTimer(c *websocket.Conn, qc *quizSocketController, wg *sync.WaitG
 					// send event to the user
 					response.Component = constants.Score
 					response.Data = constants.EventResumeQuiz
-					shareEvenWithUser(c, qc, response, constants.EventResumeQuiz, session.ID.String(), int(session.InvitationCode.Int32), constants.ToUser)
+					shareEvenWithUser(c, qc, response, constants.EventResumeQuiz, session.ID.String(), int(session.InvitationCode.Int32), constants.ToUser, arrangeMu)
 				}
 			}
 		}
 	}
 }
 
-func handleAnswerSubmission(c *websocket.Conn, qc *quizSocketController, session models.ActiveQuiz, questionId uuid.UUID, duration int, wg *sync.WaitGroup, chanSkipEvent chan bool, response *QuizSendResponse) {
+func handleAnswerSubmission(c *websocket.Conn, qc *quizSocketController, session models.ActiveQuiz, questionId uuid.UUID, duration int, wg *sync.WaitGroup, chanSkipEvent chan bool, response *QuizSendResponse, arrangeMu *sync.Mutex) {
 	defer wg.Done()
 
 	isTimeout := time.NewTicker(time.Duration(duration) * time.Second)
@@ -1102,7 +1194,7 @@ func handleAnswerSubmission(c *websocket.Conn, qc *quizSocketController, session
 					return
 				} else { // send warning if all participant not given answer
 					response.Data = constants.WarnSkip
-					shareEvenWithUser(c, qc, response, constants.EventSkipAsked, session.ID.String(), int(session.InvitationCode.Int32), constants.ToAdmin)
+					shareEvenWithUser(c, qc, response, constants.EventSkipAsked, session.ID.String(), int(session.InvitationCode.Int32), constants.ToAdmin, arrangeMu)
 				}
 			}
 		case msg := <-ch:
@@ -1115,7 +1207,13 @@ func handleAnswerSubmission(c *websocket.Conn, qc *quizSocketController, session
 
 			response.Data = user
 			response.Action = constants.ActionAnserSubmittedByUser
-			err = utils.JSONSuccessWs(c, constants.EventAnswerSubmittedByUser, response)
+
+			err = func() error {
+				arrangeMu.Lock()
+				defer arrangeMu.Unlock()
+				return utils.JSONSuccessWs(c, constants.EventAnswerSubmittedByUser, response)
+			}()
+
 			if err != nil {
 				qc.logger.Error(fmt.Sprintf("socket error sending event: %s event, %s action, %v user", constants.EventSendQuestion, response.Action, user), zap.Error(err))
 			}
