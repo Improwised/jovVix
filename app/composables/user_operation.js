@@ -59,6 +59,9 @@ export default class UserOperation extends QuizHandler {
       this.stopPing();
       this.handleConnectionProblem();
       this.startPing();
+    } else {
+      console.log("stopping ping of user");
+      this.stopPing();
     }
   }
 
@@ -114,8 +117,6 @@ export default class UserOperation extends QuizHandler {
     if (message.component === constants.Waiting) {
       this.isWaiting = true;
     } else if (this.isWaiting && message.component === constants.Question) {
-      console.log("stopping ping");
-      this.stopPing();
       this.isWaiting = false;
     }
 

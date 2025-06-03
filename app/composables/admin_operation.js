@@ -81,7 +81,6 @@ export default class AdminOperations extends QuizHandler {
     } else if (this.currentEvent == constants.AskSkip) {
       this.skipHandler(message);
     } else if (this.currentEvent === constants.Counter && this.isWaiting) {
-      this.stopPing();
       this.isWaiting = false;
     }
     super.handler(message);
@@ -92,6 +91,8 @@ export default class AdminOperations extends QuizHandler {
   }
 
   onClose(event) {
+    console.log("stoping ping of admin");
+    this.stopPing();
     super.onClose(event);
     setSocketObject(null);
   }
