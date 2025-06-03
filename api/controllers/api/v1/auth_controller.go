@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/Improwised/quizz-app/api/config"
 	"github.com/Improwised/quizz-app/api/constants"
@@ -121,20 +120,6 @@ func (ctrl *AuthController) DoKratosAuth(c *fiber.Ctx) error {
 			return utils.JSONError(c, http.StatusInternalServerError, constants.ErrKratosDataInsertion)
 		}
 	}
-
-	cookieExpirationTime, err := time.ParseDuration(ctrl.config.Kratos.CookieExpirationTime)
-	if err != nil {
-		ctrl.logger.Debug("unable to parse the duration for the cookie expiration", zap.Error(err))
-		return utils.JSONError(c, http.StatusInternalServerError, constants.ErrKratosCookieTime)
-	}
-
-	userCookie := &fiber.Cookie{
-		Name:    constants.KratosCookie,
-		Value:   kratosId,
-		Expires: time.Now().Add(cookieExpirationTime),
-	}
-
-	c.Cookie(userCookie)
 
 	return c.Redirect(ctrl.config.WebUrl)
 }
