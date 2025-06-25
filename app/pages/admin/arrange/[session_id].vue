@@ -118,7 +118,6 @@ const handleQuizEvents = async (message) => {
     addUserSubmittedAnswer(message.data);
   } else if (message.component === "Running") {
     runningQuizJoinUser.value = message.data;
-    toast.info("user join the quiz");
   } else {
     if (message.component != "Question") {
       resetUsersSubmittedAnswers();

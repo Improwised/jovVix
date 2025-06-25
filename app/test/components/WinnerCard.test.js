@@ -32,7 +32,7 @@ vi.mock("../../composables/avatar.js", () => {
 describe("WinnerCard test", () => {
   it("renders the correct medal for rank 1", () => {
     const medal = wrapper.find("img.bg-image");
-    expect(medal.attributes("src")).toBe("/assets/images/medal/1.png");
+    expect(medal.attributes("src")).toBe("/assets/images/medal/1.webp");
   });
 
   it("renders the correct medal for rank 2", async () => {
@@ -41,7 +41,7 @@ describe("WinnerCard test", () => {
     wrapper = mountComponent();
 
     const medal = wrapper.find("img.bg-image");
-    expect(medal.attributes("src")).toBe("/assets/images/medal/2.png");
+    expect(medal.attributes("src")).toBe("/assets/images/medal/2.webp");
   });
 
   it("renders the correct medal for rank 3", async () => {
@@ -50,7 +50,7 @@ describe("WinnerCard test", () => {
     wrapper = mountComponent();
 
     const medal = wrapper.find("img.bg-image");
-    expect(medal.attributes("src")).toBe("/assets/images/medal/3.png");
+    expect(medal.attributes("src")).toBe("/assets/images/medal/1.webp");
   });
 
   it("renders the correct avatar image", async () => {

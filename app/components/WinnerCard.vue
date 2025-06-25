@@ -2,19 +2,19 @@
   <div class="winner-card">
     <img
       v-if="props.winner.rank == 1"
-      src="@/assets/images/medal/1.png"
+      src="@/assets/images/medal/1.webp"
       class="bg-image"
       alt="medal"
     />
     <img
-      v-else-if="props.winner.rank == 2"
-      src="@/assets/images/medal/2.png"
+      v-if="props.winner.rank == 2"
+      src="@/assets/images/medal/2.webp"
       class="bg-image"
       alt="medal"
     />
     <img
-      v-else
-      src="@/assets/images/medal/3.png"
+      v-if="props.winner.rank == 3"
+      src="@/assets/images/medal/3.webp"
       class="bg-image"
       alt="medal"
     />

@@ -97,7 +97,7 @@ export default class UserOperation extends QuizHandler {
 
       if (response.status !== 202) {
         const errorMessage = await response.text();
-        return { error: `Failed to submit answer: ${errorMessage}` };
+        return { error: `Failed to submit answer` };
       }
 
       return { error: null };
