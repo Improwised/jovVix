@@ -7,6 +7,6 @@ Makefile
 api-logs.json
 api/data
 data
-.aider*
 app/coverage
 api/redis
+.aider*

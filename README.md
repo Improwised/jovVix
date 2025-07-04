@@ -58,8 +58,8 @@
   - During the quiz at each question
   - After the quiz, showcasing winners and individual performance
 - **Customization Options:** Offers customizable quiz features for educators, workshop hosts, and event organizers to suit their needs.
-- **Share quiz feature** Users can share their quiz to other users through email and can grant their preferred permission while sharing to the other one 
-- **CSV Uploads:**  Enables efficient quiz creation through CSV file uploads, allowing users to preview, edit, and allowing users to seamlessly create quizzes 
+- **Share quiz feature** Users can share their quiz to other users through email and can grant their preferred permission while sharing to the other one
+- **CSV Uploads:**  Enables efficient quiz creation through CSV file uploads, allowing users to preview, edit, and allowing users to seamlessly create quizzes
     - You can see the CSV formatting guidelines here : [csv-formatting-guide.md](docs/csv-formatting-guide.md)
 - **Mobile-Friendly Design:** Fully responsive and works seamlessly on mobile and desktop devices.
 - **Admin Tools:** Advanced admin panel for managing quizzes, participants, and results.
@@ -201,8 +201,6 @@
 
 - Designed to provide a fun and educational experience while ensuring smooth admin management, jovVix is the perfect solution for interactive quiz-based learning, competitions, or corporate events.
 
-
-   cd jovvix
 <br><br>
 # Documentation
 
@@ -223,8 +221,10 @@
 - Then you have setup jovVix successfully in your local environment
  ### API Overview:
 - locally you could start your API server by running the following command :
+```
 http://127.0.0.1:3000/api/v1/docs
-
+```
+- This would open the swagger documentation
 
 - **Backend:** jovVix uses a Golang backend to handle the server-side logic.
 - This would open the swagger documentation

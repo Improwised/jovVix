@@ -12,7 +12,6 @@ import (
 	"github.com/Improwised/jovvix/api/constants"
 	controller "github.com/Improwised/jovvix/api/controllers/api/v1"
 	"github.com/Improwised/jovvix/api/middlewares"
-	pMetrics "github.com/Improwised/jovvix/api/pkg/prometheus"
 	"github.com/Improwised/jovvix/api/pkg/redis"
 	goqu "github.com/doug-martin/goqu/v9"
 	"github.com/gofiber/contrib/swagger"
