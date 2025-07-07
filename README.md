@@ -54,7 +54,8 @@
   - After the quiz, showcasing winners and individual performance
 - **Customization Options:** Offers customizable quiz features for educators, workshop hosts, and event organizers to suit their needs.
 - **Share quiz feature** Users can share their quiz to other users through email and can grant their preferred permission while sharing to the other one 
-- **CSV Uploads:**  Enables efficient quiz creation through CSV file uploads, allowing users to preview, edit, and allowing users to seamlessly create quizzes
+- **CSV Uploads:**  Enables efficient quiz creation through CSV file uploads, allowing users to preview, edit, and allowing users to seamlessly create quizzes 
+    - You can see the CSV formatting guidelines here : [csv-formatting-guide.md](docs/csv-formatting-guide.md)
 - **Mobile-Friendly Design:** Fully responsive and works seamlessly on mobile and desktop devices.
 - **Admin Tools:** Advanced admin panel for managing quizzes, participants, and results.
 - **API Documentation with Swagger:** Provides a visual interface for exploring API endpoints and testing requests, Useful for developers working with the API
