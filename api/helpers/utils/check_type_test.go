@@ -3,7 +3,7 @@ package quizUtilsHelper
 import (
 	"testing"
 
-	"github.com/Improwised/quizz-app/api/constants"
+	"github.com/Improwised/jovvix/api/constants"
 	"github.com/stretchr/testify/assert"
 )
 

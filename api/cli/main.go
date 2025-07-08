@@ -1,7 +1,7 @@
 package cli
 
 import (
-	"github.com/Improwised/quizz-app/api/config"
+	"github.com/Improwised/jovvix/api/config"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )
@@ -17,7 +17,7 @@ func Init(cfg config.AppConfig, logger *zap.Logger) error {
 	workerCmd.PersistentFlags().String("topic", "", "topic name(queue name)")
 
 	deadQueueCmd := GetDeadQueueCommandDef(cfg, logger)
-	rootCmd := &cobra.Command{Use: "quiz-app"}
+	rootCmd := &cobra.Command{Use: "jovvix"}
 	rootCmd.AddCommand(&migrationCmd, &apiCmd, &workerCmd, &deadQueueCmd)
 	return rootCmd.Execute()
 }

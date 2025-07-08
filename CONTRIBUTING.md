@@ -1,7 +1,7 @@
-# Contributions to quiz app
-- The Quiz app project welcomes all contributions from anyone willing to work in good faith with other contributors and the community. No contribution is too small and all contributions are valued.
+# Contributions to Jovvix
+- The Jovvix project welcomes all contributions from anyone willing to work in good faith with other contributors and the community. No contribution is too small and all contributions are valued.
 
-- The quiz app project has an open governance model. Individuals making significant and valuable contributions are made Collaborators and given commit-access to the project.
+- The Jovvix project has an open governance model. Individuals making significant and valuable contributions are made Collaborators and given commit-access to the project.
 
 
 <br><br>

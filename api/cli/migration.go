@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/Improwised/quizz-app/api/config"
-	"github.com/Improwised/quizz-app/api/database"
+	"github.com/Improwised/jovvix/api/config"
+	"github.com/Improwised/jovvix/api/database"
 	_ "github.com/go-sql-driver/mysql" // for mysql dialect
 	_ "github.com/lib/pq"              // for postgres dialect
 	migrate "github.com/rubenv/sql-migrate"

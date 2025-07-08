@@ -5,7 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/Improwised/quizz-app/api/utils"
+	"github.com/Improwised/jovvix/api/utils"
 	fiber "github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

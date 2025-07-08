@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Improwised/quizz-app/api/models"
+	"github.com/Improwised/jovvix/api/models"
 	"github.com/google/uuid"
 	"github.com/jszwec/csvutil"
 )

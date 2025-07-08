@@ -1,6 +1,6 @@
 [build]
-cmd = "go build -o ./tmp/build/quiz-app ."
-bin = "./tmp/build/quiz-app api"
+cmd = "go build -o ./tmp/build/jovvix ."
+bin = "./tmp/build/jovvix api"
 include_ext = ["go", "tpl", "tmpl", "html", "env", "toml", "json"]
 
 [screen]

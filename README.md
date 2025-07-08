@@ -1,8 +1,8 @@
 
-# Quiz app
+# Jovvix
 
-- The Quiz App is a fun and interactive platform where users can enjoy playing quizzes while admins have the ability to create engaging and diverse quizzes.
-- Designed to provide a fun and educational experience while ensuring smooth admin management, our Quiz App is the perfect solution for interactive quiz-based learning, competitions, or corporate events.
+- Jovvix is a fun and interactive platform where users can enjoy playing quizzes while admins have the ability to create engaging and diverse quizzes.
+- Designed to provide a fun and educational experience while ensuring smooth admin management, Jovvix is the perfect solution for interactive quiz-based learning, competitions, or corporate events.
 
 - App is an interactive, real-time platform that supports diverse
   question types like
@@ -30,7 +30,7 @@
 - RESTful API: Offers a RESTful API for integration and easy access to app functionality.
 - Environment Variables: Follows the 12-factor app principles with environment variable configuration.
 
-### User Experience 
+### User Experience
 - Intuitive UI/UX: Designed for a user-friendly and engaging interface.
 - Gamification: Includes elements like points, ranks, and leaderboards to boost user engagement.
 
@@ -66,24 +66,24 @@
 <br><br>
 
 
-## Table of Contents: 
+## Table of Contents:
 
-- [About quiz app](#quiz-app)
+- [About Jovvix](#jovvix)
   - [Quickstart](#quickstart)
-- [Features of Quiz app](#features)
+- [Features](#features)
 - [Getting started](#getting-started-for-local-setup-from-source)
   - [Local setup](#prerequisites-1)
 - [Documentation](#architecture-overview)
   - [Architecture Overview](#architecture-overview)
   - [Overview of API documentation](#api-overview)
   - [Upgrading and changelog](#upgrading-and-changelog)
-- [Contributing to Quiz app](#contributing-to-quiz-app)
+- [Contributing to Jovvix](#contributing-to-jovvix)
 - [Code Of Conduct](#code-of-conduct)
 - [Develop]()
   - [Guide](#guide)
   - [Collaborators](#collaborators)
   - [Dependencies](#dependencies)
-    
+
 
 <br><br>
 
@@ -98,23 +98,23 @@
 
 - First clone the repository on your terminal using command given below
 ```
-  git clone https://github.com/Improwised/quizz-app.git
+  git clone https://github.com/Improwised/jovvix.git
 ```
 
-- Navigate to the project directory using: 
+- Navigate to the project directory using:
 
 ```
-   cd quizz-app
+   cd jovvix
 ```
 
 - Configure your env settings into .env.docker if you want to integrate any changes otherwise keep the default ones
 
-- Then build and run the docker compose file in your environment by following command 
+- Then build and run the docker compose file in your environment by following command
 ```
-  docker-compose up --build 
+  docker-compose up --build
 ```
 
-- Your app is now running successfully and you can access it on the ip:port as :  
+- Your app is now running successfully and you can access it on the ip:port as :
 ```
   127.0.0.1:5000
 ```
@@ -124,10 +124,10 @@
 ```
 <br><br>
 
-# Getting Started For local setup from source 
+# Getting Started For local setup from source
 
 
-# Prerequisites 
+# Prerequisites
 
 
 | Package | Version |
@@ -137,6 +137,7 @@
 | [Go](https://golang.org/) | v1.21+ |
 
 
+- Jovvix is a fun and interactive platform where users can enjoy playing quizzes while admins have the ability to create engaging and diverse quizzes.
 
 
 # Installation steps
@@ -146,20 +147,20 @@
 
 
 
-- First clone the repository using 
+- First clone the repository using
 ```
-  git clone https://github.com/Improwised/quizz-app.git
+  git clone https://github.com/Improwised/jovvix.git
 ```
 
 
 - Navigate to the project directory:
 ```
-   cd quiz-app
+   cd jovvix
 ```
 
 
 - Then Copy environment files of both app and api folders  using:
-``` 
+```
    cp api/.env.example api/.env
    cp app/.env.example app/.env
 ```
@@ -175,7 +176,7 @@
 
 
 > **Warning**
-> Install all tools and technologies we have mentioned above in prerequisites 
+> Install all tools and technologies we have mentioned above in prerequisites
 
 
 - Then Install frontend dependencies:
@@ -187,22 +188,24 @@
 - Afterwards run the frontend development server:
 
 ```
-  npm i 
+  npm i
   npm run dev
 ```
-- Then you have setup quiz app succesfully in you local environment 
+- Then you have setup Jovvix successfully in your local environment
 
 
+- Designed to provide a fun and educational experience while ensuring smooth admin management, Jovvix is the perfect solution for interactive quiz-based learning, competitions, or corporate events.
+
+
+   cd jovvix
 <br><br>
-
-
 # Documentation
-  
+
   ## Architecture Overview:
 
 ### System Architecture
 
-- **Backend:** The quiz app uses a Golang backend to handle the server-side logic.
+- **Backend:** Jovvix uses a Golang backend to handle the server-side logic.
 - **Frontend:** Vue.js and nuxt framework is employed for a single-page application (SPA) architecture and component-based development.
 - **Database:** PostgreSQL is used to handle concurrent requests and manage data efficiently.
 - **Caching:** Redis is utilized for caching and manipulating users' data and requests, improving performance.
@@ -210,14 +213,16 @@
 - **Real-Time Communication:** WebSockets are implemented for handling multiple sessions and managing cookies effectively.
 - **S3 bucket:** We have used s3 bucket for storing images into object storage, you can setup the minio for local development
 
+```
+```
+- Then you have setup Jovvix successfully in your local environment
  ### API Overview:
-- locally you could start your API server by running the following command : 
-```
+- locally you could start your API server by running the following command :
 http://127.0.0.1:3000/api/v1/docs
-```
-- This would open the swagger documentation
- 
 
+
+- **Backend:** Jovvix uses a Golang backend to handle the server-side logic.
+- This would open the swagger documentation
  ### Upgrading and changelog:
 
   - It's being managed in this file: CHANGELOG.md
@@ -225,22 +230,22 @@ http://127.0.0.1:3000/api/v1/docs
 
 <br><br>
 
-# Contributing to Quiz app: 
+# Contributing to Jovvix:
 - You can see the contribution guidelines here : [CONTRIBUTING.md](./CONTRIBUTING.md)
 
 <br><br>
 
-# Code of Conduct: 
+# Code of Conduct:
 - This platforms also provides the [Code of Conduct](./CODE_OF_CONDUCT.md)
 
 
 <br><br>
 
 # Developer
-  
+
   ## Guide:
- If you're a developer looking to contribute or modify the quiz app, here is a brief guide to get started: 
-  [Getting started](#getting-started-for-local-setup-from-source) OR, you could just docker-compose up 
+ If you're a developer looking to contribute or modify Jovvix, here is a brief guide to get started:
+  [Getting started](#getting-started-for-local-setup-from-source) OR, you could just docker-compose up
 
   ### Code Structure Overview:
 
@@ -248,9 +253,9 @@ http://127.0.0.1:3000/api/v1/docs
 - api/: Contains Golang source code for the server-side logic.
 
 ## Setting Up MinIO for Local Development:
-- MinIO is used in our quiz app for object storage, enabling features like storing and serving images. Below is a guide to setting up a bucket in MinIO for local development.
+- MinIO is used in Jovvix for object storage, enabling features like storing and serving images. Below is a guide to setting up a bucket in MinIO for local development.
 
-- We already have added the minio service into our docker-compose file so you just have to start the service 
+- We already have added the minio service into our docker-compose file so you just have to start the service
 - Then open your browser and navigate to http://127.0.0.1:9001.
 - Log in using the credentials defined in our docker-compose.yml (you can change with your own afterwards)
 - Once logged in, click the Buckets tab on the left menu and you can create bucket there
@@ -262,9 +267,9 @@ http://127.0.0.1:3000/api/v1/docs
 <a href="https://github.com/your-username/your-repo/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=your-username/your-repo" />
 </a>
- 
 
-  ## Dependencies: 
+
+  ## Dependencies:
 
   This project uses the following key dependencies:
 
@@ -281,15 +286,15 @@ http://127.0.0.1:3000/api/v1/docs
   - Other Tools:
 
     - Redis: Used for caching and session management.
-    - Ory Kratos: For user authentication. 
-    - Minio setup locally for bucket storage instead of aws S3 
-    - mailpit setup locally for the SMTP like server 
+    - Ory Kratos: For user authentication.
+    - Minio setup locally for bucket storage instead of aws S3
+    - mailpit setup locally for the SMTP like server
 
 <br><br>
 
-# License: 
+# License:
 
-Our quiz app is put under a dual-licensing scheme: In general
+Jovvix is put under a dual-licensing scheme: In general
 all of the provided code is open source via [GNU/AGPL
 3.0](https://www.gnu.org/licenses/agpl-3.0.en.html), please see the
-[LICENSE](LICENSE.txt) file for more details. 
+[LICENSE](LICENSE.txt) file for more details.

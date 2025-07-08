@@ -6,13 +6,13 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/Improwised/quizz-app/api/config"
-	"github.com/Improwised/quizz-app/api/constants"
-	v1 "github.com/Improwised/quizz-app/api/controllers/api/v1"
-	"github.com/Improwised/quizz-app/api/database"
-	"github.com/Improwised/quizz-app/api/logger"
-	"github.com/Improwised/quizz-app/api/pkg/events"
-	"github.com/Improwised/quizz-app/api/utils"
+	"github.com/Improwised/jovvix/api/config"
+	"github.com/Improwised/jovvix/api/constants"
+	v1 "github.com/Improwised/jovvix/api/controllers/api/v1"
+	"github.com/Improwised/jovvix/api/database"
+	"github.com/Improwised/jovvix/api/logger"
+	"github.com/Improwised/jovvix/api/pkg/events"
+	"github.com/Improwised/jovvix/api/utils"
 	"github.com/stretchr/testify/assert"
 )
 

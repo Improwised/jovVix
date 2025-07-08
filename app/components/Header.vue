@@ -4,8 +4,9 @@
     <nav class="navbar navbar-expand-lg">
       <!-- Logo -->
       <NuxtLink class="navbar-brand navbar-logo" style="color: black" to="/">
-        <img class="logo" src="@/assets/images/logo.png" alt="" />
-        <!-- Quiz App -->
+        <!-- Jovvix Logo will be here -->
+        <!-- <img class="logo" src="@/assets/images/logo.png" alt="" /> -->
+        Jovvix
       </NuxtLink>
       <button
         class="navbar-toggler bg-light"

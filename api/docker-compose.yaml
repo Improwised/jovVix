@@ -2,12 +2,12 @@ version: "3.8"
 services:
   db:
     image: postgres:15.2-alpine
-    container_name: quiz-app-postgresdb-saperate
+    container_name: jovvix-postgresdb-saperate
     environment:
-      POSTGRES_USER: quiz-app
-      POSTGRES_PASSWORD: quiz-app
-      POSTGRES_DB: quiz-app
-      POSTGRES_MULTIPLE_DATABASES: '"kratos-db", "quiz-app-testing"'
+      POSTGRES_USER: jovvix
+      POSTGRES_PASSWORD: jovvix
+      POSTGRES_DB: jovvix
+      POSTGRES_MULTIPLE_DATABASES: '"kratos-db", "jovvix-testing"'
     ports:
       - 5432:5432
     volumes:
@@ -43,7 +43,7 @@ services:
   kratos_migrate:
     image: oryd/kratos:v1.0.0
     environment:
-      - DSN=postgres://quiz-app:quiz-app@db:5432/quiz-app?sslmode=disable&search_path=kratos
+      - DSN=postgres://jovvix:jovvix@db:5432/jovvix?sslmode=disable&search_path=kratos
       - LOG_LEVEL=trace
     command: migrate sql -e --yes
     restart: on-failure

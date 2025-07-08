@@ -3,7 +3,7 @@ package quizUtilsHelper
 import (
 	"errors"
 
-	"github.com/Improwised/quizz-app/api/constants"
+	"github.com/Improwised/jovvix/api/constants"
 )
 
 /*

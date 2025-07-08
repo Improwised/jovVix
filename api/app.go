@@ -1,4 +1,4 @@
-// Quizz-app
+// Jovvix
 //
 //	Schemes: http
 //	Host: 127.0.0.1
@@ -17,10 +17,10 @@ package main
 import (
 	"time"
 
-	"github.com/Improwised/quizz-app/api/cli"
-	"github.com/Improwised/quizz-app/api/config"
-	"github.com/Improwised/quizz-app/api/logger"
-	"github.com/Improwised/quizz-app/api/routinewrapper"
+	"github.com/Improwised/jovvix/api/cli"
+	"github.com/Improwised/jovvix/api/config"
+	"github.com/Improwised/jovvix/api/logger"
+	"github.com/Improwised/jovvix/api/routinewrapper"
 	sentry "github.com/getsentry/sentry-go"
 	"go.uber.org/zap"
 )

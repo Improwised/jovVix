@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"cloud.google.com/go/pubsub"
-	"github.com/Improwised/quizz-app/api/config"
-	"github.com/Improwised/quizz-app/api/database"
+	"github.com/Improwised/jovvix/api/config"
+	"github.com/Improwised/jovvix/api/database"
 
 	"github.com/Shopify/sarama"
 	"github.com/ThreeDotsLabs/watermill"

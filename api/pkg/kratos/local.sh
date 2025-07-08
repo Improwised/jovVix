@@ -19,7 +19,7 @@ wait_for_container() {
   echo "===== Container $container_name is running"
 }
 
-wait_for_container "quiz-app-postgresdb"
+wait_for_container "jovvix-postgresdb"
 
 echo "===== Running the migrations..."
 # running the migrations

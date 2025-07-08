@@ -2,7 +2,7 @@ style: github
 template: CHANGELOG.tpl.md
 info:
   title: CHANGELOG
-  repository_url: https://git.pride.improwised.dev/Improwised/quizz-app
+  repository_url: https://git.pride.improwised.dev/Improwised/jovvix
 options:
   commits:
     filters:
@@ -12,13 +12,13 @@ options:
         - test
         - chore
         - refactor
-    group_by: "Type"  # Group commits by their type
+    group_by: "Type" # Group commits by their type
   commit_groups:
     title_maps:
-      feat: Features            # Maps "feat" commits to "Features"
-      fix: Bug Fixes            # Maps "fix" commits to "Bug Fixes"
-      test: Test Cases          # Maps "test" commits to "Test Cases"
-      chore: Improvements       # Maps "chore" commits to "Improvements"
+      feat: Features # Maps "feat" commits to "Features"
+      fix: Bug Fixes # Maps "fix" commits to "Bug Fixes"
+      test: Test Cases # Maps "test" commits to "Test Cases"
+      chore: Improvements # Maps "chore" commits to "Improvements"
       refactor: Code Refactoring # Maps "refactor" commits to "Code Refactoring"
   header:
     pattern: "^(\\w*)(?:\\(([\\w\\$\\.\\-\\*\\s]*)\\))?\\:\\s(.*)$"

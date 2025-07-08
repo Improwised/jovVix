@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/Improwised/quizz-app/api/constants"
-	"github.com/Improwised/quizz-app/api/pkg/structs"
+	"github.com/Improwised/jovvix/api/constants"
+	"github.com/Improwised/jovvix/api/pkg/structs"
 	"github.com/doug-martin/goqu/v9"
 	"github.com/google/uuid"
 )

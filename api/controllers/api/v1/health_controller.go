@@ -4,8 +4,8 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/Improwised/quizz-app/api/constants"
-	"github.com/Improwised/quizz-app/api/utils"
+	"github.com/Improwised/jovvix/api/constants"
+	"github.com/Improwised/jovvix/api/utils"
 	goqu "github.com/doug-martin/goqu/v9"
 	fiber "github.com/gofiber/fiber/v2"
 	"go.uber.org/zap"

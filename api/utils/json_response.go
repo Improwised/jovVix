@@ -2,7 +2,7 @@ package utils
 
 import (
 	"clevergo.tech/jsend"
-	"github.com/Improwised/quizz-app/api/pkg/structs"
+	"github.com/Improwised/jovvix/api/pkg/structs"
 	"github.com/gofiber/contrib/websocket"
 	fiber "github.com/gofiber/fiber/v2"
 )

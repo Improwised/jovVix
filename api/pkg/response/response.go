@@ -1,6 +1,6 @@
 package response
 
-import "github.com/Improwised/quizz-app/api/models"
+import "github.com/Improwised/jovvix/api/models"
 
 type ResponseFinalScore struct {
 	FinalScore []models.FinalScoreBoard

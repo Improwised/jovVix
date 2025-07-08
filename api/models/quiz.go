@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Improwised/quizz-app/api/constants"
+	"github.com/Improwised/jovvix/api/constants"
 	"github.com/doug-martin/goqu/v9"
 	"github.com/google/uuid"
 )

@@ -6,7 +6,7 @@
       <div class="col-md-7">
         <div class="text-md-start text-center">
           <h1 class="content-font text-72px text-black mb-5">
-            Welcome to the Quiz App
+            Welcome to the Jovvix
           </h1>
           <p class="text-24px text-black mb-5">Explore, Learn, Quiz!</p>
         </div>

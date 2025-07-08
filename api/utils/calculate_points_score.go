@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"math"
 
-	"github.com/Improwised/quizz-app/api/constants"
-	"github.com/Improwised/quizz-app/api/pkg/structs"
+	"github.com/Improwised/jovvix/api/constants"
+	"github.com/Improwised/jovvix/api/pkg/structs"
 )
 
 func CalculatePointsAndScore(userAnswer structs.ReqAnswerSubmit, answers []int, answerPoints int16, answerDurationInSeconds, questionType int) (sql.NullInt16, int) {

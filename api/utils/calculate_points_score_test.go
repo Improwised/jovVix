@@ -4,8 +4,8 @@ import (
 	"math"
 	"testing"
 
-	"github.com/Improwised/quizz-app/api/constants"
-	"github.com/Improwised/quizz-app/api/pkg/structs"
+	"github.com/Improwised/jovvix/api/constants"
+	"github.com/Improwised/jovvix/api/pkg/structs"
 	"github.com/stretchr/testify/assert"
 )
 

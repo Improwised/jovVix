@@ -3,9 +3,9 @@ package cli
 import (
 	"go.uber.org/zap"
 
-	"github.com/Improwised/quizz-app/api/cli/workers"
-	"github.com/Improwised/quizz-app/api/config"
-	"github.com/Improwised/quizz-app/api/pkg/watermill"
+	"github.com/Improwised/jovvix/api/cli/workers"
+	"github.com/Improwised/jovvix/api/config"
+	"github.com/Improwised/jovvix/api/pkg/watermill"
 	"github.com/spf13/cobra"
 )
 

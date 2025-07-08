@@ -5,9 +5,9 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/Improwised/quizz-app/api/config"
-	"github.com/Improwised/quizz-app/api/pkg/events"
-	"github.com/Improwised/quizz-app/api/pkg/watermill"
+	"github.com/Improwised/jovvix/api/config"
+	"github.com/Improwised/jovvix/api/pkg/events"
+	"github.com/Improwised/jovvix/api/pkg/watermill"
 	"github.com/gofiber/storage/s3"
 	"go.uber.org/zap"
 )

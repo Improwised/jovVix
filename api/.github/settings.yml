@@ -4,7 +4,7 @@ repository:
   # See https://docs.github.com/en/rest/reference/repos#update-a-repository for all available settings.
 
   # The name of the repository. Changing this will rename the repository
-  name: quiz-app
+  name: jovvix
 
   # A short description of the repository that will show up on GitHub
   description: Template for go applications
@@ -57,15 +57,15 @@ repository:
 # Labels: define labels for Issues and Pull Requests
 labels:
   - name: bug
-    color: '#d73a4a'
+    color: "#d73a4a"
     description: An issue with the system 🐛.
 
   - name: dependencies
-    color: '#0366d6'
+    color: "#0366d6"
     description: Pull requests that update a dependency file
 
   - name: merge
-    color: '#506EC3'
+    color: "#506EC3"
     description: Merge the PR
 
 # Collaborators: give specific users access to this repository.

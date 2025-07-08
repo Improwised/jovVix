@@ -1,16 +1,10 @@
 {
-  "consumes": [
-    "application/json"
-  ],
-  "produces": [
-    "application/json"
-  ],
-  "schemes": [
-    "http"
-  ],
+  "consumes": ["application/json"],
+  "produces": ["application/json"],
+  "schemes": ["http"],
   "swagger": "2.0",
   "info": {
-    "description": "Quizz-app",
+    "description": "Jovvix",
     "version": "0.0.1-alpha"
   },
   "host": "127.0.0.1",
@@ -19,12 +13,8 @@
     "/healthz": {
       "get": {
         "description": "Overall health check",
-        "produces": [
-          "application/json"
-        ],
-        "tags": [
-          "Healthcheck"
-        ],
+        "produces": ["application/json"],
+        "tags": ["Healthcheck"],
         "summary": "Overall health check",
         "operationId": "overallHealthCheck",
         "responses": {
@@ -40,12 +30,8 @@
     "/healthz/db": {
       "get": {
         "description": "Database health check",
-        "produces": [
-          "application/json"
-        ],
-        "tags": [
-          "Healthcheck"
-        ],
+        "produces": ["application/json"],
+        "tags": ["Healthcheck"],
         "summary": "Database health check",
         "operationId": "dbHealthCheck",
         "responses": {
@@ -61,28 +47,17 @@
     "/metrics": {
       "get": {
         "description": "Prometheus metrics endpoint",
-        "produces": [
-          "text/plain"
-        ],
-        "tags": [
-          "Metrics"
-        ],
+        "produces": ["text/plain"],
+        "tags": ["Metrics"],
         "summary": "Prometheus metrics endpoint",
         "operationId": "ReqMetrics"
       }
     },
     "/v1/admin/reports/list": {
       "get": {
-        "consumes": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "Reports"
-        ],
+        "consumes": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["Reports"],
         "summary": "Get details of quizzes list host by Admin.",
         "operationId": "RequestListQuizzesAnalysis",
         "parameters": [
@@ -112,16 +87,9 @@
     },
     "/v1/admin/reports/{active_quiz_id}/analysis": {
       "get": {
-        "consumes": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "Reports"
-        ],
+        "consumes": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["Reports"],
         "summary": "Get details of quizzes host by Admin.",
         "operationId": "RequestGetQuizAnalysis",
         "parameters": [
@@ -151,16 +119,9 @@
     },
     "/v1/analytics_board/admin": {
       "get": {
-        "consumes": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "AnalyticsBoard"
-        ],
+        "consumes": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["AnalyticsBoard"],
         "summary": "Get a analyticsboard details for admin.",
         "operationId": "RequestAnalyticsBoardForAdmin",
         "parameters": [
@@ -187,16 +148,9 @@
     },
     "/v1/analytics_board/user": {
       "get": {
-        "consumes": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "AnalyticsBoard"
-        ],
+        "consumes": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["AnalyticsBoard"],
         "summary": "Get a analyticsboard details for user.",
         "operationId": "RequestAnalyticsBoardForUser",
         "parameters": [
@@ -223,16 +177,9 @@
     },
     "/v1/final_score/admin": {
       "get": {
-        "consumes": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "FinalScore"
-        ],
+        "consumes": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["FinalScore"],
         "summary": "Get a finalScore details for admin.",
         "operationId": "RequestFinalScoreForAdmin",
         "parameters": [
@@ -259,16 +206,9 @@
     },
     "/v1/final_score/user": {
       "get": {
-        "consumes": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "FinalScore"
-        ],
+        "consumes": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["FinalScore"],
         "summary": "Get a finalScore details for user.",
         "operationId": "RequestFinalScoreForUser",
         "parameters": [
@@ -295,16 +235,9 @@
     },
     "/v1/images": {
       "post": {
-        "consumes": [
-          "multipart/form-data"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "FileUpload"
-        ],
+        "consumes": ["multipart/form-data"],
+        "schemes": ["http", "https"],
+        "tags": ["FileUpload"],
         "summary": "Insert image in s3 bucket.",
         "operationId": "RequestInsertImage",
         "parameters": [
@@ -341,16 +274,9 @@
     },
     "/v1/kratos/auth": {
       "get": {
-        "consumes": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "Auth"
-        ],
+        "consumes": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["Auth"],
         "summary": "Authenticate user with kratos session id.",
         "operationId": "DoKratosAuth",
         "responses": {
@@ -365,16 +291,9 @@
     },
     "/v1/kratos/user": {
       "put": {
-        "consumes": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "User"
-        ],
+        "consumes": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["User"],
         "summary": "Update user Details.",
         "operationId": "RequestUpadateRegisteredUser",
         "parameters": [
@@ -417,16 +336,9 @@
         }
       },
       "delete": {
-        "consumes": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "User"
-        ],
+        "consumes": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["User"],
         "summary": "Delete user Details and all its related data.",
         "operationId": "DeleteRegisteredUser",
         "responses": {
@@ -444,16 +356,9 @@
     },
     "/v1/kratos/whoami": {
       "get": {
-        "consumes": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "User"
-        ],
+        "consumes": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["User"],
         "summary": "Get Details of Register user.",
         "operationId": "GetRegisteredUser",
         "responses": {
@@ -468,16 +373,9 @@
     },
     "/v1/quizzes": {
       "get": {
-        "consumes": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "Quiz"
-        ],
+        "consumes": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["Quiz"],
         "summary": "Get details of quizzes uploaded by Admin.",
         "operationId": "GetAdminUploadedQuizzes",
         "responses": {
@@ -498,16 +396,9 @@
     },
     "/v1/quizzes/{quiz_id}": {
       "delete": {
-        "consumes": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "Quiz"
-        ],
+        "consumes": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["Quiz"],
         "summary": "Delete quiz that created by user (if no active quiz is present).",
         "operationId": "DeleteQuizById",
         "responses": {
@@ -525,16 +416,9 @@
     },
     "/v1/quizzes/{quiz_id}/demo_session": {
       "post": {
-        "consumes": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "Quiz"
-        ],
+        "consumes": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["Quiz"],
         "summary": "Create quiz active for user.",
         "operationId": "RequestGenerateDemoSession",
         "parameters": [
@@ -561,16 +445,9 @@
     },
     "/v1/quizzes/{quiz_id}/questions": {
       "get": {
-        "consumes": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "Question"
-        ],
+        "consumes": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["Question"],
         "summary": "List all questions of quiz with `is_active_quiz_present` and `quiz_played_count`.",
         "operationId": "RequestListQuestionByQuizId",
         "parameters": [
@@ -597,16 +474,9 @@
     },
     "/v1/quizzes/{quiz_id}/questions/{question_id}": {
       "get": {
-        "consumes": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "Question"
-        ],
+        "consumes": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["Question"],
         "summary": "Get question and thier options with answer.",
         "operationId": "RequestGetQuestionById",
         "parameters": [
@@ -638,16 +508,9 @@
         }
       },
       "put": {
-        "consumes": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "Question"
-        ],
+        "consumes": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["Question"],
         "summary": "Update question and thier options with answer.",
         "operationId": "RequestUpdateQuestionById",
         "parameters": [
@@ -682,16 +545,9 @@
         }
       },
       "delete": {
-        "consumes": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "Question"
-        ],
+        "consumes": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["Question"],
         "summary": "Delete question only if no active quiz is present.",
         "operationId": "RequestDeleteQuestionById",
         "parameters": [
@@ -728,16 +584,9 @@
     },
     "/v1/quizzes/{quiz_title}/upload": {
       "post": {
-        "consumes": [
-          "multipart/form-data"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "Quiz"
-        ],
+        "consumes": ["multipart/form-data"],
+        "schemes": ["http", "https"],
+        "tags": ["Quiz"],
         "summary": "Create a new quiz by uploading a CSV file.",
         "operationId": "RequestQuizCreated",
         "parameters": [
@@ -780,16 +629,9 @@
     },
     "/v1/shared_quizzes": {
       "get": {
-        "consumes": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "ShareQuiz"
-        ],
+        "consumes": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["ShareQuiz"],
         "summary": "List shared quiz for perticular user (only shared with the user or shared by the user).",
         "operationId": "RequestListSharedQuizzes",
         "parameters": [
@@ -814,16 +656,9 @@
         }
       },
       "post": {
-        "consumes": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "ShareQuiz"
-        ],
+        "consumes": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["ShareQuiz"],
         "summary": "share quiz to other user.",
         "operationId": "RequestShareQuiz",
         "parameters": [
@@ -868,16 +703,9 @@
     },
     "/v1/shared_quizzes/{quiz_id}": {
       "get": {
-        "consumes": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "ShareQuiz"
-        ],
+        "consumes": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["ShareQuiz"],
         "summary": "List authorized users for perticular quiz.",
         "operationId": "RequestListQuizAuthorizedUsers",
         "parameters": [
@@ -902,16 +730,9 @@
         }
       },
       "put": {
-        "consumes": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "ShareQuiz"
-        ],
+        "consumes": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["ShareQuiz"],
         "summary": "Update authorized user permission for perticular quiz.",
         "operationId": "RequestUpdateUserPermissionOfQuiz",
         "parameters": [
@@ -961,16 +782,9 @@
         }
       },
       "delete": {
-        "consumes": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "ShareQuiz"
-        ],
+        "consumes": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["ShareQuiz"],
         "summary": "Delete authorized user permission for perticular quiz.",
         "operationId": "RequestDeleteUserPermissionOfQuiz",
         "parameters": [
@@ -1004,16 +818,9 @@
     },
     "/v1/user/who": {
       "get": {
-        "consumes": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "User"
-        ],
+        "consumes": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["User"],
         "summary": "Get Details of user.",
         "operationId": "GetUserMeta",
         "responses": {
@@ -1031,16 +838,9 @@
     },
     "/v1/user/{username}": {
       "post": {
-        "consumes": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "User"
-        ],
+        "consumes": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["User"],
         "summary": "Create Guest user to play for quiz directly without login.",
         "operationId": "RequestCreateQuickUser",
         "parameters": [
@@ -1074,16 +874,9 @@
     },
     "/v1/user_played_quizes": {
       "get": {
-        "consumes": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "UserPlayedQuiz"
-        ],
+        "consumes": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["UserPlayedQuiz"],
         "summary": "List played quiz by user.",
         "operationId": "UserPlayedQuiz",
         "responses": {
@@ -1101,16 +894,9 @@
     },
     "/v1/user_played_quizes/{invitationCode}": {
       "post": {
-        "consumes": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "UserPlayedQuiz"
-        ],
+        "consumes": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["UserPlayedQuiz"],
         "summary": "Validate the code and copy the questions in reponses for user.",
         "operationId": "RequestPlayedQuizValidation",
         "parameters": [
@@ -1137,16 +923,9 @@
     },
     "/v1/user_played_quizes/{user_played_quiz_id}": {
       "get": {
-        "consumes": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "UserPlayedQuiz"
-        ],
+        "consumes": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["UserPlayedQuiz"],
         "summary": "Analysis of played quiz by user.",
         "operationId": "RequestListUserPlayedQuizesWithQuestionById",
         "parameters": [
@@ -1264,7 +1043,7 @@
           "x-go-name": "Resource"
         }
       },
-      "x-go-package": "github.com/Improwised/quizz-app/api/pkg/structs"
+      "x-go-package": "github.com/Improwised/jovvix/api/pkg/structs"
     },
     "UUID": {
       "description": "A UUID is a 128 bit (16 byte) Universal Unique IDentifier as defined in RFC\n4122.",
@@ -1292,9 +1071,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "error"
-            ],
+            "enum": ["error"],
             "x-go-name": "Status"
           }
         }
@@ -1311,9 +1088,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "fail"
-            ],
+            "enum": ["fail"],
             "x-go-name": "Status"
           }
         }
@@ -1330,9 +1105,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "fail"
-            ],
+            "enum": ["fail"],
             "x-go-name": "Status"
           }
         }
@@ -1349,9 +1122,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "fail"
-            ],
+            "enum": ["fail"],
             "x-go-name": "Status"
           }
         }
@@ -1368,9 +1139,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "fail"
-            ],
+            "enum": ["fail"],
             "x-go-name": "Status"
           }
         }
@@ -1383,9 +1152,7 @@
         "properties": {
           "status": {
             "type": "string",
-            "enum": [
-              "success"
-            ],
+            "enum": ["success"],
             "x-go-name": "Status"
           }
         }
@@ -1402,9 +1169,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "fail"
-            ],
+            "enum": ["fail"],
             "x-go-name": "Status"
           }
         }

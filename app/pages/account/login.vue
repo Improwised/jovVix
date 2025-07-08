@@ -282,7 +282,7 @@ const verifyCode = async () => {
         <div class="card-body p-6">
           <div class="mb-4">
             <NuxtLink to="/" style="font-size: 30px; font-weight: bold"
-              >Quiz App</NuxtLink
+              >Jovvix</NuxtLink
             >
             <p class="mb-6">Please enter your user information.</p>
           </div>

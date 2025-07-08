@@ -8,12 +8,12 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/Improwised/quizz-app/api/config"
-	"github.com/Improwised/quizz-app/api/database"
-	"github.com/Improwised/quizz-app/api/pkg/events"
-	pMetrics "github.com/Improwised/quizz-app/api/pkg/prometheus"
-	"github.com/Improwised/quizz-app/api/pkg/watermill"
-	"github.com/Improwised/quizz-app/api/routes"
+	"github.com/Improwised/jovvix/api/config"
+	"github.com/Improwised/jovvix/api/database"
+	"github.com/Improwised/jovvix/api/pkg/events"
+	pMetrics "github.com/Improwised/jovvix/api/pkg/prometheus"
+	"github.com/Improwised/jovvix/api/pkg/watermill"
+	"github.com/Improwised/jovvix/api/routes"
 	fiber "github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/spf13/cobra"

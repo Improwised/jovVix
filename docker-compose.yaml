@@ -2,11 +2,11 @@ version: "3.8"
 services:
   db:
     image: postgres:15.2-alpine
-    container_name: quiz-app-db
+    container_name: jovvix-db
     environment:
-      POSTGRES_USER: quiz-app
-      POSTGRES_PASSWORD: quiz-app
-      POSTGRES_DB: quiz-app
+      POSTGRES_USER: jovvix
+      POSTGRES_PASSWORD: jovvix
+      POSTGRES_DB: jovvix
       POSTGRES_MULTIPLE_DATABASES: '"kratos-db"'
     ports:
       - 5432:5432
@@ -23,7 +23,7 @@ services:
       - ./api/.env.docker
     command: go run app.go migrate up
     volumes:
-      - ./api:/go/
+      - ./api:/jovvix/
 
   redis:
     image: redis:latest
@@ -50,7 +50,7 @@ services:
       - migration
       - redis
       - kratos
-    command: ["./api", "api"]
+    command: ["./jovvix", "api"]
 
   web:
     build:
@@ -67,7 +67,7 @@ services:
   kratos_migrate:
     image: oryd/kratos:v1.0.0
     environment:
-      - DSN=postgres://quiz-app:quiz-app@db:5432/quiz-app?sslmode=disable&search_path=kratos
+      - DSN=postgres://jovvix:jovvix@db:5432/jovvix?sslmode=disable&search_path=kratos
       - LOG_LEVEL=trace
 
     command: migrate sql -e --yes

@@ -5,9 +5,9 @@ import (
 	"encoding/gob"
 	"time"
 
-	"github.com/Improwised/quizz-app/api/cli/workers"
-	"github.com/Improwised/quizz-app/api/config"
-	"github.com/Improwised/quizz-app/api/database"
+	"github.com/Improwised/jovvix/api/cli/workers"
+	"github.com/Improwised/jovvix/api/config"
+	"github.com/Improwised/jovvix/api/database"
 	"github.com/ThreeDotsLabs/watermill"
 	"github.com/ThreeDotsLabs/watermill-amqp/v2/pkg/amqp"
 	"github.com/ThreeDotsLabs/watermill-googlecloud/pkg/googlecloud"

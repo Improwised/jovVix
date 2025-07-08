@@ -3,7 +3,7 @@ package quizUtilsHelper
 import (
 	"strconv"
 
-	"github.com/Improwised/quizz-app/api/constants"
+	"github.com/Improwised/jovvix/api/constants"
 )
 
 func IsValidCode(code string) bool {

@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	aws_config "github.com/Improwised/quizz-app/api/config"
+	aws_config "github.com/Improwised/jovvix/api/config"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 

@@ -8,7 +8,7 @@
         <div class="card-body text-center" style="min-height: 400px">
           <div class="auth-logo mb-4">
             <NuxtLink to="/" style="font-size: 30px; font-weight: bold"
-              >Quiz App</NuxtLink
+              >Jovvix</NuxtLink
             >
             <h2 class="mt-1 welcome-text">Recover your account</h2>
           </div>

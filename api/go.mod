@@ -1,4 +1,4 @@
-module github.com/Improwised/quizz-app/api
+module github.com/Improwised/jovvix/api
 
 go 1.21
 

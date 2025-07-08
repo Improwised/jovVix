@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Improwised/quizz-app/api/constants"
-	quizUtilsHelper "github.com/Improwised/quizz-app/api/helpers/utils"
-	"github.com/Improwised/quizz-app/api/pkg/structs"
+	"github.com/Improwised/jovvix/api/constants"
+	quizUtilsHelper "github.com/Improwised/jovvix/api/helpers/utils"
+	"github.com/Improwised/jovvix/api/pkg/structs"
 	"github.com/doug-martin/goqu/v9"
 	"github.com/google/uuid"
 	"go.uber.org/zap"

@@ -3,8 +3,8 @@ package events
 import (
 	"fmt"
 
-	"github.com/Improwised/quizz-app/api/constants"
-	"github.com/Improwised/quizz-app/api/pkg/structs"
+	"github.com/Improwised/jovvix/api/constants"
+	"github.com/Improwised/jovvix/api/pkg/structs"
 	evbus "github.com/asaskevich/EventBus"
 	"go.uber.org/zap"
 )

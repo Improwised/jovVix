@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/Improwised/quizz-app/api/config"
-	"github.com/Improwised/quizz-app/api/constants"
-	"github.com/Improwised/quizz-app/api/models"
+	"github.com/Improwised/jovvix/api/config"
+	"github.com/Improwised/jovvix/api/constants"
+	"github.com/Improwised/jovvix/api/models"
 	"github.com/doug-martin/goqu/v9"
 	"github.com/go-resty/resty/v2"
 	"go.uber.org/zap"

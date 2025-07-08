@@ -1,7 +1,7 @@
 package redis
 
 import (
-	"github.com/Improwised/quizz-app/api/config"
+	"github.com/Improwised/jovvix/api/config"
 	"github.com/doug-martin/goqu/v9"
 	"go.uber.org/zap"
 )

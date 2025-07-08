@@ -6,7 +6,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/Improwised/quizz-app/api/config"
+	"github.com/Improwised/jovvix/api/config"
 	goqu "github.com/doug-martin/goqu/v9"
 	_ "github.com/doug-martin/goqu/v9/dialect/mysql" // import mysql if it is used
 	_ "github.com/doug-martin/goqu/v9/dialect/postgres"

@@ -94,8 +94,8 @@ Ory Kratos doesn't provide UI, You have to specify the endpoints for different U
 
 1. Run ```docker-compose up``` to spin up the database and admire. In the case of a Kratos Enabled user this command ```docker-compose --profile kratos up```.
 2. Open ```localhost:8080```,  select **system** to ```PostgreSQL``` and put username and password.
-3. Build image using ```docker build -t quiz-app .```
-4. Run ```docker run quiz-app``` to run the container.
+3. Build image using ```docker build -t jovvix .```
+4. Run ```docker run jovvix``` to run the container.
 
 **Another Way:**
 - For starting All services including kratos, runinng databse migrations and starting up golang server all together, run the script `local.sh` inside `/pkg/kratos`.

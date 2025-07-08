@@ -3,7 +3,7 @@ package jwt
 import (
 	"time"
 
-	"github.com/Improwised/quizz-app/api/config"
+	"github.com/Improwised/jovvix/api/config"
 	"github.com/lestrrat-go/jwx/v2/jwa"
 	"github.com/lestrrat-go/jwx/v2/jwk"
 	"github.com/lestrrat-go/jwx/v2/jwt"

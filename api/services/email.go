@@ -3,7 +3,7 @@ package services
 import (
 	"strconv"
 
-	"github.com/Improwised/quizz-app/api/config"
+	"github.com/Improwised/jovvix/api/config"
 	"go.uber.org/zap"
 	"gopkg.in/gomail.v2"
 )

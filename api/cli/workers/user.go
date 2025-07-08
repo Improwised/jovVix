@@ -3,7 +3,7 @@ package workers
 import (
 	"log"
 
-	helpers "github.com/Improwised/quizz-app/api/helpers/smtp"
+	helpers "github.com/Improwised/jovvix/api/helpers/smtp"
 )
 
 type WelcomeMail struct {

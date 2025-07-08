@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Improwised/quizz-app/api/config"
+	"github.com/Improwised/jovvix/api/config"
 	"github.com/ThreeDotsLabs/watermill-sql/v2/pkg/sql"
 
 	"github.com/ThreeDotsLabs/watermill/message"

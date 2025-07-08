@@ -7,15 +7,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Improwised/quizz-app/api/config"
-	"github.com/Improwised/quizz-app/api/constants"
-	"github.com/Improwised/quizz-app/api/pkg/structs"
-	"github.com/Improwised/quizz-app/api/utils"
+	"github.com/Improwised/jovvix/api/config"
+	"github.com/Improwised/jovvix/api/constants"
+	"github.com/Improwised/jovvix/api/pkg/structs"
+	"github.com/Improwised/jovvix/api/utils"
 	"github.com/google/uuid"
 
 	"github.com/stretchr/testify/assert"
 
-	controller "github.com/Improwised/quizz-app/api/controllers/api/v1"
+	controller "github.com/Improwised/jovvix/api/controllers/api/v1"
 
 	"github.com/fasthttp/websocket"
 )

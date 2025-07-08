@@ -3,7 +3,7 @@ package middlewares
 import (
 	"strings"
 
-	pMetrics "github.com/Improwised/quizz-app/api/pkg/prometheus"
+	pMetrics "github.com/Improwised/jovvix/api/pkg/prometheus"
 	fiber "github.com/gofiber/fiber/v2"
 	"github.com/samber/lo"
 	"go.uber.org/zap"

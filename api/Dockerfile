@@ -1,13 +1,13 @@
 FROM golang:1.22.0-alpine3.19 as build
-WORKDIR /go/src/app
+WORKDIR /jovvix
 RUN apk update && apk add build-base
-COPY go.mod go.sum /go/src/app/
+COPY go.mod go.sum ./
 RUN go mod download
 COPY . ./
-RUN go build
+RUN go build -o jovvix
 FROM alpine
-WORKDIR /go/src/app
-COPY --from=build /go/src/app/api .
-COPY --from=build /go/src/app/database /go/src/app/database
-COPY --from=build /go/src/app/assets /go/src/app/assets
+WORKDIR /jovvix
+COPY --from=build /jovvix/jovvix .
+COPY --from=build /jovvix/database ./database
+COPY --from=build /jovvix/assets ./assets
 

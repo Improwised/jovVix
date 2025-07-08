@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/Improwised/quizz-app/api/logger"
-	"github.com/Improwised/quizz-app/api/models"
-	"github.com/Improwised/quizz-app/api/utils"
+	"github.com/Improwised/jovvix/api/logger"
+	"github.com/Improwised/jovvix/api/models"
+	"github.com/Improwised/jovvix/api/utils"
 	"github.com/stretchr/testify/assert"
 )
 

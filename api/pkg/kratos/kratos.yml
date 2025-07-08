@@ -1,4 +1,4 @@
-dsn: postgres://quiz-app:quiz-app@db:5432/quiz-app?sslmode=disable&search_path=kratos
+dsn: postgres://jovvix:jovvix@db:5432/jovvix?sslmode=disable&search_path=kratos
 
 serve:
   public:

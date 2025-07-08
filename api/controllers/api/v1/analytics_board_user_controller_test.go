@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/Improwised/quizz-app/api/constants"
-	"github.com/Improwised/quizz-app/api/utils"
+	"github.com/Improwised/jovvix/api/constants"
+	"github.com/Improwised/jovvix/api/utils"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -3,9 +3,9 @@ package utils
 import (
 	"mime/multipart"
 
-	"github.com/Improwised/quizz-app/api/config"
-	"github.com/Improwised/quizz-app/api/models"
-	"github.com/Improwised/quizz-app/api/pkg/structs"
+	"github.com/Improwised/jovvix/api/config"
+	"github.com/Improwised/jovvix/api/models"
+	"github.com/Improwised/jovvix/api/pkg/structs"
 )
 
 // swagger:parameters RequestAnalyticsBoardForAdmin

@@ -15,7 +15,7 @@ export default defineNuxtConfig({
   },
   app: {
     head: {
-      title: "Quiz App",
+      title: "Jovvix",
       meta: [
         { charset: "utf-8" },
         { name: "viewport", content: "width=device-width, initial-scale=1" },

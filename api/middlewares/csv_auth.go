@@ -5,9 +5,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/Improwised/quizz-app/api/constants"
-	quizUtilsHelper "github.com/Improwised/quizz-app/api/helpers/utils"
-	"github.com/Improwised/quizz-app/api/utils"
+	"github.com/Improwised/jovvix/api/constants"
+	quizUtilsHelper "github.com/Improwised/jovvix/api/helpers/utils"
+	"github.com/Improwised/jovvix/api/utils"
 	fiber "github.com/gofiber/fiber/v2"
 	"go.uber.org/zap"
 )
