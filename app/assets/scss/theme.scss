@@ -13,9 +13,6 @@
 // Bootstrap functions
 @import "../../node_modules/bootstrap/scss/functions";
 
-// User Variables
-@import "user-variables";
-
 // theme variables
 @import "theme/variables";
 
@@ -28,32 +25,18 @@
 // Theme
 @import "theme/theme";
 
-// User
-@import "user";
-
-.heading-permalink{
+.heading-permalink {
+  color: transparent;
+  margin-left: -2rem;
+  &:hover {
     color: transparent;
-    margin-left: -2rem;
-    &:hover{
-        color: transparent;
+  }
 
-
-    }
-
-
-
-&::before {
-    color: rgba(82,95,127,0);
+  &::before {
+    color: rgba(82, 95, 127, 0);
     content: "#";
-
-
-
-}
-&:hover:before{
+  }
+  &:hover:before {
     color: $primary;
-
-
-
-}
-
+  }
 }

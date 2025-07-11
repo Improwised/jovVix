@@ -280,7 +280,7 @@ definePageMeta({
 
 <style scoped>
 .bg-image {
-  background-image: url("@/assets/images/que-web-bg.png");
+  background-image: url("@/assets/images/que-web-bg.webp");
   position: fixed;
   right: 0;
   bottom: 0;
@@ -294,7 +294,7 @@ definePageMeta({
 
 @media (max-width: 576px) {
   .bg-image {
-    background-image: url("@/assets/images/Que-mob-bg.png");
+    background-image: url("@/assets/images/Que-mob-bg.webp");
   }
 }
 </style>

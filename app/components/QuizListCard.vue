@@ -21,8 +21,8 @@ const props = defineProps({
       <div class="col-3 d-flex align-center m-0 p-0">
         <img
           class="img-fluid bg-primary rounded randomImg h-100"
-          src="../assets/images/QuestionLogo.png"
-          alt="QuestionLogo.png"
+          src="../assets/images/QuestionLogo.webp"
+          alt="QuestionLogo.webp"
         />
       </div>
       <div class="col m-0 p-0">

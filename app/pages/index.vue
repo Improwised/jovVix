@@ -17,7 +17,7 @@
           loop
           speed="0.5"
           mode="normal"
-          src="testimg.json"
+          src="landing_page_player.json"
           style="width: 100%"
         ></lottie-player>
         <!-- vector image -->

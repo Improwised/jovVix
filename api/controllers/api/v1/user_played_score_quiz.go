@@ -9,9 +9,7 @@ import (
 	"github.com/Improwised/jovvix/api/constants"
 	quizUtilsHelper "github.com/Improwised/jovvix/api/helpers/utils"
 	"github.com/Improwised/jovvix/api/models"
-	"github.com/Improwised/jovvix/api/pkg/events"
 	"github.com/Improwised/jovvix/api/pkg/structs"
-	"github.com/Improwised/jovvix/api/pkg/watermill"
 	"github.com/Improwised/jovvix/api/services"
 	"github.com/Improwised/jovvix/api/utils"
 	goqu "github.com/doug-martin/goqu/v9"
@@ -26,12 +24,10 @@ type UserPlayedQuizeController struct {
 	userQuizResponseModel *models.UserQuizResponseModel
 	presignedURLSvc       *services.PresignURLService
 	logger                *zap.Logger
-	event                 *events.Events
-	pub                   *watermill.WatermillPublisher
 }
 
 // NewUserController returns a user
-func NewUserPlayedQuizeController(goqu *goqu.Database, logger *zap.Logger, event *events.Events, pub *watermill.WatermillPublisher, appConfig *config.AppConfig) (*UserPlayedQuizeController, error) {
+func NewUserPlayedQuizeController(goqu *goqu.Database, logger *zap.Logger, appConfig *config.AppConfig) (*UserPlayedQuizeController, error) {
 	userPlayedQuizModel := models.InitUserPlayedQuizModel(goqu)
 
 	activeQuizModel := models.InitActiveQuizModel(goqu, logger)
@@ -49,8 +45,6 @@ func NewUserPlayedQuizeController(goqu *goqu.Database, logger *zap.Logger, event
 		userQuizResponseModel: userQuizResponseModel,
 		presignedURLSvc:       presignedURLSvc,
 		logger:                logger,
-		event:                 event,
-		pub:                   pub,
 	}, nil
 }
 

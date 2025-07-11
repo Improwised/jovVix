@@ -14,16 +14,15 @@ services:
       - pgdata:/var/lib/postgresql/data
 
   migration:
-    image: golang:1.22.0-alpine3.19
+    build:
+      context: ./api/
+      dockerfile: Dockerfile
     restart: on-failure
-    platform: linux/amd64
     depends_on:
       - db
     env_file:
       - ./api/.env.docker
-    command: go run app.go migrate up
-    volumes:
-      - ./api:/jovvix/
+    command: ["./jovvix", "migrate", "up"]
 
   redis:
     image: redis:latest

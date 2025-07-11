@@ -10,8 +10,6 @@ import (
 	"github.com/Improwised/jovvix/api/constants"
 	quizUtilsHelper "github.com/Improwised/jovvix/api/helpers/utils"
 	"github.com/Improwised/jovvix/api/models"
-	"github.com/Improwised/jovvix/api/pkg/events"
-	"github.com/Improwised/jovvix/api/pkg/watermill"
 	"github.com/Improwised/jovvix/api/services"
 	"github.com/Improwised/jovvix/api/utils"
 	"github.com/doug-martin/goqu/v9"
@@ -27,10 +25,9 @@ type QuizController struct {
 	quizSvc         *services.QuizService
 	appConfig       *config.AppConfig
 	logger          *zap.Logger
-	event           *events.Events
 }
 
-func InitQuizController(db *goqu.Database, logger *zap.Logger, event *events.Events, pub *watermill.WatermillPublisher, appConfig *config.AppConfig) (*QuizController, error) {
+func InitQuizController(db *goqu.Database, logger *zap.Logger, appConfig *config.AppConfig) (*QuizController, error) {
 
 	quizModel := models.InitQuizModel(db)
 	questionModel := models.InitQuestionModel(db, logger)
@@ -51,7 +48,6 @@ func InitQuizController(db *goqu.Database, logger *zap.Logger, event *events.Eve
 		quizSvc:         quizSvc,
 		appConfig:       appConfig,
 		logger:          logger,
-		event:           event,
 	}, nil
 }
 

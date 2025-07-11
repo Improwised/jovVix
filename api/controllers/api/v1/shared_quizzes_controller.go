@@ -9,10 +9,8 @@ import (
 	"github.com/Improwised/jovvix/api/constants"
 	quizUtilsHelper "github.com/Improwised/jovvix/api/helpers/utils"
 	"github.com/Improwised/jovvix/api/models"
-	"github.com/Improwised/jovvix/api/pkg/events"
 	"github.com/Improwised/jovvix/api/pkg/structs"
 	"github.com/Improwised/jovvix/api/pkg/templates"
-	"github.com/Improwised/jovvix/api/pkg/watermill"
 	"github.com/Improwised/jovvix/api/services"
 	"github.com/Improwised/jovvix/api/utils"
 	goqu "github.com/doug-martin/goqu/v9"
@@ -26,12 +24,10 @@ type SharedQuizzes struct {
 	userModel          *models.UserModel
 	emailService       *services.EmailService
 	logger             *zap.Logger
-	event              *events.Events
-	pub                *watermill.WatermillPublisher
 	config             *config.AppConfig
 }
 
-func NewSharedQuizzesController(goqu *goqu.Database, logger *zap.Logger, event *events.Events, pub *watermill.WatermillPublisher, config *config.AppConfig) (*SharedQuizzes, error) {
+func NewSharedQuizzesController(goqu *goqu.Database, logger *zap.Logger, config *config.AppConfig) (*SharedQuizzes, error) {
 
 	sharedQuizzesModel := models.InitSharedQuizzesModel(goqu, logger)
 	userModel, err := models.InitUserModel(goqu, logger)
@@ -46,8 +42,6 @@ func NewSharedQuizzesController(goqu *goqu.Database, logger *zap.Logger, event *
 		userModel:          &userModel,
 		emailService:       emailService,
 		logger:             logger,
-		event:              event,
-		pub:                pub,
 		config:             config,
 	}, nil
 }

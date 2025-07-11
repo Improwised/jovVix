@@ -12,10 +12,8 @@ import (
 	"github.com/Improwised/jovvix/api/constants"
 	controller "github.com/Improwised/jovvix/api/controllers/api/v1"
 	"github.com/Improwised/jovvix/api/middlewares"
-	"github.com/Improwised/jovvix/api/pkg/events"
 	pMetrics "github.com/Improwised/jovvix/api/pkg/prometheus"
 	"github.com/Improwised/jovvix/api/pkg/redis"
-	"github.com/Improwised/jovvix/api/pkg/watermill"
 	goqu "github.com/doug-martin/goqu/v9"
 	"github.com/gofiber/contrib/swagger"
 	"github.com/gofiber/contrib/websocket"
@@ -25,7 +23,7 @@ import (
 var mu sync.Mutex
 
 // Setup func
-func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config config.AppConfig, events *events.Events, pMetrics *pMetrics.PrometheusMetrics, pub *watermill.WatermillPublisher) error {
+func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config config.AppConfig, pMetrics *pMetrics.PrometheusMetrics) error {
 	mu.Lock()
 	defer mu.Unlock()
 
@@ -80,11 +78,11 @@ func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config confi
 	})
 
 	// FinalScoreboard
-	err = setUpFinalScoreBoardController(v1, goqu, logger, middleware, events)
+	err = setUpFinalScoreBoardController(v1, goqu, logger, middleware)
 	if err != nil {
 		return err
 	}
-	err = setUpAnalyticsBoardController(v1, goqu, logger, config, middleware, events)
+	err = setUpAnalyticsBoardController(v1, goqu, logger, config, middleware)
 	if err != nil {
 		return err
 	}
@@ -94,7 +92,7 @@ func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config confi
 		return err
 	}
 
-	err = setupUserController(v1, goqu, logger, middleware, events, config)
+	err = setupUserController(v1, goqu, logger, middleware, config)
 	if err != nil {
 		return err
 	}
@@ -104,27 +102,27 @@ func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config confi
 		return err
 	}
 
-	err = setupQuizController(v1, goqu, logger, middleware, events, pub, config)
+	err = setupQuizController(v1, goqu, logger, middleware, config)
 	if err != nil {
 		return err
 	}
 
-	err = setupQuestionController(v1, goqu, logger, middleware, events, pub, config)
+	err = setupQuestionController(v1, goqu, logger, middleware, config)
 	if err != nil {
 		return err
 	}
 
-	err = setupUserPlayedQuizeController(v1, goqu, logger, middleware, events, pub, config)
+	err = setupUserPlayedQuizeController(v1, goqu, logger, middleware, config)
 	if err != nil {
 		return err
 	}
 
-	err = setupImageController(v1, goqu, logger, middleware, events, pub, config)
+	err = setupImageController(v1, goqu, logger, middleware, config)
 	if err != nil {
 		return err
 	}
 
-	err = setupSharedQuizzesController(v1, goqu, logger, middleware, events, pub, config)
+	err = setupSharedQuizzesController(v1, goqu, logger, middleware, config)
 	if err != nil {
 		return err
 	}
@@ -184,8 +182,8 @@ func setupAuthController(v1 fiber.Router, goqu *goqu.Database, logger *zap.Logge
 	return nil
 }
 
-func setupUserController(v1 fiber.Router, goqu *goqu.Database, logger *zap.Logger, middlewares middlewares.Middleware, events *events.Events, config config.AppConfig) error {
-	userController, err := controller.NewUserController(goqu, logger, events, config)
+func setupUserController(v1 fiber.Router, goqu *goqu.Database, logger *zap.Logger, middlewares middlewares.Middleware, config config.AppConfig) error {
+	userController, err := controller.NewUserController(goqu, logger, config)
 	if err != nil {
 		return err
 	}
@@ -234,8 +232,8 @@ func setupQuizSocketController(v1 fiber.Router, db *goqu.Database, logger *zap.L
 	return nil
 }
 
-func setupQuizController(v1 fiber.Router, db *goqu.Database, logger *zap.Logger, middleware middlewares.Middleware, events *events.Events, pub *watermill.WatermillPublisher, config config.AppConfig) error {
-	quizController, err := controller.InitQuizController(db, logger, events, pub, &config)
+func setupQuizController(v1 fiber.Router, db *goqu.Database, logger *zap.Logger, middleware middlewares.Middleware, config config.AppConfig) error {
+	quizController, err := controller.InitQuizController(db, logger, &config)
 	if err != nil {
 		return err
 	}
@@ -257,8 +255,8 @@ func setupQuizController(v1 fiber.Router, db *goqu.Database, logger *zap.Logger,
 	return nil
 }
 
-func setupQuestionController(v1 fiber.Router, db *goqu.Database, logger *zap.Logger, middleware middlewares.Middleware, events *events.Events, pub *watermill.WatermillPublisher, config config.AppConfig) error {
-	questionController, err := controller.InitQuestionController(db, logger, events, pub, &config)
+func setupQuestionController(v1 fiber.Router, db *goqu.Database, logger *zap.Logger, middleware middlewares.Middleware, config config.AppConfig) error {
+	questionController, err := controller.InitQuestionController(db, logger, &config)
 	if err != nil {
 		return err
 	}
@@ -275,13 +273,13 @@ func setupQuestionController(v1 fiber.Router, db *goqu.Database, logger *zap.Log
 }
 
 // final score board controller setup
-func setUpFinalScoreBoardController(v1 fiber.Router, goqu *goqu.Database, logger *zap.Logger, middlewares middlewares.Middleware, events *events.Events) error {
-	finalScoreBoardController, err := controller.NewFinalScoreBoardController(goqu, logger, events)
+func setUpFinalScoreBoardController(v1 fiber.Router, goqu *goqu.Database, logger *zap.Logger, middlewares middlewares.Middleware) error {
+	finalScoreBoardController, err := controller.NewFinalScoreBoardController(goqu, logger)
 	if err != nil {
 		return err
 	}
 
-	finalScoreBoardControllerAdmin, err := controller.NewFinalScoreBoardAdminController(goqu, logger, events)
+	finalScoreBoardControllerAdmin, err := controller.NewFinalScoreBoardAdminController(goqu, logger)
 	if err != nil {
 		return err
 	}
@@ -293,13 +291,13 @@ func setUpFinalScoreBoardController(v1 fiber.Router, goqu *goqu.Database, logger
 	return nil
 }
 
-func setUpAnalyticsBoardController(v1 fiber.Router, goqu *goqu.Database, logger *zap.Logger, config config.AppConfig, middlewares middlewares.Middleware, events *events.Events) error {
-	analyticsBoardUserController, err := controller.NewAnalyticsBoardUserController(goqu, logger, events, &config)
+func setUpAnalyticsBoardController(v1 fiber.Router, goqu *goqu.Database, logger *zap.Logger, config config.AppConfig, middlewares middlewares.Middleware) error {
+	analyticsBoardUserController, err := controller.NewAnalyticsBoardUserController(goqu, logger, &config)
 	if err != nil {
 		return err
 	}
 
-	analyticsBoardAdminController, err := controller.NewAnalyticsBoardAdminController(goqu, logger, events, &config)
+	analyticsBoardAdminController, err := controller.NewAnalyticsBoardAdminController(goqu, logger, &config)
 	if err != nil {
 		return err
 	}
@@ -311,8 +309,8 @@ func setUpAnalyticsBoardController(v1 fiber.Router, goqu *goqu.Database, logger 
 	return nil
 }
 
-func setupUserPlayedQuizeController(v1 fiber.Router, goqu *goqu.Database, logger *zap.Logger, middlewares middlewares.Middleware, events *events.Events, pub *watermill.WatermillPublisher, config config.AppConfig) error {
-	userPlayedQuizeController, err := controller.NewUserPlayedQuizeController(goqu, logger, events, pub, &config)
+func setupUserPlayedQuizeController(v1 fiber.Router, goqu *goqu.Database, logger *zap.Logger, middlewares middlewares.Middleware, config config.AppConfig) error {
+	userPlayedQuizeController, err := controller.NewUserPlayedQuizeController(goqu, logger, &config)
 	if err != nil {
 		return err
 	}
@@ -324,8 +322,8 @@ func setupUserPlayedQuizeController(v1 fiber.Router, goqu *goqu.Database, logger
 	return nil
 }
 
-func setupImageController(v1 fiber.Router, goqu *goqu.Database, logger *zap.Logger, middlewares middlewares.Middleware, events *events.Events, pub *watermill.WatermillPublisher, config config.AppConfig) error {
-	imageController, err := controller.NewImageController(goqu, logger, events, pub, &config)
+func setupImageController(v1 fiber.Router, goqu *goqu.Database, logger *zap.Logger, middlewares middlewares.Middleware, config config.AppConfig) error {
+	imageController, err := controller.NewImageController(goqu, logger, &config)
 	if err != nil {
 		return err
 	}
@@ -335,8 +333,8 @@ func setupImageController(v1 fiber.Router, goqu *goqu.Database, logger *zap.Logg
 	return nil
 }
 
-func setupSharedQuizzesController(v1 fiber.Router, goqu *goqu.Database, logger *zap.Logger, middlewares middlewares.Middleware, events *events.Events, pub *watermill.WatermillPublisher, config config.AppConfig) error {
-	sharedQuizzesController, err := controller.NewSharedQuizzesController(goqu, logger, events, pub, &config)
+func setupSharedQuizzesController(v1 fiber.Router, goqu *goqu.Database, logger *zap.Logger, middlewares middlewares.Middleware, config config.AppConfig) error {
+	sharedQuizzesController, err := controller.NewSharedQuizzesController(goqu, logger, &config)
 	if err != nil {
 		return err
 	}

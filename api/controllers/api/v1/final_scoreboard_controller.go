@@ -6,7 +6,6 @@ import (
 
 	"github.com/Improwised/jovvix/api/constants"
 	"github.com/Improwised/jovvix/api/models"
-	"github.com/Improwised/jovvix/api/pkg/events"
 	"github.com/Improwised/jovvix/api/utils"
 	"github.com/doug-martin/goqu/v9"
 	fiber "github.com/gofiber/fiber/v2"
@@ -16,10 +15,9 @@ import (
 type FinalScoreBoardController struct {
 	finalScoreBoardModel *models.FinalScoreBoardModel
 	logger               *zap.Logger
-	event                *events.Events
 }
 
-func NewFinalScoreBoardController(goqu *goqu.Database, logger *zap.Logger, event *events.Events) (*FinalScoreBoardController, error) {
+func NewFinalScoreBoardController(goqu *goqu.Database, logger *zap.Logger) (*FinalScoreBoardController, error) {
 	finalScoreBoardModel, err := models.InitFinalScoreBoardModel(goqu)
 	if err != nil {
 		return nil, err
@@ -28,7 +26,6 @@ func NewFinalScoreBoardController(goqu *goqu.Database, logger *zap.Logger, event
 	return &FinalScoreBoardController{
 		finalScoreBoardModel: &finalScoreBoardModel,
 		logger:               logger,
-		event:                event,
 	}, nil
 
 }

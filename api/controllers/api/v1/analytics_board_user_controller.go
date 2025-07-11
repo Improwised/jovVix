@@ -7,7 +7,6 @@ import (
 	"github.com/Improwised/jovvix/api/config"
 	"github.com/Improwised/jovvix/api/constants"
 	"github.com/Improwised/jovvix/api/models"
-	"github.com/Improwised/jovvix/api/pkg/events"
 	"github.com/Improwised/jovvix/api/services"
 	"github.com/Improwised/jovvix/api/utils"
 	"github.com/doug-martin/goqu/v9"
@@ -19,10 +18,9 @@ type AnalyticsBoardUserController struct {
 	analyticsBoardUserModel *models.AnalyticsBoardUserModel
 	presignedURLSvc         *services.PresignURLService
 	logger                  *zap.Logger
-	event                   *events.Events
 }
 
-func NewAnalyticsBoardUserController(goqu *goqu.Database, logger *zap.Logger, event *events.Events, appConfig *config.AppConfig) (*AnalyticsBoardUserController, error) {
+func NewAnalyticsBoardUserController(goqu *goqu.Database, logger *zap.Logger, appConfig *config.AppConfig) (*AnalyticsBoardUserController, error) {
 	analyticsBoardUserModel, err := models.InitAnalyticsBoardUserModel(goqu)
 	if err != nil {
 		return nil, err
@@ -37,7 +35,6 @@ func NewAnalyticsBoardUserController(goqu *goqu.Database, logger *zap.Logger, ev
 		analyticsBoardUserModel: &analyticsBoardUserModel,
 		presignedURLSvc:         presignedURLSvc,
 		logger:                  logger,
-		event:                   event,
 	}, nil
 
 }

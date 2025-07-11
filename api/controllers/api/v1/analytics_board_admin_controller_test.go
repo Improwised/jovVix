@@ -11,7 +11,6 @@ import (
 	v1 "github.com/Improwised/jovvix/api/controllers/api/v1"
 	"github.com/Improwised/jovvix/api/database"
 	"github.com/Improwised/jovvix/api/logger"
-	"github.com/Improwised/jovvix/api/pkg/events"
 	"github.com/Improwised/jovvix/api/utils"
 	"github.com/stretchr/testify/assert"
 )
@@ -25,13 +24,9 @@ func TestNewAnalyticsBoardAdminController(t *testing.T) {
 	logger, err := logger.NewRootLogger(true, true)
 	assert.Nil(t, err)
 
-	events := events.NewEventBus(logger)
-
-	err = events.SubscribeAll()
-	assert.Nil(t, err)
 	t.Run("check whether controller is being returned or not", func(t *testing.T) {
 
-		analyticsAdminController, err := v1.NewAnalyticsBoardAdminController(db, logger, events, &cfg)
+		analyticsAdminController, err := v1.NewAnalyticsBoardAdminController(db, logger, &cfg)
 		assert.Nil(t, err)
 
 		assert.NotNil(t, analyticsAdminController)

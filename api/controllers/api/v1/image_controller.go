@@ -10,8 +10,6 @@ import (
 	"github.com/Improwised/jovvix/api/config"
 	"github.com/Improwised/jovvix/api/constants"
 	"github.com/Improwised/jovvix/api/models"
-	"github.com/Improwised/jovvix/api/pkg/events"
-	"github.com/Improwised/jovvix/api/pkg/watermill"
 	"github.com/Improwised/jovvix/api/services"
 	"github.com/Improwised/jovvix/api/utils"
 	goqu "github.com/doug-martin/goqu/v9"
@@ -23,22 +21,18 @@ type ImageController struct {
 	questionModel *models.QuestionModel
 	fileUploadSvc *services.FileUploadService
 	logger        *zap.Logger
-	event         *events.Events
-	pub           *watermill.WatermillPublisher
 	config        *config.AppConfig
 }
 
-func NewImageController(goqu *goqu.Database, logger *zap.Logger, event *events.Events, pub *watermill.WatermillPublisher, config *config.AppConfig) (*ImageController, error) {
+func NewImageController(goqu *goqu.Database, logger *zap.Logger, config *config.AppConfig) (*ImageController, error) {
 
 	questionModel := models.InitQuestionModel(goqu, logger)
-	fileUploadSvc := services.NewFileUploadService(logger, event, pub, &config.AWS)
+	fileUploadSvc := services.NewFileUploadService(logger, &config.AWS)
 
 	return &ImageController{
 		questionModel: questionModel,
 		fileUploadSvc: fileUploadSvc,
 		logger:        logger,
-		event:         event,
-		pub:           pub,
 		config:        config,
 	}, nil
 }

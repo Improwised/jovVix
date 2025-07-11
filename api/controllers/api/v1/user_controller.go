@@ -10,7 +10,6 @@ import (
 	"github.com/Improwised/jovvix/api/constants"
 	quizUtilsHelper "github.com/Improwised/jovvix/api/helpers/utils"
 	"github.com/Improwised/jovvix/api/models"
-	"github.com/Improwised/jovvix/api/pkg/events"
 	"github.com/Improwised/jovvix/api/pkg/jwt"
 	"github.com/Improwised/jovvix/api/utils"
 	goqu "github.com/doug-martin/goqu/v9"
@@ -23,12 +22,11 @@ import (
 type UserController struct {
 	userModel *models.UserModel
 	logger    *zap.Logger
-	event     *events.Events
 	config    config.AppConfig
 }
 
 // NewUserController returns a user
-func NewUserController(goqu *goqu.Database, logger *zap.Logger, event *events.Events, config config.AppConfig) (*UserController, error) {
+func NewUserController(goqu *goqu.Database, logger *zap.Logger, config config.AppConfig) (*UserController, error) {
 	userModel, err := models.InitUserModel(goqu, logger)
 	if err != nil {
 		return nil, err
@@ -37,7 +35,6 @@ func NewUserController(goqu *goqu.Database, logger *zap.Logger, event *events.Ev
 	return &UserController{
 		userModel: &userModel,
 		logger:    logger,
-		event:     event,
 		config:    config,
 	}, nil
 }

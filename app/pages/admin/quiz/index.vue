@@ -7,7 +7,7 @@
       @card-click="navigateTo('/admin/quiz/create-quiz')"
     >
       <template #image>
-        <img src="@/assets/images/add-file.gif" class="card-image" />
+        <img src="@/assets/images/add-file.webp" class="card-image" />
       </template>
     </ActionCard>
     <ActionCard
@@ -15,7 +15,7 @@
       @card-click="navigateTo('/admin/quiz/list-quiz')"
     >
       <template #image>
-        <img src="@/assets/images/list.gif" class="card-image" />
+        <img src="@/assets/images/list.webp" class="card-image" />
       </template>
     </ActionCard>
     <ActionCard
@@ -23,7 +23,7 @@
       @card-click="navigateTo('/admin/quiz/shared-quiz')"
     >
       <template #image>
-        <img src="@/assets/images/shared-file.gif" class="card-image" />
+        <img src="@/assets/images/shared-file.webp" class="card-image" />
       </template>
     </ActionCard>
     <ActionCard
@@ -31,7 +31,7 @@
       @card-click="navigateTo('/admin/quiz/share-with-me')"
     >
       <template #image>
-        <img src="@/assets/images/share-with-me.gif" class="card-image" />
+        <img src="@/assets/images/share-with-me.webp" class="card-image" />
       </template>
     </ActionCard>
   </div>

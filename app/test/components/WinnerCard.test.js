@@ -50,7 +50,7 @@ describe("WinnerCard test", () => {
     wrapper = mountComponent();
 
     const medal = wrapper.find("img.bg-image");
-    expect(medal.attributes("src")).toBe("/assets/images/medal/1.webp");
+    expect(medal.attributes("src")).toBe("/assets/images/medal/3.webp");
   });
 
   it("renders the correct avatar image", async () => {
