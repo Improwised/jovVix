@@ -1,8 +1,8 @@
 
-# Jovvix
+# jovVix
 
-- Jovvix is a fun and interactive platform where users can enjoy playing quizzes while admins have the ability to create engaging and diverse quizzes.
-- Designed to provide a fun and educational experience while ensuring smooth admin management, Jovvix is the perfect solution for interactive quiz-based learning, competitions, or corporate events.
+- jovVix is a fun and interactive platform where users can enjoy playing quizzes while admins have the ability to create engaging and diverse quizzes.
+- Designed to provide a fun and educational experience while ensuring smooth admin management, jovVix is the perfect solution for interactive quiz-based learning, competitions, or corporate events.
 
 - App is an interactive, real-time platform that supports diverse
   question types like
@@ -12,6 +12,11 @@
    - real dynamic avatars
    - customizable csv with different question types like: Image based, code based, survey based questions
 <br><br>
+
+# Live Demo & Website
+
+- **Website**: Visit [https://jovvix.com](https://jovvix.com) to learn more about the platform, explore the **About** section, and access full **Documentation**.
+- **Live Demo**: Try out the platform live at [https://app.jovvix.com](https://app.jovvix.com) to experience how the quiz system works — including joining a quiz, answering questions in real-time, and viewing live leaderboards.
 
 ## Key Attributes:
 - Cloud-Based: The application can be deployed on cloud platforms, providing high availability and scalability for users and organizations.
@@ -68,7 +73,7 @@
 
 ## Table of Contents:
 
-- [About Jovvix](#jovvix)
+- [About jovVix](#jovvix)
   - [Quickstart](#quickstart)
 - [Features](#features)
 - [Getting started](#getting-started-for-local-setup-from-source)
@@ -77,7 +82,7 @@
   - [Architecture Overview](#architecture-overview)
   - [Overview of API documentation](#api-overview)
   - [Upgrading and changelog](#upgrading-and-changelog)
-- [Contributing to Jovvix](#contributing-to-jovvix)
+- [Contributing to jovVix](#contributing-to-jovvix)
 - [Code Of Conduct](#code-of-conduct)
 - [Develop]()
   - [Guide](#guide)
@@ -137,7 +142,7 @@
 | [Go](https://golang.org/) | v1.21+ |
 
 
-- Jovvix is a fun and interactive platform where users can enjoy playing quizzes while admins have the ability to create engaging and diverse quizzes.
+- jovVix is a fun and interactive platform where users can enjoy playing quizzes while admins have the ability to create engaging and diverse quizzes.
 
 
 # Installation steps
@@ -191,10 +196,10 @@
   npm i
   npm run dev
 ```
-- Then you have setup Jovvix successfully in your local environment
+- Then you have setup jovVix successfully in your local environment
 
 
-- Designed to provide a fun and educational experience while ensuring smooth admin management, Jovvix is the perfect solution for interactive quiz-based learning, competitions, or corporate events.
+- Designed to provide a fun and educational experience while ensuring smooth admin management, jovVix is the perfect solution for interactive quiz-based learning, competitions, or corporate events.
 
 
    cd jovvix
@@ -205,7 +210,7 @@
 
 ### System Architecture
 
-- **Backend:** Jovvix uses a Golang backend to handle the server-side logic.
+- **Backend:** jovVix uses a Golang backend to handle the server-side logic.
 - **Frontend:** Vue.js and nuxt framework is employed for a single-page application (SPA) architecture and component-based development.
 - **Database:** PostgreSQL is used to handle concurrent requests and manage data efficiently.
 - **Caching:** Redis is utilized for caching and manipulating users' data and requests, improving performance.
@@ -215,13 +220,13 @@
 
 ```
 ```
-- Then you have setup Jovvix successfully in your local environment
+- Then you have setup jovVix successfully in your local environment
  ### API Overview:
 - locally you could start your API server by running the following command :
 http://127.0.0.1:3000/api/v1/docs
 
 
-- **Backend:** Jovvix uses a Golang backend to handle the server-side logic.
+- **Backend:** jovVix uses a Golang backend to handle the server-side logic.
 - This would open the swagger documentation
  ### Upgrading and changelog:
 
@@ -230,7 +235,7 @@ http://127.0.0.1:3000/api/v1/docs
 
 <br><br>
 
-# Contributing to Jovvix:
+# Contributing to jovVix:
 - You can see the contribution guidelines here : [CONTRIBUTING.md](./CONTRIBUTING.md)
 
 <br><br>
@@ -244,7 +249,7 @@ http://127.0.0.1:3000/api/v1/docs
 # Developer
 
   ## Guide:
- If you're a developer looking to contribute or modify Jovvix, here is a brief guide to get started:
+ If you're a developer looking to contribute or modify jovVix, here is a brief guide to get started:
   [Getting started](#getting-started-for-local-setup-from-source) OR, you could just docker-compose up
 
   ### Code Structure Overview:
@@ -253,7 +258,7 @@ http://127.0.0.1:3000/api/v1/docs
 - api/: Contains Golang source code for the server-side logic.
 
 ## Setting Up MinIO for Local Development:
-- MinIO is used in Jovvix for object storage, enabling features like storing and serving images. Below is a guide to setting up a bucket in MinIO for local development.
+- MinIO is used in jovVix for object storage, enabling features like storing and serving images. Below is a guide to setting up a bucket in MinIO for local development.
 
 - We already have added the minio service into our docker-compose file so you just have to start the service
 - Then open your browser and navigate to http://127.0.0.1:9001.
@@ -264,8 +269,8 @@ http://127.0.0.1:3000/api/v1/docs
 ## Collaborators:
 - Thanks to all the people who already contributed!
 
-<a href="https://github.com/your-username/your-repo/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=your-username/your-repo" />
+<a href="https://github.com/improwised/jovvix/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=improwised/jovvix" />
 </a>
 
 
@@ -292,9 +297,17 @@ http://127.0.0.1:3000/api/v1/docs
 
 <br><br>
 
+# Design & Image Credits
+
+- The **jovVix logo** is designed by [Nirav Raval](https://www.linkedin.com/in/nirav-raval-06732858).
+- All other images and visual assets used in the platform are either custom-designed or sourced from [Freepik](https://www.freepik.com/) under their free license.
+
+> Note: Assets from Freepik are used in accordance with their [license terms](https://www.freepikcompany.com/legal#nav-freepik-license).
+
+
 # License:
 
-Jovvix is put under a dual-licensing scheme: In general
+jovVix is put under a dual-licensing scheme: In general
 all of the provided code is open source via [GNU/AGPL
 3.0](https://www.gnu.org/licenses/agpl-3.0.en.html), please see the
 [LICENSE](LICENSE.txt) file for more details.
