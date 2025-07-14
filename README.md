@@ -39,10 +39,6 @@
 - Intuitive UI/UX: Designed for a user-friendly and engaging interface.
 - Gamification: Includes elements like points, ranks, and leaderboards to boost user engagement.
 
-
-
-<br><br>
-
 ## Features
 
 - **Real-time Interaction:** Supports real-time quizzes with instant feedback and live leaderboards, ensuring a highly engaging user experience.
@@ -66,11 +62,6 @@
 - **API Documentation with Swagger:** Provides a visual interface for exploring API endpoints and testing requests, Useful for developers working with the API
 - **Open Source:** Fully open-source platform, allowing developers to contribute, customize, and extend the app.
 
-
-
-<br><br>
-
-
 ## Table of Contents:
 
 - [About jovVix](#jovvix)
@@ -88,9 +79,6 @@
   - [Guide](#guide)
   - [Collaborators](#collaborators)
   - [Dependencies](#dependencies)
-
-
-<br><br>
 
 # Prerequisites
 - Docker latest version installed in your system
@@ -127,13 +115,10 @@
 ```
   127.0.0.1:8025
 ```
-<br><br>
 
 # Getting Started For local setup from source
 
-
 # Prerequisites
-
 
 | Package | Version |
 | --- | --- |
@@ -201,10 +186,9 @@
 
 - Designed to provide a fun and educational experience while ensuring smooth admin management, jovVix is the perfect solution for interactive quiz-based learning, competitions, or corporate events.
 
-<br><br>
 # Documentation
 
-  ## Architecture Overview:
+## Architecture Overview:
 
 ### System Architecture
 
@@ -228,38 +212,30 @@ http://127.0.0.1:3000/api/v1/docs
 
 - **Backend:** jovVix uses a Golang backend to handle the server-side logic.
 - This would open the swagger documentation
+
  ### Upgrading and changelog:
 
-  - It's being managed in this file: CHANGELOG.md
-
-
-<br><br>
+- It's being managed in this file: CHANGELOG.md
 
 # Contributing to jovVix:
 - You can see the contribution guidelines here : [CONTRIBUTING.md](./CONTRIBUTING.md)
 
-<br><br>
-
 # Code of Conduct:
 - This platforms also provides the [Code of Conduct](./CODE_OF_CONDUCT.md)
 
-
-<br><br>
-
 # Developer
 
-  ## Guide:
- If you're a developer looking to contribute or modify jovVix, here is a brief guide to get started:
-  [Getting started](#getting-started-for-local-setup-from-source) OR, you could just docker-compose up
+## Guide:
+If you're a developer looking to contribute or modify jovVix, here is a brief guide to get started: [Getting started](#getting-started-for-local-setup-from-source) OR, you could just `docker-compose up`
 
-  ### Code Structure Overview:
+### Code Structure Overview:
 
 - app/: Contains Vue.js components for the quiz interface and holds frontend pages and all
 - api/: Contains Golang source code for the server-side logic.
 
 ## Setting Up MinIO for Local Development:
-- MinIO is used in jovVix for object storage, enabling features like storing and serving images. Below is a guide to setting up a bucket in MinIO for local development.
 
+- MinIO is used in jovVix for object storage, enabling features like storing and serving images. Below is a guide to setting up a bucket in MinIO for local development.
 - We already have added the minio service into our docker-compose file so you just have to start the service
 - Then open your browser and navigate to http://127.0.0.1:9001.
 - Log in using the credentials defined in our docker-compose.yml (you can change with your own afterwards)
@@ -274,28 +250,26 @@ http://127.0.0.1:3000/api/v1/docs
 </a>
 
 
-  ## Dependencies:
+## Dependencies:
 
-  This project uses the following key dependencies:
+This project uses the following key dependencies:
 
-  - Frontend:
+- Frontend:
 
-    - Vue.js: For building reactive user interfaces.
-    - Nuxt 3: Framework for server-side rendering and static site generation.
+  - Vue.js: For building reactive user interfaces.
+  - Nuxt 3: Framework for server-side rendering and static site generation.
 
-  - Backend:
+- Backend:
 
-    - Go (Golang): High-performance backend logic.
-    - PostgreSQL: Relational database management.
+  - Go (Golang): High-performance backend logic.
+  - PostgreSQL: Relational database management.
 
-  - Other Tools:
+- Other Tools:
 
-    - Redis: Used for caching and session management.
-    - Ory Kratos: For user authentication.
-    - Minio setup locally for bucket storage instead of aws S3
-    - mailpit setup locally for the SMTP like server
-
-<br><br>
+  - Redis: Used for caching and session management.
+  - Ory Kratos: For user authentication.
+  - Minio setup locally for bucket storage instead of aws S3
+  - mailpit setup locally for the SMTP like server
 
 # Design & Image Credits
 
@@ -304,10 +278,6 @@ http://127.0.0.1:3000/api/v1/docs
 
 > Note: Assets from Freepik are used in accordance with their [license terms](https://www.freepikcompany.com/legal#nav-freepik-license).
 
-
 # License:
 
-jovVix is put under a dual-licensing scheme: In general
-all of the provided code is open source via [GNU/AGPL
-3.0](https://www.gnu.org/licenses/agpl-3.0.en.html), please see the
-[LICENSE](LICENSE.txt) file for more details.
+jovVix is put under a dual-licensing scheme: In general all of the provided code is open source via [GNU AGPL 3.0](https://www.gnu.org/licenses/agpl-3.0.en.html), please see the [LICENSE](LICENSE.txt) file for more details.
