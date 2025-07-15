@@ -13,6 +13,10 @@ on:
     branches:
       - develop
       - main
+    paths:
+      - "app/**"
+      - ".github/workflows/test-build-push-app.yaml"
+      - "!**.md"      
 jobs:
   frontend-tests:
     name: Frontend Tests
@@ -49,10 +53,14 @@ jobs:
         uses: docker/setup-buildx-action@v3
         timeout-minutes: 5
 
-      - name: Create Tag
-        id: tag
-        run: echo "tag=${{ github.ref_name }}-$(git rev-parse --short HEAD)-$(date +%s)" >> $GITHUB_OUTPUT
-        timeout-minutes: 5
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ vars.AWS_ECR_REGISTRY }}/${{ vars.AWS_ECR_REPOSITORY_APP }}
+          tags: |
+            type=raw,value={{branch}}-{{sha}}-{{date 'X'}}
+        timeout-minutes: 1
 
       - name: Login to ECR
         uses: docker/login-action@v3
@@ -67,15 +75,19 @@ jobs:
         with:
           context: ./app
           push: true
-          tags: ${{ secrets.AWS_ECR_REGISTRY }}/${{ vars.AWS_ECR_REPOSITORY_APP }}:${{ steps.tag.outputs.tag }}
-        timeout-minutes: 5
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          annotations: ${{ steps.meta.outputs.annotations }}
+        timeout-minutes: 15
 
       - name: status of workflow
         uses: rtCamp/action-slack-notify@v2
         if: always()
         env:
           SLACK_WEBHOOK: ${{ secrets.WEBHOOK_URL }}
+          SLACK_USERNAME: workflow-status
+          SLACK_ICON: https://avatars.githubusercontent.com/u/25347574
           SLACK_COLOR: ${{ job.status }}
-          SLACK_FOOTER: ""
-          SLACK_MESSAGE: "Build workflow run **${{ job.status }}**"
+          SLACK_FOOTER: ${{ github.repository }}
+          SLACK_MESSAGE: "Build workflow run *${{ job.status }}*"
         timeout-minutes: 5
