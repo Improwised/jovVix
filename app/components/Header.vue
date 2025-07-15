@@ -4,9 +4,7 @@
     <nav class="navbar navbar-expand-lg">
       <!-- Logo -->
       <NuxtLink class="navbar-brand navbar-logo" style="color: black" to="/">
-        <!-- Jovvix Logo will be here -->
-        <!-- <img class="logo" src="@/assets/images/logo.png" alt="" /> -->
-        Jovvix
+        <img class="logo" src="/jovvix-logo.png" alt="" />
       </NuxtLink>
       <button
         class="navbar-toggler bg-light"
@@ -162,7 +160,7 @@ const stopQuiz = () => {
 .logo {
   height: 35px;
   transform: scale(2);
-  margin-top: 4px;
+  margin-top: 20px;
   margin-left: 45px;
 }
 
