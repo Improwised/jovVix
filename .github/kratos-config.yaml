@@ -1,0 +1,19 @@
+dsn: postgres://test_user:test_password@localhost:5432/test_db?sslmode=disable
+
+identity:
+  schemas:
+    - id: default
+      url: file:///etc/config/identity.schema.json
+
+selfservice:
+  default_browser_return_url: http://localhost:3000
+
+courier:
+  smtp:
+    connection_uri: smtps://user:password@mail.example.com:465
+
+serve:
+  public:
+    base_url: http://localhost:4433
+  admin:
+    base_url: http://localhost:4434

@@ -84,6 +84,17 @@ jobs:
             sleep 2
           done
         timeout-minutes: 5
+        
+      - name: Start Ory Kratos
+        run: |
+          docker run -d \
+            --name kratos \
+            -p 4433:4433 -p 4434:4434 \
+            -v ${{ github.workspace }}/.github/kratos-config.yaml:/etc/config/kratos.yaml \
+            -v ${{ github.workspace }}/.github/identity.schema.json:/etc/config/identity.schema.json \
+            -e DSN=postgres://test_user:test_password@host.docker.internal:5432/test_db?sslmode=disable \
+            oryd/kratos:v0.8.0 \
+            serve -c /etc/config/kratos.yaml
 
       - name: Wait for Ory Kratos to be Ready
         run: |
