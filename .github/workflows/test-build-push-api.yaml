@@ -123,9 +123,9 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ secrets.AWS_ECR_REGISTRY }}/${{ vars.AWS_ECR_REPOSITORY_APP }}
+          images: ${{ secrets.AWS_ECR_REGISTRY }}/${{ vars.AWS_ECR_REPOSITORY_API }}
           tags: |
-            type=raw,value={{branch}}-{{sha}}-{{date 'X'}}
+            type=raw,value=${{ github.head_ref || github.ref_name }}-{{sha}}-{{date 'X'}}
         timeout-minutes: 1
 
       - name: Login to ECR
@@ -139,7 +139,7 @@ jobs:
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v6
         with:
-          context: ./app
+          context: ./api
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
