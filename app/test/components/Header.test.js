@@ -41,7 +41,7 @@ describe("Header test", () => {
   it("renders the logo and links to the home page", () => {
     const logoLink = wrapper.findComponent(RouterLinkStub);
     const logo = logoLink.find("img");
-    expect(logo.attributes("src")).toBe("/assets/images/logo.png");
+    expect(logo.attributes("src")).toBe("/jovvix-logo.png");
     expect(logoLink.props().to).toBe("/");
   });
 
