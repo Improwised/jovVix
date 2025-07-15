@@ -46,20 +46,20 @@ jobs:
           --health-timeout 10s
           --health-retries 5
 
-      kratos:
-        image: oryd/kratos:v0.8.0
-        ports:
-          - 4433:4433
-          - 4434:4434
-        env:
-          KRATOS_DATABASE_URL: postgres://test_user:test_password@localhost/test_db?sslmode=disable
-          KRATOS_ADMIN_PORT: 4434
-          KRATOS_PUBLIC_PORT: 4433
-        options: >-
-          --health-cmd "curl -f http://localhost:4433/health"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+      # kratos:
+      #   image: oryd/kratos:v0.8.0
+      #   ports:
+      #     - 4433:4433
+      #     - 4434:4434
+      #   env:
+      #     KRATOS_DATABASE_URL: postgres://test_user:test_password@localhost/test_db?sslmode=disable
+      #     KRATOS_ADMIN_PORT: 4434
+      #     KRATOS_PUBLIC_PORT: 4433
+      #   options: >-
+      #     --health-cmd "curl -f http://localhost:4433/health"
+      #     --health-interval 10s
+      #     --health-timeout 5s
+      #     --health-retries 5
 
     steps:
       - name: Checkout Code
@@ -93,7 +93,6 @@ jobs:
             -p 4433:4433 -p 4434:4434 \
             -v ${{ github.workspace }}/.github/kratos-config.yaml:/etc/config/kratos.yaml \
             -v ${{ github.workspace }}/.github/identity.schema.json:/etc/config/identity.schema.json \
-            -e DSN=postgres://test_user:test_password@host.docker.internal:5432/test_db?sslmode=disable \
             oryd/kratos:v0.8.0 \
             serve -c /etc/config/kratos.yaml
 
