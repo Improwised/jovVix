@@ -1,3 +1,14 @@
+<p align="center">
+  <img src="public/jovvix-logo.webp" alt="Jovvix Logo" width="200"/>
+</p>
+
+<h3 align="center">
+<b>
+Open-Source Quizzing Built for Live Engagement
+</b>
+</h3 >
+
+
 
 # jovVix
 
@@ -13,7 +24,7 @@
    - customizable csv with different question types like: Image based, code based, survey based questions
 <br><br>
 
-# Live Demo & Website
+## Live Demo & Website
 
 - **Website**: Visit [https://jovvix.com](https://jovvix.com) to learn more about the platform, explore the **About** section, and access full **Documentation**.
 - **Live Demo**: Try out the platform live at [https://app.jovvix.com](https://app.jovvix.com) to experience how the quiz system works — including joining a quiz, answering questions in real-time, and viewing live leaderboards.
@@ -80,10 +91,10 @@
   - [Collaborators](#collaborators)
   - [Dependencies](#dependencies)
 
-# Prerequisites
+## Prerequisites
 - Docker latest version installed in your system
 
-# Quickstart
+## Quickstart
 
 > **Important:**
 >  Ensure all the tools mentioned in the prerequisites are installed before proceeding.
@@ -91,13 +102,13 @@
 
 - First clone the repository on your terminal using command given below
 ```
-  git clone https://github.com/Improwised/jovvix.git
+  git clone https://github.com/improwised/jovVix.git
 ```
 
 - Navigate to the project directory using:
 
 ```
-   cd jovvix
+   cd jovVix
 ```
 
 - Configure your env settings into .env.docker if you want to integrate any changes otherwise keep the default ones
@@ -116,9 +127,9 @@
   127.0.0.1:8025
 ```
 
-# Getting Started For local setup from source
+## Getting Started For local setup from source
 
-# Prerequisites
+### Prerequisites
 
 | Package | Version |
 | --- | --- |
@@ -130,7 +141,7 @@
 - jovVix is a fun and interactive platform where users can enjoy playing quizzes while admins have the ability to create engaging and diverse quizzes.
 
 
-# Installation steps
+## Installation steps
 
 > **Important:**
 >  Ensure all the tools mentioned in the prerequisites are installed before proceeding.
@@ -139,13 +150,13 @@
 
 - First clone the repository using
 ```
-  git clone https://github.com/Improwised/jovvix.git
+  git clone https://github.com/Improwised/jovVix.git
 ```
 
 
 - Navigate to the project directory:
 ```
-   cd jovvix
+   cd jovVix
 ```
 
 
@@ -186,7 +197,7 @@
 
 - Designed to provide a fun and educational experience while ensuring smooth admin management, jovVix is the perfect solution for interactive quiz-based learning, competitions, or corporate events.
 
-# Documentation
+## Documentation
 
 ## Architecture Overview:
 
@@ -200,9 +211,7 @@
 - **Real-Time Communication:** WebSockets are implemented for handling multiple sessions and managing cookies effectively.
 - **S3 bucket:** We have used s3 bucket for storing images into object storage, you can setup the minio for local development
 
-```
-```
-- Then you have setup jovVix successfully in your local environment
+
  ### API Overview:
 - locally you could start your API server by running the following command :
 ```
@@ -217,13 +226,13 @@ http://127.0.0.1:3000/api/v1/docs
 
 - It's being managed in this file: CHANGELOG.md
 
-# Contributing to jovVix:
+## Contributing to jovVix:
 - You can see the contribution guidelines here : [CONTRIBUTING.md](./CONTRIBUTING.md)
 
-# Code of Conduct:
+## Code of Conduct:
 - This platforms also provides the [Code of Conduct](./CODE_OF_CONDUCT.md)
 
-# Developer
+## Developer
 
 ## Guide:
 If you're a developer looking to contribute or modify jovVix, here is a brief guide to get started: [Getting started](#getting-started-for-local-setup-from-source) OR, you could just `docker-compose up`
@@ -245,10 +254,9 @@ If you're a developer looking to contribute or modify jovVix, here is a brief gu
 ## Collaborators:
 - Thanks to all the people who already contributed!
 
-<a href="https://github.com/improwised/jovvix/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=improwised/jovvix" />
+<a href="https://github.com/Improwised/jovVix/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=Improwised/jovVix" />
 </a>
-
 
 ## Dependencies:
 
