@@ -59,7 +59,7 @@ jobs:
         with:
           images: ${{ secrets.AWS_ECR_REGISTRY }}/${{ vars.AWS_ECR_REPOSITORY_APP }}
           tags: |
-            type=raw,value={{branch}}-{{sha}}-{{date 'X'}}
+            type=raw,value=${{ github.head_ref || github.ref_name }}-{{sha}}-{{date 'X'}}
         timeout-minutes: 1
 
       - name: Login to ECR
