@@ -6,7 +6,7 @@ on:
       - develop
     paths:
       - "api/**"
-      - ".github/workflows/build-push-api.yaml"
+      - ".github/workflows/test-build-push-api.yaml"
       - "!**.md"
   pull_request:
     types: ["opened", "reopened", "synchronize", "ready_for_review"]
@@ -15,7 +15,7 @@ on:
       - main
     paths:
       - "api/**"
-      - ".github/workflows/build-push-api.yaml"
+      - ".github/workflows/test-build-push-api.yaml"
       - "!**.md"     
 jobs:
   backend-tests:
