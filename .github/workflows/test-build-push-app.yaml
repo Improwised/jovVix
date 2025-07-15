@@ -57,7 +57,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ vars.AWS_ECR_REGISTRY }}/${{ vars.AWS_ECR_REPOSITORY_APP }}
+          images: ${{ secrets.AWS_ECR_REGISTRY }}/${{ vars.AWS_ECR_REPOSITORY_APP }}
           tags: |
             type=raw,value={{branch}}-{{sha}}-{{date 'X'}}
         timeout-minutes: 1
@@ -80,14 +80,14 @@ jobs:
           annotations: ${{ steps.meta.outputs.annotations }}
         timeout-minutes: 15
 
-      - name: status of workflow
-        uses: rtCamp/action-slack-notify@v2
-        if: always()
-        env:
-          SLACK_WEBHOOK: ${{ secrets.WEBHOOK_URL }}
-          SLACK_USERNAME: workflow-status
-          SLACK_ICON: https://avatars.githubusercontent.com/u/25347574
-          SLACK_COLOR: ${{ job.status }}
-          SLACK_FOOTER: ${{ github.repository }}
-          SLACK_MESSAGE: "Build workflow run *${{ job.status }}*"
-        timeout-minutes: 5
+      # - name: status of workflow
+      #   uses: rtCamp/action-slack-notify@v2
+      #   if: always()
+      #   env:
+      #     SLACK_WEBHOOK: ${{ secrets.WEBHOOK_URL }}
+      #     SLACK_USERNAME: workflow-status
+      #     SLACK_ICON: https://avatars.githubusercontent.com/u/25347574
+      #     SLACK_COLOR: ${{ job.status }}
+      #     SLACK_FOOTER: ${{ github.repository }}
+      #     SLACK_MESSAGE: "Build workflow run *${{ job.status }}*"
+      #   timeout-minutes: 5
