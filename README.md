@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="public/jovvix-logo.webp" alt="Jovvix Logo" width="200"/>
+  <img src="app/public/readme-logo.webp" alt="Jovvix Logo" width="200"/>
 </p>
 
 <h3 align="center">
@@ -255,7 +255,7 @@ If you're a developer looking to contribute or modify jovVix, here is a brief gu
 - Thanks to all the people who already contributed!
 
 <a href="https://github.com/Improwised/jovVix/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=Improwised/jovVix" />
+  <img src="https://contributors-img.web.app/image?repo=Improwised/jovVix" alt="contributors">
 </a>
 
 ## Dependencies:
