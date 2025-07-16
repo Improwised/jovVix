@@ -88,13 +88,21 @@ jobs:
         
       - name: Start Ory Kratos
         run: |
+          # Clean up any existing container named 'kratos'
+          if docker ps -a --format '{{.Names}}' | grep -Eq '^kratos$'; then
+            echo "Removing existing Kratos container..."
+            docker rm -f kratos
+          fi
+
+          # Start Kratos
           docker run -d \
             --name kratos \
             -p 4433:4433 -p 4434:4434 \
             -v ${{ github.workspace }}/.github/kratos-config.yaml:/etc/config/kratos.yaml \
             -v ${{ github.workspace }}/.github/identity.schema.json:/etc/config/identity.schema.json \
-            oryd/kratos:v0.8.0 \
+            oryd/kratos:v1.0.0 \
             serve -c /etc/config/kratos.yaml
+
 
       - name: Wait for Ory Kratos to be Ready
         run: |

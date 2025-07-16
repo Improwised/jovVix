@@ -8,11 +8,6 @@ identity:
 
 selfservice:
   default_browser_return_url: http://localhost:3000
-  flows:
-    login:
-      enabled: true
-    registration:
-      enabled: true
 
 courier:
   smtp:
