@@ -43,6 +43,7 @@ jobs:
         timeout-minutes: 5
 
   build:
+    needs: frontend-tests
     name: Build and Push Image
     runs-on: ubuntu-latest
     steps:

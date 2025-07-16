@@ -131,6 +131,7 @@ jobs:
         timeout-minutes: 5
 
   build:
+    needs: backend-tests
     name: Build and Push Image
     runs-on: self-hosted
 
