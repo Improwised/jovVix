@@ -24,60 +24,88 @@ jobs:
     name: Run Backend Tests
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres:15.2-alpine
-        env:
-          POSTGRES_USER: test_user
-          POSTGRES_PASSWORD: test_password
-          POSTGRES_DB: test_db
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U test_user"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-      redis:
-        image: redis:alpine
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 5s
-          --health-timeout 10s
-          --health-retries 5
-
-      kratos:
-        image: oryd/kratos:v1.0.0
-        ports:
-          - 4433:4433
-          - 4434:4434
-        volumes:
-          - ${{ github.workspace }}/.github/kratos-config.yaml:/etc/config/kratos.yaml
-          - ${{ github.workspace }}/.github/identity.schema.json:/etc/config/identity.schema.json
-        options: >-
-          --health-cmd "curl -f http://localhost:4433/health/ready"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 10
-        command: serve -c /etc/config/kratos.yaml
-
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
+        timeout-minutes: 2
+
+      - name: Create Docker Network
+        run: docker network create ci-net || true
+        timeout-minutes: 2
+
+      - name: Start Postgres (with ci-net)
+        run: |
+          docker run -d \
+            --name postgres \
+            --network ci-net \
+            -e POSTGRES_USER=test_user \
+            -e POSTGRES_PASSWORD=test_password \
+            -e POSTGRES_DB=test_db \
+            -p 5432:5432 \
+            postgres:15.2-alpine
+        timeout-minutes: 5
+
+      - name: Wait for PostgreSQL
+        run: |
+          for i in {1..10}; do
+            docker exec postgres pg_isready -U test_user && break
+            echo "Waiting for Postgres..."
+            sleep 2
+          done
+        timeout-minutes: 5
+
+      - name: Run Kratos Migrations
+        run: |
+          docker run --rm \
+            --network ci-net \
+            -v ${{ github.workspace }}/.github/kratos-config.yaml:/etc/config/kratos.yaml \
+            -v ${{ github.workspace }}/.github/identity.schema.json:/etc/config/identity.schema.json \
+            -e DSN=postgres://test_user:test_password@postgres:5432/test_db?sslmode=disable \
+            oryd/kratos:v1.0.0 \
+            migrate sql --read-from-env --yes -c /etc/config/kratos.yaml
+        timeout-minutes: 5
+
+      - name: Start Ory Kratos
+        run: |
+          docker run -d \
+            --name kratos \
+            --network ci-net \
+            -p 4433:4433 -p 4434:4434 \
+            -v ${{ github.workspace }}/.github/kratos-config.yaml:/etc/config/kratos.yaml \
+            -v ${{ github.workspace }}/.github/identity.schema.json:/etc/config/identity.schema.json \
+            oryd/kratos:v1.0.0 \
+            serve -c /etc/config/kratos.yaml
+        timeout-minutes: 5
+
+      - name: Wait for Ory Kratos to be Ready
+        run: |
+          for i in {1..10}; do
+            if curl -sf http://localhost:4433/health/ready; then
+              echo "✅ Kratos is ready"
+              exit 0
+            else
+              echo "⏳ Waiting for Kratos..."
+              sleep 3
+            fi
+          done
+          echo "❌ Kratos failed to become ready"
+          docker logs kratos
+          exit 1
+        timeout-minutes: 5
+
 
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
           go-version: '1.22'
+        timeout-minutes: 2
 
-      - name: Install Backend Dependencies
+      - name: Install Dependencies
         working-directory: ./api
         run: |
           go mod tidy
           go mod vendor
+        timeout-minutes: 5
 
       - name: Run Backend Tests
         working-directory: ./api
@@ -85,8 +113,22 @@ jobs:
           POSTGRES_USER: test_user
           POSTGRES_PASSWORD: test_password
           POSTGRES_DB: test_db
-          POSTGRES_HOST: postgres
+          POSTGRES_HOST: postgres  # hostname from docker network
         run: go test ./... -v
+        timeout-minutes: 5
+
+      - name: Cleanup containers and network
+        if: always()
+        run: |
+          echo "🧹 Stopping containers..."
+          docker stop $(docker ps -aq --filter "network=ci-net") || true
+
+          echo "🧹 Removing containers..."
+          docker rm $(docker ps -aq --filter "network=ci-net") || true
+
+          echo "🧹 Removing Docker network..."
+          docker network rm ci-net || true
+        timeout-minutes: 5
 
   build:
     name: Build and Push Image
@@ -95,9 +137,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        timeout-minutes: 2
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+        timeout-minutes: 5
 
       - name: Docker meta
         id: meta
@@ -106,6 +150,7 @@ jobs:
           images: ${{ secrets.AWS_ECR_REGISTRY }}/${{ vars.AWS_ECR_REPOSITORY_API }}
           tags: |
             type=raw,value=${{ github.head_ref || github.ref_name }}-{{sha}}-{{date 'X'}}
+        timeout-minutes: 1
 
       - name: Login to ECR
         uses: docker/login-action@v3
@@ -113,6 +158,7 @@ jobs:
           registry: ${{ secrets.AWS_ECR_REGISTRY }}
           username: ${{ secrets.AWS_ECR_ACCESS_KEY_ID }}
           password: ${{ secrets.AWS_ECR_SECRET_ACCESS_KEY }}
+        timeout-minutes: 2
 
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v6
@@ -122,13 +168,4 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           annotations: ${{ steps.meta.outputs.annotations }}
-
-      # Uncomment below to enable Slack notifications
-      # - name: status of workflow
-      #   uses: rtCamp/action-slack-notify@v2
-      #   if: always()
-      #   env:
-      #     SLACK_WEBHOOK: ${{ secrets.WEBHOOK_URL }}
-      #     SLACK_COLOR: ${{ job.status }}
-      #     SLACK_FOOTER: ""
-      #     SLACK_MESSAGE: "Build workflow run **${{ job.status }}**"
+        timeout-minutes: 10
