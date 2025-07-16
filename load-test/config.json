@@ -1,0 +1,80 @@
+{
+  "environments": {
+    "local": {
+      "baseUrl": "http://127.0.0.1:3000",
+      "kratosUrl": "http://127.0.0.1:4433"
+    },
+    "staging": {
+      "baseUrl": "https://staging-api.jovvix.com",
+      "kratosUrl": "https://staging-kratos.jovvix.com"
+    },
+    "production": {
+      "baseUrl": "https://api.jovvix.com",
+      "kratosUrl": "https://kratos.jovvix.com"
+    }
+  },
+  "testData": {
+    "adminUser": {
+      "email": "admin@jovvix.com",
+      "password": "admin123"
+    },
+    "regularUser": {
+      "email": "user@jovvix.com",
+      "password": "user123"
+    },
+    "guestUser": {
+      "name": "Guest User"
+    }
+  },
+  "loadTestOptions": {
+    "functional": {
+      "vus": 1,
+      "iterations": 1,
+      "maxDuration": "5m"
+    },
+    "light": {
+      "stages": [
+        { "duration": "30s", "target": 5 },
+        { "duration": "1m", "target": 10 },
+        { "duration": "30s", "target": 0 }
+      ]
+    },
+    "moderate": {
+      "stages": [
+        { "duration": "1m", "target": 20 },
+        { "duration": "3m", "target": 50 },
+        { "duration": "1m", "target": 0 }
+      ]
+    },
+    "heavy": {
+      "stages": [
+        { "duration": "2m", "target": 50 },
+        { "duration": "5m", "target": 100 },
+        { "duration": "2m", "target": 0 }
+      ]
+    }
+  },
+  "thresholds": {
+    "default": {
+      "http_req_duration": ["p(95)<2000"],
+      "http_req_failed": ["rate<0.1"],
+      "iteration_duration": ["p(95)<10000"],
+      "ws_connecting": ["p(95)<1000"],
+      "ws_session_duration": ["p(95)<30000"]
+    },
+    "strict": {
+      "http_req_duration": ["p(95)<1000"],
+      "http_req_failed": ["rate<0.05"],
+      "iteration_duration": ["p(95)<5000"],
+      "ws_connecting": ["p(95)<500"],
+      "ws_session_duration": ["p(95)<15000"]
+    },
+    "relaxed": {
+      "http_req_duration": ["p(95)<5000"],
+      "http_req_failed": ["rate<0.2"],
+      "iteration_duration": ["p(95)<20000"],
+      "ws_connecting": ["p(95)<2000"],
+      "ws_session_duration": ["p(95)<60000"]
+    }
+  }
+}
