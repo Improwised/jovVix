@@ -6,16 +6,15 @@
     <div class="col-6">
       <div class="card shadow-lg">
         <div class="card-body text-center" style="min-height: 400px">
-          <div class="auth-logo mb-4">
-            <NuxtLink to="/" style="font-size: 30px; font-weight: bold"
-              >Jovvix</NuxtLink
-            >
-            <h2 class="mt-1 welcome-text">Recover your account</h2>
+          <div>
+            <NuxtLink to="/"> 
+              <img class="logo" src="/jovvix-logo.png" alt="" />
+            </NuxtLink>
+            <h3 class="mt-3 welcome-text">Recover your account</h3>
           </div>
 
           <form @submit.prevent="verifyOTP">
             <div class="form-group mb-4 d-flex align-items-center flex-column">
-              <label for="otp" class="form-label">OTP code</label>
               <input
                 id="otp"
                 v-model="otp"
@@ -151,5 +150,11 @@ const verifyOTP = async () => {
 <style scoped>
 .otp-input {
   max-width: 350px;
+}
+
+.logo {
+  height: 40px;
+  transform: scale(1.8);
+  margin-bottom: 20px;
 }
 </style>
