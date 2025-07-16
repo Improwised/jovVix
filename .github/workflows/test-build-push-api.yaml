@@ -1,4 +1,5 @@
 name: Build and Push api
+
 on:
   push:
     branches:
@@ -16,11 +17,13 @@ on:
     paths:
       - "api/**"
       - ".github/workflows/test-build-push-api.yaml"
-      - "!**.md"     
+      - "!**.md"
+
 jobs:
   backend-tests:
     name: Run Backend Tests
     runs-on: ubuntu-latest
+
     services:
       postgres:
         image: postgres:15.2-alpine
@@ -46,109 +49,55 @@ jobs:
           --health-timeout 10s
           --health-retries 5
 
-      # kratos:
-      #   image: oryd/kratos:v0.8.0
-      #   ports:
-      #     - 4433:4433
-      #     - 4434:4434
-      #   env:
-      #     KRATOS_DATABASE_URL: postgres://test_user:test_password@localhost/test_db?sslmode=disable
-      #     KRATOS_ADMIN_PORT: 4434
-      #     KRATOS_PUBLIC_PORT: 4433
-      #   options: >-
-      #     --health-cmd "curl -f http://localhost:4433/health"
-      #     --health-interval 10s
-      #     --health-timeout 5s
-      #     --health-retries 5
+      kratos:
+        image: oryd/kratos:v1.0.0
+        ports:
+          - 4433:4433
+          - 4434:4434
+        volumes:
+          - ${{ github.workspace }}/.github/kratos-config.yaml:/etc/config/kratos.yaml
+          - ${{ github.workspace }}/.github/identity.schema.json:/etc/config/identity.schema.json
+        options: >-
+          --health-cmd "curl -f http://localhost:4433/health/ready"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+        command: serve -c /etc/config/kratos.yaml
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
-        timeout-minutes: 5
 
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
           go-version: '1.22'
-        timeout-minutes: 5
 
       - name: Install Backend Dependencies
-        run: go mod tidy
         working-directory: ./api
-        timeout-minutes: 5
-
-      - name: Wait for PostgreSQL
-        run: |
-          for i in {1..10}; do
-            pg_isready -h localhost -p 5432 -U test_user && break
-            sleep 2
-          done
-        timeout-minutes: 5
-        
-        
-      - name: Start Ory Kratos
-        run: |
-          # Clean up any existing container named 'kratos'
-          if docker ps -a --format '{{.Names}}' | grep -Eq '^kratos$'; then
-            echo "Removing existing Kratos container..."
-            docker rm -f kratos
-          fi
-
-          # Start Kratos
-          docker run -d \
-            --name kratos \
-            -p 4433:4433 -p 4434:4434 \
-            -v ${{ github.workspace }}/.github/kratos-config.yaml:/etc/config/kratos.yaml \
-            -v ${{ github.workspace }}/.github/identity.schema.json:/etc/config/identity.schema.json \
-            oryd/kratos:v1.0.0 \
-            serve -c /etc/config/kratos.yaml
-
-
-      - name: Wait for Ory Kratos to be Ready
-        run: |
-          for i in {1..10}; do
-            if curl -f http://localhost:4433/health; then
-              echo "Kratos is ready"
-              exit 0
-            else
-              echo "Waiting for Kratos..."
-              sleep 2
-            fi
-          done
-
-          echo "❌ Kratos failed to start. Dumping logs..."
-          docker logs kratos
-          exit 1
-
-
-      - name: Install Dependencies
         run: |
           go mod tidy
           go mod vendor
-        working-directory: ./api
-        timeout-minutes: 5
 
       - name: Run Backend Tests
+        working-directory: ./api
         env:
           POSTGRES_USER: test_user
           POSTGRES_PASSWORD: test_password
           POSTGRES_DB: test_db
-          POSTGRES_HOST: localhost
+          POSTGRES_HOST: postgres
         run: go test ./... -v
-        working-directory: ./api
-        timeout-minutes: 5
 
   build:
     name: Build and Push Image
     runs-on: self-hosted
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        timeout-minutes: 2
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-        timeout-minutes: 2
 
       - name: Docker meta
         id: meta
@@ -157,7 +106,6 @@ jobs:
           images: ${{ secrets.AWS_ECR_REGISTRY }}/${{ vars.AWS_ECR_REPOSITORY_API }}
           tags: |
             type=raw,value=${{ github.head_ref || github.ref_name }}-{{sha}}-{{date 'X'}}
-        timeout-minutes: 1
 
       - name: Login to ECR
         uses: docker/login-action@v3
@@ -165,7 +113,6 @@ jobs:
           registry: ${{ secrets.AWS_ECR_REGISTRY }}
           username: ${{ secrets.AWS_ECR_ACCESS_KEY_ID }}
           password: ${{ secrets.AWS_ECR_SECRET_ACCESS_KEY }}
-        timeout-minutes: 5
 
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v6
@@ -175,8 +122,8 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           annotations: ${{ steps.meta.outputs.annotations }}
-        timeout-minutes: 15
 
+      # Uncomment below to enable Slack notifications
       # - name: status of workflow
       #   uses: rtCamp/action-slack-notify@v2
       #   if: always()
@@ -185,4 +132,3 @@ jobs:
       #     SLACK_COLOR: ${{ job.status }}
       #     SLACK_FOOTER: ""
       #     SLACK_MESSAGE: "Build workflow run **${{ job.status }}**"
-      #   timeout-minutes: 5
