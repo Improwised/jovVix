@@ -1,20 +1,9 @@
-import {
-  describe,
-  it,
-  expect,
-  beforeEach,
-  afterEach,
-  vi,
-  beforeAll,
-} from "vitest";
+import { describe, it, expect, afterEach, vi } from "vitest";
 import { createTestingPinia } from "@pinia/testing";
 import WaitingSpace from "~/components/Quiz/WaitingSpace.vue";
 import { mount } from "@vue/test-utils";
-import { plugins } from "chart.js";
 import { useInvitationCodeStore } from "~/store/invitationcode";
 import { useListUserstore } from "~/store/userlist";
-import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
-import { useMusicStore } from "~/store/music";
 import { mockNuxtImport } from "@nuxt/test-utils/runtime";
 import usecopyToClipboard from "~/composables/copy_to_clipboard";
 
@@ -47,7 +36,6 @@ const invitationCodeStore = useInvitationCodeStore(pinia);
 invitationCodeStore.invitationCode = "123456";
 
 const listUserStore = useListUserstore(pinia);
-const musicStore = useMusicStore(pinia);
 
 const mountComponent = () =>
   mount(WaitingSpace, {

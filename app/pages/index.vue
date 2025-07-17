@@ -92,7 +92,10 @@
               <!-- Icon Section -->
               <div class="col-md-2 text-center mb-3 mb-md-0">
                 <div class="banner-icon">
-                  <font-awesome-icon :icon="['fas', 'info-circle']" class="fs-1 text-primary" />
+                  <font-awesome-icon
+                    :icon="['fas', 'info-circle']"
+                    class="fs-1 text-primary"
+                  />
                 </div>
               </div>
 
@@ -105,11 +108,11 @@
                   </div>
 
                   <div class="alert alert-info border-0 mb-4" role="alert">
-
                     <div>
-                      <strong>Info:</strong> This demo supports up to <span class="fw-bold text-primary">100 concurrent
-                        users</span>.
-                      Performance may be affected beyond this limit.
+                      <strong>Info:</strong> This demo supports up to
+                      <span class="fw-bold text-primary"
+                        >100 concurrent users</span
+                      >. Performance may be affected beyond this limit.
                     </div>
                   </div>
                 </div>
@@ -119,11 +122,15 @@
                   <div class="col-md-6">
                     <div class="feature-card h-100">
                       <div class="d-flex align-items-center mb-2">
-                        <font-awesome-icon :icon="['fas', 'rocket']" class="me-2 text-success" />
+                        <font-awesome-icon
+                          :icon="['fas', 'rocket']"
+                          class="me-2 text-success"
+                        />
                         <h6 class="mb-0 fw-semibold">Deploy Your Own</h6>
                       </div>
                       <p class="text-muted mb-3 small">
-                        Get unlimited users and full control with your own instance
+                        Get unlimited users and full control with your own
+                        instance
                       </p>
                       <!-- <button class="btn btn-outline-success btn-sm">
                             <font-awesome-icon :icon="['fas', 'book']" class="me-1" />
@@ -136,14 +143,21 @@
                   <div class="col-md-6">
                     <div class="feature-card h-100">
                       <div class="d-flex align-items-center mb-2">
-                        <font-awesome-icon :icon="['fas', 'headset']" class="me-2 text-info" />
+                        <font-awesome-icon
+                          :icon="['fas', 'headset']"
+                          class="me-2 text-info"
+                        />
                         <h6 class="mb-0 fw-semibold">Get in touch:</h6>
                       </div>
                       <div class="d-flex flex-wrap gap-2">
-                        <a href="mailto:contact@jovvix.com"
+                        <a
+                          href="mailto:contact@jovvix.com"
                           class="btn btn-outline-primary btn-sm text-decoration-none contact-btn"
                         >
-                          <font-awesome-icon :icon="['fas', 'envelope']" class="me-1" />
+                          <font-awesome-icon
+                            :icon="['fas', 'envelope']"
+                            class="me-1"
+                          />
                           contact@jovvix.com
                         </a>
                       </div>
@@ -165,9 +179,13 @@ onMounted(async () => {
 
   // Initialize Bootstrap tooltips
   if (import.meta.client) {
-    const { Tooltip } = await import('bootstrap');
-    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-    [...tooltipTriggerList].map(tooltipTriggerEl => new Tooltip(tooltipTriggerEl));
+    const { Tooltip } = await import("bootstrap");
+    const tooltipTriggerList = document.querySelectorAll(
+      '[data-bs-toggle="tooltip"]'
+    );
+    [...tooltipTriggerList].map(
+      (tooltipTriggerEl) => new Tooltip(tooltipTriggerEl)
+    );
   }
 });
 </script>
@@ -185,7 +203,7 @@ onMounted(async () => {
 }
 
 .demo-info-banner::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
@@ -232,13 +250,18 @@ onMounted(async () => {
 }
 
 .feature-card::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, transparent 0%, #007bff 50%, transparent 100%);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    #007bff 50%,
+    transparent 100%
+  );
   transform: translateX(-100%);
   transition: transform 0.3s ease;
 }
@@ -271,13 +294,18 @@ onMounted(async () => {
 }
 
 .contact-btn::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
   transition: left 0.5s;
 }
 
@@ -337,7 +365,6 @@ onMounted(async () => {
 }
 
 @keyframes opacitySwitch {
-
   0%,
   100% {
     opacity: 1;

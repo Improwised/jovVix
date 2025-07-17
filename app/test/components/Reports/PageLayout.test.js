@@ -1,8 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { mount, RouterLinkStub } from "@vue/test-utils";
-import { useRoute } from "vue-router";
 import PageLayout from "~/components/reports/PageLayout.vue";
-
 
 let wrapper = mount(PageLayout, {
   props: {

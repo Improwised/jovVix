@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import { mount } from "@vue/test-utils";
 import ShareQuizAuthorizeUser from "~/components/Quiz/ShareQuizAuthorizeUser.vue";
 import constants from "~/test/constants";

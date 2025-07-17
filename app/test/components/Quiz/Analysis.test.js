@@ -1,9 +1,8 @@
-import { mountSuspended, renderSuspended } from "@nuxt/test-utils/runtime";
+import { mountSuspended } from "@nuxt/test-utils/runtime";
 import { it, expect, describe } from "vitest";
 import Analysis from "~~/components/Quiz/Analysis.vue";
 import QuizQuestionAnalysis from "~~/components/Quiz/QuestionAnalysis.vue";
 import QuizOptionsAnalysis from "~~/components/Quiz/OptionsAnalysis.vue";
-import { mount } from "@vue/test-utils";
 
 const mountComponent = async (props) => {
   return await mountSuspended(Analysis, {
@@ -49,8 +48,7 @@ const data = [
     response_time: 1040,
     calculated_points: 0,
     question: "Which company is known for its Think Different slogan?",
-    raw_options:
-      "img",
+    raw_options: "img",
     options: {
       1: "img1",
       2: "img2",
@@ -76,8 +74,7 @@ const data = [
     calculated_points: 1,
     question:
       "What features of a travel destination are most important to you when planning a vacation?",
-    raw_options:
-      "img",
+    raw_options: "img",
     options: {
       1: "Scenic landscapes",
       2: "Cultural experiences",

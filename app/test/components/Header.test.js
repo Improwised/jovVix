@@ -1,8 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { RouterLinkStub, mount } from "@vue/test-utils";
 import Header from "~/components/Header.vue";
-import { useRouter } from "vue-router";
-import { useSessionStore } from "~~/store/session";
 import { useUsersStore } from "~~/store/users";
 import { createTestingPinia } from "@pinia/testing";
 
