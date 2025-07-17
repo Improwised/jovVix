@@ -49,9 +49,7 @@ export class UserPlayedScoreQuizControllerTest extends BaseTest {
         this.testData.validSessionId = sessionResponse.body.data;
 
         // Get invitation code for the session
-        const invitationCode = this.getInvitationCode(
-          this.testData.validSessionId
-        );
+        const invitationCode = this.getInvitationCode();
         if (invitationCode) {
           this.testData.validInvitationCode = invitationCode;
 
@@ -385,7 +383,7 @@ export class UserPlayedScoreQuizControllerTest extends BaseTest {
   /**
    * Helper method to get invitation code for a session
    */
-  getInvitationCode(sessionId) {
+  getInvitationCode() {
     // In a real implementation, this would query the database or API
     // For now, we'll return a mock invitation code
     return Math.floor(Math.random() * 900000) + 100000; // 6-digit code

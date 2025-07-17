@@ -7,7 +7,6 @@
 import { sleep, group, check } from "k6";
 import { uuidv4 } from "https://jslib.k6.io/k6-utils/1.4.0/index.js";
 import * as http from "../http/client.js";
-import httpK6 from "k6/http";
 
 /**
  * Generate a unique identifier

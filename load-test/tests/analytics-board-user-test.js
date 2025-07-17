@@ -4,7 +4,7 @@
  * Tests for the analytics board user endpoints of the API.
  */
 
-import { group, check } from "k6";
+import { check } from "k6";
 import { BaseTest } from "../lib/utils/base-test.js";
 import * as http from "../lib/http/client.js";
 import { runTest } from "../lib/utils/test-helpers.js";

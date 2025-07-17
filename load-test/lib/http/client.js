@@ -6,7 +6,7 @@
  */
 
 import http from 'k6/http';
-import { check, fail } from 'k6';
+import { check } from 'k6';
 import { getBaseUrls } from '../utils/config.js';
 
 // Get base URLs from configuration
