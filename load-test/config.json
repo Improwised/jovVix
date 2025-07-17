@@ -3,14 +3,6 @@
     "local": {
       "baseUrl": "http://127.0.0.1:3000",
       "kratosUrl": "http://127.0.0.1:4433"
-    },
-    "staging": {
-      "baseUrl": "https://staging-api.jovvix.com",
-      "kratosUrl": "https://staging-kratos.jovvix.com"
-    },
-    "production": {
-      "baseUrl": "https://api.jovvix.com",
-      "kratosUrl": "https://kratos.jovvix.com"
     }
   },
   "testData": {
