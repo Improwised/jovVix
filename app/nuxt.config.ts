@@ -51,6 +51,15 @@ export default defineNuxtConfig({
   ],
 
   vite: {
+    // Temporary solution to silence Bootstrap SCSS deprecation warnings
+    // Reference: https://github.com/twbs/bootstrap/issues/40962
+    css: {
+      preprocessorOptions: {
+        scss: {
+          silenceDeprecations: ['mixed-decls', 'color-functions', 'global-builtin', 'import']
+        }
+      }
+    },
     define: {
       "process.env.DEBUG": false,
     },
