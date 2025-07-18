@@ -40,6 +40,7 @@ describe("ShareQuizModal test", () => {
 
   it("renders authorized users", async () => {
     wrapper.vm.quizAuthorizedUsersPending = false;
+    wrapper.vm.quizAuthorizedUsersError = null;
     wrapper.vm.quizAuthorizedUsersData = mockData;
     await wrapper.vm.$nextTick();
     const authorizedUsers = wrapper.findAllComponents(ShareQuizAuthorizeUser);
