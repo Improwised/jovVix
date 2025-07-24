@@ -132,7 +132,7 @@ jobs:
   build:
     needs: backend-tests
     name: Build and Push Image
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
