@@ -7,9 +7,7 @@ on:
       - develop
     paths:
       - "api/**"
-      - ".github/workflows/test-build-push-api.yaml"
-      - ".github/kratos-config.yaml"
-      - ".github/identity.schema.json"      
+      - ".github/workflows/test-build-push-api.yaml"      
       - "!**.md"
   pull_request:
     types: ["opened", "reopened", "synchronize", "ready_for_review"]
@@ -19,8 +17,6 @@ on:
     paths:
       - "api/**"
       - ".github/workflows/test-build-push-api.yaml"
-      - ".github/kratos-config.yaml"
-      - ".github/identity.schema.json"
       - "!**.md"
 
 jobs:
