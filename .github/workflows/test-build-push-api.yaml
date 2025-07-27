@@ -7,7 +7,7 @@ on:
       - develop
     paths:
       - "api/**"
-      - ".github/workflows/test-build-push-api.yaml"
+      - ".github/workflows/test-build-push-api.yaml"      
       - "!**.md"
   pull_request:
     types: ["opened", "reopened", "synchronize", "ready_for_review"]
@@ -42,6 +42,11 @@ jobs:
           go mod vendor
         timeout-minutes: 5
 
+      - name: Run Backend Tests
+        working-directory: ./api
+        run: go test ./... -v
+        timeout-minutes: 5
+
   build:
     needs: backend-tests
     name: Build and Push Image
@@ -73,12 +78,17 @@ jobs:
           password: ${{ secrets.AWS_ECR_SECRET_ACCESS_KEY }}
         timeout-minutes: 2
 
+      - name: Set PR Tags
+        if: ${{ github.event_name == 'pull_request' }}
+        run: echo "TAGS=test-${{ github.sha }}" >> $GITHUB_ENV
+        timeout-minutes: 1
+
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v6
         with:
           context: ./api
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          push: ${{ github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'develop') }}
+          tags: ${{ env.TAGS || steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           annotations: ${{ steps.meta.outputs.annotations }}
         timeout-minutes: 10
