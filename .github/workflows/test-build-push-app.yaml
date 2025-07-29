@@ -59,25 +59,29 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ secrets.AWS_ECR_REGISTRY }}/${{ vars.AWS_ECR_REPOSITORY_APP }}
+          images: improwised/${{ vars.DOCKER-HUB_REPOSITORY_UI }}
           tags: |
             type=raw,value=${{ github.head_ref || github.ref_name }}-{{sha}}-{{date 'X'}}
         timeout-minutes: 1
 
-      - name: Login to ECR
+      - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          registry: ${{ secrets.AWS_ECR_REGISTRY }}
-          username: ${{ secrets.AWS_ECR_ACCESS_KEY_ID}}
-          password: ${{ secrets.AWS_ECR_SECRET_ACCESS_KEY }}
+          username: ${{ vars.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
         timeout-minutes: 2
 
+      - name: Set PR Tags
+        if: ${{ github.event_name == 'pull_request' }}
+        run: echo "TAGS=test-${{ github.sha }}" >> $GITHUB_ENV
+        timeout-minutes: 1
+        
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v6
         with:
           context: ./app
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          push: ${{ github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'develop') }}
+          tags: ${{ env.TAGS || steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           annotations: ${{ steps.meta.outputs.annotations }}
         timeout-minutes: 10
