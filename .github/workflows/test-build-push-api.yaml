@@ -65,7 +65,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: improwised/${{ vars.DOCKER-HUB_REPOSITORY_API }}
+          images: improwised/${{ vars.DOCKER_HUB_REPOSITORY_API }}
           tags: |
             type=raw,value=${{ github.head_ref || github.ref_name }}-{{sha}}-{{date 'X'}}
         timeout-minutes: 1
