@@ -20,19 +20,10 @@ export default defineNuxtConfig({
         { charset: "utf-8" },
         { name: "viewport", content: "width=device-width, initial-scale=1" },
       ],
-      script: [
-        //This is just for example how to add js
-        //you can  include js  by this method direact include or via import individual method as per below link
-        //https://github.com/Debonex/samples/blob/master/nuxt3-bootstrap5/app.vue
-      ],
-      link: [
-        //This for just example how to add css
-        { rel: "stylesheet", href: "" },
-      ],
     },
   },
 
-  css: ["@/assets/scss/theme.scss"], // add
+  css: ["@/assets/scss/theme.scss"],
   modules: [
     "@nuxt/test-utils/module",
     [
@@ -41,7 +32,6 @@ export default defineNuxtConfig({
         autoImports: ["defineStore", "acceptHMRUpdate"],
       },
     ],
-    "@pinia-plugin-persistedstate/nuxt",
     (_options, nuxt) => {
       nuxt.hooks.hook("vite:extendConfig", (config) => {
         // @ts-expect-error error 'config.plugins' is possibly 'undefined'
@@ -51,6 +41,20 @@ export default defineNuxtConfig({
   ],
 
   vite: {
+    // Temporary solution to silence Bootstrap SCSS deprecation warnings
+    // Reference: https://github.com/twbs/bootstrap/issues/40962
+    css: {
+      preprocessorOptions: {
+        scss: {
+          silenceDeprecations: [
+            "mixed-decls",
+            "color-functions",
+            "global-builtin",
+            "import",
+          ],
+        },
+      },
+    },
     define: {
       "process.env.DEBUG": false,
     },

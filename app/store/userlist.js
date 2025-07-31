@@ -18,8 +18,6 @@ export const useListUserstore = defineStore(
     return { listUsers, addUser, removeAllUsers };
   },
   {
-    persist: {
-      storage: persistedState.localStorage,
-    },
+    persist: true,
   }
 );

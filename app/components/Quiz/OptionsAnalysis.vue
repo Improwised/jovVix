@@ -58,9 +58,7 @@ const props = defineProps({
   correctAnswer: {
     type: String,
     required: true,
-    default: () => {
-      return [];
-    },
+    default: "",
   },
   selectedAnswer: {
     type: String,

@@ -15,8 +15,6 @@ export const useMusicStore = defineStore(
     return { music, getMusic, setMusic };
   },
   {
-    persist: {
-      storage: persistedState.localStorage,
-    },
+    persist: true,
   }
 );
