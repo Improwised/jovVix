@@ -1,14 +1,10 @@
-import { describe, it, expect, vi, afterAll, afterEach } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import { mount } from "@vue/test-utils";
-import { useToast } from "vue-toastification";
-import { createTestingPinia } from "@pinia/testing";
-import { useMusicStore } from "~/store/music";
 import QuestionSpace from "~/components/Quiz/QuestionSpace.vue";
 import constants from "~/config/constants";
 import QuizQuestionAnalysis from "~/components/Quiz/QuestionAnalysis.vue";
 import { VProgressCircular } from "vuetify/components";
-import CodeBlockComponent from "~/components/CodeBlockComponent.vue";
-import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+
 vi.mock("vue-toastification", () => ({
   useToast: vi.fn(() => ({
     error: vi.fn(),

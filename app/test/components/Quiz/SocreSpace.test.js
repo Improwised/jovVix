@@ -1,8 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import { mount } from "@vue/test-utils";
 import ScoreSpace from "~/components/Quiz/ScoreSpace.vue";
 import { VProgressLinear } from "vuetify/components";
-import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 
 const props = {
   data: {
