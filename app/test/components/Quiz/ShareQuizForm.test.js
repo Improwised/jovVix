@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import { mount } from "@vue/test-utils";
 import ShareQuizForm from "~/components/Quiz/ShareQuizForm.vue";
 
@@ -50,7 +50,7 @@ describe("ShareOrEditPermissionForm.vue", () => {
 
     const emailInput = wrapper.find("input#email");
     const permissionSelect = wrapper.find("select#permission");
-    
+
     await emailInput.setValue("test@example.com");
     await permissionSelect.setValue("write");
     await wrapper.find("form").trigger("submit.prevent");

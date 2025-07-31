@@ -1,9 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { mount } from "@vue/test-utils";
-import { useRouter } from "vue-router";
-import { useToast } from "vue-toastification";
-import { useListUserstore } from "~/store/userlist";
-import { useSessionStore } from "~/store/session";
 import StartQuiz from "~/components/utils/StartQuiz.vue";
 
 // Mock Vue Toastification
