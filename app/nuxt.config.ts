@@ -15,6 +15,9 @@ export default defineNuxtConfig({
   },
   app: {
     head: {
+      htmlAttrs: {
+        lang: "en",
+      },
       title: "Jovvix",
       meta: [
         { charset: "utf-8" },
@@ -28,13 +31,17 @@ export default defineNuxtConfig({
       link: [
         // Preconnect to Google Fonts for faster loading
         { rel: "preconnect", href: "https://fonts.googleapis.com" },
-        { rel: "preconnect", href: "https://fonts.gstatic.com", crossorigin: "" },
+        {
+          rel: "preconnect",
+          href: "https://fonts.gstatic.com",
+          crossorigin: "",
+        },
         // Load Google Fonts with font-display: swap - critical for performance
-        { 
-          rel: "stylesheet", 
+        {
+          rel: "stylesheet",
           href: "https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap",
           media: "print",
-          onload: "this.media='all'"
+          onload: "this.media='all'",
         },
       ],
     },
@@ -86,22 +93,22 @@ export default defineNuxtConfig({
         output: {
           manualChunks: (id) => {
             // Chunk large libraries separately
-            if (id.includes('node_modules')) {
-              if (id.includes('vuetify')) return 'vendor-vuetify';
-              if (id.includes('chart.js')) return 'vendor-charts';
-              if (id.includes('bootstrap')) return 'vendor-bootstrap';
-              if (id.includes('@fortawesome')) return 'vendor-icons';
-              if (id.includes('highlight.js')) return 'vendor-highlight';
+            if (id.includes("node_modules")) {
+              if (id.includes("vuetify")) return "vendor-vuetify";
+              if (id.includes("chart.js")) return "vendor-charts";
+              if (id.includes("bootstrap")) return "vendor-bootstrap";
+              if (id.includes("@fortawesome")) return "vendor-icons";
+              if (id.includes("highlight.js")) return "vendor-highlight";
             }
-          }
-        }
+          },
+        },
       },
       // Reduce chunk size warnings
       chunkSizeWarningLimit: 1000,
     },
     // Optimize dependencies - only JS modules
     optimizeDeps: {
-      include: ['vuetify', 'chart.js', 'bootstrap'],
+      include: ["vuetify", "chart.js", "bootstrap"],
     },
   },
 
