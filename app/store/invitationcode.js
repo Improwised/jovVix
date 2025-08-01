@@ -7,8 +7,6 @@ export const useInvitationCodeStore = defineStore(
   },
 
   {
-    persist: {
-      storage: persistedState.localStorage,
-    },
+    persist: true,
   }
 );

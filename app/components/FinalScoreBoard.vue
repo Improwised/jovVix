@@ -150,11 +150,26 @@ onMounted(() => {
 </script>
 <template>
   <div v-if="winnerUI == 'true' && props.isAdmin">
-    <img id="myVideo" src="@/assets/images/medal/bg.webp" alt="" />
-    <div v-if="requestPending" class="text-center">Loading...</div>
+    <img
+      id="myVideo"
+      src="@/assets/images/medal/bg.webp"
+      alt="Winners celebration background"
+    />
     <div
+      v-if="requestPending"
+      class="text-center"
+      role="status"
+      aria-live="polite"
+    >
+      <span class="sr-only">Loading winners...</span>
+      Loading...
+    </div>
+    <main
       v-else
+      id="main-content"
       class="container-fluid justify-content-around row winners-container"
+      role="main"
+      aria-label="Quiz winners podium"
     >
       <div
         v-if="scoreboardData.length > 0"
@@ -174,51 +189,90 @@ onMounted(() => {
       >
         <WinnerCard :winner="scoreboardData[2]" />
       </div>
-      <div
-        class="col-12 order-4 text-center change-ui-button"
-        @click="changeUI(false)"
-      >
-        <v-btn rounded color="light" dark x-large class="px-7" flat>Next</v-btn>
+      <div class="col-12 order-4 text-center change-ui-button">
+        <v-btn
+          rounded
+          color="light"
+          dark
+          x-large
+          class="px-7"
+          flat
+          aria-label="Continue to scoreboard table view"
+          @click="changeUI(false)"
+        >
+          Next
+        </v-btn>
       </div>
-    </div>
+    </main>
   </div>
 
   <ClientOnly v-else>
-    <div v-if="requestPending" class="text-center">Loading...</div>
-    <div v-else>
-      <div
+    <div
+      v-if="requestPending"
+      class="text-center"
+      role="status"
+      aria-live="polite"
+    >
+      <span class="sr-only">Loading scoreboard...</span>
+      Loading...
+    </div>
+    <main v-else id="main-content" role="main">
+      <section
         v-if="scoreboardData"
         class="table-responsive mt-5 w-100 container p-0 pb-2"
+        aria-label="Quiz scoreboard results"
       >
         <ScoreBoardTable
           :scoreboard-data="scoreboardData"
           :is-admin="props.isAdmin"
           :user-name="props.userName"
         />
-        <button
+        <div
           v-if="props.isAdmin"
-          class="btn btn-primary"
-          @click="showAnalysis"
+          class="admin-controls mt-3"
+          role="group"
+          aria-label="Admin controls"
         >
-          Show Analysis
-        </button>
-        <button
-          v-if="props.isAdmin"
-          class="btn m-2 btn-primary"
-          @click="changeUI(true)"
-        >
-          Show Winners
-        </button>
-      </div>
-      <div v-if="!props.isAdmin">
+          <button
+            class="btn btn-primary"
+            aria-label="View detailed quiz analysis"
+            @click="showAnalysis"
+          >
+            Show Analysis
+          </button>
+          <button
+            class="btn m-2 btn-primary"
+            aria-label="Switch to winners podium view"
+            @click="changeUI(true)"
+          >
+            Show Winners
+          </button>
+        </div>
+      </section>
+      <section
+        v-if="!props.isAdmin"
+        aria-label="User quiz statistics and analysis"
+      >
         <QuizStatisticsBadges :user-statistics="userStatistics" />
         <QuizAnalysis :data="analysisData" />
-      </div>
-    </div>
+      </section>
+    </main>
   </ClientOnly>
 </template>
 
 <style scoped>
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 #myVideo {
   position: fixed;
   right: 0;

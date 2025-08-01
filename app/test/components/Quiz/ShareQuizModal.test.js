@@ -2,9 +2,6 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { mount } from "@vue/test-utils";
 import ShareQuizModal from "~/components/Quiz/ShareQuizModal.vue";
 import ShareQuizAuthorizeUser from "~/components/Quiz/ShareQuizAuthorizeUser.vue";
-import { registerEndpoint } from "@nuxt/test-utils/runtime";
-import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
-import { VCard, VCardText, VList, VListItem } from "vuetify/components";
 import ShareQuizForm from "~/components/Quiz/ShareQuizForm.vue";
 import constants from "~/test/constants";
 
@@ -40,6 +37,7 @@ describe("ShareQuizModal test", () => {
 
   it("renders authorized users", async () => {
     wrapper.vm.quizAuthorizedUsersPending = false;
+    wrapper.vm.quizAuthorizedUsersError = null;
     wrapper.vm.quizAuthorizedUsersData = mockData;
     await wrapper.vm.$nextTick();
     const authorizedUsers = wrapper.findAllComponents(ShareQuizAuthorizeUser);

@@ -22,9 +22,7 @@ services:
       - db
     env_file:
       - ./api/.env.docker
-    command: go run app.go migrate up
-    volumes:
-      - ./api:/jovvix/
+    command: ["./jovvix", "migrate", "up"]
 
   redis:
     image: redis:latest

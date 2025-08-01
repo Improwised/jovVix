@@ -7,7 +7,7 @@
       <div class="card shadow-lg">
         <div class="card-body text-center" style="min-height: 400px">
           <div>
-            <NuxtLink to="/"> 
+            <NuxtLink to="/">
               <img class="logo" src="/jovvix-logo.png" alt="" />
             </NuxtLink>
             <h3 class="mt-3 welcome-text">Recover your account</h3>

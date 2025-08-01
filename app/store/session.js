@@ -15,8 +15,6 @@ export const useSessionStore = defineStore(
     return { session, getSession, setSession };
   },
   {
-    persist: {
-      storage: persistedState.localStorage,
-    },
+    persist: true,
   }
 );

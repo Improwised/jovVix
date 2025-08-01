@@ -15,6 +15,9 @@ export default defineNuxtConfig({
   },
   app: {
     head: {
+      htmlAttrs: {
+        lang: "en",
+      },
       title: "Jovvix",
       meta: [
         { charset: "utf-8" },
@@ -26,13 +29,25 @@ export default defineNuxtConfig({
         //https://github.com/Debonex/samples/blob/master/nuxt3-bootstrap5/app.vue
       ],
       link: [
-        //This for just example how to add css
-        { rel: "stylesheet", href: "" },
+        // Preconnect to Google Fonts for faster loading
+        { rel: "preconnect", href: "https://fonts.googleapis.com" },
+        {
+          rel: "preconnect",
+          href: "https://fonts.gstatic.com",
+          crossorigin: "",
+        },
+        // Load Google Fonts with font-display: swap - critical for performance
+        {
+          rel: "stylesheet",
+          href: "https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap",
+          media: "print",
+          onload: "this.media='all'",
+        },
       ],
     },
   },
 
-  css: ["@/assets/scss/theme.scss"], // add
+  css: ["@/assets/scss/theme.scss"],
   modules: [
     "@nuxt/test-utils/module",
     [
@@ -41,7 +56,6 @@ export default defineNuxtConfig({
         autoImports: ["defineStore", "acceptHMRUpdate"],
       },
     ],
-    "@pinia-plugin-persistedstate/nuxt",
     (_options, nuxt) => {
       nuxt.hooks.hook("vite:extendConfig", (config) => {
         // @ts-expect-error error 'config.plugins' is possibly 'undefined'
@@ -51,6 +65,20 @@ export default defineNuxtConfig({
   ],
 
   vite: {
+    // Temporary solution to silence Bootstrap SCSS deprecation warnings
+    // Reference: https://github.com/twbs/bootstrap/issues/40962
+    css: {
+      preprocessorOptions: {
+        scss: {
+          silenceDeprecations: [
+            "mixed-decls",
+            "color-functions",
+            "global-builtin",
+            "import",
+          ],
+        },
+      },
+    },
     define: {
       "process.env.DEBUG": false,
     },
@@ -58,6 +86,29 @@ export default defineNuxtConfig({
       template: {
         transformAssetUrls,
       },
+    },
+    build: {
+      // Code splitting optimizations - only include actual JS modules
+      rollupOptions: {
+        output: {
+          manualChunks: (id) => {
+            // Chunk large libraries separately
+            if (id.includes("node_modules")) {
+              if (id.includes("vuetify")) return "vendor-vuetify";
+              if (id.includes("chart.js")) return "vendor-charts";
+              if (id.includes("bootstrap")) return "vendor-bootstrap";
+              if (id.includes("@fortawesome")) return "vendor-icons";
+              if (id.includes("highlight.js")) return "vendor-highlight";
+            }
+          },
+        },
+      },
+      // Reduce chunk size warnings
+      chunkSizeWarningLimit: 1000,
+    },
+    // Optimize dependencies - only JS modules
+    optimizeDeps: {
+      include: ["vuetify", "chart.js", "bootstrap"],
     },
   },
 
@@ -71,6 +122,18 @@ export default defineNuxtConfig({
       "@fortawesome/pro-regular-svg-icons",
       "@fortawesome/free-brands-svg-icons",
     ],
+  },
+
+  // Performance optimizations
+  ssr: true, // Enable SSR for better performance
+  experimental: {
+    payloadExtraction: false, // Improve initial load
+  },
+
+  // Critical performance optimizations
+  nitro: {
+    compressPublicAssets: true, // Enable compression
+    minify: true, // Minify output
   },
 
   plugins: ["@/plugins/chart.js"],

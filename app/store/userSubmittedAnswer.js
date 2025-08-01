@@ -24,8 +24,6 @@ export const useUserThatSubmittedAnswer = defineStore(
     };
   },
   {
-    persist: {
-      storage: persistedState.localStorage,
-    },
+    persist: true,
   }
 );
