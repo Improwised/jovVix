@@ -7,7 +7,7 @@
         <div class="col-md-7">
           <div class="text-md-start text-center">
             <h1 class="content-font text-72px text-black mb-5">
-              Welcome to the jovVix
+              Open-Source Quizzing Built for Live Engagement
             </h1>
             <p class="text-24px text-black mb-5">Explore, Learn, Quiz!</p>
           </div>
@@ -151,14 +151,14 @@
                       </div>
                       <div class="d-flex flex-wrap gap-2">
                         <a
-                          href="mailto:contact@jovvix.com"
+                          href="mailto:contact[at]jovvix[.com]"
                           class="btn btn-outline-primary btn-sm text-decoration-none contact-btn"
                         >
                           <font-awesome-icon
                             :icon="['fas', 'envelope']"
                             class="me-1"
                           />
-                          contact@jovvix.com
+                          contact[at]jovvix[.com]
                         </a>
                       </div>
                     </div>
@@ -338,6 +338,13 @@ onMounted(async () => {
   font-weight: 600;
 }
 
+lottie-player {
+  max-width: 500px;
+  max-height: 500px;
+  width: 100% !important;
+  height: auto !important;
+}
+
 @media (max-width: 768px) {
   .banner-card {
     padding: 1.5rem;
@@ -350,6 +357,11 @@ onMounted(async () => {
   .banner-icon {
     width: 60px;
     height: 60px;
+  }
+
+  lottie-player {
+    max-width: 400px;
+    max-height: 400px;
   }
 }
 
@@ -511,6 +523,23 @@ onMounted(async () => {
 
   .quiz-content p {
     padding-bottom: -50px;
+  }
+
+  .text-72px {
+    font-size: 48px !important;
+    line-height: 1.2;
+  }
+}
+
+@media (max-width: 480px) {
+  .text-72px {
+    font-size: 36px !important;
+    line-height: 1.1;
+  }
+
+  lottie-player {
+    max-width: 300px;
+    max-height: 300px;
   }
 }
 </style>
