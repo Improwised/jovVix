@@ -47,7 +47,10 @@ export default defineNuxtConfig({
     },
   },
 
-  css: ["@/assets/scss/theme.scss"],
+  css: [
+    "@/assets/scss/theme.scss",
+    "@fortawesome/fontawesome-svg-core/styles.css",
+  ],
   modules: [
     "@nuxt/test-utils/module",
     [
