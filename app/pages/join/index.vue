@@ -16,7 +16,9 @@
               </div>
               <form v-else method="POST" @submit.prevent="join_quiz">
                 <div class="mb-3 pe-3">
-                  <label for="code" class="form-label purple-text"
+                  <label
+                    for="code"
+                    class="form-label text-primary font-weight-bold"
                     >Invitation Code</label
                   >
                   <!-- Assuming v-otp-input is a custom component or external library -->
@@ -26,14 +28,14 @@
                     min-height="20"
                     type="number"
                     placeholder="0"
-                    class="purple-text"
+                    class="text-primary font-weight-bold"
                   />
                 </div>
                 <div class="mb-3">
                   <label
                     v-if="!isUserLoggedIn"
                     for="username"
-                    class="form-label purple-text"
+                    class="form-label text-primary font-weight-bold"
                     >User Name</label
                   >
                   <input
@@ -42,7 +44,7 @@
                     v-model.trim="username"
                     type="text"
                     name="username"
-                    class="purple-text form-control"
+                    class="text-primary font-weight-bold form-control"
                   />
                   <div v-if="isUserLoggedIn">
                     Welcome
@@ -220,11 +222,6 @@ const join_quiz = async () => {
 </script>
 
 <style scoped>
-.purple-text {
-  color: #663399;
-  font-weight: bold;
-}
-
 .join-button {
   background: linear-gradient(270deg, #5a66ef 0, #8042e4);
 }
