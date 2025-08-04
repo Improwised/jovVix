@@ -245,116 +245,98 @@ const verifyCode = async () => {
 <template>
   <QuizLoadingSpace v-if="component === 'waiting'"></QuizLoadingSpace>
   <!-- Verification of email -->
-  <div
+  <Frame
     v-else-if="component === 'verifyCode'"
-    class="row mt-5 justify-content-center g-0 min-vh-100"
+    page-title="Email Verification"
+    page-message="Please enter the verification code sent to your email"
   >
-    <div class="col-12 col-md-8 col-lg-6 col-xxl-4 py-8 py-xl-0">
-      <div class="card smooth-shadow-md">
-        <div class="card-body p-6">
-          <form @submit.prevent="verifyCode">
-            <h3>Please enter the verification code sent to your email</h3>
-            <div class="mb-3">
-              <label for="code" class="form-label">Verification Code</label>
-              <input
-                id="code"
-                v-model="code"
-                type="text"
-                class="form-control"
-                maxlength="6"
-                required
-              />
-            </div>
-            <div v-if="errors.code" class="text-danger">{{ errors.code }}</div>
-            <button type="submit" class="btn btn-primary text-light">
-              Verify
-            </button>
-          </form>
-        </div>
+    <form @submit.prevent="verifyCode">
+      <div class="mb-3">
+        <label for="code" class="form-label">Verification Code</label>
+        <input
+          id="code"
+          v-model="code"
+          type="text"
+          class="form-control"
+          maxlength="6"
+          required
+        />
       </div>
-    </div>
-  </div>
-  <div v-else class="row mt-5 justify-content-center g-0 min-vh-100">
-    <div class="col-12 col-md-8 col-lg-6 col-xxl-4 py-8 py-xl-0">
-      <!-- Card -->
-      <div class="card smooth-shadow-md">
-        <!-- Card body -->
-        <div class="card-body p-6">
-          <div class="mb-4">
-            <NuxtLink to="/" style="font-size: 30px; font-weight: bold"
-              >Login</NuxtLink
-            >
-            <p class="mb-6">Please enter your user information.</p>
-          </div>
-          <!-- Form -->
-          <form method="POST" :action="loginURLWithFlowQuery">
-            <!-- Username -->
-            <div class="mb-3">
-              <label for="email" class="form-label">Email</label>
-              <input
-                id="email"
-                v-model="email"
-                type="email"
-                name="identifier"
-                class="form-control"
-                required=""
-              />
-            </div>
-            <!-- Password -->
-            <div class="mb-3">
-              <label for="password" class="form-label">Password</label>
-              <input
-                id="password"
-                class="form-control"
-                type="password"
-                name="password"
-                required=""
-              />
-            </div>
-            <div v-if="errors.password" class="text-danger">
-              {{ errors.password }}
-            </div>
-            <div>
-              <input type="hidden" name="csrf_token" :value="csrfToken" />
-            </div>
-            <div>
-              <input type="hidden" name="method" value="password" />
-            </div>
-            <div>
-              <!-- Button -->
-              <div class="d-grid">
-                <button type="submit" class="btn btn-primary text-white">
-                  Sign in
-                </button>
-              </div>
+      <div v-if="errors.code" class="text-danger">{{ errors.code }}</div>
+      <button type="submit" class="btn btn-primary text-light">Verify</button>
+    </form>
+  </Frame>
+  <Frame
+    v-else
+    page-title="Login"
+    page-message="Please enter your user information."
+  >
+    <!-- Form -->
+    <form method="POST" :action="loginURLWithFlowQuery">
+      <!-- Username -->
+      <div class="mb-3">
+        <label for="email" class="form-label">Email</label>
+        <input
+          id="email"
+          v-model="email"
+          type="email"
+          name="identifier"
+          class="form-control"
+          required=""
+        />
+      </div>
+      <!-- Password -->
+      <div class="mb-3">
+        <label for="password" class="form-label">Password</label>
+        <input
+          id="password"
+          class="form-control"
+          type="password"
+          name="password"
+          required=""
+        />
+      </div>
+      <div v-if="errors.password" class="text-danger">
+        {{ errors.password }}
+      </div>
+      <div>
+        <input type="hidden" name="csrf_token" :value="csrfToken" />
+      </div>
+      <div>
+        <input type="hidden" name="method" value="password" />
+      </div>
+      <div>
+        <!-- Button -->
+        <div class="d-grid">
+          <button type="submit" class="btn btn-primary text-white">
+            Sign in
+          </button>
+        </div>
 
-              <div class="d-md-flex justify-content-between mt-4">
-                <div class="mb-2 mb-md-0">
-                  <NuxtLink to="/account/register" class="fs-5"
-                    >Create An Account
-                  </NuxtLink>
-                </div>
-                <div>
-                  <button
-                    class="text-primary mb-2 fs-5"
-                    @click.prevent="handleForgotPassword"
-                  >
-                    Forgot your password?
-                  </button>
-                </div>
-                <div>
-                  <button
-                    class="text-primary fs-5"
-                    @click.prevent="handleEmailVerification"
-                  >
-                    Verify your email
-                  </button>
-                </div>
-              </div>
-            </div>
-          </form>
+        <div class="d-md-flex justify-content-between mt-4">
+          <div class="mb-2 mb-md-0">
+            <NuxtLink to="/account/register" class="fs-5"
+              >Create An Account
+            </NuxtLink>
+          </div>
+          <div>
+            <button
+              class="text-primary mb-2 fs-5"
+              @click.prevent="handleForgotPassword"
+            >
+              Forgot your password?
+            </button>
+          </div>
+          <div>
+            <button
+              class="text-primary fs-5"
+              @click.prevent="handleEmailVerification"
+            >
+              Verify your email
+            </button>
+          </div>
         </div>
       </div>
-    </div>
-  </div>
+    </form>
+  </Frame>
 </template>

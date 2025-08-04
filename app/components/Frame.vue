@@ -54,7 +54,7 @@ const music = computed(() => {
     <div class="border p-2 m-0 m-sm-5 p-sm-5 max-width rounded bg-white shadow">
       <div class="d-flex flex-row">
         <div class="flex-grow-1">
-          <h1 class="join-page-title">{{ pageTitle }}</h1>
+          <h1 class="join-page-title text-primary">{{ pageTitle }}</h1>
           <h6 v-if="props.pageMessage">{{ pageMessage }}</h6>
         </div>
         <div>
