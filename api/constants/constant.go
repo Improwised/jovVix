@@ -253,6 +253,11 @@ const (
 	// Event 11. ping
 	EventPing = "ping"
 	EventPong = "pong"
+
+	// Event 12. PDF
+	PdfName         = "pdf_name"
+	ErrInGettingPdf = "error during getting pdf"
+	ErrPdfNotFound  = "pdf not found with this name"
 )
 
 // final scoreboard cookie for user

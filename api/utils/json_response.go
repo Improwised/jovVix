@@ -53,3 +53,9 @@ func JSONErrorWs(c *websocket.Conn, eventName string, data interface{}) error {
 	}
 
 }
+
+func JSONSuccessPdf(c *fiber.Ctx, statusCode int, pdfBytes []byte) error {
+	c.Set("Content-Type", "application/pdf")
+	c.Set("Content-Disposition", "attachment; filename=quiz report.pdf")
+	return c.Status(statusCode).Send(pdfBytes)
+}

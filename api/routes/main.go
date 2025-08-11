@@ -127,6 +127,11 @@ func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config confi
 		return err
 	}
 
+	err = setupDownloadQuizReportController(v1, goqu, logger, middleware, config)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -347,5 +352,19 @@ func setupSharedQuizzesController(v1 fiber.Router, goqu *goqu.Database, logger *
 	sharedQuizzesRouter.Get(fmt.Sprintf("/:%s", constants.QuizId), middlewares.QuizPermission, middlewares.VerifyQuizShareAccess, sharedQuizzesController.ListQuizAuthorizedUsers)
 	sharedQuizzesRouter.Put(fmt.Sprintf("/:%s", constants.QuizId), middlewares.QuizPermission, middlewares.VerifyQuizShareAccess, sharedQuizzesController.UpdateUserPermissionOfQuiz)
 	sharedQuizzesRouter.Delete(fmt.Sprintf("/:%s", constants.QuizId), middlewares.QuizPermission, middlewares.VerifyQuizShareAccess, sharedQuizzesController.DeleteUserPermissionOfQuiz)
+	return nil
+}
+
+func setupDownloadQuizReportController(v1 fiber.Router, goqu *goqu.Database, logger *zap.Logger, middlewares middlewares.Middleware, config config.AppConfig) error {
+	downloadQuizReportController, err := controller.NewDownloadQuizReportContorller(goqu, logger, &config)
+
+	if err != nil {
+		return err
+	}
+
+	downloadQuizRouter := v1.Group("/download")
+	downloadQuizRouter.Use(middlewares.KratosAuthenticated)
+	downloadQuizRouter.Get(fmt.Sprintf("/:%s", constants.ActiveQuizId), downloadQuizReportController.DownloadQuizReport)
+	// downloadQuizRouter.Get(fmt.Sprintf("/pdf/:%s", constants.PdfName), downloadQuizReportController.GetPdfById)
 	return nil
 }
