@@ -57,7 +57,7 @@ func (fc *AnalyticsBoardUserController) GetAnalyticsForUser(ctx *fiber.Ctx) erro
 	userPlayedQuizId := ctx.Query(constants.UserPlayedQuiz)
 	fc.logger.Debug("AnalyticsBoardUserController.GetAnalyticsForUser called", zap.Any("userPlayedQuizId", userPlayedQuizId))
 
-	if userPlayedQuizId == "" || !(len(userPlayedQuizId) == 36) {
+	if userPlayedQuizId == "" || len(userPlayedQuizId) != 36 {
 		fc.logger.Error("user played quiz is not valid")
 		return utils.JSONFail(ctx, http.StatusBadRequest, errors.New("user play quiz should be valid string").Error())
 	}

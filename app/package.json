@@ -9,6 +9,7 @@
     "postinstall": "nuxt prepare",
     "lint": "eslint --ext \".ts,.js,.vue\" --ignore-path .gitignore .",
     "lint-fix": "eslint --fix --ext \".ts,.js,.vue\" --ignore-path .gitignore .",
+    "format": "prettier --write \"**/*.{js,ts,vue,html,css}\"",
     "prepare": "cd .. && husky install",
     "test": "vitest",
     "start": "node .output/server/index.mjs"

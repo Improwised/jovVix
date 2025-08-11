@@ -16,7 +16,7 @@ on:
     paths:
       - "app/**"
       - ".github/workflows/test-build-push-app.yaml"
-      - "!**.md"      
+      - "!**.md"
 jobs:
   frontend-tests:
     name: Frontend Tests
@@ -75,7 +75,7 @@ jobs:
         if: ${{ github.event_name == 'pull_request' }}
         run: echo "TAGS=test-${{ github.sha }}" >> $GITHUB_ENV
         timeout-minutes: 1
-        
+
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v6
         with:

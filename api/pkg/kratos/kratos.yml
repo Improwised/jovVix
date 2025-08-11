@@ -93,7 +93,7 @@ selfservice:
       # http://127.0.0.1:4433/self-service/login/browser?aal=&refresh=&return_to=
       after:
         default_browser_return_url: http://127.0.0.1:3000/api/v1/kratos/auth
-        hooks: 
+        hooks:
           - hook: require_verified_address
       lifespan: 10m
 

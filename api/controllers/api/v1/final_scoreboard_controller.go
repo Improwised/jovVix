@@ -48,7 +48,7 @@ func (fc *FinalScoreBoardController) GetScore(ctx *fiber.Ctx) error {
 	userPlayedQuiz := ctx.Query(constants.UserPlayedQuiz)
 	fc.logger.Debug("FinalScoreBoardController.GetScore called", zap.Any("userPlayedQuiz", userPlayedQuiz))
 
-	if !(userPlayedQuiz != "" && len(userPlayedQuiz) == 36) {
+	if userPlayedQuiz == "" || len(userPlayedQuiz) != 36 {
 		fc.logger.Debug("user played quiz id is not valid - either empty string or it is not 36 characters long")
 		return utils.JSONFail(ctx, http.StatusBadRequest, errors.New("user play quiz should be valid string").Error())
 	}

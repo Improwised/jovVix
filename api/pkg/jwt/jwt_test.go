@@ -15,8 +15,8 @@ func TestJWT(t *testing.T) {
 	err = os.Chdir("../../")
 	assert.Nil(t, err)
 
-	var token string = ""
-	var subject string = "11112"
+	var token = ""
+	var subject = "11112"
 	cfg := config.LoadTestEnv()
 
 	t.Run("create token", func(t *testing.T) {

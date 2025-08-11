@@ -48,7 +48,7 @@ func (fc *FinalScoreBoardAdminController) GetScoreForAdmin(ctx *fiber.Ctx) error
 
 	var activeQuizId = ctx.Query(constants.ActiveQuizId)
 
-	if !(activeQuizId != "" && len(activeQuizId) == 36) {
+	if activeQuizId == "" || len(activeQuizId) != 36 {
 		fc.logger.Debug("active quiz id is not valid - either empty string or it is not 36 characters long")
 		return utils.JSONFail(ctx, http.StatusBadRequest, errors.New("user play quiz should be valid string").Error())
 	}

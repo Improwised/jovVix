@@ -10,12 +10,12 @@ import (
 
 func CalculatePointsAndScore(userAnswer structs.ReqAnswerSubmit, answers []int, answerPoints int16, answerDurationInSeconds, questionType int) (sql.NullInt16, int) {
 
-	var points sql.NullInt16 = sql.NullInt16{}
+	var points = sql.NullInt16{}
 	var remainingTime int
 	var remainingTimeFloat float64
 	var timePoints int
-	var basePoint int = 500
-	var finalScore int = 0
+	var basePoint = 500
+	var finalScore = 0
 
 	// check type of the question
 	actualAnswerLen := len(answers)
@@ -66,7 +66,7 @@ func CalculatePointsAndScore(userAnswer structs.ReqAnswerSubmit, answers []int, 
 	// 	}
 	// }
 
-	var noOfMatches int = 0
+	var noOfMatches = 0
 	for _, actualAnswer := range answers {
 		for _, userAnswer := range userAnswer.AnswerKeys {
 			if actualAnswer == userAnswer {

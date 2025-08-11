@@ -261,5 +261,5 @@ func (ctrl *AuthController) DeleteRegisteredUser(c *fiber.Ctx) error {
 	}
 	ctrl.logger.Debug("AuthController.DeleteRegisteredUser success", zap.Any("userID", userId), zap.Any("kratosID", kratosId))
 
-	return utils.JSONSuccess(c, http.StatusOK, "user deleted succesfully!")
+	return utils.JSONSuccess(c, http.StatusOK, "user deleted successfully!")
 }

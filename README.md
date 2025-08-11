@@ -1,32 +1,34 @@
-<p align="center">
-  <img src="app/public/readme-logo.webp" alt="Jovvix Logo" width="200"/>
-</p>
+[![Go Report Card](https://goreportcard.com/badge/github.com/Improwised/jovVix/api)](https://goreportcard.com/report/github.com/Improwised/golang-api/api)
+![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/Improwised/jovVix?filename=api%2Fgo.mod)
+[![License](https://img.shields.io/github/license/Improwised/jovVix)](https://github.com/Improwised/jovVix/blob/main/LICENSE)
+[![Workflow Status](https://img.shields.io/github/actions/workflow/status/Improwised/jovVix/.github/workflows/test-build-push-api.yaml?branch=main&label=backend-workflow)](https://github.com/Improwised/jovVix/actions/workflows/test-build-push-api.yaml?query=branch:main)
+[![Workflow Status](https://img.shields.io/github/actions/workflow/status/Improwised/jovVix/.github/workflows/test-build-push-app.yaml?branch=main&label=frontend-workflow)](https://github.com/Improwised/jovVix/actions/workflows/test-build-push-app.yaml?query=branch:main)
+[![Latest Release](https://img.shields.io/github/v/release/Improwised/jovVix)](https://github.com/Improwised/jovVix/releases/latest)
 
-<h3 align="center">
-<b>
+# jovVix  <img align="right" width=150 src="app/public/readme-logo.webp" alt=" Jovvix Logo">
 Open-Source Quizzing Built for Live Engagement
-</b>
-</h3 >
 
 
-
-# jovVix
-
+## Overview
 - jovVix is a fun and interactive platform where users can enjoy playing quizzes while admins have the ability to create engaging and diverse quizzes.
 - Designed to provide a fun and educational experience while ensuring smooth admin management, jovVix is the perfect solution for interactive quiz-based learning, competitions, or corporate events.
 
 - App is an interactive, real-time platform that supports diverse
   question types like
+   - Multiple choice
+   - Survey based
+   - Code based
+   - Image based
 - App provides instant feedback and live ranks and leaderboards.
   With features like
    - In-depth analytics
    - real dynamic avatars
-   - customizable csv with different question types like: Image based, code based, survey based questions
+   - customizable csv with different question types.
 <br><br>
 
 ## Live Demo & Website
 
-- **Website**: Visit [https://jovvix.com](https://jovvix.com) to learn more about the platform, explore the **About** section, and access full **Documentation**.
+- **Website**: Visit [https://jovvix.com](https://jovvix.com) to learn more about the platform, and **Documentation**.
 - **Live Demo**: Try out the platform live at [https://app.jovvix.com](https://app.jovvix.com) to experience how the quiz system works — including joining a quiz, answering questions in real-time, and viewing live leaderboards.
 
 ## Key Attributes:
@@ -39,9 +41,9 @@ Open-Source Quizzing Built for Live Engagement
 ### Development and Quality
 - Linting: Utilizes ESLint to maintain code quality and consistency.
 - Authentication: Ory Kratos manages secure user authentication and session management.
-- Third-Party Integrations: Includes S3 for image handling, as well as other integrations as required.
+- Third-Party Integrations: Includes S3 compatible object storage for image handling, as well as other integrations as required.
 - SMTP Services: Configured for email services, supporting verification and password recovery.
-- Testing: We have performed the unit testing in this application
+- Testing: We have performed the unit testing in this application.
 - Containerization: Packaged with Docker for streamlined deployment and environment consistency.
 - RESTful API: Offers a RESTful API for integration and easy access to app functionality.
 - Environment Variables: Follows the 12-factor app principles with environment variable configuration.
@@ -65,8 +67,8 @@ Open-Source Quizzing Built for Live Engagement
   - During the quiz at each question
   - After the quiz, showcasing winners and individual performance
 - **Customization Options:** Offers customizable quiz features for educators, workshop hosts, and event organizers to suit their needs.
-- **Share quiz feature** Users can share their quiz to other users through email and can grant their preferred permission while sharing to the other one
-- **CSV Uploads:**  Enables efficient quiz creation through CSV file uploads, allowing users to preview, edit, and allowing users to seamlessly create quizzes
+- **Share quiz feature:** Users can share their quiz to other users through email and can grant their preferred permission while sharing to the other one.
+- **CSV Uploads:**  Enables efficient quiz creation through CSV file uploads, allowing users to preview, edit, and allowing users to seamlessly create quizzes.
     - You can see the CSV formatting guidelines here : [csv-formatting-guide.md](docs/csv-formatting-guide.md)
 - **Mobile-Friendly Design:** Fully responsive and works seamlessly on mobile and desktop devices.
 - **Admin Tools:** Advanced admin panel for managing quizzes, participants, and results.
@@ -111,7 +113,7 @@ Open-Source Quizzing Built for Live Engagement
    cd jovVix
 ```
 
-- Configure your env settings into .env.docker if you want to integrate any changes otherwise keep the default ones
+- Configure your env settings into .env.docker if you want to integrate any changes otherwise keep the default ones.
 
 - Then build and run the docker compose file in your environment by following command
 ```
@@ -133,9 +135,9 @@ Open-Source Quizzing Built for Live Engagement
 
 | Package | Version |
 | --- | --- |
-| [Node.js](https://nodejs.org/en/) | v18.0+ |
+| [Node.js](https://nodejs.org/en/) | v19.0+ |
 | [Nuxt](https://nuxt.com/) | v3.0.0 |
-| [Go](https://golang.org/) | v1.21+ |
+| [Go](https://golang.org/) | ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/Improwised/jovVix?filename=api%2Fgo.mod)|
 
 
 - jovVix is a fun and interactive platform where users can enjoy playing quizzes while admins have the ability to create engaging and diverse quizzes.
@@ -171,7 +173,7 @@ Open-Source Quizzing Built for Live Engagement
 ```
   cd api
   docker-compose up
-  go run app.go migrate
+  go run app.go migrate up
   go run app.go api
 ```
 
@@ -189,7 +191,6 @@ Open-Source Quizzing Built for Live Engagement
 - Afterwards run the frontend development server:
 
 ```
-  npm i
   npm run dev
 ```
 - Then you have setup jovVix successfully in your local environment
@@ -213,13 +214,10 @@ Open-Source Quizzing Built for Live Engagement
 
 
  ### API Overview:
-- locally you could start your API server by running the following command :
+- locally you can check the API documentation by running the backend server and visit :
 ```
 http://127.0.0.1:3000/api/v1/docs
 ```
-- This would open the swagger documentation
-
-- **Backend:** jovVix uses a Golang backend to handle the server-side logic.
 - This would open the swagger documentation
 
  ### Upgrading and changelog:
@@ -232,9 +230,7 @@ http://127.0.0.1:3000/api/v1/docs
 ## Code of Conduct:
 - This platforms also provides the [Code of Conduct](./CODE_OF_CONDUCT.md)
 
-## Developer
-
-## Guide:
+## Developer Guide:
 If you're a developer looking to contribute or modify jovVix, here is a brief guide to get started: [Getting started](#getting-started-for-local-setup-from-source) OR, you could just `docker-compose up`
 
 ### Code Structure Overview:

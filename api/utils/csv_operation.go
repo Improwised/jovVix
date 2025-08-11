@@ -86,7 +86,10 @@ func ExtractQuestionsFromCSV(questions []Question, questionTimeLimit string) ([]
 		for _, a := range strings.Split(u.CorrectAnswer, "|") {
 			if a != "" {
 				answerInt := 0
-				fmt.Sscanf(a, "%d", &answerInt)
+				_, err := fmt.Sscanf(a, "%d", &answerInt)
+				if err != nil {
+					return validQuestions, fmt.Errorf("invalid answer format: %s", a)
+				}
 				answers = append(answers, answerInt)
 			}
 		}
@@ -94,7 +97,10 @@ func ExtractQuestionsFromCSV(questions []Question, questionTimeLimit string) ([]
 		// Determine points
 		points := 1
 		if u.Points != "" {
-			fmt.Sscanf(u.Points, "%d", &points)
+			_, err := fmt.Sscanf(u.Points, "%d", &points)
+			if err != nil {
+				return validQuestions, fmt.Errorf("invalid points format: %s", u.Points)
+			}
 		}
 
 		duration := 30

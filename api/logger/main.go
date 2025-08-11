@@ -30,21 +30,21 @@ var zapServerConfig = zap.Config{
 }
 
 // NewRootLogger instantiates zap.Logger with given configuration
-func NewRootLogger(debug, developement bool) (*zap.Logger, error) {
+func NewRootLogger(debug, development bool) (*zap.Logger, error) {
 	var err error
 	var logger *zap.Logger
 
 	if debug {
 		// enable debug level
 		zapServerConfig.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
-		if !developement {
+		if !development {
 			return zapServerConfig.Build(zap.AddStacktrace(zap.ErrorLevel), zap.AddCaller())
 		}
 		zapServerConfig.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 		return zapServerConfig.Build(zap.AddStacktrace(zap.ErrorLevel), zap.AddCaller())
 	}
 
-	if developement {
+	if development {
 		zapServerConfig.Encoding = "console"
 		zapServerConfig.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 		return zapServerConfig.Build(zap.AddStacktrace(zap.ErrorLevel), zap.AddCaller())

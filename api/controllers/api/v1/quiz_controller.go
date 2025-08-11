@@ -72,7 +72,7 @@ func (ctrl *QuizController) GetAdminUploadedQuizzes(c *fiber.Ctx) error {
 	quizzes, err := ctrl.quizModel.GetQuizzesByAdmin(userID)
 
 	if err != nil {
-		ctrl.logger.Error("error occured while getting quizzes by admin", zap.Error(err))
+		ctrl.logger.Error("error occurred while getting quizzes by admin", zap.Error(err))
 		return utils.JSONError(c, http.StatusInternalServerError, err.Error())
 	}
 
@@ -154,7 +154,7 @@ func (qc *QuizController) ListQuizzesAnalysis(c *fiber.Ctx) error {
 	quizzes, count, err := qc.quizModel.ListQuizzesAnalysis(filters[constants.NameQueryParam], filters[constants.OrderQueryParam], filters[constants.OrderByQueryParam], filters["date"], userID, page)
 
 	if err != nil {
-		qc.logger.Error("error occured while listing quizzes for analysis", zap.Error(err))
+		qc.logger.Error("error occurred while listing quizzes for analysis", zap.Error(err))
 		return utils.JSONError(c, http.StatusInternalServerError, err.Error())
 	}
 
@@ -272,7 +272,7 @@ func (ctrl *QuizController) DeleteQuizById(c *fiber.Ctx) error {
 
 	isActiveQuizPresent, err := ctrl.activeQuizModel.IsActiveQuizPresent(quizId)
 	if err != nil {
-		ctrl.logger.Error("error occured while getting is active quiz is present or not", zap.Error(err))
+		ctrl.logger.Error("error occurred while getting is active quiz is present or not", zap.Error(err))
 		return utils.JSONError(c, http.StatusInternalServerError, err.Error())
 	}
 	if isActiveQuizPresent {
@@ -281,7 +281,7 @@ func (ctrl *QuizController) DeleteQuizById(c *fiber.Ctx) error {
 
 	err = ctrl.quizSvc.DeleteQuizById(quizId)
 	if err != nil {
-		ctrl.logger.Error("error occured while deleting quiz", zap.Error(err))
+		ctrl.logger.Error("error occurred while deleting quiz", zap.Error(err))
 		return utils.JSONError(c, http.StatusInternalServerError, err.Error())
 	}
 

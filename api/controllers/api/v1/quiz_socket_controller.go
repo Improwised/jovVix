@@ -627,19 +627,13 @@ func handleCodeGeneration(c *websocket.Conn, qc *quizSocketController, session m
 
 	if !isInvitationCodeSent {
 		// handle Waiting page
-		for {
-
-			if !(*isConnected) {
-				break
-			}
-
+		for *isConnected {
 			// if code not sent then sent it
 			if !isInvitationCodeSent {
 				// send code to client
 				handleInvitationCodeSend(c, response, qc.logger, session.InvitationCode.Int32, arrangeMu)
 				isInvitationCodeSent = true
 				go handleConnectedUser(c, qc, session.ID.String(), adminDisconnected, arrangeMu)
-
 			}
 
 			// once code sent receive start signal
@@ -863,12 +857,12 @@ func questionAndScoreHandler(c *websocket.Conn, qc *quizSocketController, respon
 	chanSkipEvent := make(chan bool)
 	chanSkipTimer := make(chan bool)
 	chanPauseQuiz := make(chan bool)
-	var isQuizEnd bool = false
+	var isQuizEnd = false
 
 	go listenAllEvents(c, qc, response, session, chanNextEvent, chanSkipEvent, chanSkipTimer, chanPauseQuiz, isQuizEnd, arrangeMu)
 
 	// handle question
-	var isFirst bool = lastQuestionDeliveryTime.Valid
+	var isFirst = lastQuestionDeliveryTime.Valid
 	response.Component = constants.Question
 	for _, question := range questions {
 		wg.Add(1)
@@ -939,15 +933,59 @@ func listenAllEvents(c *websocket.Conn, qc *quizSocketController, response *Quiz
 }
 
 func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.WaitGroup, response *QuizSendResponse, session models.ActiveQuiz, question models.Question, lastQuestionTimeStamp sql.NullTime, chanSkipEvent chan bool, chanSkipTimer chan bool, chanPauseQuiz chan bool, totalQuestions int64, arrangeMu *sync.Mutex) {
-
 	defer wg.Done()
 
+	// Prepare question media URLs
+	prepareQuestionMedia(qc, &question)
+
+	// Get total user count
+	totalUserJoin, err := qc.userPlayedQuizModel.GetCountOfTotalJoinUsers(session.ID.String())
+	if err != nil {
+		qc.logger.Error(constants.ErrGetTotalJoinUser, zap.Error(err))
+		return
+	}
+
+	// Handle question counter and activation for new questions
+	if err := handleNewQuestionSetup(c, qc, response, session, question, lastQuestionTimeStamp, arrangeMu); err != nil {
+		return
+	}
+
+	// Send question to users
+	if err := sendQuestionToUsers(c, qc, response, session, question, lastQuestionTimeStamp, totalQuestions, totalUserJoin, arrangeMu); err != nil {
+		return
+	}
+
+	// Handle answer submission
+	duration := calculateQuestionDuration(question, lastQuestionTimeStamp)
+	if err := handleQuestionAnswering(c, qc, session, question, duration, chanSkipEvent, response, arrangeMu); err != nil {
+		return
+	}
+
+	// Deactivate question
+	if err := qc.quizModel.UpdateCurrentQuestion(session.ID, question.ID, false); err != nil {
+		qc.logger.Error(fmt.Sprintf("socket error update current question: %s event, %s action %v code", constants.EventSendQuestion, response.Action, session.InvitationCode), zap.Error(err))
+		return
+	}
+
+	// Show scoreboard
+	if err := showScoreboard(c, qc, response, session, question, totalQuestions, arrangeMu); err != nil {
+		return
+	}
+
+	// Handle skip timer
+	scoreboardMaxDuration := getScoreboardMaxDuration(qc)
+	handleScoreboardTimer(c, qc, response, session, chanSkipTimer, chanPauseQuiz, scoreboardMaxDuration, arrangeMu)
+}
+
+// prepareQuestionMedia handles presigned URL generation for question and option media
+func prepareQuestionMedia(qc *quizSocketController, question *models.Question) {
 	if question.QuestionMedia == "image" {
 		presignedURL, err := qc.presignedURLSvc.GetPresignedURL(question.Resource.String, 5*time.Minute)
 		if err != nil {
 			qc.logger.Error("error while generating presign url")
+		} else {
+			question.Resource = sql.NullString{String: presignedURL, Valid: true}
 		}
-		question.Resource = sql.NullString{String: presignedURL, Valid: true}
 	}
 
 	if question.OptionsMedia == "image" {
@@ -955,36 +993,56 @@ func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.Wa
 			presignedURL, err := qc.presignedURLSvc.GetPresignedURL(v, 1*time.Minute)
 			if err != nil {
 				qc.logger.Error("error while generating presign url")
+			} else {
+				question.Options[i] = presignedURL
 			}
-			question.Options[i] = presignedURL
 		}
 	}
+}
 
-	totalUserJoin, err := qc.userPlayedQuizModel.GetCountOfTotalJoinUsers(session.ID.String())
+// handleNewQuestionSetup manages counter and question activation for new questions
+func handleNewQuestionSetup(c *websocket.Conn, qc *quizSocketController, response *QuizSendResponse, session models.ActiveQuiz, question models.Question, lastQuestionTimeStamp sql.NullTime, arrangeMu *sync.Mutex) error {
+	if lastQuestionTimeStamp.Valid {
+		return nil // Not a new question, skip setup
+	}
+
+	response.Component = constants.Question
+	response.Action = constants.ActionCounter
+	response.Data = map[string]int{"counter": constants.Counter, "count": constants.Count}
+	shareEvenWithUser(c, qc, response, constants.EventStartCount5, session.ID.String(), int(session.InvitationCode.Int32), constants.ToAll, arrangeMu)
+	time.Sleep(time.Duration(constants.Counter) * time.Second)
+
+	// Update question status to activate
+	err := qc.quizModel.UpdateCurrentQuestion(session.ID, question.ID, true)
 	if err != nil {
-		qc.logger.Error(constants.ErrGetTotalJoinUser, zap.Error(err))
-		return
+		qc.logger.Error(fmt.Sprintf("socket error update current question: %s event, %s action %v code", constants.EventSendQuestion, response.Action, session.InvitationCode), zap.Error(err))
+		return err
 	}
+	return nil
+}
 
-	// start counter if not any question running
-	if !lastQuestionTimeStamp.Valid {
-		response.Component = constants.Question
-		response.Action = constants.ActionCounter
-		response.Data = map[string]int{"counter": constants.Counter, "count": constants.Count}
-		shareEvenWithUser(c, qc, response, constants.EventStartCount5, session.ID.String(), int(session.InvitationCode.Int32), constants.ToAll, arrangeMu)
-		time.Sleep(time.Duration(constants.Counter) * time.Second)
-
-		// update question status to activate
-		err := qc.quizModel.UpdateCurrentQuestion(session.ID, question.ID, true)
-		if err != nil {
-			qc.logger.Error(fmt.Sprintf("socket error update current question: %s event, %s action %v code", constants.EventSendQuestion, response.Action, session.InvitationCode), zap.Error(err))
-			return
-		}
-	}
-
-	// question sent
+// sendQuestionToUsers sends the question data to appropriate users
+func sendQuestionToUsers(c *websocket.Conn, qc *quizSocketController, response *QuizSendResponse, session models.ActiveQuiz, question models.Question, lastQuestionTimeStamp sql.NullTime, totalQuestions int64, totalUserJoin int64, arrangeMu *sync.Mutex) error {
 	response.Action = constants.ActionSendQuestion
-	responseData := map[string]any{
+	responseData := buildQuestionResponseData(question, lastQuestionTimeStamp, totalQuestions, totalUserJoin)
+
+	if !lastQuestionTimeStamp.Valid {
+		// Handling new question
+		responseData["question_time"] = ""
+		response.Data = responseData
+		shareEvenWithUser(c, qc, response, constants.EventSendQuestion, session.ID.String(), int(session.InvitationCode.Int32), constants.ToAll, arrangeMu)
+	} else {
+		// Handling running question
+		responseData["duration"] = question.DurationInSeconds - int(time.Since(lastQuestionTimeStamp.Time).Seconds())
+		response.Data = responseData
+		shareEvenWithUser(c, qc, response, constants.EventSendQuestion, session.ID.String(), int(session.InvitationCode.Int32), constants.ToAdmin, arrangeMu)
+	}
+	return nil
+}
+
+// buildQuestionResponseData creates the response data map for questions
+func buildQuestionResponseData(question models.Question, lastQuestionTimeStamp sql.NullTime, totalQuestions int64, totalUserJoin int64) map[string]any {
+	return map[string]any{
 		"id":             question.ID,
 		"quiz_id":        question.QuizId,
 		"no":             question.OrderNumber,
@@ -998,53 +1056,87 @@ func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.Wa
 		"totalQuestions": totalQuestions,
 		"totalJoinUser":  totalUserJoin,
 	}
+}
 
-	if !lastQuestionTimeStamp.Valid { // handling new question
-		responseData["question_time"] = ""
-		response.Data = responseData
-		shareEvenWithUser(c, qc, response, constants.EventSendQuestion, session.ID.String(), int(session.InvitationCode.Int32), constants.ToAll, arrangeMu)
-	} else { // handling running question
-		responseData["duration"] = question.DurationInSeconds - int(time.Since(lastQuestionTimeStamp.Time).Seconds())
-		response.Data = responseData
-		shareEvenWithUser(c, qc, response, constants.EventSendQuestion, session.ID.String(), int(session.InvitationCode.Int32), constants.ToAdmin, arrangeMu)
+// calculateQuestionDuration calculates the remaining duration for a question
+func calculateQuestionDuration(question models.Question, lastQuestionTimeStamp sql.NullTime) int {
+	if !lastQuestionTimeStamp.Valid {
+		return question.DurationInSeconds
 	}
 
+	duration := question.DurationInSeconds - int(time.Since(lastQuestionTimeStamp.Time).Seconds())
+	if duration < 0 {
+		return 1
+	}
+	return duration
+}
+
+// handleQuestionAnswering manages the answer submission process
+func handleQuestionAnswering(c *websocket.Conn, qc *quizSocketController, session models.ActiveQuiz, question models.Question, duration int, chanSkipEvent chan bool, response *QuizSendResponse, arrangeMu *sync.Mutex) error {
 	wgForQuestion := &sync.WaitGroup{}
 	wgForQuestion.Add(1)
-	var duration int
-	if !lastQuestionTimeStamp.Valid { // new question
-		duration = question.DurationInSeconds
-	} else { // handle running question
-		duration = question.DurationInSeconds - int(time.Since(lastQuestionTimeStamp.Time).Seconds())
-		if duration < 0 {
-			duration = 1
-		}
-	}
 	go handleAnswerSubmission(c, qc, session, question.ID, duration, wgForQuestion, chanSkipEvent, response, arrangeMu)
 	wgForQuestion.Wait()
+	return nil
+}
 
-	// update current status to deactivate
-	err = qc.quizModel.UpdateCurrentQuestion(session.ID, question.ID, false)
-	if err != nil {
-		qc.logger.Error(fmt.Sprintf("socket error update current question: %s event, %s action %v code", constants.EventSendQuestion, response.Action, session.InvitationCode), zap.Error(err))
-		return
-	}
-
-	// score-board rendering
+// showScoreboard handles the scoreboard display logic
+func showScoreboard(c *websocket.Conn, qc *quizSocketController, response *QuizSendResponse, session models.ActiveQuiz, question models.Question, totalQuestions int64, arrangeMu *sync.Mutex) error {
 	response.Component = constants.Score
 	response.Action = constants.ActionShowScore
+
 	userRankBoard, err := qc.userPlayedQuizModel.GetRank(session.ID, question.ID)
 	if err != nil {
 		qc.logger.Error("error during get userRankBoard", zap.Error(err))
-		return
+		return err
 	}
+
 	userResponses, err := qc.userQuizResponseModel.GetUsersResponses(session.ID, question.ID)
 	if err != nil {
 		qc.logger.Error("error during get userResponses", zap.Error(err))
 	}
 
-	scoreboardMaxDurationEnv := qc.appConfig.Quiz.ScoreboardMaxDuration
+	scoreboardMaxDuration := getScoreboardMaxDuration(qc)
+
+	// Send scoreboard to admin
+	adminScoreboardData := buildScoreboardData(question, userRankBoard, userResponses, scoreboardMaxDuration, totalQuestions, true)
+	response.Data = adminScoreboardData
+	shareEvenWithUser(c, qc, response, constants.EventShowScore, session.ID.String(), int(session.InvitationCode.Int32), constants.ToAdmin, arrangeMu)
+
+	// Send scoreboard to users
+	userScoreboardData := buildScoreboardData(question, userRankBoard, nil, scoreboardMaxDuration, totalQuestions, false)
+	response.Data = userScoreboardData
+	shareEvenWithUser(c, qc, response, constants.EventShowScore, session.ID.String(), int(session.InvitationCode.Int32), constants.ToUser, arrangeMu)
+
+	return nil
+}
+
+// buildScoreboardData creates the scoreboard response data
+func buildScoreboardData(question models.Question, userRankBoard any, userResponses any, scoreboardMaxDuration int, totalQuestions int64, includeUserResponses bool) map[string]any {
+	data := map[string]any{
+		"quiz_id":        question.QuizId,
+		"rankList":       userRankBoard,
+		"question":       question.Question,
+		"answers":        question.Answers,
+		"options":        question.Options,
+		"question_media": question.QuestionMedia,
+		"options_media":  question.OptionsMedia,
+		"resource":       question.Resource.String,
+		"duration":       scoreboardMaxDuration,
+		"totalQuestions": totalQuestions,
+	}
+
+	if includeUserResponses {
+		data["userResponses"] = userResponses
+	}
+
+	return data
+}
+
+// getScoreboardMaxDuration gets the scoreboard duration from config
+func getScoreboardMaxDuration(qc *quizSocketController) int {
 	scoreboardMaxDuration := 20
+	scoreboardMaxDurationEnv := qc.appConfig.Quiz.ScoreboardMaxDuration
 
 	if scoreboardMaxDurationEnv != "" {
 		if parsedDuration, err := strconv.Atoi(scoreboardMaxDurationEnv); err == nil {
@@ -1052,39 +1144,13 @@ func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.Wa
 		}
 	}
 
-	response.Data = map[string]any{
-		"quiz_id":        question.QuizId,
-		"rankList":       userRankBoard,
-		"question":       question.Question,
-		"answers":        question.Answers,
-		"options":        question.Options,
-		"question_media": question.QuestionMedia,
-		"options_media":  question.OptionsMedia,
-		"resource":       question.Resource.String,
-		"duration":       scoreboardMaxDuration,
-		"totalQuestions": totalQuestions,
-		"userResponses":  userResponses,
-	}
-	shareEvenWithUser(c, qc, response, constants.EventShowScore, session.ID.String(), int(session.InvitationCode.Int32), constants.ToAdmin, arrangeMu)
+	return scoreboardMaxDuration
+}
 
-	response.Data = map[string]any{
-		"quiz_id":        question.QuizId,
-		"rankList":       userRankBoard,
-		"question":       question.Question,
-		"answers":        question.Answers,
-		"options":        question.Options,
-		"question_media": question.QuestionMedia,
-		"options_media":  question.OptionsMedia,
-		"resource":       question.Resource.String,
-		"duration":       scoreboardMaxDuration,
-		"totalQuestions": totalQuestions,
-	}
-	shareEvenWithUser(c, qc, response, constants.EventShowScore, session.ID.String(), int(session.InvitationCode.Int32), constants.ToUser, arrangeMu)
-
+// handleScoreboardTimer manages the scoreboard timer
+func handleScoreboardTimer(c *websocket.Conn, qc *quizSocketController, response *QuizSendResponse, session models.ActiveQuiz, chanSkipTimer chan bool, chanPauseQuiz chan bool, scoreboardMaxDuration int, arrangeMu *sync.Mutex) {
 	wgForSkipTimer := &sync.WaitGroup{}
 	wgForSkipTimer.Add(1)
-
-	// skip timer
 	go handleSkipTimer(c, qc, wgForSkipTimer, response, session, chanSkipTimer, chanPauseQuiz, scoreboardMaxDuration, arrangeMu)
 	wgForSkipTimer.Wait()
 }
@@ -1142,18 +1208,16 @@ func handleSkipTimer(c *websocket.Conn, qc *quizSocketController, wg *sync.WaitG
 				response.Component = constants.Score
 				response.Data = constants.EventPauseQuiz
 				shareEvenWithUser(c, qc, response, constants.EventPauseQuiz, session.ID.String(), int(session.InvitationCode.Int32), constants.ToUser, arrangeMu)
-			} else {
+			} else if timerPaused {
 				// Resume with the remaining time
-				if timerPaused {
-					startTime = time.Now()
-					isTimeout.Reset(remainingTime)
-					timerPaused = false
+				startTime = time.Now()
+				isTimeout.Reset(remainingTime)
+				timerPaused = false
 
-					// send event to the user
-					response.Component = constants.Score
-					response.Data = constants.EventResumeQuiz
-					shareEvenWithUser(c, qc, response, constants.EventResumeQuiz, session.ID.String(), int(session.InvitationCode.Int32), constants.ToUser, arrangeMu)
-				}
+				// send event to the user
+				response.Component = constants.Score
+				response.Data = constants.EventResumeQuiz
+				shareEvenWithUser(c, qc, response, constants.EventResumeQuiz, session.ID.String(), int(session.InvitationCode.Int32), constants.ToUser, arrangeMu)
 			}
 		}
 	}
@@ -1222,45 +1286,81 @@ func handleAnswerSubmission(c *websocket.Conn, qc *quizSocketController, session
 }
 
 func (qc *quizSocketController) SetAnswer(c *fiber.Ctx) error {
+	currentQuizId, sessionId, user, answer, err := qc.validateSetAnswerRequest(c)
+	if err != nil {
+		return err
+	}
+
+	err = qc.validateActiveQuestion(c, sessionId, answer)
+	if err != nil {
+		return err
+	}
+
+	points, score, err := qc.calculateAnswerScore(c, answer)
+	if err != nil {
+		return err
+	}
+
+	finalScore, newStreakCount, err := qc.calculateFinalScore(c, currentQuizId, answer.QuestionId, score)
+	if err != nil {
+		return err
+	}
+
+	err = qc.submitAnswerAndPublish(c, currentQuizId, sessionId, answer, points, finalScore, newStreakCount, user)
+	if err != nil {
+		return err
+	}
+
+	return utils.JSONSuccess(c, http.StatusAccepted, nil)
+}
+
+// validateSetAnswerRequest validates the initial request parameters and body
+func (qc *quizSocketController) validateSetAnswerRequest(c *fiber.Ctx) (uuid.UUID, string, models.User, structs.ReqAnswerSubmit, error) {
+	var emptyUUID uuid.UUID
+	var emptyUser models.User
+	var emptyAnswer structs.ReqAnswerSubmit
+
 	currentQuiz := c.Query(constants.CurrentUserQuiz)
 	sessionId := c.Query(constants.SessionIDParam)
 
-	// validations
 	if currentQuiz == "" {
 		qc.logger.Error(constants.ErrQuizNotFound)
-		return utils.JSONFail(c, http.StatusBadRequest, constants.ErrQuizNotFound)
+		return emptyUUID, "", emptyUser, emptyAnswer, utils.JSONFail(c, http.StatusBadRequest, constants.ErrQuizNotFound)
 	}
 
 	currentQuizId, err := uuid.Parse(currentQuiz)
 	if err != nil {
 		qc.logger.Error("invalid UUID")
-		return utils.JSONFail(c, http.StatusBadRequest, "invalid UUID")
+		return emptyUUID, "", emptyUser, emptyAnswer, utils.JSONFail(c, http.StatusBadRequest, "invalid UUID")
 	}
 
 	user, ok := quizUtilsHelper.ConvertType[models.User](c.Locals(constants.ContextUser))
 	if !ok {
 		qc.logger.Error("Unable to convert to user-model type from locals")
-		return utils.JSONFail(c, http.StatusInternalServerError, "Unable to convert to user-model type from locals")
+		return emptyUUID, "", emptyUser, emptyAnswer, utils.JSONFail(c, http.StatusInternalServerError, "Unable to convert to user-model type from locals")
 	}
 
 	var answer structs.ReqAnswerSubmit
-
 	err = json.Unmarshal(c.Body(), &answer)
 	if err != nil {
-		return utils.JSONFail(c, http.StatusBadRequest, err.Error())
+		return emptyUUID, "", emptyUser, emptyAnswer, utils.JSONFail(c, http.StatusBadRequest, err.Error())
 	}
 
 	validate := validator.New()
 	err = validate.Struct(answer)
 	if err != nil {
-		return utils.JSONFail(c, http.StatusBadRequest, utils.ValidatorErrorString(err))
+		return emptyUUID, "", emptyUser, emptyAnswer, utils.JSONFail(c, http.StatusBadRequest, utils.ValidatorErrorString(err))
 	}
 
-	// check for question is active or not to receive answers
+	return currentQuizId, sessionId, user, answer, nil
+}
+
+// validateActiveQuestion checks if the question is active and matches the submitted answer
+func (qc *quizSocketController) validateActiveQuestion(c *fiber.Ctx, sessionId string, answer structs.ReqAnswerSubmit) error {
 	currentQuestion, err := qc.userPlayedQuizModel.GetCurrentActiveQuestion(sessionId)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			qc.logger.Error("error during answer submit get current active question", zap.Any("answers", answer), zap.Any("current_quiz_id", currentQuizId))
+			qc.logger.Error("error during answer submit get current active question", zap.Any("answers", answer))
 			return utils.JSONFail(c, http.StatusBadRequest, constants.ErrAnswerSubmit)
 		}
 		qc.logger.Error("error during answer submit", zap.Error(err))
@@ -1272,30 +1372,41 @@ func (qc *quizSocketController) SetAnswer(c *fiber.Ctx) error {
 		return utils.JSONFail(c, http.StatusBadRequest, constants.ErrQuestionNotActive)
 	}
 
+	return nil
+}
+
+// calculateAnswerScore calculates points and score for the submitted answer
+func (qc *quizSocketController) calculateAnswerScore(c *fiber.Ctx, answer structs.ReqAnswerSubmit) (sql.NullInt16, int, error) {
 	answers, answerPoints, answerDurationInSeconds, questionType, err := qc.questionModel.GetAnswersPointsDurationType(answer.QuestionId.String())
 	if err != nil {
 		qc.logger.Error("error while get answer, points, duration and type")
-		return utils.JSONFail(c, http.StatusBadRequest, "error while get answer, points, duration and type")
+		return sql.NullInt16{}, 0, utils.JSONFail(c, http.StatusBadRequest, "error while get answer, points, duration and type")
 	}
 
-	// calculate points
 	points, score := utils.CalculatePointsAndScore(answer, answers, answerPoints, answerDurationInSeconds, questionType)
+	return points, score, nil
+}
 
-	streakCount, err := qc.userPlayedQuizModel.GetStreakCount(currentQuizId, answer.QuestionId)
+// calculateFinalScore calculates the final score including streak bonus
+func (qc *quizSocketController) calculateFinalScore(c *fiber.Ctx, currentQuizId uuid.UUID, questionId uuid.UUID, score int) (int, int, error) {
+	streakCount, err := qc.userPlayedQuizModel.GetStreakCount(currentQuizId, questionId)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			qc.logger.Error(constants.ErrGetStreakCount, zap.Error(err))
-			return utils.JSONError(c, http.StatusBadRequest, constants.ErrQuizNotFound)
+			return 0, 0, utils.JSONError(c, http.StatusBadRequest, constants.ErrQuizNotFound)
 		}
 		qc.logger.Error(constants.ErrGetStreakCount, zap.Error(err))
-		return utils.JSONError(c, http.StatusInternalServerError, constants.ErrGetStreakCount)
+		return 0, 0, utils.JSONError(c, http.StatusInternalServerError, constants.ErrGetStreakCount)
 	}
 
-	// add streak score and update streak also
-	finalScore, newSreakCount := utils.CalculateStreakScore(streakCount, score)
+	finalScore, newStreakCount := utils.CalculateStreakScore(streakCount, score)
+	return finalScore, newStreakCount, nil
+}
 
-	// Submit answer
-	if err := qc.userQuizResponseModel.SubmitAnswer(currentQuizId, answer, points, finalScore, newSreakCount); err != nil {
+// submitAnswerAndPublish submits the answer and publishes to Redis
+func (qc *quizSocketController) submitAnswerAndPublish(c *fiber.Ctx, currentQuizId uuid.UUID, sessionId string, answer structs.ReqAnswerSubmit, points sql.NullInt16, finalScore, newStreakCount int, user models.User) error {
+	err := qc.userQuizResponseModel.SubmitAnswer(currentQuizId, answer, points, finalScore, newStreakCount)
+	if err != nil {
 		if err == sql.ErrNoRows {
 			return utils.JSONFail(c, http.StatusBadRequest, constants.ErrAnswerAlreadySubmitted)
 		}
@@ -1316,7 +1427,7 @@ func (qc *quizSocketController) SetAnswer(c *fiber.Ctx) error {
 		}
 	}()
 
-	return utils.JSONSuccess(c, http.StatusAccepted, nil)
+	return nil
 }
 
 func (ctrl *quizSocketController) Terminate(c *fiber.Ctx) error {

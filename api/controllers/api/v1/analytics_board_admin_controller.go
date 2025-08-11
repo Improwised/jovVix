@@ -57,7 +57,7 @@ func (fc *AnalyticsBoardAdminController) GetAnalyticsForAdmin(ctx *fiber.Ctx) er
 
 	var activeQuizId = ctx.Query(constants.ActiveQuizId, "")
 
-	if activeQuizId == "" || !(len(activeQuizId) == 36) {
+	if activeQuizId == "" || len(activeQuizId) != 36 {
 		fc.logger.Error("active quiz id is not valid")
 		return utils.JSONFail(ctx, http.StatusBadRequest, errors.New("active quiz id should be valid string").Error())
 	}

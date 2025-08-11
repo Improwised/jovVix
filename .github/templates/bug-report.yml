@@ -16,7 +16,7 @@ body:
     id: current-behavior
     attributes:
       label: Current Behavior
-      description: Tell us what happens instead of the expected behavior 
+      description: Tell us what happens instead of the expected behavior
       placeholder: Tell us what you see!
       value: "A bug happened!"
     validations:

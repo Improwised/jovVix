@@ -228,7 +228,7 @@ func registerQuestionToQuizzes(transaction *goqu.TxDatabase, quizId uuid.UUID, q
 	return nil
 }
 
-func (model *QuestionModel) GetQuestionById(QuestionId string) (structs.QuestionAnalytics, error) {
+func (model *QuestionModel) GetQuestionById(questionId string) (structs.QuestionAnalytics, error) {
 	var questionAnalytics structs.QuestionAnalytics
 
 	_, err := model.db.
@@ -246,7 +246,7 @@ func (model *QuestionModel) GetQuestionById(QuestionId string) (structs.Question
 			"duration_in_seconds",
 		).
 		Where(goqu.Ex{
-			constants.QuestionsTable + ".id": QuestionId,
+			constants.QuestionsTable + ".id": questionId,
 		}).
 		ScanStruct(&questionAnalytics)
 
@@ -267,11 +267,11 @@ func (model *QuestionModel) GetQuestionById(QuestionId string) (structs.Question
 	return questionAnalytics, nil
 }
 
-func (model *QuestionModel) ListQuestionsWithAnswerByQuizId(QuizId string, media string) ([]structs.QuestionAnalytics, int64, error) {
+func (model *QuestionModel) ListQuestionsWithAnswerByQuizId(quizId string, media string) ([]structs.QuestionAnalytics, int64, error) {
 
 	var questionAnalytics []structs.QuestionAnalytics
 	var quizPlayedCount int64
-	found, err := model.db.From(ActiveQuizzesTable).Select(goqu.COUNT(goqu.I("*")).As("count")).Where(goqu.Ex{"quiz_id": QuizId, "activated_to": goqu.Op{"isNot": nil}}).ScanVal(&quizPlayedCount)
+	found, err := model.db.From(ActiveQuizzesTable).Select(goqu.COUNT(goqu.I("*")).As("count")).Where(goqu.Ex{"quiz_id": quizId, "activated_to": goqu.Op{"isNot": nil}}).ScanVal(&quizPlayedCount)
 
 	if err != nil {
 		return questionAnalytics, quizPlayedCount, err
@@ -296,7 +296,7 @@ func (model *QuestionModel) ListQuestionsWithAnswerByQuizId(QuizId string, media
 		).
 		InnerJoin(goqu.T(constants.QuizQuestionsTable), goqu.On(goqu.I(constants.QuizQuestionsTable+".question_id").Eq(goqu.I(constants.QuestionsTable+".id")))).
 		Where(goqu.Ex{
-			constants.QuizQuestionsTable + ".quiz_id": QuizId,
+			constants.QuizQuestionsTable + ".quiz_id": quizId,
 		})
 
 	if media != "" {
@@ -316,7 +316,10 @@ func (model *QuestionModel) ListQuestionsWithAnswerByQuizId(QuizId string, media
 		return nil, quizPlayedCount, err
 	}
 	for index := 0; index < len(questionAnalytics); index++ {
-		json.Unmarshal(questionAnalytics[index].RawOptions, &questionAnalytics[index].Options)
+		err := json.Unmarshal(questionAnalytics[index].RawOptions, &questionAnalytics[index].Options)
+		if err != nil {
+			return nil, quizPlayedCount, err
+		}
 
 		questionAnalytics[index].QuestionType, err = quizUtilsHelper.GetQuestionType(questionAnalytics[index].QuestionTypeID)
 		if err != nil {
@@ -327,15 +330,15 @@ func (model *QuestionModel) ListQuestionsWithAnswerByQuizId(QuizId string, media
 	return questionAnalytics, quizPlayedCount, nil
 }
 
-func (model *QuestionModel) GetAnswersPointsDurationType(QuestionID string) ([]int, int16, int, int, error) {
+func (model *QuestionModel) GetAnswersPointsDurationType(questionId string) ([]int, int16, int, int, error) {
 
-	var answers []int = []int{}
+	var answers = []int{}
 	var answerDurationInSeconds int
-	var answerBytes []byte = []byte{}
+	var answerBytes = []byte{}
 	var answerPoints int16
 	var questionType int
 
-	rows, err := model.db.Select(goqu.I("answers"), goqu.I("points"), goqu.I("duration_in_seconds"), goqu.I("type")).From(QuestionTable).Where(goqu.I("id").Eq(QuestionID)).Executor().Query()
+	rows, err := model.db.Select(goqu.I("answers"), goqu.I("points"), goqu.I("duration_in_seconds"), goqu.I("type")).From(QuestionTable).Where(goqu.I("id").Eq(questionId)).Executor().Query()
 
 	if err != nil {
 		return answers, answerPoints, answerDurationInSeconds, 0, err
@@ -377,17 +380,18 @@ func (model *QuestionModel) GetCurrentQuestion(id uuid.UUID) (QuestionForUser, e
 			constants.QuestionsTable + ".id": id.String(),
 		}).Limit(1).ScanStruct(&question)
 
-	if !ok && err == nil {
-		return question, sql.ErrNoRows
-	} else if !ok || err != nil {
-		return question, err
-	} else {
-		err = json.Unmarshal(question.RawOptions, &question.Options)
-		if err != nil {
-			return QuestionForUser{}, err
+	if !ok {
+		if err == nil {
+			return question, sql.ErrNoRows
 		}
-		return question, nil
+		return question, err
 	}
+
+	err = json.Unmarshal(question.RawOptions, &question.Options)
+	if err != nil {
+		return QuestionForUser{}, err
+	}
+	return question, nil
 }
 
 func (model *QuestionModel) GetTotalQuestionCount(activeQuizId string) (int64, error) {
@@ -439,7 +443,7 @@ func (model *QuestionModel) UpdateOptionsOfQuestionById(id, keyPath, data string
 	return nil
 }
 
-func (model *QuestionModel) UpdateQuestionById(QuestionId string, question Question) error {
+func (model *QuestionModel) UpdateQuestionById(questionId string, question Question) error {
 	options, err := json.Marshal(question.Options)
 	if err != nil {
 		return err
@@ -463,7 +467,7 @@ func (model *QuestionModel) UpdateQuestionById(QuestionId string, question Quest
 		"updated_at":          goqu.L("now()"),
 	}
 
-	result, err := model.db.Update(QuestionTable).Set(records).Where(goqu.I("id").Eq(QuestionId)).Executor().Exec()
+	result, err := model.db.Update(QuestionTable).Set(records).Where(goqu.I("id").Eq(questionId)).Executor().Exec()
 	if err != nil {
 		return err
 	}
@@ -480,7 +484,7 @@ func (model *QuestionModel) UpdateQuestionById(QuestionId string, question Quest
 	return nil
 }
 
-// Update previous question's next_question pointer (column) by using `next_question` and `previos_question` id
+// Update previous question's next_question pointer (column) by using `next_question` and `previous_question` id
 func (model *QuestionModel) UpdatePreviousQuestionById(transaction *goqu.TxDatabase, questionId string) error {
 
 	var nextQuestionId, previousQuestionId sql.NullString
@@ -494,7 +498,7 @@ func (model *QuestionModel) UpdatePreviousQuestionById(transaction *goqu.TxDatab
 		return err
 	}
 
-	// Get the `previos_question` of the question to be deleted
+	// Get the `previous_question` of the question to be deleted
 	_, err = model.db.From("quiz_questions").
 		Select("question_id").
 		Where(goqu.Ex{"next_question": questionId}).
@@ -546,7 +550,7 @@ func (model *QuestionModel) DeleteQuestionById(transaction *goqu.TxDatabase, que
 func deleteQuestionsByIds(transaction *goqu.TxDatabase, questionIds []string) error {
 
 	// why ? if questionIds len is 0 then sql query return syntax error so here handle this error
-	if len(questionIds) <= 0 {
+	if len(questionIds) == 0 {
 		return nil
 	}
 

@@ -1,5 +1,0 @@
-linters-settings:
-  errcheck:
-    check-blank: true
-  misspell:
-    locale: US
