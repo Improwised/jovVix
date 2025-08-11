@@ -32,7 +32,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: '1.22'
+          go-version: '1.23'
         timeout-minutes: 2
 
       - name: Install Dependencies
@@ -46,6 +46,21 @@ jobs:
         working-directory: ./api
         run: go test ./... -v
         timeout-minutes: 5
+
+      - name: Install Dependencies
+        run: |
+          export PATH=$PATH:$(go env GOPATH)/bin
+          pip install pre-commit
+          go install golang.org/x/tools/cmd/goimports@v0.29.0
+          go install github.com/fzipp/gocyclo/cmd/gocyclo@v0.6.0
+          go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.62.2
+          go install -v github.com/go-critic/go-critic/cmd/gocritic@v0.13.0
+        timeout-minutes: 20
+
+      - name: Run Precommit Hooks
+        run: |
+          SKIP="no-commit-to-branch,go-mod-tidy,go-test,node-lint" pre-commit run --all-files
+        timeout-minutes: 10
 
   build:
     needs: backend-tests
