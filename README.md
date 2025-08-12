@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-  <a href="https://goreportcard.com/report/github.com/Improwised/golang-api/api">
+  <a href="https://goreportcard.com/report/github.com/Improwised/JovVix/api">
     <img alt="Go Report Card" src="https://goreportcard.com/badge/github.com/Improwised/jovVix/api"/>
   </a>
   <a href="https://github.com/Improwised/jovVix/blob/main/api/go.mod">
