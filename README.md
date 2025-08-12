@@ -1,14 +1,14 @@
 <p align="center">
-  <a href="https://jovvix.com">
+  <a href="https://jovvix.com/">
     <img src="app/public/readme-logo.webp" alt="Jovvix Logo" width="200"/>
   </a>
 </p>
 
-<h2 align="center">
-<strong>
-  Open-Source Quizzing Built for Live Engagement
-</strong>
-</h2>
+<p align="center">
+  <strong>
+    Open-Source Quizzing Built for Live Engagement
+  </strong>
+</p>
 
 <p align="center">
   <a href="https://goreportcard.com/report/github.com/Improwised/golang-api/api">
