@@ -1,25 +1,35 @@
 <p align="center">
-  <img src="app/public/readme-logo.webp" alt="Jovvix Logo" width="200"/>
+  <a href="https://jovvix.com">
+    <img src="app/public/readme-logo.webp" alt="Jovvix Logo" width="200"/>
+  </a>
 </p>
 
-<h3 align="center">
-<b>
-Open-Source Quizzing Built for Live Engagement
-</b>
-<p align="center" style="line-height: 2;">
-  <!-- Small gap is created by line-height -->
+<h2 align="center">
+<strong>
+  Open-Source Quizzing Built for Live Engagement
+</strong>
+</h2>
+
+<p align="center">
+  <a href="https://goreportcard.com/report/github.com/Improwised/golang-api/api">
+    <img alt="Go Report Card" src="https://goreportcard.com/badge/github.com/Improwised/jovVix/api"/>
+  </a>
+  <a href="https://github.com/Improwised/jovVix/blob/main/api/go.mod">
+    <img alt="Go version" src="https://img.shields.io/github/go-mod/go-version/Improwised/jovVix?filename=api%2Fgo.mod"/>
+  </a>
+  <a href="https://github.com/Improwised/jovVix/blob/main/LICENSE">
+    <img alt="License" src="https://img.shields.io/github/license/Improwised/jovVix"/>
+  </a>
+  <a href="https://github.com/Improwised/jovVix/actions/workflows/test-build-push-api.yaml">
+    <img alt="Backend Workflow" src="https://img.shields.io/github/actions/workflow/status/Improwised/jovVix/.github/workflows/test-build-push-api.yaml?branch=main&label=backend-workflow"/>
+  </a>
+  <a href="https://github.com/Improwised/jovVix/actions/workflows/test-build-push-app.yaml">
+    <img alt="Frontend Workflow" src="https://img.shields.io/github/actions/workflow/status/Improwised/jovVix/.github/workflows/test-build-push-app.yaml?branch=main&label=frontend-workflow"/>
+  </a>
+  <a href="https://github.com/Improwised/jovVix/releases/latest">
+    <img alt="Latest Release" src="https://img.shields.io/github/v/release/Improwised/jovVix"/>
+  </a>
 </p>
-<div>
-
-[![Go Report Card](https://goreportcard.com/badge/github.com/Improwised/jovVix/api)](https://goreportcard.com/report/github.com/Improwised/golang-api/api)
-![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/Improwised/jovVix?filename=api%2Fgo.mod)
-[![License](https://img.shields.io/github/license/Improwised/jovVix)](https://github.com/Improwised/jovVix/blob/main/LICENSE)
-[![Workflow Status](https://img.shields.io/github/actions/workflow/status/Improwised/jovVix/.github/workflows/test-build-push-api.yaml?branch=main&label=backend-workflow)](https://github.com/Improwised/jovVix/actions/workflows/test-build-push-api.yaml?query=branch:main)
-[![Workflow Status](https://img.shields.io/github/actions/workflow/status/Improwised/jovVix/.github/workflows/test-build-push-app.yaml?branch=main&label=frontend-workflow)](https://github.com/Improwised/jovVix/actions/workflows/test-build-push-app.yaml?query=branch:main)
-[![Latest Release](https://img.shields.io/github/v/release/Improwised/jovVix)](https://github.com/Improwised/jovVix/releases/latest)
-</div>
-
-</h3 >
 
 ## Overview
 - jovVix is a fun and interactive platform where users can enjoy playing quizzes while admins have the ability to create engaging and diverse quizzes.
