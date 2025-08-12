@@ -10,3 +10,4 @@ data
 app/coverage
 api/redis
 .aider*
+load-test/results
