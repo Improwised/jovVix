@@ -6,8 +6,10 @@
 <b>
 Open-Source Quizzing Built for Live Engagement
 </b>
-
-<div style="margin-top:20px;">
+<p align="center" style="line-height: 2;">
+  <!-- Small gap is created by line-height -->
+</p>
+<div>
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/Improwised/jovVix/api)](https://goreportcard.com/report/github.com/Improwised/golang-api/api)
 ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/Improwised/jovVix?filename=api%2Fgo.mod)
