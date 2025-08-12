@@ -1,13 +1,19 @@
+<p align="center">
+  <img src="app/public/readme-logo.webp" alt="Jovvix Logo" width="200"/>
+</p>
+
+<h3 align="center">
+<b>
+Open-Source Quizzing Built for Live Engagement
+</b>
+</h3 >
+
 [![Go Report Card](https://goreportcard.com/badge/github.com/Improwised/jovVix/api)](https://goreportcard.com/report/github.com/Improwised/golang-api/api)
 ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/Improwised/jovVix?filename=api%2Fgo.mod)
 [![License](https://img.shields.io/github/license/Improwised/jovVix)](https://github.com/Improwised/jovVix/blob/main/LICENSE)
 [![Workflow Status](https://img.shields.io/github/actions/workflow/status/Improwised/jovVix/.github/workflows/test-build-push-api.yaml?branch=main&label=backend-workflow)](https://github.com/Improwised/jovVix/actions/workflows/test-build-push-api.yaml?query=branch:main)
 [![Workflow Status](https://img.shields.io/github/actions/workflow/status/Improwised/jovVix/.github/workflows/test-build-push-app.yaml?branch=main&label=frontend-workflow)](https://github.com/Improwised/jovVix/actions/workflows/test-build-push-app.yaml?query=branch:main)
 [![Latest Release](https://img.shields.io/github/v/release/Improwised/jovVix)](https://github.com/Improwised/jovVix/releases/latest)
-
-# jovVix  <img align="right" width=150 src="app/public/readme-logo.webp" alt=" Jovvix Logo">
-Open-Source Quizzing Built for Live Engagement
-
 
 ## Overview
 - jovVix is a fun and interactive platform where users can enjoy playing quizzes while admins have the ability to create engaging and diverse quizzes.
