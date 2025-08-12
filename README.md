@@ -6,7 +6,8 @@
 <b>
 Open-Source Quizzing Built for Live Engagement
 </b>
-</h3 >
+
+<div style="margin-top:20px;">
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/Improwised/jovVix/api)](https://goreportcard.com/report/github.com/Improwised/golang-api/api)
 ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/Improwised/jovVix?filename=api%2Fgo.mod)
@@ -14,6 +15,9 @@ Open-Source Quizzing Built for Live Engagement
 [![Workflow Status](https://img.shields.io/github/actions/workflow/status/Improwised/jovVix/.github/workflows/test-build-push-api.yaml?branch=main&label=backend-workflow)](https://github.com/Improwised/jovVix/actions/workflows/test-build-push-api.yaml?query=branch:main)
 [![Workflow Status](https://img.shields.io/github/actions/workflow/status/Improwised/jovVix/.github/workflows/test-build-push-app.yaml?branch=main&label=frontend-workflow)](https://github.com/Improwised/jovVix/actions/workflows/test-build-push-app.yaml?query=branch:main)
 [![Latest Release](https://img.shields.io/github/v/release/Improwised/jovVix)](https://github.com/Improwised/jovVix/releases/latest)
+</div>
+
+</h3 >
 
 ## Overview
 - jovVix is a fun and interactive platform where users can enjoy playing quizzes while admins have the ability to create engaging and diverse quizzes.
