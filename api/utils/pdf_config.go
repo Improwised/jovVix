@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/Improwised/jovvix/api/constants"
 	"github.com/Improwised/jovvix/api/pkg/structs"
 	"github.com/johnfercher/maroto/pkg/color"
 	"github.com/johnfercher/maroto/pkg/consts"
@@ -22,7 +23,7 @@ func getBlackColor() color.Color {
 func BuildHeading(m pdf.Maroto) {
 	m.Row(10, func() {
 		m.Col(12, func() {
-			m.Text("Quiz Report", props.Text{
+			m.Text(constants.PdfTitleText, props.Text{
 				Top:   3,
 				Style: consts.Bold,
 				Align: consts.Center,
@@ -32,16 +33,11 @@ func BuildHeading(m pdf.Maroto) {
 	})
 }
 
-func BuildUsersTables(m pdf.Maroto, questionsAndUsersMap map[int][]structs.Users, questions []string, keys []int) {
-	for ind, orderNo := range keys {
-		question := ""
-		if orderNo-1 >= 0 && orderNo-1 < len(questions) {
-			question = questions[orderNo-1]
-		}
-
+func BuildUsersTables(m pdf.Maroto, orderToUserAndQuestionData map[int][]structs.UserAndQuestionData, orderOfQuestion []int) {
+	for ind, orderNo := range orderOfQuestion {
 		m.Row(8, func() {
 			m.Col(12, func() {
-				m.Text(fmt.Sprintf("Question : %d  %v", ind+1, question), props.Text{
+				m.Text(fmt.Sprintf("%s : %d  %v", constants.PdfQueText, ind+1, orderToUserAndQuestionData[orderNo][0].Question), props.Text{
 					Style: consts.Bold,
 					Size:  10,
 					Color: getBlackColor(),
@@ -50,7 +46,7 @@ func BuildUsersTables(m pdf.Maroto, questionsAndUsersMap map[int][]structs.Users
 		})
 		m.Line(1)
 
-		for _, userData := range questionsAndUsersMap[orderNo] {
+		for _, userData := range orderToUserAndQuestionData[orderNo] {
 			m.Row(6, func() {
 				// User column
 				m.Col(2, func() {
@@ -64,11 +60,15 @@ func BuildUsersTables(m pdf.Maroto, questionsAndUsersMap map[int][]structs.Users
 					bg := color.Color{Red: 255, Green: 255, Blue: 255} // default white
 					txtColor := getBlackColor()
 
-					// Correct option
-					if optKey == strings.Split(userData.CorrectAnswer, "")[1] {
+					// Correct option and survey question options
+					if userData.QuestionType == constants.SurveyString {
 						txtColor = color.Color{Green: 255}
-					} else if optKey == strings.Split(userData.SelectedAnswer, "")[1] {
-						txtColor = color.Color{Red: 255}
+					} else {
+						if optKey == strings.Split(userData.CorrectAnswer, "")[1] {
+							txtColor = color.Color{Green: 255}
+						} else if optKey == strings.Split(userData.SelectedAnswer, "")[1] {
+							txtColor = color.Color{Red: 255}
+						}
 					}
 
 					m.Col(2, func() {

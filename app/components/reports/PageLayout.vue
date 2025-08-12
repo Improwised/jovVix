@@ -5,7 +5,7 @@
         <h3 class="mb-2 fw-bold text-center fs-1">Quiz Analysis</h3>
         <button
           class="btn bg-light-primary btn-light btn-link mx-2"
-          @click="downloadAnalysisPDF()"
+          @click="downloadQuizReport()"
         >
           Download report
         </button>
@@ -50,7 +50,7 @@ const changeComponent = (tab) => {
   emits("changeTab", tab);
 };
 
-const downloadAnalysisPDF = async () => {
-  window.open(`${apiUrl}/download/${activeQuizId.value}`, "_blank");
+const downloadQuizReport = async () => {
+  window.open(`${apiUrl}/analytics_board/admin/download-pdf/${activeQuizId.value}`, "_blank");
 };
 </script>

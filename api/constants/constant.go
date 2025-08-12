@@ -75,6 +75,7 @@ const (
 	ErrUpdateUserPermissionForQuiz = "error while updating user permission for particular quiz"
 	ErrDeleteUserPermissionForQuiz = "error while deleting user permission for particular quiz"
 	ErrGetStreakCount              = "error while getting streaks count"
+	ErrQuizIdNotFound              = "error enter valid quiz id"
 )
 
 // Bad Request Message
@@ -255,7 +256,7 @@ const (
 	EventPong = "pong"
 
 	// Event 12. PDF
-	PdfName         = "pdf_name"
+	PdfName         = "quiz_report"
 	ErrInGettingPdf = "error during getting pdf"
 	ErrPdfNotFound  = "pdf not found with this name"
 )
@@ -300,4 +301,9 @@ const (
 	ChannelUserJoin       = "user_joined"
 	ChannelUserDisconnect = "user_disconnect"
 	ChannelSetAnswer      = "set_answer"
+)
+
+const (
+	PdfTitleText = "Quiz report"
+	PdfQueText   = "Question"
 )

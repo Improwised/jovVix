@@ -1,7 +1,10 @@
 package utils
 
 import (
+	"fmt"
+
 	"clevergo.tech/jsend"
+	"github.com/Improwised/jovvix/api/constants"
 	"github.com/Improwised/jovvix/api/pkg/structs"
 	"github.com/gofiber/contrib/websocket"
 	fiber "github.com/gofiber/fiber/v2"
@@ -56,6 +59,6 @@ func JSONErrorWs(c *websocket.Conn, eventName string, data interface{}) error {
 
 func JSONSuccessPdf(c *fiber.Ctx, statusCode int, pdfBytes []byte) error {
 	c.Set("Content-Type", "application/pdf")
-	c.Set("Content-Disposition", "attachment; filename=quiz report.pdf")
+	c.Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s.pdf"`, constants.PdfName))
 	return c.Status(statusCode).Send(pdfBytes)
 }
