@@ -139,7 +139,7 @@ func (model *SharedQuizzesModel) ListSharedQuizzes(sharedBy, sharedTo string) ([
 
 	defer rows.Close()
 
-	var quizzes []QuizWithQuestions = []QuizWithQuestions{}
+	var quizzes = []QuizWithQuestions{}
 
 	for rows.Next() {
 		var quizWithQuestions QuizWithQuestions

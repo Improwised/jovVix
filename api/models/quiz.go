@@ -73,7 +73,7 @@ func (model *QuizModel) GetQuizzesByAdmin(creator_id string) ([]QuizWithQuestion
 
 	defer rows.Close()
 
-	var quizzes []QuizWithQuestions = []QuizWithQuestions{}
+	var quizzes = []QuizWithQuestions{}
 
 	for rows.Next() {
 		var quizWithQuestions QuizWithQuestions
@@ -98,7 +98,7 @@ func (model *QuizModel) GetQuizzesByAdmin(creator_id string) ([]QuizWithQuestion
 
 func (model *QuizModel) GetSharedQuestions(invitationCode int) ([]Question, sql.NullTime, error) {
 
-	var QuestionDeliveryTime sql.NullTime = sql.NullTime{}
+	var QuestionDeliveryTime = sql.NullTime{}
 	statement, err := model.db.Prepare(`
 	with core as (
 		select
@@ -172,7 +172,7 @@ func (model *QuizModel) GetSharedQuestions(invitationCode int) ([]Question, sql.
 	}
 
 	rows, err := statement.Query(invitationCode)
-	var questions []Question = []Question{}
+	var questions = []Question{}
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -432,9 +432,9 @@ func (model *QuizModel) ListQuizzesAnalysis(name, order, orderBy, date, userId s
 }
 
 // Delete quiz and and their question using `quiz_id`
-func (model *QuizModel) DeleteQuizById(transaction *goqu.TxDatabase, QuizId string) error {
+func (model *QuizModel) DeleteQuizById(transaction *goqu.TxDatabase, quizId string) error {
 	questionIds := []string{}
-	err := transaction.Delete(constants.QuizQuestionsTable).Where(goqu.Ex{"quiz_id": QuizId}).Returning("question_id").Executor().ScanVals(&questionIds)
+	err := transaction.Delete(constants.QuizQuestionsTable).Where(goqu.Ex{"quiz_id": quizId}).Returning("question_id").Executor().ScanVals(&questionIds)
 	if err != nil {
 		return err
 	}
@@ -444,7 +444,7 @@ func (model *QuizModel) DeleteQuizById(transaction *goqu.TxDatabase, QuizId stri
 		return err
 	}
 
-	err = deleteQuizById(transaction, QuizId)
+	err = deleteQuizById(transaction, quizId)
 
 	return err
 }

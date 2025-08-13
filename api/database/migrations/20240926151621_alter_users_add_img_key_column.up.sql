@@ -1,3 +1,3 @@
 -- +migrate Up
-alter table users 
+alter table users
 add column img_key text default '';

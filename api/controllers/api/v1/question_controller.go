@@ -3,6 +3,7 @@ package v1
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -64,31 +65,32 @@ func InitQuestionController(db *goqu.Database, logger *zap.Logger, appConfig *co
 func (ctrl *QuestionController) ListQuestionsWithAnswerByQuizId(c *fiber.Ctx) error {
 	QuizId := c.Params(constants.QuizId)
 	Query := c.Queries()
-	permission := c.Locals(constants.ContextQuizPermission).(string)
+	permission := c.Locals(constants.ContextQuizPermission)
+
 	ctrl.logger.Debug("QuestionController.ListQuestionsWithAnswerByQuizId called", zap.Any(constants.QuizId, QuizId), zap.Any("Query", Query))
 
 	isActiveQuizPresent, err := ctrl.activeQuizModel.IsActiveQuizPresent(QuizId)
 	if err != nil {
-		ctrl.logger.Error("error occured while getting questions by admin", zap.Error(err))
+		ctrl.logger.Error("error occurred while getting questions by admin", zap.Error(err))
 		return utils.JSONError(c, http.StatusInternalServerError, err.Error())
 	}
 
 	questions, quizPlayedcount, err := ctrl.questionModel.ListQuestionsWithAnswerByQuizId(QuizId, Query[constants.MediaQuery])
 	if err != nil {
-		ctrl.logger.Error("error occured while getting questions by admin", zap.Error(err))
+		ctrl.logger.Error("error occurred while getting questions by admin", zap.Error(err))
 		return utils.JSONError(c, http.StatusInternalServerError, err.Error())
 	}
 
 	services.ProcessAnalyticsData(questions, ctrl.presignedURLSvc, ctrl.logger)
 
 	ctrl.logger.Debug("QuestionController.ListQuestionsWithAnswerByQuizId success", zap.Any("questions", structs.ResQuestionAnalytics{Data: questions, QuizPlayedCount: quizPlayedcount}), zap.Any("quizPlayedcount", quizPlayedcount))
-	return utils.JSONSuccess(c, http.StatusOK, structs.ResQuestionAnalytics{Data: questions, QuizPlayedCount: quizPlayedcount, IsQuizEditable: !isActiveQuizPresent, Permission: permission})
+	return utils.JSONSuccess(c, http.StatusOK, structs.ResQuestionAnalytics{Data: questions, QuizPlayedCount: quizPlayedcount, IsQuizEditable: !isActiveQuizPresent, Permission: fmt.Sprintf("%s", permission)})
 }
 
-// GetQuestionById to get question and thier options with answer.
+// GetQuestionById to get question and their options with answer.
 // swagger:route GET /v1/quizzes/{quiz_id}/questions/{question_id} Question RequestGetQuestionById
 //
-// Get question and thier options with answer.
+// Get question and their options with answer.
 //
 //		Consumes:
 //		- application/json
@@ -105,7 +107,7 @@ func (ctrl *QuestionController) GetQuestionById(c *fiber.Ctx) error {
 
 	question, err := ctrl.questionModel.GetQuestionById(QuestionId)
 	if err != nil {
-		ctrl.logger.Error("error occured while getting question by admin", zap.Error(err))
+		ctrl.logger.Error("error occurred while getting question by admin", zap.Error(err))
 		return utils.JSONError(c, http.StatusInternalServerError, err.Error())
 	}
 
@@ -131,10 +133,10 @@ func (ctrl *QuestionController) GetQuestionById(c *fiber.Ctx) error {
 	return utils.JSONSuccess(c, http.StatusOK, question)
 }
 
-// UpdateQuestionById to update question and thier options with answer.
+// UpdateQuestionById to update question and their options with answer.
 // swagger:route PUT /v1/quizzes/{quiz_id}/questions/{question_id} Question RequestUpdateQuestionById
 //
-// Update question and thier options with answer.
+// Update question and their options with answer.
 //
 //		Consumes:
 //		- application/json
@@ -177,7 +179,7 @@ func (ctrl *QuestionController) UpdateQuestionById(c *fiber.Ctx) error {
 		Resource:          sql.NullString{String: questionReq.Resource, Valid: true},
 	})
 	if err != nil {
-		ctrl.logger.Error("error occured while update question by admin", zap.Error(err))
+		ctrl.logger.Error("error occurred while update question by admin", zap.Error(err))
 		return utils.JSONError(c, http.StatusInternalServerError, err.Error())
 	}
 
@@ -209,17 +211,17 @@ func (ctrl *QuestionController) DeleteQuestionById(c *fiber.Ctx) error {
 
 	isActiveQuizPresent, err := ctrl.activeQuizModel.IsActiveQuizPresent(quizId)
 	if err != nil {
-		ctrl.logger.Error("error occured while getting questions by admin", zap.Error(err))
+		ctrl.logger.Error("error occurred while getting questions by admin", zap.Error(err))
 		return utils.JSONError(c, http.StatusInternalServerError, err.Error())
 	}
 	if isActiveQuizPresent {
-		ctrl.logger.Error("error occured while getting questions by admin", zap.Error(err))
+		ctrl.logger.Error("error occurred while getting questions by admin", zap.Error(err))
 		return utils.JSONError(c, http.StatusBadRequest, constants.InvalidCredentials)
 	}
 
 	err = ctrl.quizSvc.DeleteQuestionById(questionId)
 	if err != nil {
-		ctrl.logger.Error("error occured while deleting quiz", zap.Error(err))
+		ctrl.logger.Error("error occurred while deleting quiz", zap.Error(err))
 		return utils.JSONError(c, http.StatusInternalServerError, err.Error())
 	}
 

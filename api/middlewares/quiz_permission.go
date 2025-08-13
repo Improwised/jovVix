@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"database/sql"
+	"fmt"
 	"net/http"
 
 	"github.com/Improwised/jovvix/api/constants"
@@ -53,7 +54,7 @@ func (m *Middleware) QuizPermission(c *fiber.Ctx) error {
 // check for edit permission of perticular quiz
 func (m *Middleware) VerifyQuizEditAccess(c *fiber.Ctx) error {
 	// Retrieve the user's permission for the current quiz from context
-	permission := c.Locals(constants.ContextQuizPermission).(string)
+	permission := fmt.Sprintf("%s", c.Locals(constants.ContextQuizPermission))
 	if permission != constants.SharePermission && permission != constants.WritePermission {
 		return utils.JSONError(c, http.StatusUnauthorized, constants.ErrUnauthorized)
 	}
@@ -64,7 +65,7 @@ func (m *Middleware) VerifyQuizEditAccess(c *fiber.Ctx) error {
 // check for share permission of perticular quiz
 func (m *Middleware) VerifyQuizShareAccess(c *fiber.Ctx) error {
 	// Retrieve the user's permission for the current quiz from context
-	permission := c.Locals(constants.ContextQuizPermission).(string)
+	permission := fmt.Sprintf("%s", c.Locals(constants.ContextQuizPermission))
 	if permission != constants.SharePermission {
 		return utils.JSONError(c, http.StatusUnauthorized, constants.ErrUnauthorized)
 	}

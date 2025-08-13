@@ -79,7 +79,10 @@ func (model *AnalyticsBoardAdminModel) GetAnalyticsForAdmin(activeQuizId string)
 		return nil, err
 	}
 	for index := 0; index < len(analyticsBoardData); index++ {
-		json.Unmarshal(analyticsBoardData[index].RawOptions, &analyticsBoardData[index].Options)
+		err := json.Unmarshal(analyticsBoardData[index].RawOptions, &analyticsBoardData[index].Options)
+		if err != nil {
+			return nil, err
+		}
 
 		analyticsBoardData[index].QuestionType, err = quizUtilsHelper.GetQuestionType(analyticsBoardData[index].QuestionTypeID)
 		if err != nil {

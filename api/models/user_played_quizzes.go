@@ -308,7 +308,7 @@ func (model *UserPlayedQuizModel) ListUserPlayedQuizes(userId string, page int, 
 	return userPlayedQuiz, totalCount, err
 }
 
-func (model *UserPlayedQuizModel) ListUserPlayedQuizesWithQuestionById(UserPlayedQuizId string) ([]structs.ResUserPlayedQuizAnalyticsBoard, error) {
+func (model *UserPlayedQuizModel) ListUserPlayedQuizesWithQuestionById(userPlayedQuizId string) ([]structs.ResUserPlayedQuizAnalyticsBoard, error) {
 	var userPlayedQuizAnalyticsBoard []structs.ResUserPlayedQuizAnalyticsBoard
 
 	query := model.db.From(UserPlayedQuizTable).
@@ -330,7 +330,7 @@ func (model *UserPlayedQuizModel) ListUserPlayedQuizesWithQuestionById(UserPlaye
 		InnerJoin(goqu.T(constants.UserQuizResponsesTable), goqu.On(goqu.I(UserPlayedQuizTable+".id").Eq(goqu.I(constants.UserQuizResponsesTable+".user_played_quiz_id")))).
 		InnerJoin(goqu.T(constants.QuestionsTable), goqu.On(goqu.I(constants.UserQuizResponsesTable+".question_id").Eq(goqu.I(constants.QuestionsTable+".id")))).
 		Where(goqu.Ex{
-			UserPlayedQuizTable + ".id": UserPlayedQuizId,
+			UserPlayedQuizTable + ".id": userPlayedQuizId,
 		})
 
 	sql, args, err := query.ToSQL()
@@ -344,7 +344,10 @@ func (model *UserPlayedQuizModel) ListUserPlayedQuizesWithQuestionById(UserPlaye
 	}
 
 	for index := 0; index < len(userPlayedQuizAnalyticsBoard); index++ {
-		json.Unmarshal(userPlayedQuizAnalyticsBoard[index].RawOptions, &userPlayedQuizAnalyticsBoard[index].Options)
+		err := json.Unmarshal(userPlayedQuizAnalyticsBoard[index].RawOptions, &userPlayedQuizAnalyticsBoard[index].Options)
+		if err != nil {
+			return nil, err
+		}
 
 		userPlayedQuizAnalyticsBoard[index].QuestionType, err = quizUtilsHelper.GetQuestionType(userPlayedQuizAnalyticsBoard[index].QuestionTypeID)
 		if err != nil {

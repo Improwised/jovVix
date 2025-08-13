@@ -91,7 +91,7 @@ Use Markdown formatting or indentation to separate code clearly if needed.
 ```
 ### Multiple Answers (Survey or multi-select):
 
-```text 
+```text
 1|2|4
 ```
 

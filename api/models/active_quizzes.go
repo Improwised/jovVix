@@ -89,7 +89,7 @@ func (model *ActiveQuizModel) CreateActiveQuiz(title string, quizID string, admi
 }
 
 func (model *ActiveQuizModel) GetSessionByCode(invitationCode string) (ActiveQuiz, error) {
-	var activeQuiz ActiveQuiz = ActiveQuiz{}
+	var activeQuiz = ActiveQuiz{}
 
 	found, err := model.db.Select("*").From(ActiveQuizzesTable).Where(goqu.I("invitation_code").Eq(invitationCode), goqu.I("is_active").Eq(true)).Limit(1).ScanStruct(&activeQuiz)
 
@@ -172,8 +172,8 @@ func (model *ActiveQuizModel) GetQuestionsCopy(activeQuizId uuid.UUID, quizId st
 }
 
 func (model *ActiveQuizModel) GetOrActivateSession(sessionId string, userId string) (ActiveQuiz, error) {
-	var activeQuiz ActiveQuiz = ActiveQuiz{}
-	var isOk bool = false
+	var activeQuiz = ActiveQuiz{}
+	var isOk = false
 
 	transactionObj, err := model.db.Begin()
 
@@ -232,7 +232,7 @@ func (model *ActiveQuizModel) GetOrActivateSession(sessionId string, userId stri
 }
 
 func (model *ActiveQuizModel) GetSessionById(db *goqu.TxDatabase, sessionId string) (ActiveQuiz, error) {
-	var activeQuiz ActiveQuiz = ActiveQuiz{}
+	var activeQuiz = ActiveQuiz{}
 	found, err := db.Select("*").From(ActiveQuizzesTable).Where(goqu.I("id").Eq(sessionId)).Limit(1).ScanStruct(&activeQuiz)
 
 	if err != nil {
@@ -247,7 +247,7 @@ func (model *ActiveQuizModel) GetSessionById(db *goqu.TxDatabase, sessionId stri
 }
 
 func (model *ActiveQuizModel) GetSession(sessionId string) (ActiveQuiz, error) {
-	var activeQuiz ActiveQuiz = ActiveQuiz{}
+	var activeQuiz = ActiveQuiz{}
 	found, err := model.db.Select("*").From(ActiveQuizzesTable).Where(goqu.I("id").Eq(sessionId)).Limit(1).ScanStruct(&activeQuiz)
 
 	if err != nil {
@@ -351,9 +351,9 @@ func (model *ActiveQuizModel) GetCurrentActiveQuestion(id uuid.UUID) (uuid.UUID,
 	return currentQuestion, nil
 }
 
-func (model *ActiveQuizModel) IsActiveQuizPresent(QuizId string) (bool, error) {
-	var activeQuiz ActiveQuiz = ActiveQuiz{}
-	return model.db.Select("*").From(ActiveQuizzesTable).Where(goqu.I("quiz_id").Eq(QuizId)).Limit(1).ScanStruct(&activeQuiz)
+func (model *ActiveQuizModel) IsActiveQuizPresent(quizId string) (bool, error) {
+	var activeQuiz = ActiveQuiz{}
+	return model.db.Select("*").From(ActiveQuizzesTable).Where(goqu.I("quiz_id").Eq(quizId)).Limit(1).ScanStruct(&activeQuiz)
 }
 
 // This function will delete all quizzes and their related data (user responses, played quizzes)

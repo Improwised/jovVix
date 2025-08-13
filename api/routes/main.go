@@ -47,7 +47,26 @@ func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config confi
 
 	router := app.Group("/api")
 
-	err = setupHealthCheckController(router, goqu, logger)
+	redis, err := redis.InitRedisPubSub(goqu, config.RedisClient, logger)
+	if err != nil {
+		return err
+	}
+
+	// middleware initialization
+	middleware, err := middlewares.NewMiddleware(config, logger, goqu)
+	if err != nil {
+		return fmt.Errorf("failed to initialize middlewares: %w", err)
+	}
+
+	err = setUpRoutes(router, goqu, logger, pMetrics, middleware, config, redis)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func setUpRoutes(router fiber.Router, goqu *goqu.Database, logger *zap.Logger, pMetrics *pMetrics.PrometheusMetrics, middleware middlewares.Middleware, config config.AppConfig, redis *redis.RedisPubSub) error {
+	err := setupHealthCheckController(router, goqu, logger)
 	if err != nil {
 		return err
 	}
@@ -56,15 +75,6 @@ func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config confi
 	if err != nil {
 		return err
 	}
-
-	redis, err := redis.InitRedisPubSub(goqu, config.RedisClient, logger)
-
-	if err != nil {
-		return err
-	}
-
-	// middleware initialization
-	middleware := middlewares.NewMiddleware(config, logger, goqu)
 
 	v1 := router.Group("/v1")
 

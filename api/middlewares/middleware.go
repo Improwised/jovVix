@@ -15,9 +15,13 @@ type Middleware struct {
 	sharedQuizzesModel *models.SharedQuizzesModel
 }
 
-func NewMiddleware(cfg config.AppConfig, logger *zap.Logger, db *goqu.Database) Middleware {
+func NewMiddleware(cfg config.AppConfig, logger *zap.Logger, db *goqu.Database) (Middleware, error) {
 
-	userModel, _ := models.InitUserModel(db, logger)
+	userModel, err := models.InitUserModel(db, logger)
+	if err != nil {
+		logger.Error("failed to initialize user model", zap.Error(err))
+		return Middleware{}, err
+	}
 	sharedQuizzesModel := models.InitSharedQuizzesModel(db, logger)
 
 	return Middleware{
@@ -26,5 +30,5 @@ func NewMiddleware(cfg config.AppConfig, logger *zap.Logger, db *goqu.Database) 
 		Db:                 db,
 		userModel:          &userModel,
 		sharedQuizzesModel: sharedQuizzesModel,
-	}
+	}, nil
 }
