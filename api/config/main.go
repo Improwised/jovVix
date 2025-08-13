@@ -35,7 +35,7 @@ type AppConfig struct {
 	AWS            AWSConfig
 	Quiz           QuizConfig
 	SMTP           SMTPConfig
-	PDFS_FILE_PATH string `envconfig:"PDFS_FILE_PATH" default:"./temp"`
+	PDFS_FILE_PATH string `envconfig:"PDFS_FILE_PATH" default:"/temp"`
 }
 
 // GetConfig Collects all configs

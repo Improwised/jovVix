@@ -2,23 +2,15 @@ package v1
 
 import (
 	"errors"
-	"fmt"
-	"log"
 	"net/http"
-	"os"
-	"path/filepath"
-	"sort"
 
 	"github.com/Improwised/jovvix/api/config"
 	"github.com/Improwised/jovvix/api/constants"
 	"github.com/Improwised/jovvix/api/models"
-	"github.com/Improwised/jovvix/api/pkg/structs"
 	"github.com/Improwised/jovvix/api/services"
 	"github.com/Improwised/jovvix/api/utils"
 	"github.com/doug-martin/goqu/v9"
 	fiber "github.com/gofiber/fiber/v2"
-	"github.com/johnfercher/maroto/pkg/consts"
-	"github.com/johnfercher/maroto/pkg/pdf"
 	"go.uber.org/zap"
 )
 
@@ -96,46 +88,13 @@ func (fc *AnalyticsBoardAdminController) DownloadQuizReport(c *fiber.Ctx) error 
 		return err
 	}
 
-	orderToUserAndQuestionData := make(map[int][]structs.UserAndQuestionData)
+	orderToUserAndQuestionData, orderOfQuestion := utils.ResponseToPdfData(quizReport)
 
-	for _, data := range quizReport {
-		user := structs.UserAndQuestionData{
-			Options:        data.Options,
-			UserName:       data.UserName,
-			CorrectAnswer:  data.CorrectAnswer,
-			SelectedAnswer: data.SelectedAnswer.String,
-			Question:       data.Question,
-			QuestionType:   data.QuestionType,
-		}
-		if val, ok := orderToUserAndQuestionData[data.OrderNo]; ok {
-			orderToUserAndQuestionData[data.OrderNo] = append(val, user)
-		} else {
-			orderToUserAndQuestionData[data.OrderNo] = []structs.UserAndQuestionData{user}
-		}
-	}
+	pdfSvc := services.NewCreatePdfService(fc.appConfig)
 
-	orderOfQuestion := make([]int, 0, len(orderToUserAndQuestionData))
-	for o := range orderToUserAndQuestionData {
-		orderOfQuestion = append(orderOfQuestion, o)
-	}
-	sort.Ints(orderOfQuestion)
-
-	m := pdf.NewMaroto(consts.Portrait, consts.A4)
-	m.SetPageMargins(20, 10, 20)
-	utils.BuildHeading(m)
-
-	utils.BuildUsersTables(m, orderToUserAndQuestionData, orderOfQuestion)
-	pdfPath := filepath.Join(fc.appConfig.PDFS_FILE_PATH, fmt.Sprintf("/%s.pdf", activeQuizId))
-	err = m.OutputFileAndClose(pdfPath)
-
+	data, err := pdfSvc.CreatPdf(orderToUserAndQuestionData, orderOfQuestion, activeQuizId)
 	if err != nil {
-		return err
-	}
-
-	data, err := os.ReadFile(pdfPath)
-	if err != nil {
-		log.Printf("Error reading PDF file: %v", err)
-		return c.Status(fiber.StatusInternalServerError).SendString("Error reading PDF file")
+		return utils.JSONError(c, http.StatusInternalServerError, "Error reading PDF file")
 	}
 	return utils.JSONSuccessPdf(c, http.StatusOK, data)
 }

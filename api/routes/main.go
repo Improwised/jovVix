@@ -306,7 +306,7 @@ func setUpAnalyticsBoardController(v1 fiber.Router, goqu *goqu.Database, logger 
 	analyticsBoard.Get("/user", analyticsBoardUserController.GetAnalyticsForUser)
 	analyticsAdminBoard := analyticsBoard.Group("/admin")
 	analyticsAdminBoard.Get("/", middlewares.KratosAuthenticated, analyticsBoardAdminController.GetAnalyticsForAdmin)
-	analyticsAdminBoard.Get(fmt.Sprintf("/download-pdf/:%s", constants.ActiveQuizId), middlewares.KratosAuthenticated, analyticsBoardAdminController.DownloadQuizReport)
+	analyticsAdminBoard.Get(fmt.Sprintf("/:%s/download", constants.ActiveQuizId), middlewares.KratosAuthenticated, analyticsBoardAdminController.DownloadQuizReport)
 	return nil
 }
 

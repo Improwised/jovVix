@@ -64,9 +64,12 @@ func BuildUsersTables(m pdf.Maroto, orderToUserAndQuestionData map[int][]structs
 					if userData.QuestionType == constants.SurveyString {
 						txtColor = color.Color{Green: 255}
 					} else {
-						if optKey == strings.Split(userData.CorrectAnswer, "")[1] {
+						correctAns := strings.Trim(userData.CorrectAnswer, "[]")
+						selectedAns := strings.Trim(userData.SelectedAnswer, "[]")
+						switch optKey {
+						case correctAns:
 							txtColor = color.Color{Green: 255}
-						} else if optKey == strings.Split(userData.SelectedAnswer, "")[1] {
+						case selectedAns:
 							txtColor = color.Color{Red: 255}
 						}
 					}

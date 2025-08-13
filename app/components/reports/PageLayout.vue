@@ -3,12 +3,16 @@
     <div class="col-lg-12 col-md-12 col-12">
       <div class="sub-title d-flex justify-content-around">
         <h3 class="mb-2 fw-bold text-center fs-1">Quiz Analysis</h3>
-        <button
-          class="btn bg-light-primary btn-light btn-link mx-2"
-          @click="downloadQuizReport()"
+        <a
+         :href="`${apiUrl}/analytics_board/admin/${activeQuizId}/download`"
+         download
         >
+          <button
+          class="btn bg-light-primary btn-light btn-link mx-2"
+          >
           Download report
         </button>
+      </a>
       </div>
       <ul class="nav nav-tabs justify-content-center">
         <li class="nav-item" @click="changeComponent('report')">
@@ -50,7 +54,4 @@ const changeComponent = (tab) => {
   emits("changeTab", tab);
 };
 
-const downloadQuizReport = async () => {
-  window.open(`${apiUrl}/analytics_board/admin/download-pdf/${activeQuizId.value}`, "_blank");
-};
 </script>
