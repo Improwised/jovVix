@@ -75,6 +75,7 @@ const (
 	ErrUpdateUserPermissionForQuiz = "error while updating user permission for particular quiz"
 	ErrDeleteUserPermissionForQuiz = "error while deleting user permission for particular quiz"
 	ErrGetStreakCount              = "error while getting streaks count"
+	ErrQuizIdNotFound              = "error enter valid quiz id"
 )
 
 // Bad Request Message
@@ -253,6 +254,14 @@ const (
 	// Event 11. ping
 	EventPing = "ping"
 	EventPong = "pong"
+
+	// Event 12. PDF
+	PdfName         = "quiz_report"
+	ErrInGettingPdf = "error during getting pdf"
+	ErrPdfNotFound  = "pdf not found with this name"
+	ErrReadingPdf   = "Error reading PDF file"
+	PdfTitleText    = "Quiz report"
+	PdfQueText      = "Question"
 )
 
 // final scoreboard cookie for user
