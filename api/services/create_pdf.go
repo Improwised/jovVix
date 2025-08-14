@@ -30,7 +30,7 @@ func (cps *CreatePdfService) CreatPdf(orderToUserAndQuestionData map[int][]struc
 	utils.BuildHeading(cps.pdf)
 
 	utils.BuildUsersTables(cps.pdf, orderToUserAndQuestionData, orderOfQuestion)
-	pdfPath := filepath.Join(cps.appConfig.PDFS_FILE_PATH, fmt.Sprintf("/%s.pdf", activeQuizId))
+	pdfPath := filepath.Join(cps.appConfig.PdfFilePath, fmt.Sprintf("/%s.pdf", activeQuizId))
 	err := cps.pdf.OutputFileAndClose(pdfPath)
 
 	if err != nil {

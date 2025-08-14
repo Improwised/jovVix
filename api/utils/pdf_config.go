@@ -59,17 +59,17 @@ func BuildUsersTables(m pdf.Maroto, orderToUserAndQuestionData map[int][]structs
 
 					bg := color.Color{Red: 255, Green: 255, Blue: 255} // default white
 					txtColor := getBlackColor()
-
-					// Correct option and survey question options
-					if userData.QuestionType == constants.SurveyString {
+					correctAns := strings.Trim(userData.CorrectAnswer, "[]")
+					selectedAns := strings.Trim(userData.SelectedAnswer, "[]")
+					if userData.QuestionType == constants.SurveyString && len(selectedAns) > 0 {
 						txtColor = color.Color{Green: 255}
+					} else if len(selectedAns) == 0 {
+						txtColor = getBlackColor()
 					} else {
-						correctAns := strings.Trim(userData.CorrectAnswer, "[]")
-						selectedAns := strings.Trim(userData.SelectedAnswer, "[]")
-						switch optKey {
-						case correctAns:
+						if optKey == correctAns {
 							txtColor = color.Color{Green: 255}
-						case selectedAns:
+						}
+						if optKey == selectedAns && selectedAns != correctAns {
 							txtColor = color.Color{Red: 255}
 						}
 					}

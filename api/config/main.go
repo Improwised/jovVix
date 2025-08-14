@@ -21,21 +21,21 @@ type RedisClientConfig struct {
 
 // AppConfig type AppConfig
 type AppConfig struct {
-	IsDevelopment  bool   `envconfig:"IS_DEVELOPMENT"`
-	Debug          bool   `envconfig:"DEBUG"`
-	Env            string `envconfig:"APP_ENV"`
-	Port           string `envconfig:"APP_PORT"`
-	Secret         string `envconfig:"JWT_SECRET"`
-	WebUrl         string `envconfig:"WEB_URL"`
-	JWTIssuer      string `envconfig:"ISSUER"`
-	RedisClient    RedisClientConfig
-	DB             DBConfig
-	Kratos         KratosConfig
-	MQ             MQConfig
-	AWS            AWSConfig
-	Quiz           QuizConfig
-	SMTP           SMTPConfig
-	PDFS_FILE_PATH string `envconfig:"PDFS_FILE_PATH" default:"/temp"`
+	IsDevelopment bool   `envconfig:"IS_DEVELOPMENT"`
+	Debug         bool   `envconfig:"DEBUG"`
+	Env           string `envconfig:"APP_ENV"`
+	Port          string `envconfig:"APP_PORT"`
+	Secret        string `envconfig:"JWT_SECRET"`
+	WebUrl        string `envconfig:"WEB_URL"`
+	JWTIssuer     string `envconfig:"ISSUER"`
+	PdfFilePath   string `envconfig:"PDFS_FILE_PATH" default:"/tmp"`
+	RedisClient   RedisClientConfig
+	DB            DBConfig
+	Kratos        KratosConfig
+	MQ            MQConfig
+	AWS           AWSConfig
+	Quiz          QuizConfig
+	SMTP          SMTPConfig
 }
 
 // GetConfig Collects all configs

@@ -259,6 +259,9 @@ const (
 	PdfName         = "quiz_report"
 	ErrInGettingPdf = "error during getting pdf"
 	ErrPdfNotFound  = "pdf not found with this name"
+	ErrReadingPdf   = "Error reading PDF file"
+	PdfTitleText    = "Quiz report"
+	PdfQueText      = "Question"
 )
 
 // final scoreboard cookie for user
@@ -301,9 +304,4 @@ const (
 	ChannelUserJoin       = "user_joined"
 	ChannelUserDisconnect = "user_disconnect"
 	ChannelSetAnswer      = "set_answer"
-)
-
-const (
-	PdfTitleText = "Quiz report"
-	PdfQueText   = "Question"
 )

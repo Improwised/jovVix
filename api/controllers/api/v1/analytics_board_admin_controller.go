@@ -17,6 +17,7 @@ import (
 type AnalyticsBoardAdminController struct {
 	AnalyticsBoardAdminModel *models.AnalyticsBoardAdminModel
 	presignedURLSvc          *services.PresignURLService
+	pdfSvc                   *services.CreatePdfService
 	logger                   *zap.Logger
 	appConfig                *config.AppConfig
 }
@@ -32,9 +33,12 @@ func NewAnalyticsBoardAdminController(goqu *goqu.Database, logger *zap.Logger, a
 		return nil, err
 	}
 
+	p := services.NewCreatePdfService(appConfig)
+
 	return &AnalyticsBoardAdminController{
 		AnalyticsBoardAdminModel: &analyticsBoardAdminModel,
 		presignedURLSvc:          presignedURLSvc,
+		pdfSvc:                   p,
 		logger:                   logger,
 		appConfig:                appConfig,
 	}, nil
@@ -90,11 +94,9 @@ func (fc *AnalyticsBoardAdminController) DownloadQuizReport(c *fiber.Ctx) error 
 
 	orderToUserAndQuestionData, orderOfQuestion := utils.ResponseToPdfData(quizReport)
 
-	pdfSvc := services.NewCreatePdfService(fc.appConfig)
-
-	data, err := pdfSvc.CreatPdf(orderToUserAndQuestionData, orderOfQuestion, activeQuizId)
+	data, err := fc.pdfSvc.CreatPdf(orderToUserAndQuestionData, orderOfQuestion, activeQuizId)
 	if err != nil {
-		return utils.JSONError(c, http.StatusInternalServerError, "Error reading PDF file")
+		return utils.JSONError(c, http.StatusInternalServerError, constants.ErrReadingPdf)
 	}
 	return utils.JSONSuccessPdf(c, http.StatusOK, data)
 }
