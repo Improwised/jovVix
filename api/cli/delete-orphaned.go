@@ -23,14 +23,14 @@ func GetDeleteOrphanedCommand(cfg config.AppConfig) cobra.Command {
 	deleteCommand := cobra.Command{
 		Use:   "delete-orphans [emails]",
 		Short: "To delete the orphan users from kratos.",
-		Long:  `To delete the orphan users from kratos, which are already deleted from backend.`, 
+		Long:  `To delete the orphan users from kratos, which are already deleted from backend.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
 				return fmt.Errorf("please provide at least one email to delete")
 			}
 
 			if cfg.Kratos.AdminUrl == "" {
-				return fmt.Errorf("KRATOS_ADMIN_URL and ORY_ACCESS_TOKEN must be set as environment variables")
+				return fmt.Errorf("KRATOS_ADMIN_URL and must be set as environment variable")
 			}
 
 			// Emails to delete
