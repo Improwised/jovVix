@@ -28,7 +28,6 @@ func GetDeleteOrphanedCommand(cfg config.AppConfig) cobra.Command {
 			if cfg.Kratos.AdminUrl == "" {
 				return fmt.Errorf("KRATOS_ADMIN_URL and ORY_ACCESS_TOKEN must be set as environment variables")
 			}
-			fmt.Println(cfg.Kratos.AdminUrl)
 
 			// Emails to delete
 			emailsToDelete := []string{
