@@ -21,41 +21,20 @@ type Identity struct {
 
 func GetDeleteOrphanedCommand(cfg config.AppConfig) cobra.Command {
 	deleteCommand := cobra.Command{
-		Use:   "delete-orphans",
+		Use:   "delete-orphans [emails]",
 		Short: "To delete the orphan users from kratos.",
-		Long:  `To delete the orphan users from kratos, which are already deleted from backend.`,
+		Long:  `To delete the orphan users from kratos, which are already deleted from backend.`, 
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) == 0 {
+				return fmt.Errorf("please provide at least one email to delete")
+			}
+
 			if cfg.Kratos.AdminUrl == "" {
 				return fmt.Errorf("KRATOS_ADMIN_URL and ORY_ACCESS_TOKEN must be set as environment variables")
 			}
 
 			// Emails to delete
-			emailsToDelete := []string{
-				"test@Improwised.com",
-				"singh@gmail.com",
-				"riya123@gmail.com",
-				"rishi123@gmail.com",
-				"richa123@gmail.com",
-				"khushal.mer@improwised.com",
-				"husen123@gmail.com",
-				"shivani@improwised.com",
-				"shivani123456@gmail.com",
-				"husen.kureshi@improwised.com",
-				"husen.kureshi@improwised1.com",
-				"husenkureshi2003@gmail.com",
-				"ctkinavar@gmail.com",
-				"ankit.jilka@improwised.com",
-				"ankitjilka10@gmail.com",
-				"angita.shah@improwised.com",
-				"19comp.ankit.jilka@gmail.com",
-				"19ce152.ankit.jilka@vvpedulink.ac.in",
-				"ashvintwst@gmail.com",
-				"ashvintest45@gmail.com",
-				"ashvin.bambhaniya+test@improwised.com",
-				"ashvinbambhaniyatest@gmail.com",
-				"ashvin.bambhaniya@improwised.com",
-				"shaktirajsinh.zala@improwised.com",
-			}
+			emailsToDelete := args
 
 			// Create a map for quick email lookup
 			emailsMap := make(map[string]bool)
