@@ -10,8 +10,9 @@ import (
 func Init(cfg config.AppConfig, logger *zap.Logger) error {
 	migrationCmd := GetMigrationCommandDef(cfg)
 	apiCmd := GetAPICommandDef(cfg, logger)
+	deleteOrphanedKratosUserCmd := GetDeleteOrphanedCommand(cfg)
 
 	rootCmd := &cobra.Command{Use: "jovvix"}
-	rootCmd.AddCommand(&migrationCmd, &apiCmd)
+	rootCmd.AddCommand(&migrationCmd, &apiCmd, &deleteOrphanedKratosUserCmd)
 	return rootCmd.Execute()
 }
