@@ -110,15 +110,29 @@ describe("QuestionSpace test", () => {
     expect(countdown.text()).toContain("3");
   });
 
-  it("renders admin skip button", async () => {
+  it("renders admin skip button when not last question", async () => {
     props.isAdmin = true;
     props.data.event = constants.GetQuestion;
     delete props.data.data.count;
+    props.data.data.no = props.data.data.totalQuestions - 1; // not last
 
     wrapper.unmount();
     wrapper = mountComponent();
     const skipButton = wrapper.find("button.btn-primary");
-    expect(wrapper.find("button.btn-primary").exists()).toBe(true);
-    expect(skipButton.text()).contain("skip");
+    expect(skipButton.exists()).toBe(true);
+    expect(skipButton.text()).toContain("Skip");
+  });
+
+  it("renders admin finish button when last question", async () => {
+    props.isAdmin = true;
+    props.data.event = constants.GetQuestion;
+    delete props.data.data.count;
+    props.data.data.no = props.data.data.totalQuestions; // last
+
+    wrapper.unmount();
+    wrapper = mountComponent();
+    const finishButton = wrapper.find("button.btn-primary");
+    expect(finishButton.exists()).toBe(true);
+    expect(finishButton.text()).toContain("Finish");
   });
 });

@@ -40,6 +40,13 @@ const timer = ref(null);
 const time = ref(0);
 const isSkip = ref(false);
 
+// Determine if current question is the last one
+const isLastQuestion = computed(() => {
+  const question = props?.data?.data;
+  if (!question) return false;
+  return Number(question.question_no) === Number(question.totalQuestions);
+});
+
 function handleTimer() {
   clearInterval(timer.value);
   timer.value = setInterval(() => {
@@ -118,13 +125,22 @@ const changeAnalysisTab = (tab) => emits("changeAnalysisTab", tab);
       </div>
     </div>
     <button
-      v-if="isAdmin"
+      v-if="isAdmin && !isLastQuestion"
       type="button"
       class="btn text-white btn-primary mt-3"
       :disabled="isSkip"
       @click="handleSkipTimer"
     >
       Skip
+    </button>
+    <button
+      v-if="isAdmin && isLastQuestion"
+      type="button"
+      class="btn text-white btn-primary mt-3"
+      :disabled="isSkip"
+      @click="handleSkipTimer"
+    >
+      Finish
     </button>
     <ul
       v-if="isAdmin"

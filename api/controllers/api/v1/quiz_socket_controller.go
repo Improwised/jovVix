@@ -1053,6 +1053,7 @@ func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.Wa
 	}
 
 	response.Data = map[string]any{
+		"question_no":    question.OrderNumber,
 		"quiz_id":        question.QuizId,
 		"rankList":       userRankBoard,
 		"question":       question.Question,
@@ -1068,6 +1069,7 @@ func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.Wa
 	shareEvenWithUser(c, qc, response, constants.EventShowScore, session.ID.String(), int(session.InvitationCode.Int32), constants.ToAdmin, arrangeMu)
 
 	response.Data = map[string]any{
+		"question_no":    question.OrderNumber,
 		"quiz_id":        question.QuizId,
 		"rankList":       userRankBoard,
 		"question":       question.Question,
