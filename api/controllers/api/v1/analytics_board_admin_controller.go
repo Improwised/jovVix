@@ -17,7 +17,9 @@ import (
 type AnalyticsBoardAdminController struct {
 	AnalyticsBoardAdminModel *models.AnalyticsBoardAdminModel
 	presignedURLSvc          *services.PresignURLService
+	pdfSvc                   *services.CreatePdfService
 	logger                   *zap.Logger
+	appConfig                *config.AppConfig
 }
 
 func NewAnalyticsBoardAdminController(goqu *goqu.Database, logger *zap.Logger, appConfig *config.AppConfig) (*AnalyticsBoardAdminController, error) {
@@ -31,10 +33,14 @@ func NewAnalyticsBoardAdminController(goqu *goqu.Database, logger *zap.Logger, a
 		return nil, err
 	}
 
+	p := services.NewCreatePdfService(appConfig)
+
 	return &AnalyticsBoardAdminController{
 		AnalyticsBoardAdminModel: &analyticsBoardAdminModel,
 		presignedURLSvc:          presignedURLSvc,
+		pdfSvc:                   p,
 		logger:                   logger,
+		appConfig:                appConfig,
 	}, nil
 
 }
@@ -72,4 +78,25 @@ func (fc *AnalyticsBoardAdminController) GetAnalyticsForAdmin(ctx *fiber.Ctx) er
 
 	return utils.JSONSuccess(ctx, http.StatusOK, analyticsBoardData)
 
+}
+
+func (fc *AnalyticsBoardAdminController) DownloadQuizReport(c *fiber.Ctx) error {
+	activeQuizId := c.Params(constants.ActiveQuizId)
+	if activeQuizId == "" {
+		return utils.JSONError(c, http.StatusBadRequest, constants.ErrQuizIdNotFound)
+	}
+
+	quizReport, err := fc.AnalyticsBoardAdminModel.GetAnalyticsForAdmin(activeQuizId)
+
+	if err != nil {
+		return err
+	}
+
+	orderToUserAndQuestionData, orderOfQuestion := utils.ResponseToPdfData(quizReport)
+
+	data, err := fc.pdfSvc.CreatPdf(orderToUserAndQuestionData, orderOfQuestion, activeQuizId)
+	if err != nil {
+		return utils.JSONError(c, http.StatusInternalServerError, constants.ErrReadingPdf)
+	}
+	return utils.JSONSuccessPdf(c, http.StatusOK, data)
 }
