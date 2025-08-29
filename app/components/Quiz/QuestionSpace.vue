@@ -42,6 +42,12 @@ const progressValue = computed(() => {
   return (time.value * 100) / question.value.duration;
 });
 
+// Determine if current question is the last one
+const isLastQuestion = computed(() => {
+  if (!question?.value) return false;
+  return Number(question.value.no) === Number(question.value.totalQuestions);
+});
+
 const isSubmitted = ref(false);
 
 // watchers
@@ -179,12 +185,20 @@ function handleSkip(e) {
       </div>
     </div>
     <button
-      v-if="isAdmin"
+      v-if="isAdmin && !isLastQuestion"
       type="button"
       class="btn text-white btn-primary mt-3"
       @click="handleSkip"
     >
-      skip
+      Skip
+    </button>
+    <button
+      v-if="isAdmin && isLastQuestion"
+      type="button"
+      class="btn text-white btn-primary mt-3"
+      @click="handleSkip"
+    >
+      Finish
     </button>
   </Frame>
   <div
