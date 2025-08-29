@@ -122,4 +122,17 @@ describe("QuestionSpace test", () => {
     expect(skipButton.exists()).toBe(true);
     expect(skipButton.text()).toContain("Skip");
   });
+
+  it("renders admin finish button when last question", async () => {
+    props.isAdmin = true;
+    props.data.event = constants.GetQuestion;
+    delete props.data.data.count;
+    props.data.data.no = props.data.data.totalQuestions; // last
+
+    wrapper.unmount();
+    wrapper = mountComponent();
+    const finishButton = wrapper.find("button.btn-primary");
+    expect(finishButton.exists()).toBe(true);
+    expect(finishButton.text()).toContain("Finish");
+  });
 });
