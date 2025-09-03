@@ -275,6 +275,9 @@ const (
 const (
 	SingleAnswerString = "single answer"
 	SurveyString       = "survey"
+	SingleString       = "single"
+	AllString          = "all"
+	SingleAnsField     = "single answer"
 
 	SingleAnswer = 1
 	Survey       = 2
@@ -295,4 +298,24 @@ const (
 	ChannelUserJoin       = "user_joined"
 	ChannelUserDisconnect = "user_disconnect"
 	ChannelSetAnswer      = "set_answer"
+)
+
+// Analysis Download Queries
+const (
+	DownloadFileName = "quiz_analysis"
+	QuestionType     = "question_type"
+	ContentType      = "Content-Type"
+	CsvAcceptHeader  = "text/csv"
+)
+
+const (
+	PageLimit          = "user_limit"
+	PageOffset         = "starting_at"
+	SortOrder          = "order_by"
+	AscOrder           = "asc"
+	DescOrder          = "desc"
+	DefaultUserLimit   = "10"
+	DefaultUserOffset  = "0"
+	IsTop10Users       = "top_10"
+	Top10UserTrueValue = "true"
 )

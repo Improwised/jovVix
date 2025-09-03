@@ -1,5 +1,12 @@
 <template>
-  <PageLayout :current-tab="currentTab" @change-tab="changeTab" />
+  <PageLayout
+    v-model:question-type-filter="filter"
+    v-model:user-filter="userRankFilter"
+    :current-tab="currentTab"
+    :total-question="filterQuestionAnalysis.length"
+    :all-question="allQuestionsLen"
+    @change-tab="changeTab"
+  />
   <template v-if="currentTab == 'report'">
     <div v-if="quizAnalysisPending">Loading...</div>
     <div
@@ -13,7 +20,7 @@
     </div>
     <div v-else class="container mt-3">
       <div
-        v-for="(quiz, index) in quizAnalysis.data"
+        v-for="(quiz, index) in filterQuestionAnalysis"
         :key="index"
         class="card mb-3 row"
       >
@@ -45,8 +52,8 @@
     <div v-else class="quiz-content">
       <div class="tab-content">
         <QuizUserAnalyticsSpace
-          v-for="(oData, index) in rankData"
-          :key="index"
+          v-for="oData in rankData"
+          :key="oData"
           :data="userJson[oData]"
           :user-name="oData"
           :survey-questions="surveyQuestions"
@@ -54,12 +61,23 @@
         ></QuizUserAnalyticsSpace>
       </div>
     </div>
+    <div
+      v-if="!userRankFilter.showTop10"
+      class="d-flex align-items-center justify-content-center"
+    >
+      <Pagination
+        :page="Math.floor(userRankFilter.offset / userRankFilter.limit) + 1"
+        :num-of-records="Math.ceil(totalUsers / userRankFilter.limit)"
+      />
+    </div>
   </template>
 </template>
 
 <script setup>
 import PageLayout from "~~/components/reports/PageLayout.vue";
 import lodash from "lodash";
+import { ref, computed } from "vue";
+
 definePageMeta({
   layout: "default",
 });
@@ -110,13 +128,21 @@ const userJson = ref({});
 const questionJson = ref({});
 const rankData = ref([]);
 const surveyQuestions = ref(0);
-const ranks = ref();
 const quizUserAnalysispending = ref(false);
 const fetchError = ref("");
+const filter = ref("all");
+
+const userRankFilter = ref({
+  isAsc: false,
+  limit: 10,
+  offset: 0,
+  showTop10: false,
+});
 
 const getAnalysisJson = async () => {
   try {
     quizUserAnalysispending.value = true;
+
     const response = await fetch(
       `${apiUrl}/analytics_board/admin?active_quiz_id=${activeQuizId.value}`,
       {
@@ -127,57 +153,12 @@ const getAnalysisJson = async () => {
       }
     );
 
-    const ranksResponse = await fetch(
-      `${apiUrl}/final_score/admin?active_quiz_id=${activeQuizId.value}`,
-      {
-        method: "GET",
-        headers: headers.value,
-        mode: "cors",
-        credentials: "include",
-      }
-    );
-
     const result = await response.json();
-    ranks.value = await ranksResponse.json();
 
-    if (response.ok && ranksResponse.ok) {
+    if (response.ok) {
       analysisJson.value = result.data;
-
       userJson.value = lodash.groupBy(analysisJson.value, "username");
-
-      ranks.value?.data.forEach((data) => {
-        rankData.value.push(data.username); //to get usernames rank wise, to pass data from userJson in sorted manner
-        let key = data.username; // Get the username (key)
-
-        // Check if the key exists in userJson.value
-        if (userJson.value.hasOwnProperty(key)) {
-          let totalScore = data.score; // Calculate total_score as score
-
-          // Update userJson.value[key] with rank, total_score, and response_time
-          userJson.value[key].push({
-            rank: data.rank,
-            total_score: totalScore,
-            response_time: data.response_time,
-            avatar: data.img_key,
-          });
-        } else {
-          console.error(`Key '${key}' not found in userJson.value.`);
-        }
-      });
-
       questionJson.value = lodash.groupBy(analysisJson.value, "question");
-
-      // from userJson, count total points of all questions and count of total survey questions
-      for (const key in userJson.value) {
-        userJson.value[key].forEach((question) => {
-          if (!question.rank) {
-            if (question.question_type == "survey") {
-              surveyQuestions.value++;
-            }
-          }
-        });
-        break;
-      }
     } else {
       console.error(result);
     }
@@ -186,15 +167,90 @@ const getAnalysisJson = async () => {
   } catch (error) {
     quizUserAnalysispending.value = false;
     fetchError.value = error;
-    console.error("Failed to fetch data", error);
+    console.error("Failed to fetch analysis data", error);
+  }
+};
+
+const totalUsers = ref(0);
+
+const getRankData = async () => {
+  try {
+    let url = `${apiUrl}/final_score/admin?active_quiz_id=${activeQuizId.value}`;
+
+    if (userRankFilter.value.showTop10) {
+      url += `&user_limit=10&starting_at=0&order_by=desc`;
+    } else {
+      const orderBy = userRankFilter.value.isAsc ? "asc" : "desc";
+      const userLimit = userRankFilter.value.limit;
+      const offset = userRankFilter.value.offset;
+
+      url += `&user_limit=${userLimit}&starting_at=${offset}&order_by=${orderBy}`;
+    }
+
+    const ranksResponse = await fetch(url, {
+      method: "GET",
+      headers: headers.value,
+      mode: "cors",
+      credentials: "include",
+    });
+
+    const ranksResult = await ranksResponse.json();
+
+    if (ranksResponse.ok) {
+      rankData.value = [];
+      totalUsers.value = ranksResult.count; // 👈 store total count
+
+      ranksResult.data.forEach((data) => {
+        rankData.value.push(data.username);
+
+        let key = data.username;
+        if (userJson.value.hasOwnProperty(key)) {
+          userJson.value[key].push({
+            rank: data.rank,
+            total_score: data.score,
+            response_time: data.response_time,
+            avatar: data.img_key,
+          });
+        }
+      });
+    } else {
+      console.error(ranksResult);
+    }
+  } catch (error) {
+    console.error("Failed to fetch rank data", error);
   }
 };
 
 onMounted(() => {
   getAnalysisJson();
+  getRankData();
 });
+
+watch(
+  userRankFilter,
+  () => {
+    getRankData();
+  },
+  { deep: true }
+);
 
 const changeTab = (data) => {
   currentTab.value = data;
 };
+
+const filterQuestionAnalysis = computed(() => {
+  if (!quizAnalysis.value?.data) return [];
+
+  if (filter.value === "all") {
+    return quizAnalysis.value.data;
+  }
+  return quizAnalysis.value.data.filter((q) => q.type == filter.value);
+});
+
+const allQuestionsLen = computed(() => quizAnalysis.value?.data.length);
+const page = computed(() => Number(route.query.page) || 1);
+
+watch(page, (newPage) => {
+  userRankFilter.value.offset = (newPage - 1) * userRankFilter.value.limit;
+});
 </script>

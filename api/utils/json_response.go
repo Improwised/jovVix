@@ -53,3 +53,11 @@ func JSONErrorWs(c *websocket.Conn, eventName string, data interface{}) error {
 	}
 
 }
+
+func JSONSuccessWithPagination(c *fiber.Ctx, statusCode int, data interface{}, totalCount int) error {
+	return c.Status(statusCode).JSON(map[string]interface{}{
+		"status": "success",
+		"data":   data,
+		"count":  totalCount,
+	})
+}

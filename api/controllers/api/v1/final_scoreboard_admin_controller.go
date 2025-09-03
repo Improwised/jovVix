@@ -3,6 +3,8 @@ package v1
 import (
 	"errors"
 	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/Improwised/jovvix/api/constants"
 	"github.com/Improwised/jovvix/api/models"
@@ -45,19 +47,51 @@ func NewFinalScoreBoardAdminController(goqu *goqu.Database, logger *zap.Logger) 
 //	     400: GenericResFailNotFound
 //		  500: GenericResError
 func (fc *FinalScoreBoardAdminController) GetScoreForAdmin(ctx *fiber.Ctx) error {
-
+	var limit, offset int
+	var err error
 	var activeQuizId = ctx.Query(constants.ActiveQuizId)
+
+	userLimit := ctx.Query(constants.PageLimit)
+	userOffset := ctx.Query(constants.PageOffset)
+	userSortOrder := strings.ToLower(ctx.Query(constants.SortOrder))
+
+	if userLimit == "" {
+		userLimit = constants.DefaultUserLimit
+	}
+
+	if userOffset == "" {
+		userOffset = constants.DefaultUserOffset
+	}
+
+	limit, err = strconv.Atoi(userLimit)
+	if err != nil {
+		return err
+	}
+
+	offset, err = strconv.Atoi(userOffset)
+	if err != nil {
+		return err
+	}
+
+	if userSortOrder != constants.AscOrder && userSortOrder != constants.DescOrder {
+		userSortOrder = constants.DescOrder
+	}
 
 	if !(activeQuizId != "" && len(activeQuizId) == 36) {
 		fc.logger.Debug("active quiz id is not valid - either empty string or it is not 36 characters long")
 		return utils.JSONFail(ctx, http.StatusBadRequest, errors.New("user play quiz should be valid string").Error())
 	}
 
-	finalScoreBoardData, err := fc.finalScoreBoardAdminModel.GetScoreForAdmin(activeQuizId)
+	finalScoreBoardData, err := fc.finalScoreBoardAdminModel.GetScoreForAdmin(activeQuizId, limit, offset, userSortOrder)
 	if err != nil {
 		fc.logger.Error("Error while getting final scoreboard for admin", zap.Error(err))
 		return utils.JSONFail(ctx, http.StatusInternalServerError, errors.New("internal server error").Error())
 	}
+	totalUsers, err := fc.finalScoreBoardAdminModel.TotoalUsers(activeQuizId)
 
-	return utils.JSONSuccess(ctx, http.StatusOK, finalScoreBoardData)
+	if err != nil {
+		fc.logger.Error("Error while getting total user", zap.Error(err))
+		return utils.JSONFail(ctx, http.StatusInternalServerError, errors.New("internal server error").Error())
+	}
+	return utils.JSONSuccessWithPagination(ctx, http.StatusOK, finalScoreBoardData, totalUsers)
 }
