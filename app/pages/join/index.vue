@@ -7,7 +7,7 @@
             <QuizLoadingSpace v-if="pageLoading"></QuizLoadingSpace>
             <Frame
               v-else
-              page-title="Join Page"
+              page-title="Join Quiz"
               page-message="Let's Play Together"
               class="bg-white"
             >

@@ -43,6 +43,8 @@ export default defineNuxtConfig({
           media: "print",
           onload: "this.media='all'",
         },
+        // Add your favicon here
+        { rel: "icon", type: "image/x-icon", href: "/favicon.ico" },
       ],
     },
   },
