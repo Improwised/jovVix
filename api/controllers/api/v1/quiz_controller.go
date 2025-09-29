@@ -288,3 +288,30 @@ func (ctrl *QuizController) DeleteQuizById(c *fiber.Ctx) error {
 	ctrl.logger.Debug("QuizController.DeleteQuizById success", zap.Any(constants.QuizId, quizId))
 	return utils.JSONSuccess(c, http.StatusOK, "success")
 }
+
+func (qc *QuizController) DownloadReport(c *fiber.Ctx) error {
+	questionType := c.Query(constants.QuestionType)
+	activeQuizId := c.Params(constants.ActiveQuizId)
+	contentType := c.Get(constants.ContentType)
+
+	quizAnalysis, err := qc.quizModel.GetQuizAnalysis(activeQuizId)
+
+	if err != nil {
+		qc.logger.Error("error while get quiz analysis", zap.Error(err))
+		return utils.JSONError(c, http.StatusInternalServerError, err.Error())
+	}
+
+	if contentType == constants.CsvAcceptHeader {
+
+		filePath, err := services.GenerateCsv(qc.appConfig.FilePath, activeQuizId, quizAnalysis, func(a []models.QuizAnalysis) [][]string {
+			return utils.GetQuestionsData(a, questionType)
+		})
+
+		if err != nil {
+			return err
+		}
+		return utils.CsvFileResponse(c, filePath, activeQuizId+".csv")
+	}
+
+	return utils.JSONSuccess(c, http.StatusOK, quizAnalysis)
+}

@@ -26,11 +26,17 @@ func InitFinalScoreBoardAdminModel(goqu *goqu.Database) (FinalScoreBoardAdminMod
 
 // GetScoreForAdmin to send final score after quiz over
 
-func (model *FinalScoreBoardAdminModel) GetScoreForAdmin(activeQuizId string) ([]FinalScoreBoardAdmin, error) {
+func (model *FinalScoreBoardAdminModel) GetScoreForAdmin(activeQuizId string, limit, offset int, sortOrder string) ([]FinalScoreBoardAdmin, error) {
 	var finalScoreBoardData []FinalScoreBoardAdmin
 
 	UserQuizResponseTable := "user_quiz_responses"
 	UserPlayedQuizTable := "user_played_quizzes"
+
+	order := goqu.I("score").Desc()
+
+	if sortOrder == "asc" {
+		order = goqu.I("score").Asc()
+	}
 
 	err := model.db.
 		From(goqu.T("users")).
@@ -53,6 +59,9 @@ func (model *FinalScoreBoardAdminModel) GetScoreForAdmin(activeQuizId string) ([
 			UserPlayedQuizTable + ".active_quiz_id":        activeQuizId,
 		}).
 		GroupBy(goqu.I("users.id")).
+		Order(order).
+		Limit(uint(limit)).
+		Offset(uint(offset)).
 		ScanStructs(&finalScoreBoardData)
 
 	if err != nil {
@@ -60,4 +69,23 @@ func (model *FinalScoreBoardAdminModel) GetScoreForAdmin(activeQuizId string) ([
 	}
 
 	return finalScoreBoardData, nil
+}
+
+func (model *FinalScoreBoardAdminModel) TotoalUsers(activeQuizId string) (int, error) {
+	var totalCount int
+	ds := model.db.From("users").
+		Join(
+			goqu.T("user_played_quizzes"),
+			goqu.On(goqu.I("user_played_quizzes.user_id").Eq(goqu.I("users.id"))),
+		).
+		Select(goqu.COUNT("*")).
+		Where(
+			goqu.I("user_played_quizzes.active_quiz_id").Eq(activeQuizId),
+		)
+
+	_, err := ds.ScanVal(&totalCount)
+	if err != nil {
+		return 0, err
+	}
+	return totalCount, nil
 }

@@ -127,6 +127,11 @@ func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config confi
 		return err
 	}
 
+	err = setupDownloadPaticipantsController(v1, goqu, logger, middleware, config)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -252,6 +257,7 @@ func setupQuizController(v1 fiber.Router, db *goqu.Database, logger *zap.Logger,
 	report := admin.Group("/reports")
 	report.Get("/list", quizController.ListQuizzesAnalysis)
 	report.Get(fmt.Sprintf("/:%s/analysis", constants.ActiveQuizId), middleware.KratosAuthenticated, quizController.GetQuizAnalysis)
+	report.Get(fmt.Sprintf("/:%s/download/analysis", constants.ActiveQuizId), middleware.KratosAuthenticated, quizController.DownloadReport)
 	return nil
 }
 
@@ -347,5 +353,16 @@ func setupSharedQuizzesController(v1 fiber.Router, goqu *goqu.Database, logger *
 	sharedQuizzesRouter.Get(fmt.Sprintf("/:%s", constants.QuizId), middlewares.QuizPermission, middlewares.VerifyQuizShareAccess, sharedQuizzesController.ListQuizAuthorizedUsers)
 	sharedQuizzesRouter.Put(fmt.Sprintf("/:%s", constants.QuizId), middlewares.QuizPermission, middlewares.VerifyQuizShareAccess, sharedQuizzesController.UpdateUserPermissionOfQuiz)
 	sharedQuizzesRouter.Delete(fmt.Sprintf("/:%s", constants.QuizId), middlewares.QuizPermission, middlewares.VerifyQuizShareAccess, sharedQuizzesController.DeleteUserPermissionOfQuiz)
+	return nil
+}
+
+func setupDownloadPaticipantsController(v1 fiber.Router, goqu *goqu.Database, logger *zap.Logger, middleware middlewares.Middleware, config config.AppConfig) error {
+	downloadParticipantsController, err := controller.InitDownloadParticipantsController(goqu, logger, &config)
+	if err != nil {
+		return err
+	}
+
+	reports := v1.Group("/admin/reports")
+	reports.Get(fmt.Sprintf("/:%s/download/participants", constants.ActiveQuizId), middleware.KratosAuthenticated, downloadParticipantsController.DownloadParticipantsReport)
 	return nil
 }
