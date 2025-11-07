@@ -49,7 +49,7 @@
     "@fortawesome/vue-fontawesome": "^3.0.3",
     "@lottiefiles/lottie-player": "^2.0.4",
     "@mdi/font": "^7.4.47",
-    "@nuxt/devtools": "^1.6.1",
+    "@nuxt/devtools": "^3.1.0",
     "@nuxt/types": "^2.18.1",
     "@pinia/nuxt": "^0.11.1",
     "@popperjs/core": "^2.11.8",
