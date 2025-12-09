@@ -44,6 +44,10 @@ func ValidateCSVFileFormat(fileName string) ([]Question, error) {
 		return questions, err
 	}
 
+	if len(csvData) == 0 {
+		return questions, fmt.Errorf("the uploaded file is empty. please choose a file with content")
+	}
+
 	if err := csvutil.Unmarshal(csvData, &questions); err != nil {
 		return questions, err
 	}

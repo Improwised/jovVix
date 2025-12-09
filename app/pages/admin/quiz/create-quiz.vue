@@ -38,8 +38,7 @@ const uploadQuizAndQuestions = async (e) => {
       onResponse({ response }) {
         if (response.status != 202) {
           requestPending.value = false;
-          toast.error("error while create quiz");
-          return;
+          throw new Error(response?._data?.data || "Error while creating quiz");
         }
         if (response.status == 202) {
           quizId.value = response._data?.data;
