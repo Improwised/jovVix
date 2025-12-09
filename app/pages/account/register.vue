@@ -13,12 +13,6 @@ const password = ref();
 const csrfToken = ref();
 const component = ref("waiting");
 const { kratosUrl } = useRuntimeConfig().public;
-// const errors = ref({
-//   email: "",
-//   password: "",
-//   firstname: "",
-//   lastname: "",
-// });
 const { errors, validate } = useRegisterValidation();
 
 const registerURLWithFlowQuery = ref("");
@@ -160,9 +154,9 @@ async function setFlowIDAndCSRFToken() {
   >
     <form
       method="POST"
-      @submit.prevent="onSubmit"
       :action="registerURLWithFlowQuery"
       enctype="application/json"
+      @submit.prevent="onSubmit"
     >
       <div class="mb-3">
         <label for="firstname" class="form-label">First Name</label>
