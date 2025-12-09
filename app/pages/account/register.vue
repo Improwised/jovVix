@@ -13,14 +13,34 @@ const password = ref();
 const csrfToken = ref();
 const component = ref("waiting");
 const { kratosUrl } = useRuntimeConfig().public;
-const errors = ref({
-  email: "",
-  password: "",
-  firstname: "",
-  lastname: "",
-});
+// const errors = ref({
+//   email: "",
+//   password: "",
+//   firstname: "",
+//   lastname: "",
+// });
+const { errors, validate } = useRegisterValidation();
+
 const registerURLWithFlowQuery = ref("");
 console.log(); // this console.log is required because without this, nuxt will give 5xx error as async function is called afterwards
+
+function onSubmit(event) {
+  const isValid = validate({
+    firstname: firstname.value,
+    lastname: lastname.value,
+    email: email.value,
+    password: password.value,
+  });
+
+  console.log(isValid);
+  if (!isValid) {
+    // Stop form submission
+    return;
+  }
+
+  // If valid → submit the form manually
+  event.target.submit();
+}
 
 (async () => {
   if (process.client) {
@@ -140,6 +160,7 @@ async function setFlowIDAndCSRFToken() {
   >
     <form
       method="POST"
+      @submit.prevent="onSubmit"
       :action="registerURLWithFlowQuery"
       enctype="application/json"
     >
@@ -151,7 +172,6 @@ async function setFlowIDAndCSRFToken() {
           type="text"
           name="traits.name.first"
           class="form-control"
-          required
         />
         <div v-if="errors.firstname" class="text-danger">
           {{ errors.firstname }}
@@ -165,7 +185,6 @@ async function setFlowIDAndCSRFToken() {
           type="text"
           name="traits.name.last"
           class="form-control"
-          required
         />
         <div v-if="errors.lastname" class="text-danger">
           {{ errors.lastname }}
@@ -176,10 +195,9 @@ async function setFlowIDAndCSRFToken() {
         <input
           id="email"
           v-model="email"
-          type="email"
+          type="text"
           name="traits.email"
           class="form-control"
-          required
         />
         <div v-if="errors.email" class="text-danger">{{ errors.email }}</div>
       </div>
@@ -191,7 +209,6 @@ async function setFlowIDAndCSRFToken() {
           type="password"
           name="password"
           class="form-control"
-          required
         />
         <div v-if="errors.password" class="text-danger">
           {{ errors.password }}
