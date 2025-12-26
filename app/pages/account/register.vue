@@ -1,6 +1,7 @@
 <script setup>
 import { useToast } from "vue-toastification";
 import { useUsersStore } from "~~/store/users";
+import { useUserPasswordRules } from "@/composables/user_password_rules";
 const userData = useUsersStore();
 const { getUserData } = userData;
 const route = useRoute();
@@ -12,6 +13,7 @@ const email = ref();
 const password = ref();
 const csrfToken = ref();
 const component = ref("waiting");
+const submitted = ref(false);
 const { kratosUrl } = useRuntimeConfig().public;
 const errors = ref({
   email: "",
@@ -20,8 +22,20 @@ const errors = ref({
   lastname: "",
 });
 const registerURLWithFlowQuery = ref("");
-console.log(); // this console.log is required because without this, nuxt will give 5xx error as async function is called afterwards
+const { passwordErrors } = useUserPasswordRules(
+  password,
+  firstname,
+  lastname
+);
 
+console.log(); // this console.log is required because without this, nuxt will give 5xx error as async function is called afterwards
+function onSubmit() {
+  submitted.value = true;
+  if (passwordErrors.value.length > 0) {
+    return;
+  }
+  event.target.submit();
+}
 (async () => {
   if (process.client) {
     const user = getUserData();
@@ -142,6 +156,7 @@ async function setFlowIDAndCSRFToken() {
       method="POST"
       :action="registerURLWithFlowQuery"
       enctype="application/json"
+      @submit.prevent="onSubmit"
     >
       <div class="mb-3">
         <label for="firstname" class="form-label">First Name</label>
@@ -191,9 +206,13 @@ async function setFlowIDAndCSRFToken() {
           type="password"
           name="password"
           class="form-control"
+          placeholder=""
           required
         />
-        <div v-if="errors.password" class="text-danger">
+        <div v-if="submitted && passwordErrors.length" class="mt-2">
+          <div v-for="(err, i) in passwordErrors" :key="i">• {{ err }}</div>
+        </div>
+        <div v-else-if="errors.password" class="text-danger">
           {{ errors.password }}
         </div>
       </div>
