@@ -118,7 +118,7 @@ const handleForgotPassword = async () => {
 
   try {
     // First, check if user exists in your database
-    const checkEmailResponse = await $fetch(`${urls.apiUrl}/user/check-email`, {
+    await $fetch(`${urls.apiUrl}/user/check-email`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -175,7 +175,7 @@ const handleEmailVerification = async () => {
   }
 
   try {
-    const checkEmailResponse = await $fetch(`${urls.apiUrl}/user/check-email`, {
+    await $fetch(`${urls.apiUrl}/user/check-email`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
