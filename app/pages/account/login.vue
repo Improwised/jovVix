@@ -112,36 +112,59 @@ async function setFlowIDAndCSRFToken() {
 
 const handleForgotPassword = async () => {
   if (!email.value) {
-    toast.error("please enter email first!");
+    toast.error("Please enter email first!");
     return;
   }
-  const recoveryResponse = await fetch(
-    `${kratosUrl}/self-service/recovery/browser`,
-    {
+
+  try {
+    // First, check if user exists in your database
+    const checkEmailResponse = await $fetch(`${urls.apiUrl}/user/check-email`, {
+      method: "POST",
       headers: {
+        "Content-Type": "application/json",
+      },
+      body: {
+        email: email.value,
+      },
+    });
+
+    // If user doesn't exist, the catch block will handle it
+    // If we reach here, user exists, proceed with Kratos flow
+    const recoveryResponse = await fetch(
+      `${kratosUrl}/self-service/recovery/browser`,
+      {
+        headers: {
+          Accept: "application/json",
+        },
+      }
+    );
+    const recovery = await recoveryResponse.json();
+
+    const recoverypage = recovery?.ui?.action;
+
+    await fetch(recoverypage, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
         Accept: "application/json",
       },
+      body: JSON.stringify({
+        email: email.value,
+        csrf_token: csrfToken.value,
+        method: "code",
+      }),
+    });
+
+    navigateTo(recoverypage, { external: true });
+  } catch (error) {
+    if (error.status === 404 || error.statusCode === 404) {
+      toast.error("User not found. Please register first.");
+    } else {
+      toast.error("An error occurred. Please try again.");
+      console.error(error);
     }
-  );
-  const recovery = await recoveryResponse.json();
-
-  const recoverypage = recovery?.ui?.action;
-
-  await fetch(recoverypage, {
-    method: "POST",
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
-    body: JSON.stringify({
-      email: email.value,
-      csrf_token: csrfToken.value,
-      method: "code",
-    }),
-  });
-
-  navigateTo(recoverypage, { external: true });
+  }
 };
 
 // Handle email verification
@@ -152,7 +175,16 @@ const handleEmailVerification = async () => {
   }
 
   try {
-    // Request email verification flow from Kratos
+    const checkEmailResponse = await $fetch(`${urls.apiUrl}/user/check-email`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: {
+        email: email.value,
+      },
+    });
+
     const verificationResponse = await fetch(
       `${kratosUrl}/self-service/verification/browser`,
       {
@@ -166,7 +198,6 @@ const handleEmailVerification = async () => {
     const verificationPage = verification?.ui?.action;
     flowID.value = verification?.id;
 
-    // Trigger email verification
     await fetch(verificationPage, {
       method: "POST",
       credentials: "include",
@@ -184,8 +215,12 @@ const handleEmailVerification = async () => {
     toast.success("Verification email has been sent!");
     component.value = "verifyCode";
   } catch (error) {
-    toast.error("An error occurred while sending the verification email.");
-    console.error(error);
+    if (error.status === 404 || error.statusCode === 404) {
+      toast.error("User not found. Please register first.");
+    } else {
+      toast.error("An error occurred while sending the verification email.");
+      console.error(error);
+    }
   }
 };
 

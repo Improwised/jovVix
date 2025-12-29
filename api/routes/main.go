@@ -191,6 +191,7 @@ func setupUserController(v1 fiber.Router, goqu *goqu.Database, logger *zap.Logge
 	// user route
 	userRouter := v1.Group("/user")
 	userRouter.Get("/who", middlewares.Authenticated, userController.GetUserMeta)
+	userRouter.Post("/check-email", userController.CheckUserEmail)
 	userRouter.Post(fmt.Sprintf("/:%s", constants.Username), userController.CreateGuestUser)
 
 	return nil

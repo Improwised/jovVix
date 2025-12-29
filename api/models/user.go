@@ -168,6 +168,29 @@ func (model *UserModel) GetUserByKratosID(kratosID string) (User, error) {
 	}
 }
 
+// CheckEmailExists checks if an email exists in the users table
+func (model *UserModel) CheckEmailExists(email string) (bool, error) {
+	var exists bool
+	
+	rows, err := model.db.Select(goqu.L("EXISTS ?", 
+		model.db.Select().From(UserTable).Where(goqu.Ex{"email": email}),
+	)).Executor().Query()
+	
+	if err != nil {
+		return false, err
+	}
+	defer rows.Close()
+	
+	if rows.Next() {
+		err = rows.Scan(&exists)
+		if err != nil {
+			return false, err
+		}
+	}
+	
+	return exists, nil
+}
+
 func (model *UserModel) UpdateKratosUserDetails(reqUser User, userMetadata []byte) error {
 	isOk := false
 	transaction, err := model.db.Begin()

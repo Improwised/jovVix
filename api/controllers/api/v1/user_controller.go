@@ -190,3 +190,53 @@ func (ctrl *UserController) CreateGuestUser(c *fiber.Ctx) error {
 
 	return utils.JSONSuccess(c, http.StatusOK, user)
 }
+// CheckUserEmail Check if user email exists
+// swagger:route POST /v1/user/check-email User CheckUserEmail
+//
+// Check if user email exists in database.
+//
+//		Consumes:
+//		- application/json
+//
+//		Schemes: http, https
+//
+//		Responses:
+//		  200: ResponseEmailExists
+//		  400: GenericResError
+//		  500: GenericResError
+// CheckUserEmail Check if user email exists
+func (ctrl *UserController) CheckUserEmail(c *fiber.Ctx) error {
+	var reqBody struct {
+		Email string `json:"email"`
+	}
+	
+	if err := c.BodyParser(&reqBody); err != nil {
+		ctrl.logger.Error("Failed to parse request body", zap.Error(err))
+		return utils.JSONError(c, http.StatusBadRequest, "Invalid request body")
+	}
+
+	if reqBody.Email == "" {
+		return utils.JSONError(c, http.StatusBadRequest, "Email is required")
+	}
+
+	// Check if email exists
+	exists, err := ctrl.userModel.CheckEmailExists(reqBody.Email)
+	if err != nil {
+		ctrl.logger.Error("Failed to check email", zap.Error(err))
+		return utils.JSONError(c, http.StatusInternalServerError, "Failed to check email")
+	}
+
+	// If user doesn't exist, return error
+	if !exists {
+		ctrl.logger.Debug("User not found", zap.String("email", reqBody.Email))
+		return utils.JSONError(c, http.StatusNotFound, "User not found. Please register first.")
+	}
+
+	// User exists
+	ctrl.logger.Debug("User found", zap.String("email", reqBody.Email))
+	return utils.JSONSuccess(c, http.StatusOK, map[string]interface{}{
+		"exists":  true,
+		"message": "User exists",
+		"email":   reqBody.Email,
+	})
+}
