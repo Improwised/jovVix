@@ -11,6 +11,7 @@
               <img class="logo" src="/jovvix-logo.png" alt="" />
             </NuxtLink>
             <h3 class="mt-3 welcome-text">Recover your account</h3>
+            <p class="mt-3 welcome-text">If an account exists for this email address, you will receive a password recovery email shortly.</p>
           </div>
 
           <form @submit.prevent="verifyOTP">
