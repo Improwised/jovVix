@@ -35,22 +35,18 @@ const uploadQuizAndQuestions = async (e) => {
       body: formData,
       mode: "cors",
       credentials: "include",
-      onResponse({ response }) {
-        if (response.status != 202) {
-          requestPending.value = false;
-          toast.error("error while create quiz");
-          return;
-        }
-        if (response.status == 202) {
-          quizId.value = response._data?.data;
-          toast.success(app.$CsvUploadSuccess);
-        }
-      },
+        onResponse({ response }) {
+          if (response.status === 202) {
+            quizId.value = response._data?.data;
+            toast.success(app.$CsvUploadSuccess);
+          }
+        },
     });
   } catch (error) {
-    toast.error(error.message);
-    requestPending.value = false;
-    return;
+      const parsed = error?.data?.data ?? error?.data?.message ?? error?.message ?? JSON.stringify(error)
+      toast.error(parsed || "error while creating quiz")
+      requestPending.value = false
+      return
   }
 
   try {
