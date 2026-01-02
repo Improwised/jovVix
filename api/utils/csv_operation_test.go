@@ -49,7 +49,7 @@ func TestValidateCSVFileFormat(t *testing.T) {
 		defer os.Remove(tempFile.Name())
 
 		questions, err := ValidateCSVFileFormat(tempFile.Name())
-		assert.NoError(t, err)
+		assert.Error(t, err)
 		assert.Empty(t, questions)
 
 	})
@@ -65,7 +65,7 @@ func TestValidateCSVFileFormat(t *testing.T) {
 		defer os.Remove(tempFile.Name())
 
 		questions, err := ValidateCSVFileFormat(tempFile.Name())
-		assert.NoError(t, err)
+		assert.Error(t, err)
 		assert.Empty(t, questions)
 	})
 }
