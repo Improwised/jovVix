@@ -55,6 +55,10 @@ console.log(); // this console.log is required because without this, nuxt will g
           onResponse({ response }) {
             response?._data?.ui?.messages?.forEach((message) => {
               if (message.type === "error") {
+                if (message.text?.toLowerCase().includes("expired")) {
+                  toast.error("Your session has expired. Please start the registration process again.");
+                  return; 
+                }
                 if (message.id === 4000007) {
                   toast.error("An account with the same email exists already!");
                 } else {
@@ -133,66 +137,30 @@ async function setFlowIDAndCSRFToken() {
 
 <template>
   <QuizLoadingSpace v-if="component === 'waiting'"></QuizLoadingSpace>
-  <Frame
-    v-else
-    page-title="Register"
-    page-message="We Would Be Happy To Have You"
-  >
-    <form
-      method="POST"
-      :action="registerURLWithFlowQuery"
-      enctype="application/json"
-    >
+  <Frame v-else page-title="Register" page-message="We Would Be Happy To Have You">
+    <form method="POST" :action="registerURLWithFlowQuery" enctype="application/json">
       <div class="mb-3">
         <label for="firstname" class="form-label">First Name</label>
-        <input
-          id="firstname"
-          v-model="firstname"
-          type="text"
-          name="traits.name.first"
-          class="form-control"
-          required
-        />
+        <input id="firstname" v-model="firstname" type="text" name="traits.name.first" class="form-control" required />
         <div v-if="errors.firstname" class="text-danger">
           {{ errors.firstname }}
         </div>
       </div>
       <div class="mb-3">
         <label for="lastname" class="form-label">Last Name</label>
-        <input
-          id="lastname"
-          v-model="lastname"
-          type="text"
-          name="traits.name.last"
-          class="form-control"
-          required
-        />
+        <input id="lastname" v-model="lastname" type="text" name="traits.name.last" class="form-control" required />
         <div v-if="errors.lastname" class="text-danger">
           {{ errors.lastname }}
         </div>
       </div>
       <div class="mb-3">
         <label for="traits.email" class="form-label">Email</label>
-        <input
-          id="email"
-          v-model="email"
-          type="email"
-          name="traits.email"
-          class="form-control"
-          required
-        />
+        <input id="email" v-model="email" type="email" name="traits.email" class="form-control" required />
         <div v-if="errors.email" class="text-danger">{{ errors.email }}</div>
       </div>
       <div class="mb-3">
         <label for="password" class="form-label">Password</label>
-        <input
-          id="password"
-          v-model="password"
-          type="password"
-          name="password"
-          class="form-control"
-          required
-        />
+        <input id="password" v-model="password" type="password" name="password" class="form-control" required />
         <div v-if="errors.password" class="text-danger">
           {{ errors.password }}
         </div>
