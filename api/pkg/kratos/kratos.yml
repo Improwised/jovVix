@@ -82,7 +82,7 @@ selfservice:
       ui_url: http://127.0.0.1:5000/verification
       use: code
       after:
-        default_browser_return_url: http://127.0.0.1:3000/api/v1/kratos/auth
+        default_browser_return_url: http://127.0.0.1:5000/account/login
 
     logout:
       after:
