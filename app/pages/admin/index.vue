@@ -405,7 +405,7 @@ const changePassword = async () => {
     );
 
     if (response.status == 400) {
-      throw new Error("the password is too similar to the user identifier");
+      throw new Error("Please enter a new password");
     }
 
     if (!response.ok) {
