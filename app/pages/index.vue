@@ -120,7 +120,13 @@
     </div>
   </div>
 </template>
-
+<style>
+  .alert {
+  margin-left: calc(var(--bs-gutter-x) * -0.5);
+  margin-right: calc(var(--bs-gutter-x) * -0.5);
+  width: calc(100% + var(--bs-gutter-x));
+}
+</style>
 <script setup>
 const url = useRuntimeConfig().public;
 const headers = useRequestHeaders(["cookie"]);
