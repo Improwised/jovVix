@@ -23,7 +23,7 @@ func (m *Middleware) ValidateCsv(c *fiber.Ctx) error {
 
 	if file.Size > constants.FileSize {
 		m.Logger.Error("error in getting csv file", zap.Error(err))
-		return utils.JSONFail(c, http.StatusBadRequest, constants.ErrGettingAttachment)
+		return utils.JSONFail(c, http.StatusBadRequest, constants.ErrFileSizeExceed)
 	}
 
 	isMatched := false
