@@ -21,7 +21,7 @@ func (m *Middleware) ValidateCsv(c *fiber.Ctx) error {
 		return utils.JSONFail(c, http.StatusBadRequest, constants.ErrGettingAttachment)
 	}
 
-	if file.Size > constants.FileSize {
+	if file.Size > m.Config.Quiz.FileSize {
 		m.Logger.Error("error in getting csv file", zap.Error(err))
 		return utils.JSONFail(c, http.StatusBadRequest, constants.ErrFileSizeExceed)
 	}

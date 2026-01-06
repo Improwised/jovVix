@@ -106,9 +106,9 @@ const imageFileUpload = async (e) => {
     return;
   }
 
-  // 2 MB max
-  if (file.size > 2000000) {
-    toast.error("Please upload an image less than 2 MB.");
+  // 1 MB max
+  if (file.size > 1000000) {
+    toast.error("Please upload an image less than 1 MB.");
     return;
   }
 
