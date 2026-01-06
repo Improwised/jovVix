@@ -64,7 +64,7 @@
             <div type="button" class="btn btn-sm text-white mx-1" :class="userData.email_verify ? 'btn-dark' : 'btn-success'"
               :style="userData.email_verify ? { opacity: 0.4, pointerEvents: 'none', cursor: 'not-allowed' } : {}"
               @click="handleEmailVerification">
-              {{ userData.email_verify ? "Verified ✔" : "Verify Your Account" }}
+              {{ userData.email_verify ? "Verified" : "Verify Your Account" }}
             </div>
           </div>
         </div>
@@ -211,7 +211,6 @@ watch(
   [user, userError],
   () => {
     if (user.value) {
-      console.log("user", user.value);
       userData.full_name =
         user.value.data.identity.traits.name.first +
         " " +
@@ -406,8 +405,6 @@ const handleEmailVerification = async () => {
     if (!sendEmailResponse.ok) {
       throw new Error("Failed to send verification email");
     }
-
-    // toast.success("Verification email has been sent!");
 
     setTimeout(() => {
       navigateTo(`/verification?flow=${flowId}`);
