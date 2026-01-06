@@ -2,6 +2,7 @@
   <div class="container">
     <!-- Modal -->
     <div
+      ref="passwordModalEl"
       id="exampleModal"
       class="modal fade"
       tabindex="-1"
@@ -231,6 +232,7 @@
 import { useUsersStore } from "~~/store/users";
 import { getAvatarUrlByName } from "~~/composables/avatar";
 import { useToast } from "vue-toastification";
+import { Modal } from "bootstrap";
 const toast = useToast();
 const userStore = useUsersStore();
 const { getUserData, setUserData } = userStore;
@@ -241,22 +243,23 @@ const updateuserPending = ref(false);
 const passwordRequestError = ref(false);
 const cancleButton = ref(false);
 const route = useRoute();
+const passwordModalEl = ref(null);
+let passwordModal = null;
 const avatar = computed(() => {
   const user = getUserData();
   return getAvatarUrlByName(user?.avatar);
 });
 
-onMounted(() => {
-  if (route.query.openPasswordModal === 'true') {
-    nextTick(() => {
-      setTimeout(() => {
-        const modalButton = document.querySelector('[data-bs-target="#exampleModal"]');
-        if (modalButton) {
-          modalButton.click();
-          navigateTo('/admin', { replace: true });
-        }
-      }, 500);
-    });
+onMounted(async () => {
+  if (route.query.openPasswordModal === "true") {
+    await nextTick();
+
+    if (passwordModalEl.value) {
+      passwordModal = new Modal(passwordModalEl.value);
+      passwordModal.show();
+
+      navigateTo("/admin", { replace: true });
+    }
   }
 });
 
