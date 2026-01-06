@@ -240,10 +240,24 @@ const updateuserError = ref(false);
 const updateuserPending = ref(false);
 const passwordRequestError = ref(false);
 const cancleButton = ref(false);
-
+const route = useRoute();
 const avatar = computed(() => {
   const user = getUserData();
   return getAvatarUrlByName(user?.avatar);
+});
+
+onMounted(() => {
+  if (route.query.openPasswordModal === 'true') {
+    nextTick(() => {
+      setTimeout(() => {
+        const modalButton = document.querySelector('[data-bs-target="#exampleModal"]');
+        if (modalButton) {
+          modalButton.click();
+          navigateTo('/admin', { replace: true });
+        }
+      }, 500);
+    });
+  }
 });
 
 const {
