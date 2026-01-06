@@ -36,38 +36,6 @@
         </div>
       </div>
     </div>
-    <!-- Email Verification Modal -->
-    <div v-if="showVerifyModal" class="modal fade show d-block" tabindex="-1"
-      style="background-color: rgba(0,0,0,0.5);">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Verify Email</h5>
-            <button type="button" class="btn-close" @click="closeVerifyModal" aria-label="Close"></button>
-          </div>
-
-          <div class="modal-body">
-            <div class="form-group">
-              <label for="verificationCode" class="form-label">Verification Code</label>
-              <input id="verificationCode" v-model="verificationCode" type="text" maxlength="6" class="form-control"
-                placeholder="Enter 6-digit code" />
-              <small class="form-text text-muted">
-                Enter the verification code sent to <strong class="email-highlight">"{{ userData.email }}"</strong>
-              </small>
-            </div>
-          </div>
-
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary text-white" @click="closeVerifyModal">
-              Cancel
-            </button>
-            <button type="button" class="btn btn-primary text-white" @click="verifyEmailCode">
-              Verify Email
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
 
     <h3 class="d-flex align-item-center justify-content-center">
       Account Profile
@@ -93,16 +61,11 @@
             <div type="button" class="btn btn-danger btn-sm text-white mx-1" @click="deleteAccount">
               Delete Account
             </div>
-            <!-- <div type="button" class="btn btn-success btn-sm text-white mx-1" @click="handleEmailVerification">
-              {{ userData.email_verify ? "Verified" : "Verify Your Account" }}
-            </div> -->
             <div type="button" class="btn btn-sm text-white mx-1" :class="userData.email_verify ? 'btn-dark' : 'btn-success'"
               :style="userData.email_verify ? { opacity: 0.4, pointerEvents: 'none', cursor: 'not-allowed' } : {}"
               @click="handleEmailVerification">
               {{ userData.email_verify ? "Verified ✔" : "Verify Your Account" }}
             </div>
-
-
           </div>
         </div>
       </div>
@@ -197,10 +160,6 @@ const updateuserError = ref(false);
 const updateuserPending = ref(false);
 const passwordRequestError = ref(false);
 const cancleButton = ref(false);
-const showVerifyModal = ref(false);
-const verificationFlowId = ref("");
-const verificationCsrfToken = ref("");
-const verificationCode = ref("");
 
 const avatar = computed(() => {
   const user = getUserData();
@@ -406,97 +365,59 @@ const deleteAccount = async () => {
   }
 };
 
-const closeVerifyModal = () => {
-  showVerifyModal.value = false;
-  verificationCode.value = "";
-  userData.email_verify = true;
-};
-
-const verifyEmailCode = async () => {
+const handleEmailVerification = async () => {
   try {
-    const response = await fetch(
-      `${url.kratosUrl}/self-service/verification?flow=${verificationFlowId.value}`,
+    const verificationResponse = await fetch(
+      `${url.kratosUrl}/self-service/verification/browser?return_to=${window.location.origin}/admin`,
       {
-        method: "POST",
-        credentials: "include",
+        method: "GET",
         headers: {
-          "Content-Type": "application/json",
           Accept: "application/json",
         },
-        body: JSON.stringify({
-          method: "code",
-          code: verificationCode.value,
-          csrf_token: verificationCsrfToken.value,
-        }),
+        credentials: "include",
       }
     );
 
-    const result = await response.json();
-
-    // Check for error messages
-    const messages = result?.ui?.messages;
-    if (messages && messages[0]?.type === "error") {
-      // code is invalid or already used
-      if (messages[0]?.id === 4070006) {
-        toast.error("The verification code is invalid or has already been used.");
-        return;
-      }
-      toast.error(messages[0]?.text || "Verification failed");
-      return;
+    if (!verificationResponse.ok) {
+      throw new Error("Failed to initiate verification flow");
     }
 
-    // Check if verification passed
-    if (result.state === "passed_challenge") {
-      toast.success("Email verified successfully!");
-      closeVerifyModal();
-    } else {
-      toast.error("Verification failed. Please try again.");
-    }
-
-  } catch (error) {
-    console.error(error);
-    toast.error("Verification failed");
-  }
-};
-
-const handleEmailVerification = async () => {
-  try {
-    const response = await fetch(`${url.kratosUrl}/self-service/verification/browser`, {
-      method: "GET",
-      headers: { Accept: "application/json" },
-      credentials: "include",
-    });
-
-    const data = await response.json();
-
-    verificationFlowId.value = data.id;
-    verificationCsrfToken.value = data.ui.nodes.find(
-      (n) => n.attributes.name === "csrf_token"
+    const verification = await verificationResponse.json();
+    const verificationPage = verification?.ui?.action;
+    const flowId = verification?.id;
+    const csrfToken = verification.ui.nodes.find(
+      (node) => node.attributes.name === "csrf_token"
     ).attributes.value;
 
-    await fetch(data.ui.action, {
+    const sendEmailResponse = await fetch(verificationPage, {
       method: "POST",
+      credentials: "include",
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
       },
-      credentials: "include",
       body: JSON.stringify({
         email: userData.email,
-        csrf_token: verificationCsrfToken.value,
+        csrf_token: csrfToken,
         method: "code",
       }),
     });
 
-    toast.success("Verification email sent!");
-    showVerifyModal.value = true;
+    if (!sendEmailResponse.ok) {
+      throw new Error("Failed to send verification email");
+    }
+
+    // toast.success("Verification email has been sent!");
+
+    setTimeout(() => {
+      navigateTo(`/verification?flow=${flowId}`);
+    }, 300);
 
   } catch (error) {
     console.error(error);
     toast.error("Failed to start verification");
   }
 };
-
 </script>
 
 <style scoped>
