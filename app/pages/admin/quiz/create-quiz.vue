@@ -221,8 +221,10 @@ const imageFileUpload = async (e) => {
           </label>
           <input id="attachment" type="file" class="form-control" name="attachment" placeholder="upload"
             aria-describedby="fileHelpId" accept=".csv" @change="(e) => (file = e.target.files.length)" />
-
         </div>
+        <p class="text-muted">
+          You can download a sample CSV file to help you prepare your quiz data.
+        </p>
       </div>
       <div class="d-flex p-2">
         <button v-if="requestPending" class="btn text-white btn-primary me-2">
