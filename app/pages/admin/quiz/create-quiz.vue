@@ -11,6 +11,7 @@ useSystemEnv();
 let file = ref(0);
 let title = ref("");
 const url = useRuntimeConfig().public;
+const maxFileSize = useRuntimeConfig().public.maxImageFileSize;
 let quizId = ref();
 const requestPending = ref(false);
 const imageRequestPending = ref(false);
@@ -107,8 +108,8 @@ const imageFileUpload = async (e) => {
   }
 
   // 1 MB max
-  if (file.size > 1000000) {
-    toast.error("Please upload an image less than 1 MB.");
+  if (file.size > maxFileSize) {
+    toast.error(`Please upload an image less than ${maxFileSize / 1024 / 1024} MB.`);
     return;
   }
 

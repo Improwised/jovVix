@@ -27,7 +27,7 @@ func GetAPICommandDef(cfg config.AppConfig, logger *zap.Logger) cobra.Command {
 
 			// Create fiber app
 			app := fiber.New(fiber.Config{
-				BodyLimit: 15 * 1024 * 1024,
+				BodyLimit: cfg.BodyLimitMB * 1024 * 1024,
 			})
 
 			app.Use(cors.New(cors.Config{
