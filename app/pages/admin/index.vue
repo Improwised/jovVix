@@ -440,6 +440,7 @@ const changePassword = async () => {
     password.new = "";
     password.confirm = "";
 
+    toast.success("Password updated successfully.");
     document.getElementById("closeModalButton").click();
   } catch (error) {
     passwordRequestError.value = error.message;
