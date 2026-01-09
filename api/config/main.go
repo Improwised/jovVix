@@ -28,6 +28,7 @@ type AppConfig struct {
 	Secret        string `envconfig:"JWT_SECRET"`
 	WebUrl        string `envconfig:"WEB_URL"`
 	JWTIssuer     string `envconfig:"ISSUER"`
+	BodyLimitMB   int    `envconfig:"BODY_LIMIT_MB"`
 	RedisClient   RedisClientConfig
 	DB            DBConfig
 	Kratos        KratosConfig

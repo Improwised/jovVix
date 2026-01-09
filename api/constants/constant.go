@@ -107,7 +107,7 @@ const (
 	QuizTitle                   = "quiz_title"
 	QuizTitleRequired           = "quiz-title is required"
 	ErrGettingAttachment        = "error in getting file"
-	ErrFileSizeExceed           = "file size exceeded"
+	ErrFileSizeExceed           = "The file is too large to upload. Please select a smaller file."
 	ErrFileIsNotInSupportedType = "file has no supported type"
 	ErrProblemInUploadFile      = "there was some error in file upload"
 	ErrValidatingColumns        = "file columns not in proper format"
