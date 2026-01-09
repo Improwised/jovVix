@@ -117,6 +117,8 @@ const (
 	ErrSingleAnswerLength       = "in single answer there should be only one correct answer"
 	ErrQuestionType             = "please provide a proper question type"
 	ErrQuestionId               = "question type id not exists"
+	ErrEmptyFile 				= "The uploaded file is empty. Please choose a file with content."
+    ErrUnsupportedFileType 		= "The uploaded file is not a valid CSV. Please check the format and try again."
 
 	// quiz-id
 	QuizId       = "quiz_id"
