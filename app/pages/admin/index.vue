@@ -42,12 +42,17 @@
                 id="name"
                 v-model="password.confirm"
                 type="password"
-                class="form-control"
+                class="form-control mb-2"
                 placeholder="Confirm new password"
                 required
               />
-              <div v-if="passwordRequestError" class="form-text text-danger">
-                {{ passwordRequestError }}
+              <div v-if="passwordRequestError">
+                • {{ passwordRequestError }}
+              </div>
+              <div v-if="passwordSubmitted && passwordErrors.length">
+                <div v-for="(err, i) in passwordErrors" :key="i">
+                  • {{ err }}
+                </div>
               </div>
             </div>
           </div>
@@ -63,6 +68,7 @@
             <button
               type="button"
               class="btn btn-primary text-white"
+              :disabled="isChangePasswordDisabled"
               @click="changePassword"
             >
               Change Password
@@ -231,6 +237,8 @@
 import { useUsersStore } from "~~/store/users";
 import { getAvatarUrlByName } from "~~/composables/avatar";
 import { useToast } from "vue-toastification";
+import { toRef } from "vue";
+import { useUserPasswordRules } from "@/composables/user_password_rules";
 const toast = useToast();
 const userStore = useUsersStore();
 const { getUserData, setUserData } = userStore;
@@ -240,6 +248,20 @@ const updateuserError = ref(false);
 const updateuserPending = ref(false);
 const passwordRequestError = ref(false);
 const cancleButton = ref(false);
+const passwordSubmitted = ref(false);
+const password = reactive({
+  new: "",
+  confirm: "",
+});
+const newPasswordRef = toRef(password, "new");
+
+const { passwordErrors } = useUserPasswordRules(
+  newPasswordRef,
+);
+
+const isChangePasswordDisabled = computed(() => {
+  return !password.new || !password.confirm;
+});
 
 const avatar = computed(() => {
   const user = getUserData();
@@ -283,11 +305,6 @@ const userData = reactive({
 const profile = reactive({
   full_name: "",
   email: "",
-});
-
-const password = reactive({
-  new: "",
-  confirm: "",
 });
 
 watch(
@@ -380,9 +397,15 @@ const fetchFlowIdAndCsrfToken = async () => {
 };
 
 const changePassword = async () => {
+  passwordSubmitted.value = true;
   try {
+    if (passwordErrors.value.length > 0) {
+      return;
+    }
+
     if (password.new !== password.confirm) {
-      throw new Error("Passwords do not match.");
+      passwordRequestError.value = "Passwords do not match.";
+      return;
     }
 
     await fetchFlowIdAndCsrfToken();
@@ -404,10 +427,6 @@ const changePassword = async () => {
       }
     );
 
-    if (response.status == 400) {
-      throw new Error("Please enter a new password");
-    }
-
     if (!response.ok) {
       const errorData = await response.json();
       if (errorData.error.id === "session_refresh_required") {
@@ -418,11 +437,11 @@ const changePassword = async () => {
     }
 
     passwordRequestError.value = "";
+    password.new = "";
+    password.confirm = "";
 
-    var closeModalButton = document.getElementById("closeModalButton");
-    closeModalButton.click();
+    document.getElementById("closeModalButton").click();
   } catch (error) {
-    console.error("Error during password change:", error.message);
     passwordRequestError.value = error.message;
   }
 };
