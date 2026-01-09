@@ -10,8 +10,8 @@ useSystemEnv();
 // define props and emits
 let file = ref(0);
 let title = ref("");
-const url = useRuntimeConfig().public;
-const maxFileSize = useRuntimeConfig().public.maxImageFileSize;
+const publicRuntimeConfig = useRuntimeConfig().public;
+const maxFileSize = publicRuntimeConfig.maxImageFileSize;
 let quizId = ref();
 const requestPending = ref(false);
 const imageRequestPending = ref(false);
@@ -28,7 +28,7 @@ const uploadQuizAndQuestions = async (e) => {
   formData.append(description.name, description.value);
   formData.append(attachment.name, attachment.files[0]);
   try {
-    await $fetch(encodeURI(`${url.apiUrl}/quizzes/${title.value}/upload`), {
+    await $fetch(encodeURI(`${publicRuntimeConfig.apiUrl}/quizzes/${title.value}/upload`), {
       method: "POST",
       headers: {
         Accept: "application/json",
@@ -52,7 +52,7 @@ const uploadQuizAndQuestions = async (e) => {
 
   try {
     await $fetch(
-      encodeURI(`${url.apiUrl}/quizzes/${quizId.value}/questions?media=image`),
+      encodeURI(`${publicRuntimeConfig.apiUrl}/quizzes/${quizId.value}/questions?media=image`),
       {
         method: "GET",
         headers: {
@@ -118,7 +118,7 @@ const imageFileUpload = async (e) => {
 
   imageRequestPending.value = true;
   try {
-    await $fetch(encodeURI(`${url.apiUrl}/images?quiz_id=${quizId.value}`), {
+    await $fetch(encodeURI(`${publicRuntimeConfig.apiUrl}/images?quiz_id=${quizId.value}`), {
       method: "POST",
       headers: {
         Accept: "application/json",
