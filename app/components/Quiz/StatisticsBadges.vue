@@ -15,7 +15,7 @@
       Total Incorrect: {{ props.userStatistics?.wrongAnwers }}
     </span>
     <span class="badge rounded-pill bg-light-secondary text-dark m-2 px-2 fs-5">
-      Total Un-attmpted: {{ props.userStatistics?.unAttemptedQuestions }}
+      Total Un-attempted: {{ props.userStatistics?.unAttemptedQuestions }}
     </span>
   </div>
 </template>

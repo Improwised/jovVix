@@ -21,7 +21,6 @@ func (m *Middleware) ValidateCsv(c *fiber.Ctx) error {
 		return utils.JSONFail(c, http.StatusBadRequest, constants.ErrGettingAttachment)
 	}
 
-	// size validation
 	if file.Size > constants.FileSize {
 		m.Logger.Error("error in getting csv file", zap.Error(err))
 		return utils.JSONFail(c, http.StatusBadRequest, constants.ErrGettingAttachment)
@@ -34,17 +33,15 @@ func (m *Middleware) ValidateCsv(c *fiber.Ctx) error {
 	}
 
 	for _, types := range allowedTypes {
-
 		if types == file.Header.Get("Content-Type") {
 			isMatched = true
 			break
 		}
 	}
 
-	// content type validation
 	if !isMatched {
 		m.Logger.Error("file type mismatch", zap.Any("file", file))
-		return utils.JSONFail(c, fiber.StatusBadRequest, constants.ErrFileIsNotInSupportedType)
+		return utils.JSONFail(c, fiber.StatusBadRequest, constants.ErrUnsupportedFileType)
 	}
 
 	folder := "./uploads"
