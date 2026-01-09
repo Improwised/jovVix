@@ -25,10 +25,21 @@
             </div>
             <div class="form-group">
               <label for="name" class="form-label">Confirm New Password</label>
-              <input id="name" v-model="password.confirm" type="password" class="form-control"
-                placeholder="Confirm new password" required />
-              <div v-if="passwordRequestError" class="form-text text-danger">
-                {{ passwordRequestError }}
+              <input
+                id="name"
+                v-model="password.confirm"
+                type="password"
+                class="form-control mb-2"
+                placeholder="Confirm new password"
+                required
+              />
+              <div v-if="passwordRequestError">
+                • {{ passwordRequestError }}
+              </div>
+              <div v-if="passwordSubmitted && passwordErrors.length">
+                <div v-for="(err, i) in passwordErrors" :key="i">
+                  • {{ err }}
+                </div>
               </div>
             </div>
           </div>
@@ -36,7 +47,12 @@
             <button id="closeModalButton" type="button" class="btn btn-secondary text-white" data-bs-dismiss="modal">
               Close
             </button>
-            <button type="button" class="btn btn-primary text-white" @click="changePassword">
+            <button
+              type="button"
+              class="btn btn-primary text-white"
+              :disabled="isChangePasswordDisabled"
+              @click="changePassword"
+            >
               Change Password
             </button>
           </div>
@@ -158,6 +174,8 @@
 import { useUsersStore } from "~~/store/users";
 import { getAvatarUrlByName } from "~~/composables/avatar";
 import { useToast } from "vue-toastification";
+import { toRef } from "vue";
+import { useUserPasswordRules } from "@/composables/user_password_rules";
 import { Modal } from "bootstrap";
 const toast = useToast();
 const userStore = useUsersStore();
@@ -168,6 +186,21 @@ const updateuserError = ref(false);
 const updateuserPending = ref(false);
 const passwordRequestError = ref(false);
 const cancleButton = ref(false);
+const passwordSubmitted = ref(false);
+const password = reactive({
+  new: "",
+  confirm: "",
+});
+const newPasswordRef = toRef(password, "new");
+
+const { passwordErrors } = useUserPasswordRules(
+  newPasswordRef,
+);
+
+const isChangePasswordDisabled = computed(() => {
+  return !password.new || !password.confirm;
+});
+
 const route = useRoute();
 const passwordModalEl = ref(null);
 let passwordModal = null;
@@ -223,11 +256,6 @@ const userData = reactive({
   last_name: "",
   email: "",
   email_verify: false,
-});
-
-const password = reactive({
-  new: "",
-  confirm: "",
 });
 
 watch(
@@ -321,9 +349,15 @@ const fetchFlowIdAndCsrfToken = async () => {
 };
 
 const changePassword = async () => {
+  passwordSubmitted.value = true;
   try {
+    if (passwordErrors.value.length > 0) {
+      return;
+    }
+
     if (password.new !== password.confirm) {
-      throw new Error("Passwords do not match.");
+      passwordRequestError.value = "Passwords do not match.";
+      return;
     }
 
     await fetchFlowIdAndCsrfToken();
@@ -345,10 +379,6 @@ const changePassword = async () => {
       }
     );
 
-    if (response.status == 400) {
-      throw new Error("the password is too similar to the user identifier");
-    }
-
     if (!response.ok) {
       const errorData = await response.json();
       if (errorData.error.id === "session_refresh_required") {
@@ -359,11 +389,12 @@ const changePassword = async () => {
     }
 
     passwordRequestError.value = "";
+    password.new = "";
+    password.confirm = "";
 
-    var closeModalButton = document.getElementById("closeModalButton");
-    closeModalButton.click();
+    toast.success("Password updated successfully.");
+    document.getElementById("closeModalButton").click();
   } catch (error) {
-    console.error("Error during password change:", error.message);
     passwordRequestError.value = error.message;
   }
 };
