@@ -19,6 +19,10 @@ type KratosUserDetails struct {
 			} `json:"name"`
 			Email string `json:"email"`
 		} `json:"traits"`
+		VerifiableAddresses []struct {
+			Value    string `json:"value"`
+			Verified bool   `json:"verified"`
+		} `json:"verifiable_addresses"`
 		CreatedAt string `json:"created_at"`
 		UpdatedAt string `json:"updated_at"`
 	} `json:"identity"`
