@@ -12,66 +12,38 @@
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h1
-              id="exampleModalLabel"
-              class="modal-title fs-5 text-center text-white"
-            >
+            <h1 id="exampleModalLabel" class="modal-title fs-5 text-center text-white">
               Change Password
             </h1>
-            <button
-              type="button"
-              class="btn-close"
-              data-bs-dismiss="modal"
-              aria-label="Close"
-            ></button>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
             <div class="form-group">
               <label for="name" class="form-label">Enter new password</label>
-              <input
-                id="name"
-                v-model="password.new"
-                type="password"
-                class="form-control"
-                placeholder="Enter new password"
-                required
-              />
+              <input id="name" v-model="password.new" type="password" class="form-control"
+                placeholder="Enter new password" required />
             </div>
             <div class="form-group">
               <label for="name" class="form-label">Confirm New Password</label>
-              <input
-                id="name"
-                v-model="password.confirm"
-                type="password"
-                class="form-control"
-                placeholder="Confirm new password"
-                required
-              />
+              <input id="name" v-model="password.confirm" type="password" class="form-control"
+                placeholder="Confirm new password" required />
               <div v-if="passwordRequestError" class="form-text text-danger">
                 {{ passwordRequestError }}
               </div>
             </div>
           </div>
           <div class="modal-footer">
-            <button
-              id="closeModalButton"
-              type="button"
-              class="btn btn-secondary text-white"
-              data-bs-dismiss="modal"
-            >
+            <button id="closeModalButton" type="button" class="btn btn-secondary text-white" data-bs-dismiss="modal">
               Close
             </button>
-            <button
-              type="button"
-              class="btn btn-primary text-white"
-              @click="changePassword"
-            >
+            <button type="button" class="btn btn-primary text-white" @click="changePassword">
               Change Password
             </button>
           </div>
         </div>
       </div>
     </div>
+
     <h3 class="d-flex align-item-center justify-content-center">
       Account Profile
     </h3>
@@ -85,29 +57,21 @@
     <div v-else class="row">
       <div class="col-md-5 mt-4">
         <div class="card d-flex justify-content-center align-items-center">
-          <img
-            :src="avatar"
-            class="card-img-top mt-3"
-            style="width: 14rem"
-            alt="..."
-          />
+          <img :src="avatar" class="card-img-top mt-3" style="width: 14rem" alt="..." />
           <div class="card-body text-center">
-            <h5 class="card-title">{{ profile.full_name }}</h5>
-            <h5 class="card-title">{{ profile.email }}</h5>
-            <div
-              type="button"
-              class="btn btn-primary btn-sm text-white mx-1"
-              data-bs-toggle="modal"
-              data-bs-target="#exampleModal"
-            >
+            <h5 class="card-title">{{ userData.full_name }}</h5>
+            <h5 class="card-title">{{ userData.email }}</h5>
+            <div type="button" class="btn btn-primary btn-sm text-white mx-1" data-bs-toggle="modal"
+              data-bs-target="#exampleModal">
               Change Password
             </div>
-            <div
-              type="button"
-              class="btn btn-danger btn-sm text-white mx-1"
-              @click="deleteAccount"
-            >
+            <div type="button" class="btn btn-danger btn-sm text-white mx-1" @click="deleteAccount">
               Delete Account
+            </div>
+            <div type="button" class="btn btn-sm text-white mx-1" :class="userData.email_verify ? 'btn-dark' : 'btn-success'"
+              :style="userData.email_verify ? { opacity: 0.4, pointerEvents: 'none', cursor: 'not-allowed' } : {}"
+              @click="handleEmailVerification">
+              {{ userData.email_verify ? "Verified" : "Verify Your Account" }}
             </div>
           </div>
         </div>
@@ -118,46 +82,21 @@
             <form @submit.prevent="changeUserMetaData">
               <div class="form-group">
                 <label for="name" class="form-label">First Name</label>
-                <input
-                  id="name"
-                  v-model="userData.first_name"
-                  type="text"
-                  class="form-control"
-                  placeholder="Pending..."
-                  required
-                  @focus="showCancleButton"
-                />
+                <input id="name" v-model="userData.first_name" type="text" class="form-control" placeholder="Pending..."
+                  required @focus="showCancleButton" />
               </div>
               <div class="form-group">
                 <label for="name" class="form-label">Last Name</label>
-                <input
-                  id="name"
-                  v-model="userData.last_name"
-                  type="text"
-                  class="form-control"
-                  placeholder="Pending..."
-                  required
-                  @focus="showCancleButton"
-                />
+                <input id="name" v-model="userData.last_name" type="text" class="form-control" placeholder="Pending..."
+                  required @focus="showCancleButton" />
               </div>
               <div class="form-group">
                 <label for="email" class="form-label">Email</label>
-                <input
-                  id="email"
-                  v-model="userData.email"
-                  type="email"
-                  class="form-control"
-                  placeholder="Pending..."
-                  required
-                  @focus="showCancleButton"
-                />
+                <input id="email" v-model="userData.email" type="email" class="form-control" placeholder="Pending..."
+                  required @focus="showCancleButton" />
               </div>
               <!-- Error message for password mismatch -->
-              <div
-                v-if="updateuserError"
-                class="alert alert-danger"
-                role="alert"
-              >
+              <div v-if="updateuserError" class="alert alert-danger" role="alert">
                 {{ updateuserError.data }}
               </div>
               <div v-else-if="updateuserPending">
@@ -167,11 +106,7 @@
                 <button type="submit" class="btn btn-primary text-white">
                   Save Changes
                 </button>
-                <div
-                  v-if="cancleButton"
-                  class="btn btn-secondary ml-2"
-                  @click="hideCancleButton"
-                >
+                <div v-if="cancleButton" class="btn btn-secondary ml-2" @click="hideCancleButton">
                   Cancel
                 </div>
               </div>
@@ -196,27 +131,18 @@
                 <nav class="navbar">
                   <div class="container-fluid p-0">
                     <h3 class="mb-0">Played Quiz List</h3>
-                    <NuxtLink
-                      class="btn text-white btn-primary"
-                      to="/admin/played_quiz"
-                    >
+                    <NuxtLink class="btn text-white btn-primary" to="/admin/played_quiz">
                       Played Quiz
                     </NuxtLink>
                   </div>
                 </nav>
               </div>
-              <div
-                v-if="quizList == null || quizList.length < 1"
-                class="no-quiz-list d-flex flex-column align-items-center my-4"
-              >
+              <div v-if="quizList == null || quizList.length < 1"
+                class="no-quiz-list d-flex flex-column align-items-center my-4">
                 <h2>No Quiz Played By You !</h2>
               </div>
               <div class="row p-2">
-                <div
-                  v-for="(details, index) in quizList"
-                  :key="index"
-                  class="col-md-6 mb-5"
-                >
+                <div v-for="(details, index) in quizList" :key="index" class="col-md-6 mb-5">
                   <QuizListCard :details="details" :is-played-quiz="true" />
                 </div>
               </div>
@@ -292,14 +218,11 @@ const {
 });
 
 const userData = reactive({
+  full_name: "",
   first_name: "",
   last_name: "",
   email: "",
-});
-
-const profile = reactive({
-  full_name: "",
-  email: "",
+  email_verify: false,
 });
 
 const password = reactive({
@@ -311,14 +234,15 @@ watch(
   [user, userError],
   () => {
     if (user.value) {
-      profile.full_name =
+      userData.full_name =
         user.value.data.identity.traits.name.first +
         " " +
         user.value.data.identity.traits.name.last;
       userData.first_name = user.value.data.identity.traits.name.first;
       userData.last_name = user.value.data.identity.traits.name.last;
       userData.email = user.value.data.identity.traits.email;
-      profile.email = user.value.data.identity.traits.email;
+      userData.email_verify = user.value.data.identity.verifiable_addresses[0].verified;
+      userData.email = user.value.data.identity.traits.email;
     }
     if (userError.value) {
       console.log("error");
@@ -348,9 +272,9 @@ const changeUserMetaData = async () => {
       updateuserError.value = false;
     }, 2000);
   } else {
-    profile.full_name =
+    userData.full_name =
       data.value.data.first_name + " " + data.value.data.last_name;
-    profile.email = data.value.data.email;
+    userData.email = data.value.data.email;
     cancleButton.value = false;
   }
 };
@@ -460,6 +384,58 @@ const deleteAccount = async () => {
       console.error("Failed to delete the user", error);
       toast.error("Failed to delete the user.");
     }
+  }
+};
+
+const handleEmailVerification = async () => {
+  try {
+    const verificationResponse = await fetch(
+      `${url.kratosUrl}/self-service/verification/browser?return_to=${window.location.origin}/admin`,
+      {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+        },
+        credentials: "include",
+      }
+    );
+
+    if (!verificationResponse.ok) {
+      throw new Error("Failed to initiate verification flow");
+    }
+
+    const verification = await verificationResponse.json();
+    const verificationPage = verification?.ui?.action;
+    const flowId = verification?.id;
+    const csrfToken = verification.ui.nodes.find(
+      (node) => node.attributes.name === "csrf_token"
+    ).attributes.value;
+
+    const sendEmailResponse = await fetch(verificationPage, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        email: userData.email,
+        csrf_token: csrfToken,
+        method: "code",
+      }),
+    });
+
+    if (!sendEmailResponse.ok) {
+      throw new Error("Failed to send verification email");
+    }
+
+    setTimeout(() => {
+      navigateTo(`/verification?flow=${flowId}`);
+    }, 300);
+
+  } catch (error) {
+    console.error(error);
+    toast.error("Failed to start verification");
   }
 };
 </script>

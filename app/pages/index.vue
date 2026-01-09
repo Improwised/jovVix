@@ -1,8 +1,14 @@
 <template>
   <div>
-    <div
-      class="full-height-layout d-flex align-items-center justify-content-center px-15px py-10"
-    >
+    <div v-if="!emailVerified && user" class="alert alert-warning text-center rounded-0">
+      <strong>Action required:</strong>
+      Please verify your account within <b>30 days of signup</b> from your
+      <NuxtLink to="/profile" class="text-decoration-underline">
+        Profile
+      </NuxtLink>,
+      or it will be deleted.
+    </div>
+    <div class="full-height-layout d-flex align-items-center justify-content-center px-15px py-10">
       <div class="row align-items-center">
         <div class="col-md-7">
           <div class="text-md-start text-center">
@@ -13,72 +19,29 @@
           </div>
         </div>
         <div class="col-md-5">
-          <lottie-player
-            autoplay
-            loop
-            speed="0.5"
-            mode="normal"
-            src="landing_page_player.json"
-            style="width: 100%"
-          ></lottie-player>
+          <lottie-player autoplay loop speed="0.5" mode="normal" src="landing_page_player.json"
+            style="width: 100%"></lottie-player>
           <!-- vector image -->
 
-          <img
-            src="../assets/images/shapes/2.svg"
-            alt=""
-            class="shapes shape-three absolute z--1 left-11% top-35%"
-          />
+          <img src="../assets/images/shapes/2.svg" alt="" class="shapes shape-three absolute z--1 left-11% top-35%" />
           <!-- cyan circle -->
-          <img
-            src="../assets/images/shapes/4.svg"
-            alt=""
-            class="shapes shape-five absolute z--1 left-22% top-90%"
-          />
+          <img src="../assets/images/shapes/4.svg" alt="" class="shapes shape-five absolute z--1 left-22% top-90%" />
           <!-- < sign -->
-          <img
-            src="../assets/images/shapes/6.svg"
-            alt=""
-            class="shapes shape-seven absolute z--1 right-12% top-28%"
-          />
+          <img src="../assets/images/shapes/6.svg" alt="" class="shapes shape-seven absolute z--1 right-12% top-28%" />
           <!-- pink circle -->
-          <img
-            src="../assets/images/shapes/7.svg"
-            alt=""
-            class="shapes shape-eight absolute z--1 right-12% top-60%"
-          />
+          <img src="../assets/images/shapes/7.svg" alt="" class="shapes shape-eight absolute z--1 right-12% top-60%" />
           <!-- line -->
-          <img
-            src="../assets/images/shapes/8.svg"
-            alt=""
-            class="shapes shape-nine absolute z--1 right-1/4 top-85%"
-          />
+          <img src="../assets/images/shapes/8.svg" alt="" class="shapes shape-nine absolute z--1 right-1/4 top-85%" />
           <!-- small circle -->
-          <img
-            src="../assets/images/shapes/9.svg"
-            alt=""
-            class="shapes shape-ten absolute z--1 right-5% bottom-0 md:hidden sm:hidden xsm:hidden"
-          />
+          <img src="../assets/images/shapes/9.svg" alt=""
+            class="shapes shape-ten absolute z--1 right-5% bottom-0 md:hidden sm:hidden xsm:hidden" />
           <!-- half yellow circle -->
-          <img
-            src="../assets/images/shapes/8.svg"
-            alt=""
-            class="shapes shape-eleven absolute z--1 right-1/4 top-85%"
-          />
-          <img
-            src="../assets/images/shapes/8.svg"
-            alt=""
-            class="shapes shape-twelve absolute z--1 right-1/4 top-85%"
-          />
-          <img
-            src="../assets/images/shapes/8.svg"
-            alt=""
-            class="shapes shape-thirteen absolute z--1 right-1/4 top-85%"
-          />
-          <img
-            src="../assets/images/shapes/2.svg"
-            alt=""
-            class="shapes shape-fourteen absolute z--1 left-11% top-35%"
-          />
+          <img src="../assets/images/shapes/8.svg" alt="" class="shapes shape-eleven absolute z--1 right-1/4 top-85%" />
+          <img src="../assets/images/shapes/8.svg" alt="" class="shapes shape-twelve absolute z--1 right-1/4 top-85%" />
+          <img src="../assets/images/shapes/8.svg" alt=""
+            class="shapes shape-thirteen absolute z--1 right-1/4 top-85%" />
+          <img src="../assets/images/shapes/2.svg" alt=""
+            class="shapes shape-fourteen absolute z--1 left-11% top-35%" />
         </div>
       </div>
     </div>
@@ -92,10 +55,7 @@
               <!-- Icon Section -->
               <div class="col-md-2 text-center mb-3 mb-md-0">
                 <div class="banner-icon">
-                  <font-awesome-icon
-                    :icon="['fas', 'info-circle']"
-                    class="fs-1 text-primary"
-                  />
+                  <font-awesome-icon :icon="['fas', 'info-circle']" class="fs-1 text-primary" />
                 </div>
               </div>
 
@@ -110,9 +70,8 @@
                   <div class="alert alert-info border-0 mb-4" role="alert">
                     <div>
                       <strong>Info:</strong> This demo supports up to
-                      <span class="fw-bold text-primary"
-                        >100 concurrent users</span
-                      >. Performance may be affected beyond this limit.
+                      <span class="fw-bold text-primary">100 concurrent users</span>. Performance may be affected beyond
+                      this limit.
                     </div>
                   </div>
                 </div>
@@ -122,10 +81,7 @@
                   <div class="col-md-6">
                     <div class="feature-card h-100">
                       <div class="d-flex align-items-center mb-2">
-                        <font-awesome-icon
-                          :icon="['fas', 'rocket']"
-                          class="me-2 text-success"
-                        />
+                        <font-awesome-icon :icon="['fas', 'rocket']" class="me-2 text-success" />
                         <h6 class="mb-0 fw-semibold">Deploy Your Own</h6>
                       </div>
                       <p class="text-muted mb-3 small">
@@ -143,21 +99,13 @@
                   <div class="col-md-6">
                     <div class="feature-card h-100">
                       <div class="d-flex align-items-center mb-2">
-                        <font-awesome-icon
-                          :icon="['fas', 'headset']"
-                          class="me-2 text-info"
-                        />
+                        <font-awesome-icon :icon="['fas', 'headset']" class="me-2 text-info" />
                         <h6 class="mb-0 fw-semibold">Get in touch:</h6>
                       </div>
                       <div class="d-flex flex-wrap gap-2">
-                        <a
-                          href="mailto:contact[at]jovvix[.com]"
-                          class="btn btn-outline-primary btn-sm text-decoration-none contact-btn"
-                        >
-                          <font-awesome-icon
-                            :icon="['fas', 'envelope']"
-                            class="me-1"
-                          />
+                        <a href="mailto:contact[at]jovvix[.com]"
+                          class="btn btn-outline-primary btn-sm text-decoration-none contact-btn">
+                          <font-awesome-icon :icon="['fas', 'envelope']" class="me-1" />
                           contact[at]jovvix[.com]
                         </a>
                       </div>
@@ -172,8 +120,26 @@
     </div>
   </div>
 </template>
-
+<style>
+  .alert {
+  margin-left: calc(var(--bs-gutter-x) * -0.5);
+  margin-right: calc(var(--bs-gutter-x) * -0.5);
+  width: calc(100% + var(--bs-gutter-x));
+}
+</style>
 <script setup>
+const url = useRuntimeConfig().public;
+const headers = useRequestHeaders(["cookie"]);
+const { data: user } = useFetch(url.apiUrl + "/kratos/whoami", {
+  method: "GET",
+  headers,
+  credentials: "include",
+});
+
+const emailVerified = computed(() => {
+  return !!user.value?.data?.identity?.verifiable_addresses?.[0]?.verified;
+});
+
 onMounted(async () => {
   import("@lottiefiles/lottie-player");
 
@@ -256,12 +222,10 @@ onMounted(async () => {
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    #007bff 50%,
-    transparent 100%
-  );
+  background: linear-gradient(90deg,
+      transparent 0%,
+      #007bff 50%,
+      transparent 100%);
   transform: translateX(-100%);
   transition: transform 0.3s ease;
 }
@@ -300,12 +264,10 @@ onMounted(async () => {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.2),
-    transparent
-  );
+  background: linear-gradient(90deg,
+      transparent,
+      rgba(255, 255, 255, 0.2),
+      transparent);
   transition: left 0.5s;
 }
 
@@ -366,6 +328,7 @@ lottie-player {
 }
 
 @keyframes moveUpDown {
+
   0%,
   100% {
     transform: translateY(0);
@@ -377,6 +340,7 @@ lottie-player {
 }
 
 @keyframes opacitySwitch {
+
   0%,
   100% {
     opacity: 1;

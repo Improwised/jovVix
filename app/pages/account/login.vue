@@ -11,8 +11,6 @@ const component = ref("waiting");
 const loginURLWithFlowQuery = ref("");
 const urls = useRuntimeConfig().public;
 const email = ref();
-const code = ref("");
-const flowID = ref("");
 const errors = ref({
   email: "",
   password: "",
@@ -144,128 +142,10 @@ const handleForgotPassword = async () => {
   navigateTo(recoverypage, { external: true });
 };
 
-// Handle email verification
-const handleEmailVerification = async () => {
-  if (!email.value) {
-    toast.error("Please enter email first!");
-    return;
-  }
-
-  try {
-    // Request email verification flow from Kratos
-    const verificationResponse = await fetch(
-      `${kratosUrl}/self-service/verification/browser`,
-      {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-        },
-      }
-    );
-    const verification = await verificationResponse.json();
-    const verificationPage = verification?.ui?.action;
-    flowID.value = verification?.id;
-
-    // Trigger email verification
-    await fetch(verificationPage, {
-      method: "POST",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify({
-        email: email.value,
-        csrf_token: csrfToken.value,
-        method: "code",
-      }),
-    });
-
-    toast.success("Verification email has been sent!");
-    component.value = "verifyCode";
-  } catch (error) {
-    toast.error("An error occurred while sending the verification email.");
-    console.error(error);
-  }
-};
-
-// Handle verification code input
-const verifyCode = async () => {
-  if (!code.value) {
-    errors.value.code = "Verification code is required.";
-    return;
-  }
-
-  try {
-    const response = await fetch(
-      `${kratosUrl}/self-service/verification?flow=${flowID.value}`,
-      {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({
-          csrf_token: csrfToken.value,
-          method: "code",
-          code: code.value,
-        }),
-      }
-    );
-
-    const result = await response.json();
-
-    if (response.ok) {
-      const messages = result?.ui?.messages;
-
-      // code is invalid
-      if (messages && messages[0]?.id == 4070006) {
-        toast.error(
-          "The verification code is invalid or has already been used. Please try again."
-        );
-        return;
-      }
-
-      toast.success("Email verified successfully!");
-      component.value = "form";
-    } else {
-      toast.error(
-        result?.error?.message || "Verification failed, please try again."
-      );
-      errors.value.code = "The verification code is invalid or expired.";
-    }
-  } catch (error) {
-    toast.error("An error occurred during verification.");
-    console.error(error);
-  }
-};
 </script>
 
 <template>
   <QuizLoadingSpace v-if="component === 'waiting'"></QuizLoadingSpace>
-  <!-- Verification of email -->
-  <Frame
-    v-else-if="component === 'verifyCode'"
-    page-title="Email Verification"
-    page-message="Please enter the verification code sent to your email"
-  >
-    <form @submit.prevent="verifyCode">
-      <div class="mb-3">
-        <label for="code" class="form-label">Verification Code</label>
-        <input
-          id="code"
-          v-model="code"
-          type="text"
-          class="form-control"
-          maxlength="6"
-          required
-        />
-      </div>
-      <div v-if="errors.code" class="text-danger">{{ errors.code }}</div>
-      <button type="submit" class="btn btn-primary text-light">Verify</button>
-    </form>
-  </Frame>
   <Frame
     v-else
     page-title="Login"
@@ -325,14 +205,6 @@ const verifyCode = async () => {
               @click.prevent="handleForgotPassword"
             >
               Forgot your password?
-            </button>
-          </div>
-          <div>
-            <button
-              class="text-primary fs-5"
-              @click.prevent="handleEmailVerification"
-            >
-              Verify your email
             </button>
           </div>
         </div>
