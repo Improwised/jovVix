@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/Improwised/jovvix/api/constants"
 	"github.com/Improwised/jovvix/api/models"
 	"github.com/google/uuid"
 	"github.com/jszwec/csvutil"
@@ -46,6 +47,10 @@ func ValidateCSVFileFormat(fileName string) ([]Question, error) {
 
 	if err := csvutil.Unmarshal(csvData, &questions); err != nil {
 		return questions, err
+	}
+
+	if len(questions) == 0 {
+		return questions, fmt.Errorf(constants.ErrEmptyFile)
 	}
 
 	return questions, nil
