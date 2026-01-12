@@ -126,12 +126,8 @@ func (ctrl *QuestionController) GetQuestionById(c *fiber.Ctx) error {
 			question.Options[key] = presignedURL
 		}
 	}
-	questionStartTime := time.Now()
 	ctrl.logger.Debug("QuestionController.GetQuestionById success", zap.Any("question", question))
-	return utils.JSONSuccess(c, http.StatusOK, map[string]interface{}{
-        "question":   question,
-        "start_time": questionStartTime,
-    })
+	return utils.JSONSuccess(c, http.StatusOK, question)
 }
 
 // UpdateQuestionById to update question and thier options with answer.

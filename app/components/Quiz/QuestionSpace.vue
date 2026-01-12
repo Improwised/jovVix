@@ -73,10 +73,8 @@ function handleEvent(message) {
   }
   if (message.event == app.$GetQuestion) {
     question.value = message.data;
-    serverStartTime.value = message.data.start_time
-    ? new Date(message.data.start_time)
-    : new Date();
-
+    serverStartTime.value = new Date(message.data.start_time)
+    time.value = 0;
     count.value = null;
     answer.value = [];
 
@@ -95,22 +93,20 @@ function handleEvent(message) {
 function handleTimer() {
   clearInterval(timer.value);
 
-  const duration = question.value.duration;
-
+  const duration = Number(question.value.duration);
 
   timer.value = setInterval(() => {
     const now = new Date();
 
     const elapsedSeconds = Math.floor(
-      (now - serverStartTime.value) / 1000
+      (now.getTime() - serverStartTime.value.getTime()) / 1000
     );
 
-    time.value = elapsedSeconds;
+    time.value =  Math.min(Math.max(elapsedSeconds, 0), duration);  ;
 
     if (elapsedSeconds >= duration) {
       clearInterval(timer.value);
       timer.value = null;
-      time.value = duration;
     }
   }, 1000);
 }
