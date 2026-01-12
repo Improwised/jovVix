@@ -126,7 +126,6 @@ func (ctrl *QuestionController) GetQuestionById(c *fiber.Ctx) error {
 			question.Options[key] = presignedURL
 		}
 	}
-
 	ctrl.logger.Debug("QuestionController.GetQuestionById success", zap.Any("question", question))
 	return utils.JSONSuccess(c, http.StatusOK, question)
 }
