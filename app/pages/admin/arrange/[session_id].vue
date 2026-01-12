@@ -62,26 +62,15 @@ const handleCustomChange = (isFullScreenEvent) => {
 
 // main functions
 onMounted(() => {
-  // core logic
   if (process.client) {
     try {
-      if (socketObject) {
-        adminOperationHandler.value = new AdminOperations(
-          session_id,
-          handleQuizEvents,
-          handleNetworkEvent,
-          confirmSkip
-        );
-        continueAdmin();
-      } else {
-        adminOperationHandler.value = new AdminOperations(
-          session_id,
-          handleQuizEvents,
-          handleNetworkEvent,
-          confirmSkip
-        );
-        connectAdmin();
-      }
+      adminOperationHandler.value = new AdminOperations(
+        session_id,
+        handleQuizEvents,
+        handleNetworkEvent,
+        confirmSkip
+      );
+      connectAdmin(); // Always connect fresh
     } catch (err) {
       console.error(err);
       toast.info(app.$ReloadRequired);
