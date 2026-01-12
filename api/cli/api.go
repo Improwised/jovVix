@@ -26,7 +26,9 @@ func GetAPICommandDef(cfg config.AppConfig, logger *zap.Logger) cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			// Create fiber app
-			app := fiber.New(fiber.Config{})
+			app := fiber.New(fiber.Config{
+				BodyLimit: cfg.BodyLimitMB * 1024 * 1024,
+			})
 
 			app.Use(cors.New(cors.Config{
 				AllowHeaders:     "Origin,Content-Type,Accept,Content-Length,Accept-Language,Accept-Encoding,Connection,Access-Control-Allow-Origin,Authorization,Options",
