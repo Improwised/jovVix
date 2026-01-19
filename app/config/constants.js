@@ -61,5 +61,5 @@ export default {
   NoAnswerFound: "please select an answer",
 
   // Messages
-  CsvUploadSuccess: "file uploaded successfully",
+  CsvUploadSuccess: "File uploaded successfully",
 };

@@ -110,7 +110,7 @@ async function setFlowIDAndCSRFToken() {
 
 const handleForgotPassword = async () => {
   if (!email.value) {
-    toast.error("please enter email first!");
+    toast.error("Please enter email first!");
     return;
   }
   const recoveryResponse = await fetch(
@@ -148,7 +148,7 @@ const handleForgotPassword = async () => {
   <QuizLoadingSpace v-if="component === 'waiting'"></QuizLoadingSpace>
   <Frame
     v-else
-    page-title="Login"
+    page-title="Sign in"
     page-message="Please enter your user information."
   >
     <!-- Form -->
@@ -204,7 +204,7 @@ const handleForgotPassword = async () => {
               class="text-primary mb-2 fs-5"
               @click.prevent="handleForgotPassword"
             >
-              Forgot your password?
+              Forgot Your Password?
             </button>
           </div>
         </div>

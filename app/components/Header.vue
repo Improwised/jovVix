@@ -55,7 +55,7 @@
               <button
                 class="btn px-4 border bg-light-primary nav-link nav-link-button btn-link mx-2"
               >
-                Log in
+                Sign in
               </button>
             </div>
             <button

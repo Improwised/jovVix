@@ -36,7 +36,7 @@
                     v-if="!isUserLoggedIn"
                     for="username"
                     class="form-label text-primary font-weight-bold"
-                    >User Name</label
+                    >Username</label
                   >
                   <input
                     v-if="!isUserLoggedIn"
