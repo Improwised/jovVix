@@ -11,10 +11,7 @@
               page-message="Let's Play Together"
               class="bg-white"
             >
-              <div v-if="userError">
-                {{ userError }}
-              </div>
-              <form v-else method="POST" @submit.prevent="join_quiz">
+              <form method="POST" @submit.prevent="join_quiz">
                 <div class="mb-3 pe-3">
                   <label
                     for="code"
@@ -177,7 +174,8 @@ const join_quiz = async () => {
     userError.value = error.message;
     quickUserPending.value = false;
     if (error?.status == 400) {
-      userError.value = "invitation code not found";
+      toast.error("Please enter a valid quiz code (6 characters)");
+      code.value = "";
     }
     return;
   }
