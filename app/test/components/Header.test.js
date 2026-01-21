@@ -45,7 +45,7 @@ describe("Header test", () => {
 
   it("renders login and signup buttons for non-admin users", () => {
     const navs = wrapper.find("ul").findAll("li");
-    expect(navs[1].text()).toContain("Log in");
+    expect(navs[1].text()).toContain("Sign in");
     expect(navs[2].text()).toContain("Sign up");
   });
 
