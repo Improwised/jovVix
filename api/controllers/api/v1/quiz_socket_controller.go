@@ -966,6 +966,8 @@ func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.Wa
 		return
 	}
 
+	var questionStartTime time.Time
+	
 	// start counter if not any question running
 	if !lastQuestionTimeStamp.Valid {
 		response.Component = constants.Question
@@ -974,12 +976,18 @@ func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.Wa
 		shareEvenWithUser(c, qc, response, constants.EventStartCount5, session.ID.String(), int(session.InvitationCode.Int32), constants.ToAll, arrangeMu)
 		time.Sleep(time.Duration(constants.Counter) * time.Second)
 
+		// Set the question start time to NOW (after counter finishes)
+		questionStartTime = time.Now()
+
 		// update question status to activate
 		err := qc.quizModel.UpdateCurrentQuestion(session.ID, question.ID, true)
 		if err != nil {
 			qc.logger.Error(fmt.Sprintf("socket error update current question: %s event, %s action %v code", constants.EventSendQuestion, response.Action, session.InvitationCode), zap.Error(err))
 			return
 		}
+	} else {
+		// For running questions, use the existing timestamp
+		questionStartTime = lastQuestionTimeStamp.Time
 	}
 
 	// question sent
@@ -989,7 +997,7 @@ func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.Wa
 		"quiz_id":        question.QuizId,
 		"no":             question.OrderNumber,
 		"duration":       question.DurationInSeconds,
-		"question_time":  lastQuestionTimeStamp.Time,
+		"start_time":     questionStartTime.Format(time.RFC3339), 
 		"question":       question.Question,
 		"options":        question.Options,
 		"question_media": question.QuestionMedia,
@@ -1000,7 +1008,6 @@ func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.Wa
 	}
 
 	if !lastQuestionTimeStamp.Valid { // handling new question
-		responseData["question_time"] = ""
 		response.Data = responseData
 		shareEvenWithUser(c, qc, response, constants.EventSendQuestion, session.ID.String(), int(session.InvitationCode.Int32), constants.ToAll, arrangeMu)
 	} else { // handling running question

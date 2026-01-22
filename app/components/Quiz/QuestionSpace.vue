@@ -38,6 +38,7 @@ const counter = ref(null);
 const count = ref(0);
 const timer = ref(null);
 const time = ref(0);
+const serverStartTime = ref(null);
 const progressValue = computed(() => {
   return (time.value * 100) / question.value.duration;
 });
@@ -72,8 +73,11 @@ function handleEvent(message) {
   }
   if (message.event == app.$GetQuestion) {
     question.value = message.data;
+    serverStartTime.value = new Date(message.data.start_time)
+    time.value = 0;
     count.value = null;
     answer.value = [];
+
     handleTimer();
   } else if (message.event == app.$Counter) {
     question.value = null;
@@ -88,11 +92,20 @@ function handleEvent(message) {
 
 function handleTimer() {
   clearInterval(timer.value);
+
+  const duration = Number(question.value.duration);
+
   timer.value = setInterval(() => {
-    time.value += 1;
-    if (time.value == question.value?.duration + 1) {
+    const now = new Date();
+
+    const elapsedSeconds = Math.floor(
+      (now.getTime() - serverStartTime.value.getTime()) / 1000
+    );
+
+    time.value =  Math.min(Math.max(elapsedSeconds, 0), duration);  ;
+
+    if (elapsedSeconds >= duration) {
       clearInterval(timer.value);
-      time.value = -1;
       timer.value = null;
     }
   }, 1000);
