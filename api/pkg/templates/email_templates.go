@@ -23,7 +23,7 @@ func GenerateQuizShareEmail(quizLink, sharedBy string, permissions string) strin
 				<p>You have been invited by <strong>%s</strong> to participate in the quiz.</p>
 				<p>%s</p>
 				<p>To participate in the quiz, click the link below:</p>
-				<p><a href="%s" class="button">Take the Quiz</a></p>
+				<p><a href="%s" class="button" style="color:#ffffff !important; text-decoration:none;">Take the Quiz</a></p>
 				<p>If the button doesn’t work, copy and paste this link into your browser:</p>
 				<p><a href="%s">%s</a></p>
 				<p class="footer">This invitation was sent to you by %s via the Quiz Platform.</p>

@@ -15,18 +15,18 @@
         <div
           class="col-sm-12 col-md-8 d-flex align-items-center justify-content-md-end flex-wrap gap-2"
         >
-          <input
-            v-model="nameInput"
-            type="text"
-            placeholder="Search quiz"
-            class="border rounded p-2 mx-2"
-          />
-          <input
-            v-model="date"
-            type="datetime-local"
-            placeholder="Select date"
-            class="border rounded p-2 mx-2"
-          />
+        <input
+        v-model="date"
+        type="datetime-local"
+        placeholder="Select date"
+        class="border rounded p-2 mx-2"
+        />
+        <input
+          v-model="nameInput"
+          type="text"
+          placeholder="Search quiz"
+          class="border rounded p-2 mx-2"
+        />
         </div>
       </div>
       <div class="table-responsive">
@@ -62,7 +62,7 @@
                 <font-awesome-icon v-else icon="sort" class="bx bx-sort" />
               </th>
               <th role="button" @click="sortEventHandler('activated_from')">
-                Starts At
+                Started At
                 <font-awesome-icon
                   v-if="orderBy === 'activated_from' && order === 'asc'"
                   icon="arrow-up-short-wide"
@@ -76,7 +76,7 @@
                 <font-awesome-icon v-else icon="sort" class="bx bx-sort" />
               </th>
               <th role="button" @click="sortEventHandler('activated_to')">
-                Ends At
+                Ended At
                 <font-awesome-icon
                   v-if="orderBy === 'activated_to' && order === 'asc'"
                   icon="arrow-up-short-wide"

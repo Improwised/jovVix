@@ -37,7 +37,7 @@ const (
 
 // Email templetes
 const (
-	QuizEmailSubject = "you have been invited for quiz"
+	QuizEmailSubject = "You have been invited to a quiz"
 )
 
 // Success messages
@@ -184,7 +184,7 @@ const (
 	QuizSessionInvitationCode     = "invitationCode"
 	SessionIDParam                = "session_id"
 	ActiveQuizObj                 = "current active quiz obj"
-	NoPlayerFound                 = "no player found"
+	NoPlayerFound                 = "No player found"
 	StartQuizByAdminNoPlayerFound = "start quiz by admin but no player found"
 	ActionSendUserData            = "send user join data"
 	JoinUserOnRunningQuiz         = "join_user_on_running_quiz"
@@ -200,7 +200,7 @@ const (
 	UserName          = "username"
 	UserUkey          = "users_username_ukey"
 	Join              = "join access"
-	QuizStartsSoon    = "quiz will start soon"
+	QuizStartsSoon    = "Quiz will start soon"
 	ErrUsernameExists = "username already exists"
 
 	// Event 6. Start quiz <admin>

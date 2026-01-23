@@ -19,7 +19,7 @@
           </div>
           <div class="modal-body">
             <div class="form-group">
-              <label for="name" class="form-label">Enter new password</label>
+              <label for="name" class="form-label">Enter New Password</label>
               <input id="name" v-model="password.new" type="password" class="form-control"
                 placeholder="Enter new password" required />
             </div>
@@ -61,7 +61,7 @@
     </div>
 
     <h3 class="d-flex align-item-center justify-content-center">
-      Account Profile
+      My Profile
     </h3>
     <div v-if="userError?.data?.code == 401">
       {{ navigateTo("/account/login") }}

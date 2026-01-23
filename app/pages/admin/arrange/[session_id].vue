@@ -195,7 +195,7 @@ const handlePauseQuiz = () => {
 const confirmSkip = (message) => {
   confirmNeeded.title = "Skip Forcefully !!!";
   confirmNeeded.message = message.data;
-  confirmNeeded.positive = "skip";
+  confirmNeeded.positive = "Skip";
   confirmNeeded.show = true;
 };
 
