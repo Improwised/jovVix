@@ -1006,13 +1006,10 @@ func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.Wa
 		"totalQuestions": totalQuestions,
 		"totalJoinUser":  totalUserJoin,
 	}
-
+	response.Data = responseData
 	if !lastQuestionTimeStamp.Valid { // handling new question
-		response.Data = responseData
 		shareEvenWithUser(c, qc, response, constants.EventSendQuestion, session.ID.String(), int(session.InvitationCode.Int32), constants.ToAll, arrangeMu)
 	} else { // handling running question
-		responseData["duration"] = question.DurationInSeconds - int(time.Since(lastQuestionTimeStamp.Time).Seconds())
-		response.Data = responseData
 		shareEvenWithUser(c, qc, response, constants.EventSendQuestion, session.ID.String(), int(session.InvitationCode.Int32), constants.ToAdmin, arrangeMu)
 	}
 
