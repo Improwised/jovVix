@@ -37,7 +37,7 @@ const (
 
 // Email templetes
 const (
-	QuizEmailSubject = "you have been invited for quiz"
+	QuizEmailSubject = "You have been invited to a quiz"
 )
 
 // Success messages
