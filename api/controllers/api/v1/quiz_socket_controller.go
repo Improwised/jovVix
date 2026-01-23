@@ -742,13 +742,14 @@ func handleConnectedUser(c *websocket.Conn, qc *quizSocketController, sessionId 
 				Data:      usersData,
 			}
 
-			arrangeMu.Lock()
-			_ = utils.JSONSuccessWs(
-				c,
-				constants.EventSendInvitationCode,
-				response,
-			)
-			arrangeMu.Unlock()
+			err = func() error {
+				arrangeMu.Lock()
+				defer arrangeMu.Unlock()
+				return utils.JSONSuccessWs( c, constants.EventSendInvitationCode, response )
+			}()
+			if err != nil {
+				qc.logger.Error("error while sending initial user data to admin", zap.Error(err))
+			}
 		}
 	}
 	
