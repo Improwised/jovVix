@@ -15,18 +15,18 @@
         <div
           class="col-sm-12 col-md-8 d-flex align-items-center justify-content-md-end flex-wrap gap-2"
         >
-          <input
-            v-model="nameInput"
-            type="text"
-            placeholder="Search quiz"
-            class="border rounded p-2 mx-2"
-          />
-          <input
-            v-model="date"
-            type="datetime-local"
-            placeholder="Select date"
-            class="border rounded p-2 mx-2"
-          />
+        <input
+        v-model="date"
+        type="datetime-local"
+        placeholder="Select date"
+        class="border rounded p-2 mx-2"
+        />
+        <input
+          v-model="nameInput"
+          type="text"
+          placeholder="Search quiz"
+          class="border rounded p-2 mx-2"
+        />
         </div>
       </div>
       <div class="table-responsive">
