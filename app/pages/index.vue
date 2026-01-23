@@ -2,10 +2,10 @@
   <div>
     <div v-if="!emailVerified && user" class="alert alert-warning text-center rounded-0">
       <strong>Action required:</strong>
-      Please verify your account within <b>30 days of signup</b> from your
-      <NuxtLink to="/profile" class="text-decoration-underline">
-        Profile
-      </NuxtLink>,
+      Please verify your account within <b>30 days of signup</b> from 
+      <NuxtLink to="/admin" class="text-decoration-underline">
+        My Profile
+      </NuxtLink>
       or it will be deleted.
     </div>
     <div class="full-height-layout d-flex align-items-center justify-content-center px-15px py-10">
