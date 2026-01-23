@@ -40,11 +40,9 @@ export default class QuizHandler {
     this.socket.onclose = (event) => this.onClose(event);
     this.socket.onmessage = (event) => this.onMessage(event);
     this.close = (code) => this.socket.close(code);
-    setSocketObject(this.socket);
   }
 
   continue() {
-    this.socket = socketObject;
     this.socket.onopen = (event) => this.onOpen(event);
     this.socket.onerror = (event) => this.onError(event);
     this.socket.onclose = (event) => this.onClose(event);

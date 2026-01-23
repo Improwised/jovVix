@@ -45,7 +45,7 @@ const confirmNeeded = reactive({
 const currentComponent = ref("Loading");
 const adminOperationHandler = ref();
 const analysisTab = ref("ranking");
-const session_id = route.params.session_id;
+const session_id = computed(() => route.params.session_id);
 const runningQuizJoinUser = ref(0);
 const isPauseQuiz = ref(false);
 const quizState = computed(() =>
@@ -62,32 +62,22 @@ const handleCustomChange = (isFullScreenEvent) => {
 
 // main functions
 onMounted(() => {
-  // core logic
-  if (process.client) {
-    try {
-      if (socketObject) {
-        adminOperationHandler.value = new AdminOperations(
-          session_id,
-          handleQuizEvents,
-          handleNetworkEvent,
-          confirmSkip
-        );
-        continueAdmin();
-      } else {
-        adminOperationHandler.value = new AdminOperations(
-          session_id,
-          handleQuizEvents,
-          handleNetworkEvent,
-          confirmSkip
-        );
-        connectAdmin();
-      }
-    } catch (err) {
-      console.error(err);
-      toast.info(app.$ReloadRequired);
-    }
-  }
+  if (!process.client) return;
+
+  removeAllUsers();
+  resetUsersSubmittedAnswers();
+  currentComponent.value = "Loading";
+
+  adminOperationHandler.value = new AdminOperations(
+    session_id.value,
+    handleQuizEvents,
+    handleNetworkEvent,
+    confirmSkip
+  );
+
+  connectAdmin();
 });
+
 
 const handleQuizEvents = async (message) => {
   if (message.status == app.$Error) {
