@@ -45,7 +45,7 @@ const confirmNeeded = reactive({
 const currentComponent = ref("Loading");
 const adminOperationHandler = ref();
 const analysisTab = ref("ranking");
-const session_id = computed(() => route.params.session_id);
+const session_id = route.params.session_id;
 const runningQuizJoinUser = ref(0);
 const isPauseQuiz = ref(false);
 const quizState = computed(() =>
@@ -69,7 +69,7 @@ onMounted(() => {
   currentComponent.value = "Loading";
 
   adminOperationHandler.value = new AdminOperations(
-    session_id.value,
+    session_id,
     handleQuizEvents,
     handleNetworkEvent,
     confirmSkip
