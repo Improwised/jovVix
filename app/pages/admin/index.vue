@@ -1,65 +1,5 @@
 <template>
   <div class="container">
-    <!-- Modal -->
-    <div
-      ref="passwordModalEl"
-      id="exampleModal"
-      class="modal fade"
-      tabindex="-1"
-      aria-labelledby="exampleModalLabel"
-      aria-hidden="true"
-    >
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h1 id="exampleModalLabel" class="modal-title fs-5 text-center text-white">
-              Change Password
-            </h1>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            <div class="form-group">
-              <label for="name" class="form-label">Enter New Password</label>
-              <input id="name" v-model="password.new" type="password" class="form-control"
-                placeholder="Enter new password" required />
-            </div>
-            <div class="form-group">
-              <label for="name" class="form-label">Confirm New Password</label>
-              <input
-                id="name"
-                v-model="password.confirm"
-                type="password"
-                class="form-control mb-2"
-                placeholder="Confirm new password"
-                required
-              />
-              <div v-if="passwordRequestError">
-                • {{ passwordRequestError }}
-              </div>
-              <div v-if="passwordSubmitted && passwordErrors.length">
-                <div v-for="(err, i) in passwordErrors" :key="i">
-                  • {{ err }}
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button id="closeModalButton" type="button" class="btn btn-secondary text-white" data-bs-dismiss="modal">
-              Close
-            </button>
-            <button
-              type="button"
-              class="btn btn-primary text-white"
-              :disabled="isChangePasswordDisabled"
-              @click="changePassword"
-            >
-              Change Password
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <h3 class="d-flex align-item-center justify-content-center">
       My Profile
     </h3>
@@ -77,8 +17,7 @@
           <div class="card-body text-center">
             <h5 class="card-title">{{ userData.full_name }}</h5>
             <h5 class="card-title">{{ userData.email }}</h5>
-            <div type="button" class="btn btn-primary btn-sm text-white mx-1" data-bs-toggle="modal"
-              data-bs-target="#exampleModal">
+            <div type="button" class="btn btn-primary btn-sm text-white mx-1" @click="handleChangePasswordClick">
               Change Password
             </div>
             <div type="button" class="btn btn-danger btn-sm text-white mx-1" @click="deleteAccount">
@@ -175,8 +114,6 @@ import { useUsersStore } from "~~/store/users";
 import { getAvatarUrlByName } from "~~/composables/avatar";
 import { useToast } from "vue-toastification";
 import { toRef } from "vue";
-import { useUserPasswordRules } from "@/composables/user_password_rules";
-import { Modal } from "bootstrap";
 const toast = useToast();
 const userStore = useUsersStore();
 const { getUserData, setUserData } = userStore;
@@ -184,42 +121,10 @@ const url = useRuntimeConfig().public;
 const headers = useRequestHeaders(["cookie"]);
 const updateuserError = ref(false);
 const updateuserPending = ref(false);
-const passwordRequestError = ref(false);
 const cancleButton = ref(false);
-const passwordSubmitted = ref(false);
-const password = reactive({
-  new: "",
-  confirm: "",
-});
-const newPasswordRef = toRef(password, "new");
-
-const { passwordErrors } = useUserPasswordRules(
-  newPasswordRef,
-);
-
-const isChangePasswordDisabled = computed(() => {
-  return !password.new || !password.confirm;
-});
-
-const route = useRoute();
-const passwordModalEl = ref(null);
-let passwordModal = null;
 const avatar = computed(() => {
   const user = getUserData();
   return getAvatarUrlByName(user?.avatar);
-});
-
-onMounted(async () => {
-  if (route.query.openPasswordModal === "true") {
-    await nextTick();
-
-    if (passwordModalEl.value) {
-      passwordModal = new Modal(passwordModalEl.value);
-      passwordModal.show();
-
-      navigateTo("/admin", { replace: true });
-    }
-  }
 });
 
 const {
@@ -318,86 +223,6 @@ const hideCancleButton = () => {
   cancleButton.value = false;
 };
 
-const flow = ref("");
-const csrfToken = ref("");
-
-const fetchFlowIdAndCsrfToken = async () => {
-  try {
-    const response = await fetch(
-      `${url.kratosUrl}/self-service/settings/browser?aal=&refresh=&return_to=`,
-      {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-        },
-        credentials: "include",
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`Error: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    flow.value = data.id;
-    csrfToken.value = data.ui.nodes.find(
-      (node) => node.attributes.name === "csrf_token"
-    ).attributes.value;
-  } catch (error) {
-    console.error("Error fetching flow ID and CSRF token:", error);
-  }
-};
-
-const changePassword = async () => {
-  passwordSubmitted.value = true;
-  try {
-    if (passwordErrors.value.length > 0) {
-      return;
-    }
-
-    if (password.new !== password.confirm) {
-      passwordRequestError.value = "Passwords do not match.";
-      return;
-    }
-
-    await fetchFlowIdAndCsrfToken();
-
-    const response = await fetch(
-      `${url.kratosUrl}/self-service/settings?flow=${flow.value}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          password: password.new,
-          csrf_token: csrfToken.value,
-          method: "password",
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      if (errorData.error.id === "session_refresh_required") {
-        window.location.href = errorData.redirect_browser_to;
-      } else {
-        throw new Error(errorData.error.message);
-      }
-    }
-
-    passwordRequestError.value = "";
-    password.new = "";
-    password.confirm = "";
-
-    toast.success("Password updated successfully.");
-    document.getElementById("closeModalButton").click();
-  } catch (error) {
-    passwordRequestError.value = error.message;
-  }
-};
 
 const deleteAccount = async () => {
   const isconfirm = confirm("are you sure?");
@@ -415,6 +240,63 @@ const deleteAccount = async () => {
       console.error("Failed to delete the user", error);
       toast.error("Failed to delete the user.");
     }
+  }
+};
+
+const isPrivilegeSessionValid = () => {
+  if (!user.value?.data?.authenticated_at) return false;
+  const authAt = new Date(user.value.data.authenticated_at).getTime();
+  const now = Date.now();
+  const diffInMinutes = (now - authAt) / (1000 * 60);
+  return diffInMinutes <= 2;
+};
+
+const handleChangePasswordClick = async () => {
+  if (!isPrivilegeSessionValid()) {
+    toast.error("Session expired. Please re-login to change your password.");
+    const loggedOut = await handleLogoutt();
+    if (loggedOut) {
+      navigateTo('/account/login?returnTo=/account/change-password');
+    }
+    return;
+  }
+  await nextTick();
+  navigateTo("/account/change-password");
+};
+
+const handleLogoutt = async () => {
+  const { kratosUrl } = url;
+  try {
+    const response = await fetch(`${kratosUrl}/self-service/logout/browser`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      credentials: "include",
+    });
+    if (!response.ok) {
+      throw new Error("Failed to fetch logout URL and token");
+    }
+    const { logout_url } = await response.json();
+    const secondApiResponse = await fetch(`${logout_url}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      credentials: "include",
+    });
+    if (!secondApiResponse.ok) {
+      throw new Error("Failed to perform logout with the provided URL and token");
+    }
+
+    console.log("Logged out successfully");
+    setUserData(null);
+    return true;
+  } catch (error) {
+    console.error("Error during logout:", error);
+    return false;
   }
 };
 
