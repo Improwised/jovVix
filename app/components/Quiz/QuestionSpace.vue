@@ -31,6 +31,30 @@ const props = defineProps({
 });
 const emits = defineEmits(["sendAnswer", "askSkip"]);
 
+const clockOffset = ref(0); // Calculated once, used for all timers
+const isOffsetCalculated = ref(false);
+
+// Calculate offset only ONCE when we first receive server_time
+const calculateClockOffset = (serverTimeString) => {
+  if (isOffsetCalculated.value || !serverTimeString) return;
+  
+  try {
+    const clientReceiveTime = Date.now();
+    const serverTime = new Date(serverTimeString).getTime();
+    clockOffset.value = serverTime - clientReceiveTime;
+    isOffsetCalculated.value = true;
+    
+    console.log(`✓ Clock offset calculated: ${clockOffset.value}ms (one-time sync)`);
+  } catch (error) {
+    console.error("Error calculating clock offset:", error);
+  }
+};
+
+// Get current time corrected with offset
+const getCorrectedNow = () => {
+  return new Date(Date.now() + clockOffset.value);
+};
+
 // custom refs
 const question = ref();
 const answer = ref([]);
@@ -38,9 +62,12 @@ const counter = ref(null);
 const count = ref(0);
 const timer = ref(null);
 const time = ref(0);
-const serverStartTime = ref(null);
+const questionStartTime = ref(null);
+const questionDuration = ref(0);
+
 const progressValue = computed(() => {
-  return (time.value * 100) / question.value.duration;
+  if (!questionDuration.value) return 0;
+  return (time.value * 100) / questionDuration.value;
 });
 
 // Determine if current question is the last one
@@ -67,16 +94,24 @@ watch(
 // main function
 function handleEvent(message) {
   let counterSound = null;
+  // Calculate offset ONCE if server sends time
+  if (message.data.server_time) {
+    calculateClockOffset(message.data.server_time);
+  }
 
   if (music.value) {
     counterSound = new Audio("/music/clock.mp3");
   }
+  
   if (message.event == app.$GetQuestion) {
     question.value = message.data;
-    serverStartTime.value = new Date(message.data.start_time)
+    questionStartTime.value = new Date(message.data.start_time);
+    questionDuration.value = Number(message.data.duration);
+    
     time.value = 0;
     count.value = null;
     answer.value = [];
+    isSubmitted.value = false;
 
     handleTimer();
   } else if (message.event == app.$Counter) {
@@ -93,22 +128,28 @@ function handleEvent(message) {
 function handleTimer() {
   clearInterval(timer.value);
 
-  const duration = Number(question.value.duration);
+  if (!questionStartTime.value || !questionDuration.value) {
+    console.error("Missing question start time or duration");
+    return;
+  }
+
+  const duration = questionDuration.value;
 
   timer.value = setInterval(() => {
-    const now = new Date();
-
+    // Use offset-corrected time for calculation
+    const correctedNow = getCorrectedNow();
     const elapsedSeconds = Math.floor(
-      (now.getTime() - serverStartTime.value.getTime()) / 1000
+      (correctedNow.getTime() - questionStartTime.value.getTime()) / 1000
     );
 
-    time.value =  Math.min(Math.max(elapsedSeconds, 0), duration);  ;
+    time.value = Math.min(Math.max(elapsedSeconds, 0), duration);
 
     if (elapsedSeconds >= duration) {
       clearInterval(timer.value);
       timer.value = null;
+      time.value = duration;
     }
-  }, 1000);
+  }, 100);
 }
 
 function handleCounter(counterSound) {
@@ -142,6 +183,16 @@ function handleSkip(e) {
   e.preventDefault();
   emits("askSkip");
 }
+
+// Cleanup on unmount
+onUnmounted(() => {
+  if (timer.value) {
+    clearInterval(timer.value);
+  }
+  if (counter.value) {
+    clearInterval(counter.value);
+  }
+});
 </script>
 
 <template>
@@ -159,7 +210,7 @@ function handleSkip(e) {
         :width="13"
         color="primary"
       >
-        {{ question.duration - time }}
+        {{ Math.max(0, questionDuration - time) }}
       </v-progress-circular>
     </template>
 
