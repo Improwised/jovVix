@@ -1032,6 +1032,9 @@ func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.Wa
 		"totalQuestions": totalQuestions,
 		"totalJoinUser":  totalUserJoin,
 	}
+	if !lastQuestionTimeStamp.Valid {
+		responseData["server_time"] = time.Now().UTC().Format(time.RFC3339Nano)
+	}
 	response.Data = responseData
 	if !lastQuestionTimeStamp.Valid { // handling new question
 		shareEvenWithUser(c, qc, response, constants.EventSendQuestion, session.ID.String(), int(session.InvitationCode.Int32), constants.ToAll, arrangeMu)
