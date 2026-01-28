@@ -43,8 +43,6 @@ const calculateClockOffset = (serverTimeString) => {
     const serverTime = new Date(serverTimeString).getTime();
     clockOffset.value = serverTime - clientReceiveTime;
     isOffsetCalculated.value = true;
-    
-    console.log(`✓ Clock offset calculated: ${clockOffset.value}ms (one-time sync)`);
   } catch (error) {
     console.error("Error calculating clock offset:", error);
   }
