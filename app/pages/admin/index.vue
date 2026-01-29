@@ -113,7 +113,7 @@
 import { useUsersStore } from "~~/store/users";
 import { getAvatarUrlByName } from "~~/composables/avatar";
 import { useToast } from "vue-toastification";
-import { toRef } from "vue";
+const config = useRuntimeConfig();
 const toast = useToast();
 const userStore = useUsersStore();
 const { getUserData, setUserData } = userStore;
@@ -248,10 +248,11 @@ const isPrivilegeSessionValid = () => {
   const authAt = new Date(user.value.data.authenticated_at).getTime();
   const now = Date.now();
   const diffInMinutes = (now - authAt) / (1000 * 60);
-  return diffInMinutes <= 2;
+  return diffInMinutes <=   config.public.privilegedSessionMaxAge;
 };
 
 const handleChangePasswordClick = async () => {
+  console.log(config.public.privilegedSessionMaxAge)
   if (!isPrivilegeSessionValid()) {
     toast.error("Session expired. Please re-login to change your password.");
     const loggedOut = await handleLogoutt();

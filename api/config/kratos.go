@@ -10,11 +10,7 @@ type KratosConfig struct {
 }
 
 type KratosUserDetails struct {
-	ID string `json:"id"`
-	Active bool `json:"active"`
-	ExpiresAt string `json:"expires_at"`
-	AuthenticatedAt string `json:"authenticated_at"`
-	IssuedAt string `json:"issued_at"`		
+	AuthenticatedAt string `json:"authenticated_at"`	
 	Identity struct {
 		ID     string `json:"id"`
 		Traits struct {
