@@ -255,51 +255,14 @@ const handleChangePasswordClick = async () => {
   console.log(config.public.privilegedSessionMaxAge)
   if (!isPrivilegeSessionValid()) {
     toast.error("Session expired. Please re-login to change your password.");
-    const loggedOut = await handleLogoutt();
-    if (loggedOut) {
-      navigateTo('/account/login?returnTo=/account/change-password');
-    }
+    await handleLogout();
+    navigateTo('/account/login?returnTo=/account/change-password');
     return;
   }
   await nextTick();
   navigateTo("/account/change-password");
 };
 
-const handleLogoutt = async () => {
-  const { kratosUrl } = url;
-  try {
-    const response = await fetch(`${kratosUrl}/self-service/logout/browser`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      credentials: "include",
-    });
-    if (!response.ok) {
-      throw new Error("Failed to fetch logout URL and token");
-    }
-    const { logout_url } = await response.json();
-    const secondApiResponse = await fetch(`${logout_url}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      credentials: "include",
-    });
-    if (!secondApiResponse.ok) {
-      throw new Error("Failed to perform logout with the provided URL and token");
-    }
-
-    console.log("Logged out successfully");
-    setUserData(null);
-    return true;
-  } catch (error) {
-    console.error("Error during logout:", error);
-    return false;
-  }
-};
 
 const handleEmailVerification = async () => {
   try {

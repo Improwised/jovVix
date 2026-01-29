@@ -35,14 +35,6 @@
           </div>
         </div>
       </div>
-
-      <!-- Forgot Password Link
-      <div class="mb-3 text-end">
-        <NuxtLink to="/account/recovery" class="text-primary">
-          Forgot your password?
-        </NuxtLink>
-      </div> -->
-
       <div>
         <!-- Button -->
         <div class="d-grid gap-2">
