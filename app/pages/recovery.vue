@@ -135,7 +135,7 @@ const verifyOTP = async () => {
         errorData.error &&
         errorData.error.id === "browser_location_change_required"
       ) {
-        navigateTo("/admin?openPasswordModal=true");
+        navigateTo("/account/change-password");
       } else {
         throw new Error(errorData.message || "Failed to verify OTP");
       }
