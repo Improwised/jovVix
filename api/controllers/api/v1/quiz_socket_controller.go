@@ -745,7 +745,7 @@ func handleConnectedUser(c *websocket.Conn, qc *quizSocketController, sessionId 
 			err = func() error {
 				arrangeMu.Lock()
 				defer arrangeMu.Unlock()
-				return utils.JSONSuccessWs( c, constants.EventSendInvitationCode, response )
+				return utils.JSONSuccessWs(c, constants.EventSendInvitationCode, response)
 			}()
 			if err != nil {
 				qc.logger.Error("error while sending initial user data to admin", zap.Error(err))
@@ -1353,4 +1353,71 @@ func (qc *quizSocketController) SetAnswer(c *fiber.Ctx) error {
 
 func (ctrl *quizSocketController) Terminate(c *fiber.Ctx) error {
 	return utils.JSONSuccess(c, http.StatusOK, nil)
+}
+
+// GetArrangeState returns the current waiting-lobby state for an admin who reconnects.
+// This allows the frontend to show the waiting state immediately without waiting for a new socket event.
+func (qc *quizSocketController) GetArrangeState(c *fiber.Ctx) error {
+	sessionID := c.Params(constants.SessionIDParam)
+	if sessionID == "" {
+		return utils.JSONFail(c, http.StatusBadRequest, constants.ErrSessionNotFound)
+	}
+
+	user, ok := quizUtilsHelper.ConvertType[models.User](c.Locals(constants.ContextUser))
+	if !ok {
+		qc.logger.Error("GetArrangeState: user model type conversion failed")
+		return utils.JSONFail(c, http.StatusInternalServerError, constants.UnknownError)
+	}
+
+	session, err := qc.activeQuizModel.GetSession(sessionID)
+	if err != nil {
+		if err.Error() == constants.ErrSessionNotFound {
+			return utils.JSONFail(c, http.StatusNotFound, constants.ErrSessionNotFound)
+		}
+		qc.logger.Error("GetArrangeState: get session", zap.Error(err))
+		return utils.JSONFail(c, http.StatusInternalServerError, constants.UnknownError)
+	}
+
+	if session.AdminID != user.ID {
+		return utils.JSONFail(c, http.StatusForbidden, constants.Unauthorized)
+	}
+
+	if !session.IsActive {
+		return utils.JSONFail(c, http.StatusBadRequest, constants.ErrSessionNotFound)
+	}
+
+	if session.ActivatedTo.Valid {
+		return utils.JSONFail(c, http.StatusBadRequest, constants.ErrSessionWasCompleted)
+	}
+
+	// Only return state when session is in Waiting (no current question)
+	if session.CurrentQuestion.Valid {
+		return utils.JSONFail(c, http.StatusBadRequest, "session is not in waiting state")
+	}
+
+	if !session.InvitationCode.Valid {
+		qc.logger.Error("GetArrangeState: session in waiting but no invitation code")
+		return utils.JSONFail(c, http.StatusInternalServerError, constants.UnknownError)
+	}
+
+	usersData := []UserInfo{}
+	users, err := qc.redis.PubSubModel.Client.Get(qc.redis.PubSubModel.Ctx, session.ID.String()).Result()
+	if err == nil && users != "" {
+		if err := json.Unmarshal([]byte(users), &usersData); err != nil {
+			qc.logger.Error("GetArrangeState: unmarshal users from redis", zap.Error(err))
+		}
+	}
+
+	data := map[string]any{"code": int(session.InvitationCode.Int32)}
+	if len(usersData) == 0 {
+		data["users"] = "no player found"
+	} else {
+		data["users"] = usersData
+	}
+	response := map[string]any{
+		"component": constants.Waiting,
+		"data":      data,
+	}
+
+	return utils.JSONSuccess(c, http.StatusOK, response)
 }

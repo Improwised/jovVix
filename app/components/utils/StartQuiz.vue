@@ -49,6 +49,7 @@ const handleStartDemo = async () => {
   }
 
   removeAllUsers();
+  setSocketObject(null);
 
   router.push(`/admin/arrange/${activeQuizId.value}`);
 

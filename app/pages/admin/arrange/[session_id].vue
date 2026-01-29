@@ -60,22 +60,61 @@ const handleCustomChange = (isFullScreenEvent) => {
   }
 };
 
+// Fetch current waiting-lobby state when reusing existing socket (e.g. admin navigated back).
+// Without this, the UI stays on Loading until a new socket event occurs.
+async function fetchAndApplyArrangeState() {
+  const { apiUrl } = useRuntimeConfig().public;
+  try {
+    const response = await $fetch(`${apiUrl}/admin/arrange/${session_id}/state`, {
+      method: "GET",
+      credentials: "include",
+    });
+    const payload = response?.data ?? response;
+    if (payload?.component === app.$Waiting && payload?.data) {
+      currentComponent.value = payload.component;
+      data.value = { component: payload.component, data: payload.data };
+      confirmNeeded.value = { show: false };
+      if (payload.data.code !== undefined) {
+        invitationCode.value = payload.data.code;
+      }
+      removeAllUsers();
+      if (payload.data.users !== "no player found" && Array.isArray(payload.data.users)) {
+        addUser(payload.data.users);
+      }
+    }
+  } catch (_) {
+    // Non‑Waiting or error: keep Loading until socket sends state
+  }
+}
+
 // main functions
 onMounted(() => {
-  if (!process.client) return;
-
-  removeAllUsers();
-  resetUsersSubmittedAnswers();
-  currentComponent.value = "Loading";
-
-  adminOperationHandler.value = new AdminOperations(
-    session_id,
-    handleQuizEvents,
-    handleNetworkEvent,
-    confirmSkip
-  );
-
-  connectAdmin();
+  // core logic
+  if (process.client) {
+    try {
+      if (socketObject) {
+        adminOperationHandler.value = new AdminOperations(
+          session_id,
+          handleQuizEvents,
+          handleNetworkEvent,
+          confirmSkip
+        );
+        continueAdmin();
+        fetchAndApplyArrangeState();
+      } else {
+        adminOperationHandler.value = new AdminOperations(
+          session_id,
+          handleQuizEvents,
+          handleNetworkEvent,
+          confirmSkip
+        );
+        connectAdmin();
+      }
+    } catch (err) {
+      console.error(err);
+      toast.info(app.$ReloadRequired);
+    }
+  }
 });
 
 
