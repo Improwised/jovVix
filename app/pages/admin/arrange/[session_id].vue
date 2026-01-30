@@ -13,7 +13,7 @@ import { useUserThatSubmittedAnswer } from "~/store/userSubmittedAnswer";
 import { storeToRefs } from "pinia";
 import { useSessionStore } from "~~/store/session";
 const sessionStore = useSessionStore();
-const { setSession } = sessionStore;
+const { setSession, setLastComponent, getLastComponent } = sessionStore;
 
 const invitationCodeStore = useInvitationCodeStore();
 const { invitationCode } = storeToRefs(invitationCodeStore);
@@ -62,22 +62,36 @@ const handleCustomChange = (isFullScreenEvent) => {
 
 // main functions
 onMounted(() => {
-  if (!process.client) return;
-
-  removeAllUsers();
-  resetUsersSubmittedAnswers();
-  currentComponent.value = "Loading";
-
-  adminOperationHandler.value = new AdminOperations(
-    session_id,
-    handleQuizEvents,
-    handleNetworkEvent,
-    confirmSkip
-  );
-
-  connectAdmin();
+  if (process.client) {
+    try {
+      const lastRenderedComponent = getLastComponent();
+      if (socketObject && lastRenderedComponent !== "Waiting") {
+        adminOperationHandler.value = new AdminOperations(
+          session_id,
+          handleQuizEvents,
+          handleNetworkEvent,
+          confirmSkip
+        );
+        continueAdmin();
+      } else {
+        adminOperationHandler.value = new AdminOperations(
+          session_id,
+          handleQuizEvents,
+          handleNetworkEvent,
+          confirmSkip
+        );
+        connectAdmin();
+      }
+    } catch (err) {
+      console.error(err);
+      toast.info(app.$ReloadRequired);
+    }
+  }
 });
 
+onUnmounted(() => {
+  setLastComponent(currentComponent.value);
+});
 
 const handleQuizEvents = async (message) => {
   if (message.status == app.$Error) {

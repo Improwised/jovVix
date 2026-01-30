@@ -49,7 +49,7 @@ const handleStartDemo = async () => {
   }
 
   removeAllUsers();
-
+  setSocketObject(null);
   router.push(`/admin/arrange/${activeQuizId.value}`);
 
   // add session in store after 1 second
