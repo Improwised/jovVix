@@ -3,6 +3,7 @@ export const useSessionStore = defineStore(
   "session-store",
   () => {
     const session = ref(false);
+    const lastComponent = ref("");
 
     const getSession = () => {
       return session.value;
@@ -12,7 +13,22 @@ export const useSessionStore = defineStore(
       session.value = data;
     };
 
-    return { session, getSession, setSession };
+    const getLastComponent = () => {
+      return lastComponent.value;
+    };
+
+    const setLastComponent = (data) => {
+      lastComponent.value = data;
+    };
+
+    return {
+      session,
+      getSession,
+      setSession,
+      lastComponent,
+      getLastComponent,
+      setLastComponent,
+    };
   },
   {
     persist: true,

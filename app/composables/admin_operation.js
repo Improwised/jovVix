@@ -94,6 +94,7 @@ export default class AdminOperations extends QuizHandler {
     console.log("stoping ping of admin");
     this.stopPing();
     super.onClose(event);
+    setSocketObject(null);
   }
 
   requestPauseQuiz(isPause) {
