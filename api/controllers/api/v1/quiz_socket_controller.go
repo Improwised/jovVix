@@ -726,32 +726,6 @@ func handleConnectedUser(c *websocket.Conn, qc *quizSocketController, sessionId 
 	response := QuizSendResponse{}
 	response.Action = constants.ActionSendUserData
 	response.Component = constants.Waiting
-
-	users, err := qc.redis.PubSubModel.Client.Get(
-		qc.redis.PubSubModel.Ctx,
-		sessionId,
-	).Result()
-
-	if err == nil && users != "" {
-		var usersData []UserInfo
-		if err := json.Unmarshal([]byte(users), &usersData); err == nil {
-
-			response := QuizSendResponse{
-				Component: constants.Waiting,
-				Action:    constants.ActionSendUserData,
-				Data:      usersData,
-			}
-
-			err = func() error {
-				arrangeMu.Lock()
-				defer arrangeMu.Unlock()
-				return utils.JSONSuccessWs(c, constants.EventSendInvitationCode, response)
-			}()
-			if err != nil {
-				qc.logger.Error("error while sending initial user data to admin", zap.Error(err))
-			}
-		}
-	}
 	
 	pubsub := qc.redis.PubSubModel.Client.Subscribe(qc.redis.PubSubModel.Ctx, fmt.Sprintf("%s-%s", constants.ChannelUserJoin, sessionId), fmt.Sprintf("%s-%s", constants.ChannelUserDisconnect, sessionId), constants.EventTerminateQuiz, constants.EventStartQuizByAdmin, constants.StartQuizByAdminNoPlayerFound)
 	defer func() {
