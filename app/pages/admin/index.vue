@@ -252,10 +252,8 @@ const isPrivilegeSessionValid = () => {
 };
 
 const handleChangePasswordClick = async () => {
-  console.log(config.public.privilegedSessionMaxAge)
   if (!isPrivilegeSessionValid()) {
-    toast.error("Session expired. Please re-login to change your password.");
-    await handleLogout();
+    toast.warning("Please re-enter your password to continue.");
     navigateTo('/account/login?returnTo=/account/change-password');
     return;
   }

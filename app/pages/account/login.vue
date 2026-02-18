@@ -22,7 +22,9 @@ console.log();
 (async () => {
   if (process.client) {
     const user = getUserData();
-    if (user && user?.role == "admin-user") {
+    const isReauth = !!route.query.returnTo;
+
+    if (!isReauth && user) {
       navigateTo("/");
       return;
     }
@@ -115,6 +117,13 @@ async function setFlowIDAndCSRFToken() {
       (node) => node.attributes.name === "csrf_token"
     )?.attributes?.value;
     loginURLWithFlowQuery.value = kratosResponse?.ui?.action;
+
+    const identifierNode = kratosResponse?.ui?.nodes.find(
+      (node) => node.attributes.name === "identifier"
+    );
+    if (identifierNode?.attributes?.value) {
+      email.value = identifierNode.attributes.value;
+    }
   } catch (error) {
     console.error(error);
   }
@@ -164,7 +173,7 @@ const handleForgotPassword = async () => {
       <!-- Username -->
       <div class="mb-3">
         <label for="email" class="form-label">Email</label>
-        <input id="email" v-model="email" type="email" name="identifier" class="form-control" required="" />
+        <input id="email" v-model="email" type="email" name="identifier" class="form-control" :readonly="!!route.query.returnTo" :style="route.query.returnTo ? { backgroundColor: '#e9ecef', cursor: 'not-allowed' } : {}" required="" />
       </div>
       <!-- Password -->
       <div class="mb-3">

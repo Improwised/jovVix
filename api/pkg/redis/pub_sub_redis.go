@@ -13,9 +13,10 @@ type PubSubModel struct {
 
 func InitPubSubModel(addr, password string, db int) (*PubSubModel, error) {
 	client := redis.NewClient(&redis.Options{
-		Addr:     addr,
-		Password: password,
-		DB:       db,
+		Addr:             addr,
+		Password:         password,
+		DB:               db,
+		DisableIndentity: true,
 	})
 	ctx := context.Background()
 
