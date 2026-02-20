@@ -22,7 +22,9 @@ console.log();
 (async () => {
   if (process.client) {
     const user = getUserData();
-    if (user && user?.role == "admin-user") {
+    const isReauth = !!route.query.returnTo;
+
+    if (!isReauth && user) {
       navigateTo("/");
       return;
     }
@@ -81,14 +83,23 @@ console.log();
 
 async function setFlowIDAndCSRFToken() {
   try {
+    // Build return_to URL
+    const returnToUrl = route.query.returnTo
+      ? `${window.location.origin}${route.query.returnTo}`
+      : `${window.location.origin}/`;
+
     const kratosResponse = await $fetch(
-      kratosUrl + "/self-service/login/browser?refresh=true",
+      kratosUrl + "/self-service/login/browser",
       {
         method: "GET",
         headers: {
           Accept: "application/json",
         },
         credentials: "include",
+        query: {
+          refresh: true,
+          return_to: returnToUrl
+        },
         onResponseError({ response }) {
           console.error(
             "error while getting the flow id from the server",
@@ -97,12 +108,22 @@ async function setFlowIDAndCSRFToken() {
         },
       }
     );
+    const queryParams = route.query.returnTo
+      ? `?flow=${kratosResponse?.id}&returnTo=${route.query.returnTo}`
+      : `?flow=${kratosResponse?.id}`;
 
-    router.push("?flow=" + kratosResponse?.id);
+    router.push(queryParams);
     csrfToken.value = kratosResponse?.ui?.nodes.find(
       (node) => node.attributes.name === "csrf_token"
     )?.attributes?.value;
     loginURLWithFlowQuery.value = kratosResponse?.ui?.action;
+
+    const identifierNode = kratosResponse?.ui?.nodes.find(
+      (node) => node.attributes.name === "identifier"
+    );
+    if (identifierNode?.attributes?.value) {
+      email.value = identifierNode.attributes.value;
+    }
   } catch (error) {
     console.error(error);
   }
@@ -146,35 +167,18 @@ const handleForgotPassword = async () => {
 
 <template>
   <QuizLoadingSpace v-if="component === 'waiting'"></QuizLoadingSpace>
-  <Frame
-    v-else
-    page-title="Sign in"
-    page-message="Please enter your user information."
-  >
+  <Frame v-else page-title="Sign in" page-message="Please enter your user information.">
     <!-- Form -->
     <form method="POST" :action="loginURLWithFlowQuery">
       <!-- Username -->
       <div class="mb-3">
         <label for="email" class="form-label">Email</label>
-        <input
-          id="email"
-          v-model="email"
-          type="email"
-          name="identifier"
-          class="form-control"
-          required=""
-        />
+        <input id="email" v-model="email" type="email" name="identifier" class="form-control" :readonly="!!route.query.returnTo" :style="route.query.returnTo ? { backgroundColor: '#e9ecef', cursor: 'not-allowed' } : {}" required="" />
       </div>
       <!-- Password -->
       <div class="mb-3">
         <label for="password" class="form-label">Password</label>
-        <input
-          id="password"
-          class="form-control"
-          type="password"
-          name="password"
-          required=""
-        />
+        <input id="password" class="form-control" type="password" name="password" required="" />
       </div>
       <div v-if="errors.password" class="text-danger">
         {{ errors.password }}
@@ -195,15 +199,11 @@ const handleForgotPassword = async () => {
 
         <div class="d-md-flex justify-content-between mt-4">
           <div class="mb-2 mb-md-0">
-            <NuxtLink to="/account/register" class="fs-5"
-              >Create An Account
+            <NuxtLink to="/account/register" class="fs-5">Create An Account
             </NuxtLink>
           </div>
           <div>
-            <button
-              class="text-primary mb-2 fs-5"
-              @click.prevent="handleForgotPassword"
-            >
+            <button class="text-primary mb-2 fs-5" @click.prevent="handleForgotPassword">
               Forgot Your Password?
             </button>
           </div>

@@ -7,11 +7,12 @@ export default defineNuxtConfig({
     public: {
       baseUrl: process.env.NUXT_PUBLIC_BASE_URL || "http://127.0.0.1:3001",
       apiUrl: process.env.NUXT_PUBLIC_API_URL || "http://127.0.0.1:3000/api/v1",
-      maxImageFileSize: parseInt(process.env.MAX_IMAGE_FILE_SIZE || "1048576") , //1MB default
+      maxImageFileSize: parseInt(process.env.NUXT_PUBLIC_MAX_IMAGE_FILE_SIZE || "1048576") , //1MB default
       apiSocketUrl:
         process.env.NUXT_PUBLIC_API_SOCKET_URL ||
         "ws://127.0.0.1:3000/api/v1/socket",
       kratosUrl: process.env.NUXT_PUBLIC_KRATOS_URL || "http://127.0.0.1:4433",
+      privilegedSessionMaxAge: parseInt(process.env.NUXT_PUBLIC_PRIVILEGED_SESSION_MAX_AGE || "15"),
     },
   },
   app: {
