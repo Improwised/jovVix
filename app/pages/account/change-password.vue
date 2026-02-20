@@ -2,7 +2,6 @@
   <Frame page-title="Change Password" page-message="Please enter your new password information.">
     <!-- Form -->
     <form @submit.prevent="handleChangePassword">
-      <!-- New Password -->
       <div class="mb-3">
         <label for="newPassword" class="form-label">New Password</label>
         <input 
@@ -15,7 +14,6 @@
         />
       </div>
 
-      <!-- Confirm Password -->
       <div class="mb-3">
         <label for="confirmPassword" class="form-label">Confirm Password</label>
         <input 
@@ -36,7 +34,6 @@
         </div>
       </div>
       <div>
-        <!-- Button -->
         <div class="d-grid gap-2">
           <button 
             type="submit" 
@@ -65,25 +62,20 @@ import { useUserPasswordRules } from "@/composables/user_password_rules";
 const toast = useToast();
 const url = useRuntimeConfig().public;
 
-// Form data - matching modal structure
 const password = reactive({
   new: "",
   confirm: ""
 });
 
-// Create ref for password rules composable
 const newPasswordRef = toRef(password, "new");
 
-// Use password rules validation
 const { passwordErrors } = useUserPasswordRules(newPasswordRef);
 
-// Error state - matching modal
 const passwordRequestError = ref("");
 const passwordSubmitted = ref(false);
 const flow = ref("");
 const csrfToken = ref("");
 
-// Fetch flow ID and CSRF token - exact same as modal
 const fetchFlowIdAndCsrfToken = async () => {
   try {
     const response = await fetch(
@@ -111,17 +103,14 @@ const fetchFlowIdAndCsrfToken = async () => {
   }
 };
 
-// Handle password change - exact same logic as modal
 const handleChangePassword = async () => {
   passwordSubmitted.value = true;
   
   try {
-    // Check password validation errors first
     if (passwordErrors.value.length > 0) {
       return;
     }
 
-    // Check if passwords match
     if (password.new !== password.confirm) {
       passwordRequestError.value = "Passwords do not match.";
       return;
@@ -155,17 +144,13 @@ const handleChangePassword = async () => {
       }
     }
 
-    // Clear error on success
     passwordRequestError.value = "";
     
-    // Clear form
     password.new = "";
     password.confirm = "";
     
-    // Show success toast
     toast.success("Password updated successfully.");
     
-    // Redirect to admin profile
     navigateTo("/");
 
   } catch (error) {
@@ -173,7 +158,6 @@ const handleChangePassword = async () => {
   }
 };
 
-// Handle cancel
 const handleCancel = () => {
   navigateTo("/admin");
 };
