@@ -1,7 +1,7 @@
 <template>
   <div class="d-flex align-items-center flex-grow-1">
     <button
-      class="btn btn-icon btn-white border border-2 rounded-circle btn-dashed ms-2 mr-2"
+      class="btn btn-icon btn-white border border-2 rounded-circle btn-dashed ms-2 mr-2 cursor-default"
     >
       {{ String.fromCharCode(64 + Number(props.order)) }}
     </button>
