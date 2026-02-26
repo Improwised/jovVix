@@ -129,40 +129,6 @@ async function setFlowIDAndCSRFToken() {
   }
 }
 
-const handleForgotPassword = async () => {
-  if (!email.value) {
-    toast.error("Please enter email first!");
-    return;
-  }
-  const recoveryResponse = await fetch(
-    `${kratosUrl}/self-service/recovery/browser`,
-    {
-      headers: {
-        Accept: "application/json",
-      },
-    }
-  );
-  const recovery = await recoveryResponse.json();
-
-  const recoverypage = recovery?.ui?.action;
-
-  await fetch(recoverypage, {
-    method: "POST",
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
-    body: JSON.stringify({
-      email: email.value,
-      csrf_token: csrfToken.value,
-      method: "code",
-    }),
-  });
-
-  navigateTo(recoverypage, { external: true });
-};
-
 </script>
 
 <template>
@@ -203,9 +169,8 @@ const handleForgotPassword = async () => {
             </NuxtLink>
           </div>
           <div>
-            <button class="text-primary mb-2 fs-5" @click.prevent="handleForgotPassword">
-              Forgot Your Password?
-            </button>
+            <NuxtLink to="/account/forgot-password" class="fs-5">Forgot Your Password?
+            </NuxtLink>
           </div>
         </div>
       </div>
