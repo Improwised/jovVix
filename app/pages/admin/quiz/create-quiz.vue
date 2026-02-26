@@ -24,11 +24,12 @@ const uploadQuizAndQuestions = async (e) => {
 
   const description = document.getElementById("description");
   const attachment = document.getElementById("attachment");
+  const encodedTitle = encodeURIComponent(title.value);
 
   formData.append(description.name, description.value);
   formData.append(attachment.name, attachment.files[0]);
   try {
-    await $fetch(encodeURI(`${publicRuntimeConfig.apiUrl}/quizzes/${title.value}/upload`), {
+    await $fetch(`${publicRuntimeConfig.apiUrl}/quizzes/${encodedTitle}/upload`, {
       method: "POST",
       headers: {
         Accept: "application/json",
