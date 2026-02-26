@@ -151,7 +151,7 @@ const handleChangePassword = async () => {
     
     toast.success("Password updated successfully.");
     
-    navigateTo("/");
+    navigateTo("/admin");
 
   } catch (error) {
     passwordRequestError.value = error.message;
