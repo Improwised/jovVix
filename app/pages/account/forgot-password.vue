@@ -82,7 +82,7 @@ const handleForgotPassword = async () => {
           class="btn btn-primary text-white"
           :disabled="isLoading"
         >
-          {{ isLoading ? "Sending..." : "Send Reset Password Link" }}
+          {{ isLoading ? "Sending..." : "Send Reset Password Code" }}
         </button>
       </div>
 
