@@ -1,0 +1,31 @@
+{
+  "name": "jovvix",
+  "version": "1.0.0",
+  "description": "<p align=\"center\">   <img src=\"app/public/readme-logo.webp\" alt=\"Jovvix Logo\" width=\"200\"/> </p>",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Improwised/jovVix.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/Improwised/jovVix/issues"
+  },
+  "homepage": "https://github.com/Improwised/jovVix#readme",
+  "devDependencies": {
+    "@playwright/experimental-ct-vue": "^1.57.0",
+    "@playwright/test": "^1.57.0",
+    "nock": "^14.0.10",
+    "playwright": "^1.57.0",
+    "vue": "^3.5.26"
+  }
+}
