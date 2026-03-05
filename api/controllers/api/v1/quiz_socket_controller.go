@@ -1355,5 +1355,40 @@ func (qc *quizSocketController) SetAnswer(c *fiber.Ctx) error {
 }
 
 func (ctrl *quizSocketController) Terminate(c *fiber.Ctx) error {
+	sessionId := c.Query(constants.SessionIDParam)
+	if sessionId == "" {
+		return utils.JSONFail(c, http.StatusBadRequest, "session_id is required")
+	}
+
+	userId := quizUtilsHelper.GetString(c.Locals(constants.ContextUid))
+	if userId == "" {
+		return utils.JSONError(c, http.StatusUnauthorized, constants.ErrUnauthenticated)
+	}
+
+	session, err := ctrl.activeQuizModel.GetSession(sessionId)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return utils.JSONFail(c, http.StatusBadRequest, constants.ErrSessionNotFound)
+		}
+		return utils.JSONError(c, http.StatusInternalServerError, constants.UnknownError)
+	}
+
+	if session.AdminID != userId {
+		return utils.JSONError(c, http.StatusUnauthorized, constants.ErrUnauthorized)
+	}
+
+	sessionUUID, err := uuid.Parse(sessionId)
+	if err != nil {
+		return utils.JSONFail(c, http.StatusBadRequest, "invalid session_id")
+	}
+
+	err = ctrl.activeQuizModel.Deactivate(sessionUUID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return utils.JSONFail(c, http.StatusBadRequest, constants.ErrSessionNotFound)
+		}
+		return utils.JSONError(c, http.StatusInternalServerError, constants.UnknownError)
+	}
+
 	return utils.JSONSuccess(c, http.StatusOK, nil)
 }
