@@ -206,6 +206,14 @@ func (model *UserModel) UpdateKratosUserDetails(reqUser User, userMetadata []byt
 		return err
 	}
 
+	if !strings.EqualFold(strings.TrimSpace(user.Email), strings.TrimSpace(reqUser.Email)) {
+		err = UpdateKratosVerifiableAddress(transaction, strings.TrimSpace(user.KratosID.String), reqUser.Email)
+		if err != nil {
+			model.logger.Debug("error in UpdateKratosVerifiableAddress", zap.Error(err))
+			return err
+		}
+	}
+
 	err = UpdateUserMetadata(transaction, reqUser)
 	if err != nil {
 		model.logger.Debug("error in UpdateKratosIdentityTraits", zap.Error(err))
@@ -250,6 +258,21 @@ func UpdateUserMetadata(transaction *goqu.TxDatabase, user User) error {
 
 	_, err := transaction.Update(UserTable).Set(record).Where(goqu.Ex{
 		"id": user.ID,
+	}).Executor().Exec()
+
+	return err
+}
+
+func UpdateKratosVerifiableAddress(transaction *goqu.TxDatabase, kratosId, email string) error {
+	_, err := transaction.Update("kratos.identity_verifiable_addresses").Set(goqu.Record{
+		"value":       email,
+		"status":      "pending",
+		"verified":    false,
+		"verified_at": nil,
+		"updated_at":  goqu.L("NOW()"),
+	}).Where(goqu.Ex{
+		"identity_id": kratosId,
+		"via":         "email",
 	}).Executor().Exec()
 
 	return err

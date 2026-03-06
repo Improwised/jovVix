@@ -175,7 +175,6 @@ watch(
       userData.last_name = user.value.data.identity.traits.name.last;
       userData.email = user.value.data.identity.traits.email;
       userData.email_verify = user.value.data.identity.verifiable_addresses[0].verified;
-      userData.email = user.value.data.identity.traits.email;
     }
     if (userError.value) {
       console.log("error");
@@ -186,6 +185,9 @@ watch(
 
 const changeUserMetaData = async () => {
   updateuserPending.value = true;
+  
+  const oldEmail = user.value.data.identity.traits.email;
+
   const { data, error } = await useFetch(url.apiUrl + "/kratos/user", {
     method: "PUT",
     headers: headers,
@@ -208,6 +210,9 @@ const changeUserMetaData = async () => {
     userData.full_name =
       data.value.data.first_name + " " + data.value.data.last_name;
     userData.email = data.value.data.email;
+    if (oldEmail !== data.value.data.email) {
+      userData.email_verify = false;
+    }
     cancleButton.value = false;
   }
 };
