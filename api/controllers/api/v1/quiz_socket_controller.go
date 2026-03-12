@@ -1377,12 +1377,7 @@ func (ctrl *quizSocketController) Terminate(c *fiber.Ctx) error {
 		return utils.JSONError(c, http.StatusUnauthorized, constants.ErrUnauthorized)
 	}
 
-	sessionUUID, err := uuid.Parse(sessionId)
-	if err != nil {
-		return utils.JSONFail(c, http.StatusBadRequest, "invalid session_id")
-	}
-
-	err = ctrl.activeQuizModel.Deactivate(sessionUUID)
+	err = ctrl.activeQuizModel.Deactivate(session.ID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return utils.JSONFail(c, http.StatusBadRequest, constants.ErrSessionNotFound)
