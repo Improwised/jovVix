@@ -24,8 +24,8 @@ const showEditForm = () => {
 
 <template>
   <v-list-item-title>
-    <div class="d-flex align-center py-3 justify-content-between">
-      <div class="d-flex">
+    <div class="d-flex align-center py-3 justify-content-between gap-3">
+      <div class="d-flex flex-grow-1 overflow-hidden">
         <div class="mr-3">
           <v-badge
             bordered
@@ -46,20 +46,20 @@ const showEditForm = () => {
         </div>
 
         <!-- User Details -->
-        <div class="mx-3">
+        <div class="mx-3 flex-grow-1 overflow-hidden">
           <h4 v-if="props.user.first_name.Valid">
             {{ props.user.first_name.String }}
             {{ props.user.last_name.String }}
           </h4>
           <h4 v-else class="mt-n1 mb-1">Unknown</h4>
-          <div class="truncate-text text-subtitle-2 textSecondary">
+          <div class="text-subtitle-2 textSecondary d-block text-truncate">
             {{ props.user.shared_to }}
           </div>
         </div>
       </div>
 
       <!-- User Permission -->
-      <div class="d-flex align-items-center">
+      <div class="d-flex align-items-center flex-shrink-0 text-nowrap">
         {{ props.user.permission }}
         <!-- Button for edit permission -->
         <button
