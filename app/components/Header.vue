@@ -125,6 +125,9 @@
 
 <script setup>
 const router = useRouter();
+const { apiUrl } = useRuntimeConfig().public;
+import { useToast } from "vue-toastification";
+const toast = useToast();
 import { setUserDataStore } from "~~/composables/auth";
 import { useUsersStore } from "~~/store/users";
 const userData = useUsersStore();
@@ -150,9 +153,22 @@ onMounted(() => {
   setUserDataStore();
 });
 
-const stopQuiz = () => {
-  setSession(null);
-  console.log("stop called");
+const stopQuiz = async () => {
+  if (!activeSession.value) {
+    return;
+  }
+
+  try {
+    await $fetch(`${apiUrl}/quiz/terminate?session_id=${activeSession.value}`, {
+      method: "GET",
+      credentials: "include",
+    });
+    setSession(null);
+    toast.success("Quiz stopped successfully.");
+  } catch (error) {
+    console.error("failed to stop quiz from header", error);
+    toast.error("Failed to stop running quiz.");
+  }
 };
 </script>
 
