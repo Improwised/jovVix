@@ -91,7 +91,7 @@
   </div>
   <div
     v-if="activeSession && isKratosUser"
-    class="alert bg-danger text-black d-flex justify-content-center align-items-center"
+    class="alert bg-light-primary text-black d-flex justify-content-center align-items-center"
     role="alert"
   >
     <div class="doodle">&#128641;</div>
