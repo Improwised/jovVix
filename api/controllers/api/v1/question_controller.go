@@ -148,6 +148,7 @@ func (ctrl *QuestionController) GetQuestionById(c *fiber.Ctx) error {
 func (ctrl *QuestionController) UpdateQuestionById(c *fiber.Ctx) error {
 	QuestionId := c.Params(constants.QuestionId)
 	ctrl.logger.Debug("QuizController.UpdateQuestionById called", zap.Any(constants.QuestionId, QuestionId))
+	QuizId := c.Params(constants.QuizId)
 
 	ctrl.logger.Debug("validate req", zap.Any("Body", c.Body()))
 	var questionReq structs.ReqUpdateQuestion
@@ -164,7 +165,7 @@ func (ctrl *QuestionController) UpdateQuestionById(c *fiber.Ctx) error {
 		return utils.JSONFail(c, http.StatusBadRequest, utils.ValidatorErrorString(err))
 	}
 
-	err = ctrl.questionModel.UpdateQuestionById(QuestionId, models.Question{
+	_, err = ctrl.quizSvc.EditQuestionById(QuizId, QuestionId, models.Question{
 		Question:          questionReq.Question,
 		Type:              questionReq.Type,
 		Options:           questionReq.Options,
