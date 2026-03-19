@@ -745,14 +745,14 @@ func handleConnectedUser(c *websocket.Conn, qc *quizSocketController, sessionId 
 			err = func() error {
 				arrangeMu.Lock()
 				defer arrangeMu.Unlock()
-				return utils.JSONSuccessWs( c, constants.EventSendInvitationCode, response )
+				return utils.JSONSuccessWs(c, constants.EventSendInvitationCode, response)
 			}()
 			if err != nil {
 				qc.logger.Error("error while sending initial user data to admin", zap.Error(err))
 			}
 		}
 	}
-	
+
 	pubsub := qc.redis.PubSubModel.Client.Subscribe(qc.redis.PubSubModel.Ctx, fmt.Sprintf("%s-%s", constants.ChannelUserJoin, sessionId), fmt.Sprintf("%s-%s", constants.ChannelUserDisconnect, sessionId), constants.EventTerminateQuiz, constants.EventStartQuizByAdmin, constants.StartQuizByAdminNoPlayerFound)
 	defer func() {
 		if pubsub != nil {
@@ -993,7 +993,7 @@ func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.Wa
 	}
 
 	var questionStartTime time.Time
-	
+
 	// start counter if not any question running
 	if !lastQuestionTimeStamp.Valid {
 		response.Component = constants.Question
@@ -1023,7 +1023,7 @@ func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.Wa
 		"quiz_id":        question.QuizId,
 		"no":             question.OrderNumber,
 		"duration":       question.DurationInSeconds,
-		"start_time":     questionStartTime.Format(time.RFC3339), 
+		"start_time":     questionStartTime.Format(time.RFC3339),
 		"question":       question.Question,
 		"options":        question.Options,
 		"question_media": question.QuestionMedia,
@@ -1368,8 +1368,10 @@ func (ctrl *quizSocketController) Terminate(c *fiber.Ctx) error {
 	session, err := ctrl.activeQuizModel.GetSession(sessionId)
 	if err != nil {
 		if err == sql.ErrNoRows {
+			ctrl.logger.Error("session not found during terminate", zap.Error(err))
 			return utils.JSONFail(c, http.StatusBadRequest, constants.ErrSessionNotFound)
 		}
+		ctrl.logger.Error("error getting session during terminate", zap.Error(err))
 		return utils.JSONError(c, http.StatusInternalServerError, constants.UnknownError)
 	}
 
@@ -1380,8 +1382,10 @@ func (ctrl *quizSocketController) Terminate(c *fiber.Ctx) error {
 	err = ctrl.activeQuizModel.Deactivate(session.ID)
 	if err != nil {
 		if err == sql.ErrNoRows {
+			ctrl.logger.Error("session not found during deactivate", zap.Error(err))
 			return utils.JSONFail(c, http.StatusBadRequest, constants.ErrSessionNotFound)
 		}
+		ctrl.logger.Error("error deactivating session", zap.Error(err))
 		return utils.JSONError(c, http.StatusInternalServerError, constants.UnknownError)
 	}
 
