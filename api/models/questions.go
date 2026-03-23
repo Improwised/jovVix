@@ -439,31 +439,51 @@ func (model *QuestionModel) UpdateOptionsOfQuestionById(id, keyPath, data string
 	return nil
 }
 
-func (model *QuestionModel) UpdateQuestionById(QuestionId string, question Question) error {
+func (model *QuestionModel) CreateQuestion(transaction *goqu.TxDatabase, question Question) (uuid.UUID, error) {
 	options, err := json.Marshal(question.Options)
 	if err != nil {
-		return err
+		return uuid.UUID{}, err
 	}
 
 	answers, err := json.Marshal(question.Answers)
 	if err != nil {
-		return err
+		return uuid.UUID{}, err
 	}
 
-	records := goqu.Record{
-		"question":            question.Question,
-		"type":                question.Type,
-		"options":             string(options),
-		"answers":             string(answers),
-		"points":              question.Points,
-		"duration_in_seconds": question.DurationInSeconds,
-		"question_media":      question.QuestionMedia,
-		"options_media":       question.OptionsMedia,
-		"resource":            question.Resource.String,
-		"updated_at":          goqu.L("now()"),
+	questionId, err := uuid.NewUUID()
+	if err != nil {
+		return uuid.UUID{}, err
 	}
 
-	result, err := model.db.Update(QuestionTable).Set(records).Where(goqu.I("id").Eq(QuestionId)).Executor().Exec()
+	_, err = transaction.Insert(QuestionTable).Rows(
+		goqu.Record{
+			"id":                  questionId,
+			"question":            question.Question,
+			"type":                question.Type,
+			"options":             string(options),
+			"answers":             string(answers),
+			"points":              question.Points,
+			"duration_in_seconds": question.DurationInSeconds,
+			"question_media":      question.QuestionMedia,
+			"options_media":       question.OptionsMedia,
+			"resource":            question.Resource.String,
+			"created_at":          goqu.L("now()"),
+			"updated_at":          goqu.L("now()"),
+		},
+	).Executor().Exec()
+	if err != nil {
+		return uuid.UUID{}, err
+	}
+
+	return questionId, nil
+}
+
+// Rewire quiz_questions to point at the new question id and fix the previous link.
+func (model *QuestionModel) RewireQuizQuestionForEdit(transaction *goqu.TxDatabase, quizId, oldQuestionId string, newQuestionId uuid.UUID) error {
+	result, err := transaction.Update(constants.QuizQuestionsTable).
+		Set(goqu.Record{"question_id": newQuestionId}).
+		Where(goqu.Ex{"quiz_id": quizId, "question_id": oldQuestionId}).
+		Executor().Exec()
 	if err != nil {
 		return err
 	}
@@ -472,9 +492,16 @@ func (model *QuestionModel) UpdateQuestionById(QuestionId string, question Quest
 	if err != nil {
 		return err
 	}
-
 	if affectedRow == 0 {
 		return sql.ErrNoRows
+	}
+
+	_, err = transaction.Update(constants.QuizQuestionsTable).
+		Set(goqu.Record{"next_question": newQuestionId}).
+		Where(goqu.Ex{"quiz_id": quizId, "next_question": oldQuestionId}).
+		Executor().Exec()
+	if err != nil {
+		return err
 	}
 
 	return nil

@@ -97,3 +97,40 @@ func (quizSvc *QuizService) DeleteQuestionById(questionId string) error {
 
 	return nil
 }
+
+// Edit question by creating a new question row and rewiring quiz_questions to the new id.
+// This preserves historical sessions and reports that still point to the old question id.
+func (quizSvc *QuizService) EditQuestionById(quizId, oldQuestionId string, question models.Question) (string, error) {
+	isOk := false
+	transaction, err := quizSvc.db.Begin()
+	if err != nil {
+		return "", err
+	}
+
+	defer func() {
+		if isOk {
+			err := transaction.Commit()
+			if err != nil {
+				quizSvc.logger.Error("error during commit in edit question", zap.Error(err))
+			}
+		} else {
+			err := transaction.Rollback()
+			if err != nil {
+				quizSvc.logger.Error("error during rollback in edit question", zap.Error(err))
+			}
+		}
+	}()
+
+	newQuestionId, err := quizSvc.questionModel.CreateQuestion(transaction, question)
+	if err != nil {
+		return "", err
+	}
+
+	err = quizSvc.questionModel.RewireQuizQuestionForEdit(transaction, quizId, oldQuestionId, newQuestionId)
+	if err != nil {
+		return "", err
+	}
+
+	isOk = true
+	return newQuestionId.String(), nil
+}

@@ -353,7 +353,10 @@ func (model *ActiveQuizModel) GetCurrentActiveQuestion(id uuid.UUID) (uuid.UUID,
 
 func (model *ActiveQuizModel) IsActiveQuizPresent(QuizId string) (bool, error) {
 	var activeQuiz ActiveQuiz = ActiveQuiz{}
-	return model.db.Select("*").From(ActiveQuizzesTable).Where(goqu.I("quiz_id").Eq(QuizId)).Limit(1).ScanStruct(&activeQuiz)
+	return model.db.Select("*").From(ActiveQuizzesTable).Where(
+		goqu.I("quiz_id").Eq(QuizId),
+		goqu.I("is_active").Eq(true),
+	).Limit(1).ScanStruct(&activeQuiz)
 }
 
 // This function will delete all quizzes and their related data (user responses, played quizzes)
