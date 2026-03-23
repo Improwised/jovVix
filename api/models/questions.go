@@ -507,47 +507,6 @@ func (model *QuestionModel) RewireQuizQuestionForEdit(transaction *goqu.TxDataba
 	return nil
 }
 
-// func (model *QuestionModel) UpdateQuestionById(QuestionId string, question Question) error {
-// 	options, err := json.Marshal(question.Options)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	answers, err := json.Marshal(question.Answers)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	records := goqu.Record{
-// 		"question":            question.Question,
-// 		"type":                question.Type,
-// 		"options":             string(options),
-// 		"answers":             string(answers),
-// 		"points":              question.Points,
-// 		"duration_in_seconds": question.DurationInSeconds,
-// 		"question_media":      question.QuestionMedia,
-// 		"options_media":       question.OptionsMedia,
-// 		"resource":            question.Resource.String,
-// 		"updated_at":          goqu.L("now()"),
-// 	}
-
-// 	result, err := model.db.Update(QuestionTable).Set(records).Where(goqu.I("id").Eq(QuestionId)).Executor().Exec()
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	affectedRow, err := result.RowsAffected()
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	if affectedRow == 0 {
-// 		return sql.ErrNoRows
-// 	}
-
-// 	return nil
-// }
-
 // Update previous question's next_question pointer (column) by using `next_question` and `previos_question` id
 func (model *QuestionModel) UpdatePreviousQuestionById(transaction *goqu.TxDatabase, questionId string) error {
 
