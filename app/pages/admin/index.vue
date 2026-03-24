@@ -175,7 +175,6 @@ watch(
       userData.last_name = user.value.data.identity.traits.name.last;
       userData.email = user.value.data.identity.traits.email;
       userData.email_verify = user.value.data.identity.verifiable_addresses[0].verified;
-      userData.email = user.value.data.identity.traits.email;
     }
     if (userError.value) {
       console.log("error");
