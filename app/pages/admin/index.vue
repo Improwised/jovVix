@@ -48,7 +48,7 @@
               <div class="form-group">
                 <label for="email" class="form-label">Email</label>
                 <input id="email" v-model="userData.email" type="email" class="form-control" placeholder="Pending..."
-                  required @focus="showCancleButton" />
+                  disabled />
               </div>
               <!-- Error message for password mismatch -->
               <div v-if="updateuserError" class="alert alert-danger" role="alert">
@@ -175,7 +175,6 @@ watch(
       userData.last_name = user.value.data.identity.traits.name.last;
       userData.email = user.value.data.identity.traits.email;
       userData.email_verify = user.value.data.identity.verifiable_addresses[0].verified;
-      userData.email = user.value.data.identity.traits.email;
     }
     if (userError.value) {
       console.log("error");
@@ -194,7 +193,6 @@ const changeUserMetaData = async () => {
     body: {
       first_name: userData.first_name,
       last_name: userData.last_name,
-      email: userData.email,
     },
   });
 
@@ -207,7 +205,6 @@ const changeUserMetaData = async () => {
   } else {
     userData.full_name =
       data.value.data.first_name + " " + data.value.data.last_name;
-    userData.email = data.value.data.email;
     cancleButton.value = false;
   }
 };
@@ -219,7 +216,6 @@ const showCancleButton = () => {
 const hideCancleButton = () => {
   userData.first_name = user.value.data.identity.traits.name.first;
   userData.last_name = user.value.data.identity.traits.name.last;
-  userData.email = user.value.data.identity.traits.email;
   cancleButton.value = false;
 };
 

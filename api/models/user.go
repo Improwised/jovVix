@@ -194,12 +194,6 @@ func (model *UserModel) UpdateKratosUserDetails(reqUser User, userMetadata []byt
 		return err
 	}
 
-	err = UpdateKratosIdentifiers(transaction, user.Email, reqUser.Email)
-	if err != nil {
-		model.logger.Debug("error in UpdateKratosIdentifiers", zap.Error(err))
-		return err
-	}
-
 	err = UpdateKratosIdentityTraits(transaction, strings.TrimSpace(user.KratosID.String), userMetadata)
 	if err != nil {
 		model.logger.Debug("error in UpdateKratosIdentityTraits", zap.Error(err))
@@ -245,7 +239,6 @@ func UpdateUserMetadata(transaction *goqu.TxDatabase, user User) error {
 	record := goqu.Record{
 		"first_name": user.FirstName,
 		"last_name":  user.LastName,
-		"email":      user.Email,
 	}
 
 	_, err := transaction.Update(UserTable).Set(record).Where(goqu.Ex{

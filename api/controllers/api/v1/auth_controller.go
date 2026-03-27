@@ -190,22 +190,9 @@ func (ctrl *AuthController) UpadateRegisteredUser(c *fiber.Ctx) error {
 	}
 	ctrl.logger.Debug("validate req success", zap.Any("userReq", userReq))
 
-	ctrl.logger.Debug("userModel.IsUniqueEmail called", zap.Any("Email", userReq.Email))
-	IsUniqueEmail, err := ctrl.userModel.IsUniqueEmailExceptId(userId, userReq.Email)
-	if err != nil {
-		ctrl.logger.Error("error while UpdateUser", zap.Error(err))
-		return utils.JSONFail(c, http.StatusInternalServerError, err.Error())
-	}
-	ctrl.logger.Debug("userModel.IsUniqueEmail success", zap.Any("IsUniqueEmail", IsUniqueEmail))
-
-	if !IsUniqueEmail {
-		return utils.JSONFail(c, http.StatusBadRequest, "email already exist")
-	}
-
 	var kratosStruct = config.KratosTraits{}
 	kratosStruct.Name.First = userReq.FirstName
 	kratosStruct.Name.Last = userReq.LastName
-	kratosStruct.Email = userReq.Email
 
 	kratosjson, err := json.Marshal(kratosStruct)
 	if err != nil {
@@ -213,7 +200,7 @@ func (ctrl *AuthController) UpadateRegisteredUser(c *fiber.Ctx) error {
 	}
 
 	ctrl.logger.Debug("userModel.UpdateKratosUserDetails called", zap.Any("userId", userId))
-	if err := ctrl.userModel.UpdateKratosUserDetails(models.User{ID: userId, FirstName: userReq.FirstName, LastName: userReq.LastName, Email: userReq.Email}, kratosjson); err != nil {
+	if err := ctrl.userModel.UpdateKratosUserDetails(models.User{ID: userId, FirstName: userReq.FirstName, LastName: userReq.LastName}, kratosjson); err != nil {
 		ctrl.logger.Error("error while UpdateKratosUserById", zap.Error(err))
 		return utils.JSONFail(c, http.StatusInternalServerError, err.Error())
 	}
