@@ -1,6 +1,6 @@
 module github.com/Improwised/jovvix/api
 
-go 1.23.0
+go 1.24
 
 require (
 	clevergo.tech/jsend v1.1.3
@@ -37,7 +37,7 @@ require (
 
 require (
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
-	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.4.11 // indirect
+	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.8 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.13.7 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.11.76 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.37 // indirect
@@ -51,7 +51,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sso v1.13.1 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.15.1 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.21.1 // indirect
-	github.com/aws/smithy-go v1.14.0 // indirect
+	github.com/aws/smithy-go v1.24.2 // indirect
 	github.com/fasthttp/websocket v1.5.7 // indirect
 	github.com/go-openapi/analysis v0.21.4 // indirect
 	github.com/go-openapi/errors v0.20.3 // indirect
