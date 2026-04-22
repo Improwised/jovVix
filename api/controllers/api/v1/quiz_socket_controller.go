@@ -315,15 +315,16 @@ func onConnectHandleUser(c *websocket.Conn, qc *quizSocketController, response *
 		}
 
 		response.Action = constants.ActionSendQuestion
-		duration := currentQuestion.DurationInSeconds - int(time.Since(session.QuestionDeliveryTime.Time).Seconds())
-		if duration < 0 {
+		remainingSeconds := currentQuestion.DurationInSeconds - int(time.Since(session.QuestionDeliveryTime.Time).Seconds())
+		if remainingSeconds < 0 {
 			return
 		}
 		responseData := map[string]any{
 			"id":             currentQuestion.ID,
 			"no":             currentQuestion.OrderNumber,
-			"duration":       duration,
-			"question_time":  session.QuestionDeliveryTime.Time,
+			"duration":       currentQuestion.DurationInSeconds,
+			"start_time":     session.QuestionDeliveryTime.Time.Format(time.RFC3339),
+			"server_time":    time.Now().UTC().Format(time.RFC3339Nano),
 			"question":       currentQuestion.Question,
 			"options":        currentQuestion.Options,
 			"totalQuestions": totalQuestion,
@@ -1024,6 +1025,7 @@ func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.Wa
 		"no":             question.OrderNumber,
 		"duration":       question.DurationInSeconds,
 		"start_time":     questionStartTime.Format(time.RFC3339),
+		"server_time":    time.Now().UTC().Format(time.RFC3339Nano),
 		"question":       question.Question,
 		"options":        question.Options,
 		"question_media": question.QuestionMedia,
@@ -1032,9 +1034,7 @@ func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.Wa
 		"totalQuestions": totalQuestions,
 		"totalJoinUser":  totalUserJoin,
 	}
-	if !lastQuestionTimeStamp.Valid {
-		responseData["server_time"] = time.Now().UTC().Format(time.RFC3339Nano)
-	}
+
 	response.Data = responseData
 	if !lastQuestionTimeStamp.Valid { // handling new question
 		shareEvenWithUser(c, qc, response, constants.EventSendQuestion, session.ID.String(), int(session.InvitationCode.Int32), constants.ToAll, arrangeMu)
