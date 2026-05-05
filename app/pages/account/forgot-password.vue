@@ -88,9 +88,7 @@ const handleForgotPassword = async () => {
 
       <!-- Back to login -->
       <div class="text-center">
-        <NuxtLink to="/account/login" class="fs-5">
-          Back to Sign In
-        </NuxtLink>
+        <NuxtLink to="/account/login" class="fs-5"> Back to Sign In </NuxtLink>
       </div>
     </form>
   </Frame>

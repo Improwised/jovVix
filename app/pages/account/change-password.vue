@@ -1,48 +1,44 @@
 <template>
-  <Frame page-title="Change Password" page-message="Please enter your new password information.">
+  <Frame
+    page-title="Change Password"
+    page-message="Please enter your new password information."
+  >
     <!-- Form -->
     <form @submit.prevent="handleChangePassword">
       <div class="mb-3">
         <label for="newPassword" class="form-label">New Password</label>
-        <input 
-          id="newPassword" 
-          v-model="password.new" 
-          class="form-control mb-2" 
-          type="password" 
+        <input
+          id="newPassword"
+          v-model="password.new"
+          class="form-control mb-2"
+          type="password"
           placeholder="Enter new password"
-          required 
+          required
         />
       </div>
 
       <div class="mb-3">
         <label for="confirmPassword" class="form-label">Confirm Password</label>
-        <input 
-          id="confirmPassword" 
-          v-model="password.confirm" 
-          class="form-control mb-2" 
-          type="password" 
+        <input
+          id="confirmPassword"
+          v-model="password.confirm"
+          class="form-control mb-2"
+          type="password"
           placeholder="Confirm new password"
-          required 
+          required
         />
-        <div v-if="passwordRequestError">
-          • {{ passwordRequestError }}
-        </div>
+        <div v-if="passwordRequestError">• {{ passwordRequestError }}</div>
         <div v-if="passwordSubmitted && passwordErrors.length">
-          <div v-for="(err, i) in passwordErrors" :key="i">
-            • {{ err }}
-          </div>
+          <div v-for="(err, i) in passwordErrors" :key="i">• {{ err }}</div>
         </div>
       </div>
       <div>
         <div class="d-grid gap-2">
-          <button 
-            type="submit" 
-            class="btn btn-primary text-white"
-          >
+          <button type="submit" class="btn btn-primary text-white">
             Change Password
           </button>
-          <button 
-            type="button" 
+          <button
+            type="button"
             class="btn btn-secondary text-white"
             @click="handleCancel"
           >
@@ -64,7 +60,7 @@ const url = useRuntimeConfig().public;
 
 const password = reactive({
   new: "",
-  confirm: ""
+  confirm: "",
 });
 
 const newPasswordRef = toRef(password, "new");
@@ -105,7 +101,7 @@ const fetchFlowIdAndCsrfToken = async () => {
 
 const handleChangePassword = async () => {
   passwordSubmitted.value = true;
-  
+
   try {
     if (passwordErrors.value.length > 0) {
       return;
@@ -145,14 +141,13 @@ const handleChangePassword = async () => {
     }
 
     passwordRequestError.value = "";
-    
+
     password.new = "";
     password.confirm = "";
-    
-    toast.success("Password updated successfully.");
-    
-    navigateTo("/admin");
 
+    toast.success("Password updated successfully.");
+
+    navigateTo("/admin");
   } catch (error) {
     passwordRequestError.value = error.message;
   }

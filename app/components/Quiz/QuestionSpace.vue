@@ -37,7 +37,7 @@ const isOffsetCalculated = ref(false);
 // Calculate offset only ONCE when we first receive server_time
 const calculateClockOffset = (serverTimeString) => {
   if (isOffsetCalculated.value || !serverTimeString) return;
-  
+
   try {
     const clientReceiveTime = Date.now();
     const serverTime = new Date(serverTimeString).getTime();
@@ -100,12 +100,12 @@ function handleEvent(message) {
   if (music.value) {
     counterSound = new Audio("/music/clock.mp3");
   }
-  
+
   if (message.event == app.$GetQuestion) {
     question.value = message.data;
     questionStartTime.value = new Date(message.data.start_time);
     questionDuration.value = Number(message.data.duration);
-    
+
     time.value = 0;
     count.value = null;
     answer.value = [];

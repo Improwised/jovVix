@@ -1,8 +1,6 @@
 <template>
   <div class="container">
-    <h3 class="d-flex align-item-center justify-content-center">
-      My Profile
-    </h3>
+    <h3 class="d-flex align-item-center justify-content-center">My Profile</h3>
     <div v-if="userError?.data?.code == 401">
       {{ navigateTo("/account/login") }}
     </div>
@@ -13,19 +11,44 @@
     <div v-else class="row">
       <div class="col-md-5 mt-4">
         <div class="card d-flex justify-content-center align-items-center">
-          <img :src="avatar" class="card-img-top mt-3" style="width: 14rem" alt="..." />
+          <img
+            :src="avatar"
+            class="card-img-top mt-3"
+            style="width: 14rem"
+            alt="..."
+          />
           <div class="card-body text-center">
             <h5 class="card-title">{{ userData.full_name }}</h5>
             <h5 class="card-title">{{ userData.email }}</h5>
-            <div type="button" class="btn btn-primary btn-sm text-white mx-1" @click="handleChangePasswordClick">
+            <div
+              type="button"
+              class="btn btn-primary btn-sm text-white mx-1"
+              @click="handleChangePasswordClick"
+            >
               Change Password
             </div>
-            <div type="button" class="btn btn-danger btn-sm text-white mx-1" @click="deleteAccount">
+            <div
+              type="button"
+              class="btn btn-danger btn-sm text-white mx-1"
+              @click="deleteAccount"
+            >
               Delete Account
             </div>
-            <div type="button" class="btn btn-sm text-white mx-1" :class="userData.email_verify ? 'btn-dark' : 'btn-success'"
-              :style="userData.email_verify ? { opacity: 0.4, pointerEvents: 'none', cursor: 'not-allowed' } : {}"
-              @click="handleEmailVerification">
+            <div
+              type="button"
+              class="btn btn-sm text-white mx-1"
+              :class="userData.email_verify ? 'btn-dark' : 'btn-success'"
+              :style="
+                userData.email_verify
+                  ? {
+                      opacity: 0.4,
+                      pointerEvents: 'none',
+                      cursor: 'not-allowed',
+                    }
+                  : {}
+              "
+              @click="handleEmailVerification"
+            >
               {{ userData.email_verify ? "Verified" : "Verify Your Account" }}
             </div>
           </div>
@@ -37,21 +60,45 @@
             <form @submit.prevent="changeUserMetaData">
               <div class="form-group">
                 <label for="name" class="form-label">First Name</label>
-                <input id="name" v-model="userData.first_name" type="text" class="form-control" placeholder="Pending..."
-                  required @focus="showCancleButton" />
+                <input
+                  id="name"
+                  v-model="userData.first_name"
+                  type="text"
+                  class="form-control"
+                  placeholder="Pending..."
+                  required
+                  @focus="showCancleButton"
+                />
               </div>
               <div class="form-group">
                 <label for="name" class="form-label">Last Name</label>
-                <input id="name" v-model="userData.last_name" type="text" class="form-control" placeholder="Pending..."
-                  required @focus="showCancleButton" />
+                <input
+                  id="name"
+                  v-model="userData.last_name"
+                  type="text"
+                  class="form-control"
+                  placeholder="Pending..."
+                  required
+                  @focus="showCancleButton"
+                />
               </div>
               <div class="form-group">
                 <label for="email" class="form-label">Email</label>
-                <input id="email" v-model="userData.email" type="email" class="form-control" placeholder="Pending..."
-                  disabled />
+                <input
+                  id="email"
+                  v-model="userData.email"
+                  type="email"
+                  class="form-control"
+                  placeholder="Pending..."
+                  disabled
+                />
               </div>
               <!-- Error message for password mismatch -->
-              <div v-if="updateuserError" class="alert alert-danger" role="alert">
+              <div
+                v-if="updateuserError"
+                class="alert alert-danger"
+                role="alert"
+              >
                 {{ updateuserError.data }}
               </div>
               <div v-else-if="updateuserPending">
@@ -61,7 +108,11 @@
                 <button type="submit" class="btn btn-primary text-white">
                   Save Changes
                 </button>
-                <div v-if="cancleButton" class="btn btn-secondary ml-2" @click="hideCancleButton">
+                <div
+                  v-if="cancleButton"
+                  class="btn btn-secondary ml-2"
+                  @click="hideCancleButton"
+                >
                   Cancel
                 </div>
               </div>
@@ -86,18 +137,27 @@
                 <nav class="navbar">
                   <div class="container-fluid p-0">
                     <h3 class="mb-0">Played Quiz List</h3>
-                    <NuxtLink class="btn text-white btn-primary" to="/admin/played_quiz">
+                    <NuxtLink
+                      class="btn text-white btn-primary"
+                      to="/admin/played_quiz"
+                    >
                       Played Quiz
                     </NuxtLink>
                   </div>
                 </nav>
               </div>
-              <div v-if="quizList == null || quizList.length < 1"
-                class="no-quiz-list d-flex flex-column align-items-center my-4">
+              <div
+                v-if="quizList == null || quizList.length < 1"
+                class="no-quiz-list d-flex flex-column align-items-center my-4"
+              >
                 <h2>No Quiz Played By You !</h2>
               </div>
               <div class="row p-2">
-                <div v-for="(details, index) in quizList" :key="index" class="col-md-6 mb-5">
+                <div
+                  v-for="(details, index) in quizList"
+                  :key="index"
+                  class="col-md-6 mb-5"
+                >
                   <QuizListCard :details="details" :is-played-quiz="true" />
                 </div>
               </div>
@@ -174,7 +234,8 @@ watch(
       userData.first_name = user.value.data.identity.traits.name.first;
       userData.last_name = user.value.data.identity.traits.name.last;
       userData.email = user.value.data.identity.traits.email;
-      userData.email_verify = user.value.data.identity.verifiable_addresses[0].verified;
+      userData.email_verify =
+        user.value.data.identity.verifiable_addresses[0].verified;
     }
     if (userError.value) {
       console.log("error");
@@ -219,7 +280,6 @@ const hideCancleButton = () => {
   cancleButton.value = false;
 };
 
-
 const deleteAccount = async () => {
   const isconfirm = confirm("are you sure?");
   if (isconfirm) {
@@ -244,19 +304,18 @@ const isPrivilegeSessionValid = () => {
   const authAt = new Date(user.value.data.authenticated_at).getTime();
   const now = Date.now();
   const diffInMinutes = (now - authAt) / (1000 * 60);
-  return diffInMinutes <=   config.public.privilegedSessionMaxAge;
+  return diffInMinutes <= config.public.privilegedSessionMaxAge;
 };
 
 const handleChangePasswordClick = async () => {
   if (!isPrivilegeSessionValid()) {
     toast.warning("Please re-enter your password to continue.");
-    navigateTo('/account/login?returnTo=/account/change-password');
+    navigateTo("/account/login?returnTo=/account/change-password");
     return;
   }
   await nextTick();
   navigateTo("/account/change-password");
 };
-
 
 const handleEmailVerification = async () => {
   try {
@@ -303,7 +362,6 @@ const handleEmailVerification = async () => {
     setTimeout(() => {
       navigateTo(`/verification?flow=${flowId}`);
     }, 300);
-
   } catch (error) {
     console.error(error);
     toast.error("Failed to start verification");
