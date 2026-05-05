@@ -98,7 +98,7 @@ async function setFlowIDAndCSRFToken() {
         credentials: "include",
         query: {
           refresh: true,
-          return_to: returnToUrl
+          return_to: returnToUrl,
         },
         onResponseError({ response }) {
           console.error(
@@ -128,23 +128,45 @@ async function setFlowIDAndCSRFToken() {
     console.error(error);
   }
 }
-
 </script>
 
 <template>
   <QuizLoadingSpace v-if="component === 'waiting'"></QuizLoadingSpace>
-  <Frame v-else page-title="Sign in" page-message="Please enter your user information.">
+  <Frame
+    v-else
+    page-title="Sign in"
+    page-message="Please enter your user information."
+  >
     <!-- Form -->
     <form method="POST" :action="loginURLWithFlowQuery">
       <!-- Username -->
       <div class="mb-3">
         <label for="email" class="form-label">Email</label>
-        <input id="email" v-model="email" type="email" name="identifier" class="form-control" :readonly="!!route.query.returnTo" :style="route.query.returnTo ? { backgroundColor: '#e9ecef', cursor: 'not-allowed' } : {}" required="" />
+        <input
+          id="email"
+          v-model="email"
+          type="email"
+          name="identifier"
+          class="form-control"
+          :readonly="!!route.query.returnTo"
+          :style="
+            route.query.returnTo
+              ? { backgroundColor: '#e9ecef', cursor: 'not-allowed' }
+              : {}
+          "
+          required=""
+        />
       </div>
       <!-- Password -->
       <div class="mb-3">
         <label for="password" class="form-label">Password</label>
-        <input id="password" class="form-control" type="password" name="password" required="" />
+        <input
+          id="password"
+          class="form-control"
+          type="password"
+          name="password"
+          required=""
+        />
       </div>
       <div v-if="errors.password" class="text-danger">
         {{ errors.password }}
@@ -165,11 +187,13 @@ async function setFlowIDAndCSRFToken() {
 
         <div class="d-md-flex justify-content-between mt-4">
           <div class="mb-2 mb-md-0">
-            <NuxtLink to="/account/register" class="fs-5">Create An Account
+            <NuxtLink to="/account/register" class="fs-5"
+              >Create An Account
             </NuxtLink>
           </div>
           <div>
-            <NuxtLink to="/account/forgot-password" class="fs-5">Forgot Your Password?
+            <NuxtLink to="/account/forgot-password" class="fs-5"
+              >Forgot Your Password?
             </NuxtLink>
           </div>
         </div>
