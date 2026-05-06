@@ -15,7 +15,6 @@ import {
 import { aliases, mdi } from "vuetify/iconsets/mdi-svg";
 // Import only essential Vuetify styles - use the correct paths
 import "vuetify/styles";
-import "~/assets/scss/theme.scss";
 
 export default defineNuxtPlugin((app) => {
   const vuetify = createVuetify({

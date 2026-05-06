@@ -1,5 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 import vuetify, { transformAssetUrls } from "vite-plugin-vuetify";
+import tailwindcss from "@tailwindcss/vite";
 
 export default defineNuxtConfig({
   // please refer https://nuxt.com/docs/guide/going-further/runtime-config#environment-variables for setting up environment variables.
@@ -56,8 +57,8 @@ export default defineNuxtConfig({
   },
 
   css: [
-    "@/assets/scss/theme.scss",
     "@fortawesome/fontawesome-svg-core/styles.css",
+    "@/assets/css/main.css",
   ],
   modules: [
     "@nuxt/test-utils/module",
@@ -73,8 +74,12 @@ export default defineNuxtConfig({
         config.plugins.push(vuetify({ autoImport: true }));
       });
     },
+    "shadcn-nuxt",
   ],
-
+  shadcn: {
+    prefix: "",
+    componentDir: "@/components/ui",
+  },
   vite: {
     // Temporary solution to silence Bootstrap SCSS deprecation warnings
     // Reference: https://github.com/twbs/bootstrap/issues/40962
@@ -124,6 +129,7 @@ export default defineNuxtConfig({
     optimizeDeps: {
       include: ["vuetify", "chart.js", "bootstrap"],
     },
+    plugins: [tailwindcss()],
   },
 
   build: {
