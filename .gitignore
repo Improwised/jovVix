@@ -11,3 +11,12 @@ app/coverage
 api/redis
 .aider*
 load-test/results
+
+# Node modules
+node_modules/
+
+# Playwright
+playwright-report/
+test-results/
+tests/.auth/
+tests/.test-data/
