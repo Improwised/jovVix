@@ -1,0 +1,227 @@
+@import url("./font.css");
+@import "tailwindcss";
+
+/* -----------------------------------------------------------------------------
+ *  Use `bg-jv-*`, `text-jv-*`, `border-jv-*`,
+ * `font-display/heading/body/feature`, `shadow-brutal[-sm|-lg]`, and the
+ * `jv-card` utility for the hand-drawn asymmetric radius.
+ * -------------------------------------------------------------------------- */
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --color-jv-canvas: var(--jv-canvas);
+  --color-jv-white: var(--jv-white);
+  --color-jv-slate: var(--jv-slate);
+  --color-jv-ink: var(--jv-ink);
+  --color-jv-ink-2: var(--jv-ink-2);
+  --color-jv-muted: var(--jv-muted);
+  --color-jv-coral: var(--jv-coral);
+  --color-jv-yellow: var(--jv-yellow);
+  --color-jv-yellow-2: var(--jv-yellow-2);
+  --color-jv-yellow-soft: var(--jv-yellow-soft);
+  --color-jv-mint: var(--jv-mint);
+  --color-jv-mint-2: var(--jv-mint-2);
+  --color-jv-salmon: var(--jv-salmon);
+  --color-jv-lavender: var(--jv-lavender);
+  --color-jv-accent-green: var(--jv-accent-green);
+  --color-jv-accent-gold: var(--jv-accent-gold);
+  --color-jv-accent-red: var(--jv-accent-red);
+  --color-jv-accent-purple: var(--jv-accent-purple);
+  --color-jv-accent-orange: var(--jv-accent-orange);
+
+  /* Typography */
+  --font-body: "Nunito Sans", system-ui, sans-serif;
+  --font-feature: "Inter", system-ui, sans-serif;
+  --font-headings: "Shantell Sans", cursive, sans-serif;
+
+  /* Hard offset shadows */
+  --shadow-brutal-sm: 2px 2px 0 0 var(--jv-ink);
+  --shadow-brutal: 4px 4px 0 0 var(--jv-ink);
+  --shadow-brutal-lg: 8px 8px 0 0 var(--jv-ink);
+}
+
+:root {
+  /* Surfaces */
+  --jv-canvas: #fdfbf7;
+  --jv-white: #ffffff;
+  --jv-slate: #f1f5f9;
+
+  /* Ink */
+  --jv-ink: #2d2d2d;
+  --jv-ink-2: #2d2a26;
+  --jv-muted: #555555;
+
+  /* Brand fills */
+  --jv-coral: #ff6b6b;
+  --jv-yellow: #fde047;
+  --jv-yellow-2: #fef08a;
+  --jv-yellow-soft: #fdf2a5;
+  --jv-mint: #d1fae5;
+  --jv-mint-2: #cdecd8;
+  --jv-salmon: #f8a1a3;
+  --jv-lavender: #e4dff4;
+  --jv-charcoal: #2d2d2d;
+
+  /* Accent text (per-feature category) */
+  --jv-accent-green: #43b581;
+  --jv-accent-gold: #d4b524;
+  --jv-accent-red: #d9534f;
+  --jv-accent-purple: #8a7bb8;
+  --jv-accent-orange: #d97b4f;
+
+  --background: var(--jv-canvas);
+  --foreground: var(--jv-ink);
+  --border: var(--jv-ink);
+  --ring: var(--jv-ink);
+  --radius: 0.5rem;
+
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: hsl(0 0% 98%);
+  --input: oklch(0.922 0 0);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}
+
+@layer base {
+  html {
+    font-family: var(--font-body);
+    color: var(--jv-ink);
+    background-color: var(--jv-canvas);
+  }
+
+  body {
+    @apply bg-jv-canvas text-jv-ink font-body antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-headings);
+    color: var(--jv-ink);
+  }
+}
+
+@utility text-para {
+  /* @apply text-[16px] leading-[20px] md:text-[18px] md:leading-[28px] tracking-[0.02em] font-normal text-colorprimarytext; */
+  @apply text-[18px] leading-[20px] md:text-[20px] md:leading-[1.6] font-normal tracking-normal;
+}
+@utility small-text {
+  @apply text-[16px] leading-[24px] tracking-normal font-normal;
+}
+@utility main-heading {
+  @apply font-headings text-jv-canvas text-[40px] sm:text-[54px] md:text-7xl leading-[1.1];
+}
+
+/* Hand-drawn asymmetric radius used on all cards/buttons */
+@utility jv-card {
+  border-top-left-radius: 7px;
+  border-top-right-radius: 8px;
+  border-bottom-right-radius: 10px;
+  border-bottom-left-radius: 7px;
+}
+
+@utility jv-border-uneven {
+  border: 3px solid var(--jv-ink);
+  border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+}
+
+@utility jv-border-rough {
+  border: 3px solid var(--jv-ink);
+  border-radius: 4px 12px 8px 6px / 10px 4px 12px 8px;
+}
+
+/* Feature-card icon badge — small asymmetric chip in header */
+@utility jv-badge {
+  border-top-left-radius: 8px;
+  border-top-right-radius: 6px;
+  border-bottom-right-radius: 10px;
+  border-bottom-left-radius: 4px;
+}
+
+/* Hero yellow highlight behind "Live Engagement" — mimics a felt-tip highlighter */
+@utility jv-highlight {
+  background-image: linear-gradient(
+      104deg,
+      rgba(253, 224, 71, 0) 0.9%,
+      rgb(253, 224, 71) 2.4%,
+      rgba(253, 224, 71, 0.5) 5.8%,
+      rgba(253, 224, 71, 0.1) 93%,
+      rgba(253, 224, 71, 0.7) 96%,
+      rgba(253, 224, 71, 0) 98%
+    ),
+    linear-gradient(
+      183deg,
+      rgba(253, 224, 71, 0) 0%,
+      rgba(253, 224, 71, 0.3) 7.9%,
+      rgba(253, 224, 71, 0) 15%
+    );
+}
+
+@utility jv-grid {
+  background-image: radial-gradient(var(--jv-charcoal) 1px, transparent 1px);
+  background-size: 20px 20px;
+  background-color: transparent;
+  opacity: 0.1;
+}

@@ -88,6 +88,7 @@ Open-Source Quizzing Built for Live Engagement
 - [Code Of Conduct](#code-of-conduct)
 - [Develop]()
   - [Guide](#guide)
+  - [Adding shadcn-vue Components](#adding-shadcn-vue-components)
   - [Collaborators](#collaborators)
   - [Dependencies](#dependencies)
 
@@ -241,6 +242,26 @@ If you're a developer looking to contribute or modify jovVix, here is a brief gu
 
 - app/: Contains Vue.js components for the quiz interface and holds frontend pages and all
 - api/: Contains Golang source code for the server-side logic.
+
+## Adding shadcn-vue Components:
+
+- This project is configured with [shadcn-vue](https://www.shadcn-vue.com/) via the `shadcn-nuxt` module (version `2.2.0`). The configuration lives in [`app/components.json`](app/components.json) and uses the `new-york` style with the `neutral` base color and the `lucide` icon library.
+- To add a new component to the project, run the shadcn-vue CLI from inside the `app/` directory:
+
+```
+  cd app
+  npx shadcn-vue@2.2.0 add <component-name>
+```
+
+- For example, to add the `button` component:
+
+```
+  npx shadcn-vue@2.2.0 add button
+```
+
+- The CLI reads `components.json` and installs the component into `app/components/ui/<component-name>/` using the aliases defined in that file (`@/components/ui`, `@/lib/utils`, etc.).
+- Please pin to version `2.2.0` of the CLI when adding components so that generated code stays consistent with the rest of the project. If you need to upgrade the CLI/module, bump both `shadcn-nuxt` in [`app/package.json`](app/package.json) and the version used in the command above in the same PR.
+- For the full list of available components and their usage, refer to the [shadcn-vue documentation](https://www.shadcn-vue.com/docs/components).
 
 ## Setting Up MinIO for Local Development:
 
