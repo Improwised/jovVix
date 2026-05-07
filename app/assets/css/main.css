@@ -64,6 +64,7 @@
   --color-jv-accent-red: var(--jv-accent-red);
   --color-jv-accent-purple: var(--jv-accent-purple);
   --color-jv-accent-orange: var(--jv-accent-orange);
+  --color-jv-ivory: var(--jv-ivory);
 
   /* Typography */
   --font-body: "Nunito Sans", system-ui, sans-serif;
@@ -97,6 +98,7 @@
   --jv-salmon: #f8a1a3;
   --jv-lavender: #e4dff4;
   --jv-charcoal: #2d2d2d;
+  --jv-ivory: #f0ebd8;
 
   /* Accent text (per-feature category) */
   --jv-accent-green: #43b581;
@@ -171,7 +173,7 @@
   @apply text-[16px] leading-[24px] tracking-normal font-normal;
 }
 @utility main-heading {
-  @apply font-headings text-jv-canvas text-[40px] sm:text-[54px] md:text-7xl leading-[1.1];
+  @apply font-headings text-jv-canvas text-[32px] min-[420px]:text-[40px] sm:text-[48px] md:text-[54px] lg:text-[48px] xl:text-6xl leading-[1.1];
 }
 
 /* Hand-drawn asymmetric radius used on all cards/buttons */
@@ -198,6 +200,48 @@
   border-top-right-radius: 6px;
   border-bottom-right-radius: 10px;
   border-bottom-left-radius: 4px;
+}
+
+/* Carousel prev/next nav button — brutalist hand-drawn pill */
+@utility jv-carousel-nav {
+  width: 2.75rem !important;
+  height: 2.75rem !important;
+  z-index: 30;
+  background-color: var(--jv-yellow) !important;
+  color: var(--jv-ink) !important;
+  border: 3px solid var(--jv-ink) !important;
+  border-radius: 12px 6px 14px 8px !important;
+  box-shadow: 3px 3px 0 0 var(--jv-ink) !important;
+  opacity: 0;
+  transform: rotate(-2deg);
+  transition: opacity 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.jv-carousel-nav:hover {
+  transform: rotate(3deg) !important;
+  box-shadow: 5px 5px 0 0 var(--jv-ink) !important;
+}
+
+.jv-carousel-nav:active {
+  transform: rotate(-2deg) translate(2px, 2px) !important;
+  box-shadow: 0 0 0 0 var(--jv-ink) !important;
+}
+
+.group:hover .jv-carousel-nav,
+.jv-carousel-nav:focus-visible {
+  opacity: 1;
+}
+
+.jv-carousel-nav:disabled,
+.jv-carousel-nav[disabled] {
+  opacity: 0 !important;
+  pointer-events: none;
+}
+
+.jv-carousel-nav svg {
+  width: 1.25rem !important;
+  height: 1.25rem !important;
+  stroke-width: 2.6 !important;
 }
 
 /* Hero yellow highlight behind "Live Engagement" — mimics a felt-tip highlighter */
