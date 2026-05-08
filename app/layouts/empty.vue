@@ -1,6 +1,6 @@
 <template>
   <div class="lg:flex lg:h-screen lg:overflow-hidden">
-    <Sidebar />
+    <Sidebar v-if="!hideSidebar" />
     <div class="lg:flex-1 lg:overflow-y-auto">
       <slot></slot>
     </div>
@@ -9,4 +9,7 @@
 
 <script setup>
 import Sidebar from "@/components/common/Sidebar.vue";
+
+const route = useRoute();
+const hideSidebar = computed(() => route.meta.hideSidebar === true);
 </script>

@@ -24,6 +24,11 @@ const startingQuizId = ref("");
 const selectedFilter = ref("All Quiz");
 const filterOpen = ref(false);
 const filterOptions = ["All Quiz", "Shared By Me", "Shared With Me"];
+const filterApiPaths = {
+  "All Quiz": "/quizzes",
+  "Shared By Me": "/shared_quizzes?type=shared_by_me",
+  "Shared With Me": "/shared_quizzes?type=shared_with_me",
+};
 
 const quizImages = [
   "/images/landing/homepage-public-quiz-1.png",
@@ -38,13 +43,39 @@ const tiltClasses = [
   "rotate-[-0.4deg]",
   "rotate-[0.5deg]",
 ];
+const quizListUrl = computed(
+  () => `${url.apiUrl}${filterApiPaths[selectedFilter.value]}`
+);
+const emptyState = computed(() => {
+  if (selectedFilter.value === "Shared By Me") {
+    return {
+      title: "No Quiz Shared By You!",
+      message: "Share your first quiz.",
+      showCreateAction: false,
+    };
+  }
+
+  if (selectedFilter.value === "Shared With Me") {
+    return {
+      title: "No Quiz Is Shared With You!",
+      message: "Ask someone to share a quiz with you.",
+      showCreateAction: false,
+    };
+  }
+
+  return {
+    title: "No Quiz Created By You!",
+    message: "Create your first quiz.",
+    showCreateAction: true,
+  };
+});
 
 const {
   data: quizList,
   pending: quizPending,
   error: quizError,
   refresh,
-} = useFetch(url.apiUrl + "/quizzes", {
+} = useFetch(quizListUrl, {
   method: "GET",
   headers: headers,
   mode: "cors",
@@ -171,41 +202,50 @@ const handleSelectFilter = (option) => {
 
 <template>
   <main
-    class="min-h-screen bg-jv-canvas px-4 py-6 sm:px-6 md:px-8 lg:px-10 xl:px-12"
+    class="min-h-screen bg-jv-canvas px-4 py-5 sm:px-6 md:px-8 md:py-6 lg:px-8 xl:px-10"
   >
-    <div class="mx-auto max-w-[1180px]">
+    <div class="mx-auto w-full max-w-[1220px]">
       <div
-        class="mb-8 flex flex-col gap-5 sm:mb-10 md:flex-row md:items-start md:justify-between"
+        class="mb-7 flex flex-col gap-5 sm:mb-9 md:flex-row md:items-start md:justify-between"
       >
-        <div>
-          <h1 class="font-headings text-jv-ink sm:text-[52px]">Quiz List</h1>
+        <div class="min-w-0">
+          <h1
+            class="font-headings text-[38px] leading-none text-jv-ink min-[420px]:text-[44px] sm:text-[52px] md:text-[56px]"
+          >
+            Quiz List
+          </h1>
           <div
-            class="ml-2 mt-1 h-3 w-28 rounded-full border-b-[3px] border-jv-yellow"
+            class="ml-1 mt-1 h-3 w-24 rounded-full border-b-[3px] border-jv-yellow sm:ml-2 sm:w-28"
             aria-hidden="true"
           ></div>
         </div>
         <NavigationLink
           url="/admin/quiz/create-quiz"
           url-name="Create Quiz"
-          class="bg-jv-coral text-white font-[500] py-2"
+          class="w-full bg-jv-coral py-2 font-[500] text-white sm:w-fit md:mt-1"
         />
       </div>
 
       <div
-        class="mb-8 grid gap-4 md:grid-cols-[220px_minmax(280px,448px)] md:items-center md:justify-between"
+        class="mb-7 grid gap-3 sm:gap-4 md:mb-8 md:grid-cols-[minmax(0,220px)_minmax(280px,448px)] md:items-center md:justify-between"
       >
-        <div class="relative w-fit">
+        <div class="relative w-full sm:w-fit">
           <button
             type="button"
-            class="inline-flex h-12 w-fit rotate-[-1deg] items-center gap-2 jv-border-rough bg-jv-white px-4 text-[18px] font-semibold text-jv-ink shadow-brutal-sm"
+            class="inline-flex h-11 w-full rotate-[-1deg] items-center justify-between gap-2 jv-border-rough bg-jv-white px-3 text-[16px] font-semibold text-jv-ink shadow-brutal-sm sm:h-12 sm:w-fit sm:justify-start sm:px-4 sm:text-[18px]"
             :aria-expanded="filterOpen"
             aria-haspopup="listbox"
             @click="filterOpen = !filterOpen"
           >
-            <Filter class="size-5 text-jv-coral" :stroke-width="2.2" />
-            <span>{{ selectedFilter }}</span>
+            <span class="flex min-w-0 items-center gap-2">
+              <Filter
+                class="size-5 shrink-0 text-jv-coral"
+                :stroke-width="2.2"
+              />
+              <span class="truncate">{{ selectedFilter }}</span>
+            </span>
             <ChevronDown
-              class="size-4 text-jv-ink/60 transition-transform"
+              class="size-4 shrink-0 text-jv-ink/60 transition-transform"
               :class="filterOpen ? 'rotate-180' : ''"
               :stroke-width="2.4"
             />
@@ -213,7 +253,7 @@ const handleSelectFilter = (option) => {
 
           <div
             v-if="filterOpen"
-            class="absolute left-0 top-14 z-30 w-48 rotate-[1deg] jv-border-rough bg-jv-white p-2 shadow-brutal-sm"
+            class="absolute left-0 top-[52px] z-30 w-full min-w-[190px] rotate-[1deg] jv-border-rough bg-jv-white p-2 shadow-brutal-sm sm:top-14 sm:w-52"
             role="listbox"
           >
             <button
@@ -232,13 +272,13 @@ const handleSelectFilter = (option) => {
         </div>
 
         <label
-          class="flex h-12 rotate-[1deg] items-center gap-3 jv-border-rough bg-jv-white px-4 shadow-brutal-sm"
+          class="flex h-11 min-w-0 rotate-[1deg] items-center gap-2.5 jv-border-rough bg-jv-white px-3 shadow-brutal-sm sm:h-12 sm:gap-3 sm:px-4"
         >
           <Search class="size-5 shrink-0 text-jv-ink/40" :stroke-width="2.4" />
           <input
             v-model="searchQuery"
             type="search"
-            class="h-full min-w-0 flex-1 bg-transparent text-[17px] text-jv-ink outline-none placeholder:text-jv-ink/45"
+            class="h-full min-w-0 flex-1 bg-transparent text-[15px] text-jv-ink outline-none placeholder:text-jv-ink/45 sm:text-[17px]"
             placeholder="Search by name or keyword..."
           />
         </label>
@@ -255,14 +295,19 @@ const handleSelectFilter = (option) => {
 
       <section
         v-else-if="quizzes.length < 1"
-        class="grid min-h-[420px] place-items-center text-center"
+        class="grid min-h-[320px] place-items-center px-2 text-center sm:min-h-[420px]"
       >
-        <div class="max-w-md">
-          <h2 class="font-headings text-[34px] text-jv-ink">
-            No Quiz Created By You!
+        <div class="max-w-md py-8">
+          <h2
+            class="font-headings text-[28px] leading-tight text-jv-ink sm:text-[34px]"
+          >
+            {{ emptyState.title }}
           </h2>
-          <p class="mt-2 text-[17px] text-jv-muted">Create your first quiz.</p>
+          <p class="mt-2 text-[17px] text-jv-muted">
+            {{ emptyState.message }}
+          </p>
           <NavigationLink
+            v-if="emptyState.showCreateAction"
             url="/admin/quiz/create-quiz"
             url-name="Create Quiz"
             class="bg-jv-coral text-white font-[500] py-2"
@@ -279,7 +324,7 @@ const handleSelectFilter = (option) => {
 
       <section
         v-else
-        class="grid gap-x-5 gap-y-7 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
+        class="grid gap-x-4 gap-y-6 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4"
       >
         <AdminQuizListCard
           v-for="quiz in filteredQuizzes"

@@ -1,6 +1,6 @@
 <template>
   <article
-    class="group relative flex min-h-[360px] flex-col bg-jv-white p-3 sm:p-4 shadow-brutal-sm jv-border-rough"
+    class="group relative flex min-h-[342px] flex-col bg-jv-white p-3 shadow-brutal-sm jv-border-rough sm:min-h-[360px] sm:p-4 md:min-h-[372px]"
     :class="tiltClass"
   >
     <span
@@ -9,12 +9,12 @@
     ></span>
 
     <div class="relative border-[2px] border-jv-ink bg-jv-slate p-2">
-      <div class="relative h-[118px] overflow-hidden">
+      <div class="relative h-[104px] overflow-hidden sm:h-[112px] md:h-[124px]">
         <img :src="image" :alt="title" class="size-full object-cover" />
       </div>
 
       <div
-        class="absolute inset-2 grid place-items-center bg-jv-white/70 opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
+        class="absolute inset-2 hidden place-items-center bg-jv-white/70 opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 sm:grid"
       >
         <div class="flex flex-col gap-3">
           <!-- <NuxtLink
@@ -47,8 +47,27 @@
       </div>
     </div>
 
+    <div class="mt-3 grid grid-cols-2 gap-2 sm:hidden">
+      <NuxtLink
+        :to="viewUrl"
+        class="inline-flex h-10 items-center justify-center rounded-[8px] border-[3px] border-jv-ink bg-jv-coral px-3 text-[14px] font-bold text-white no-underline shadow-brutal-sm"
+      >
+        View Quiz
+      </NuxtLink>
+      <button
+        type="button"
+        class="inline-flex h-10 items-center justify-center rounded-[8px] border-[3px] border-jv-ink bg-jv-yellow px-3 text-[14px] font-bold text-jv-ink shadow-brutal-sm disabled:cursor-not-allowed disabled:opacity-70"
+        :disabled="starting"
+        @click="$emit('start-quiz')"
+      >
+        {{ starting ? "Starting..." : "Start Quiz" }}
+      </button>
+    </div>
+
     <div class="relative mt-4 flex items-start justify-between gap-3">
-      <h3 class="font-body text-[24px] font-black leading-tight text-jv-ink">
+      <h3
+        class="min-w-0 break-words font-body text-[21px] font-black leading-tight text-jv-ink sm:text-[22px] md:text-[24px]"
+      >
         {{ title }}
       </h3>
       <button
@@ -82,19 +101,21 @@
         </button>
       </div>
     </div>
-    <p class="mt-1 text-[13px] leading-[1.4] text-jv-muted">
+    <p class="mt-1 text-[12px] leading-[1.4] text-jv-muted sm:text-[13px]">
       {{ createdAt }}
     </p>
-    <p class="mt-3 min-h-[66px] text-[14px] leading-[1.55] text-jv-muted">
+    <p
+      class="mt-2 min-h-[58px] break-words text-[13px] leading-[1.5] text-jv-muted sm:mt-3 sm:min-h-[66px] sm:text-[14px] sm:leading-[1.55]"
+    >
       {{ description }}
     </p>
 
     <div class="mt-auto border-t-2 border-dashed border-jv-ink/15 pt-3">
       <span
-        class="inline-flex items-center gap-1.5 rounded-[5px] border border-jv-ink/30 bg-jv-white px-2.5 py-1 text-[13px] leading-none text-jv-muted shadow-[1px_1px_0_rgba(45,45,45,0.25)]"
+        class="inline-flex max-w-full items-center gap-1.5 rounded-[5px] border border-jv-ink/30 bg-jv-white px-2.5 py-1 text-[12px] leading-none text-jv-muted shadow-[1px_1px_0_rgba(45,45,45,0.25)] sm:text-[13px]"
       >
         <CircleHelp class="size-3.5" :stroke-width="2.2" />
-        <span>{{ questionCount }} Questions</span>
+        <span class="truncate">{{ questionCount }} Questions</span>
       </span>
     </div>
   </article>

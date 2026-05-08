@@ -165,6 +165,7 @@ const sendAnswer = async (answers) => {
 
 definePageMeta({
   layout: "empty",
+  hideSidebar: true,
 });
 
 onBeforeUnmount(() => {
