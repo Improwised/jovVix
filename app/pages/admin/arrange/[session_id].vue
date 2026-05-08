@@ -214,6 +214,7 @@ const handleAnalysisTabChange = (tab) => (analysisTab.value = tab);
 
 definePageMeta({
   layout: "empty",
+  hideSidebar: true,
 });
 // custom class to bind component with
 </script>
@@ -223,21 +224,33 @@ definePageMeta({
   <Playground :full-screen-enabled="myRef" @is-full-screen="handleCustomChange">
     <div
       v-if="currentComponent !== 'Waiting'"
-      class="code-display p-3 d-flex align-items-center justify-content-end"
+      class="code-display flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-end sm:px-6 md:px-8"
     >
-      <div class="d-flex align-items-center gap-2 me-3">
-        <span class="text-muted fw-bold fs-2">Code:</span>
-        <span class="fw-bold fs-2">{{ invitationCode }}</span>
+      <div
+        class="flex min-w-0 items-center justify-between gap-2 jv-border-rough bg-jv-white px-3 py-2 shadow-brutal-sm sm:justify-start"
+      >
+        <span class="text-[18px] font-bold text-jv-muted sm:text-[22px]">
+          Code:
+        </span>
+        <span
+          class="min-w-0 break-all font-feature text-[22px] font-black text-jv-ink sm:text-[28px]"
+        >
+          {{ invitationCode }}
+        </span>
       </div>
-      <div v-if="currentComponent == 'Score'">
+      <div v-if="currentComponent == 'Score'" class="sm:ml-2">
         <button
           v-if="isPauseQuiz"
-          class="btn btn-danger"
+          class="inline-flex h-11 w-full items-center justify-center rounded-[8px] border-[3px] border-jv-ink bg-jv-mint px-5 text-[15px] font-black text-jv-ink shadow-brutal-sm transition-transform hover:rotate-[1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none sm:w-fit sm:text-[16px]"
           @click="handlePauseQuiz"
         >
           START
         </button>
-        <button v-else class="btn btn-danger" @click="handlePauseQuiz">
+        <button
+          v-else
+          class="inline-flex h-11 w-full items-center justify-center rounded-[8px] border-[3px] border-jv-ink bg-jv-coral px-5 text-[15px] font-black text-white shadow-brutal-sm transition-transform hover:rotate-[-1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none sm:w-fit sm:text-[16px]"
+          @click="handlePauseQuiz"
+        >
           PAUSE
         </button>
       </div>
