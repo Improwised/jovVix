@@ -29,9 +29,10 @@
             class="bg-jv-coral text-white rounded-[999px]"
           />
           <NavigationLink
-            :url="viewUrl"
-            url-name="Start Quiz"
+            :url-name="starting ? 'Starting...' : 'Start Quiz'"
             class="rounded-[999px]"
+            :disabled="starting"
+            @click="$emit('start-quiz')"
           />
 
           <!-- <button

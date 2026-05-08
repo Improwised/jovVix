@@ -3,6 +3,15 @@
 import { useNuxtApp } from "nuxt/app";
 import { useToast } from "vue-toastification";
 import { useMusicStore } from "~~/store/music";
+import {
+  Check,
+  Copy,
+  Info,
+  Keyboard,
+  Smile,
+  UserRound,
+  Users,
+} from "lucide-vue-next";
 const { baseUrl } = useRuntimeConfig().public;
 const musicStore = useMusicStore();
 const { getMusic } = musicStore;
@@ -25,9 +34,16 @@ const { invitationCode } = storeToRefs(invitationCodeStore);
 
 const listUserStore = useListUserstore();
 const { removeAllUsers } = listUserStore;
+const { listUsers } = storeToRefs(listUserStore);
 
 const startQuiz = ref(false);
 const waitingSound = ref(null);
+const participantAccentClasses = [
+  "bg-jv-yellow",
+  "bg-jv-coral text-white",
+  "bg-jv-mint",
+  "bg-jv-white",
+];
 
 // define props and emits
 const props = defineProps({
@@ -48,6 +64,12 @@ const emits = defineEmits(["startQuiz", "terminateQuiz"]);
 
 // custom refs
 const code = ref(invitationCode.value);
+const participantCount = computed(() => listUsers.value.length);
+const joinUrl = computed(() => `${baseUrl}/join`);
+const joinUrlWithCode = computed(() => `${joinUrl.value}?code=${code.value}`);
+
+const getParticipantName = (user) =>
+  user?.UserName || user?.username || user?.name || "Player";
 
 // watchers
 watch(
@@ -120,66 +142,220 @@ watch(
 </script>
 
 <template>
-  <div v-if="isAdmin" class="container-fluid mt-2">
-    <div class="flex-grow-1 text-center">
-      <h1 class="join-page-title">Ready Steady Go</h1>
-      <h6>You Can Start Quiz By Pressing Start Quiz button</h6>
-    </div>
-    <div class="row">
-      <div class="col-md-8">
-        <form @submit="start_quiz">
-          <div class="mb-3 pe-3">
-            <div class="divider my-3 text-dark">Link</div>
-            <div class="d-flex align-items-center justify-content-center gap-2">
-              <div class="fs-1 text-dark text-decoration-underline">
-                {{ `${baseUrl}/join` }}
-              </div>
-              <font-awesome-icon
-                id="URL-input-container"
-                icon="fa-solid fa-copy"
-                size="xl"
-                style="color: #0c6efd"
-                class="copy-icon"
-                role="button"
-                @click="copyToClipBoard(`${baseUrl}/join?code=${code}`)"
-              />
-            </div>
-            <div class="divider my-3 text-dark">Invitation Code</div>
-            <div class="d-flex align-items-center justify-content-center gap-2">
-              <h2 class="display-4 code">{{ code }}</h2>
-              <font-awesome-icon
-                id="OTP-input-container"
-                icon="fa-solid fa-copy"
-                size="xl"
-                style="color: #0c6efd"
-                class="copy-icon"
-                role="button"
-                @click="copyToClipBoard(code)"
-              />
-            </div>
-            <div class="divider my-3">QR</div>
+  <main
+    v-if="isAdmin"
+    class="min-h-screen bg-jv-canvas px-4 py-2 text-jv-ink sm:px-6 md:px-8"
+  >
+    <section class="mx-auto max-w-[1120px]">
+      <header class="mb-6 text-center">
+        <h1 class="font-headings text-jv-ink sm:text-[52px]">Quiz Lobby</h1>
+        <p class="text-[17px] text-jv-muted sm:text-[20px]">
+          Share the code with players. The quiz will start when you're ready!
+        </p>
+      </header>
+
+      <div class="grid gap-7 lg:grid-cols-[1fr_1fr] lg:items-stretch">
+        <form
+          class="relative flex min-h-[700px] rotate-[-0.4deg] flex-col overflow-hidden bg-jv-white shadow-brutal-lg jv-border-rough"
+          @submit="start_quiz"
+        >
+          <span
+            class="absolute left-1/2 top-[-2px] z-10 h-4 w-12 -translate-x-1/2 rotate-[-1deg] bg-jv-coral"
+            aria-hidden="true"
+          ></span>
+
+          <div class="bg-jv-yellow px-6 pb-6 pt-6 sm:px-10">
+            <h2 class="font-headings text-jv-ink text-[50px]">
+              Ready, Steady, Go!
+            </h2>
+
             <div
-              class="d-flex align-items-center justify-content-center qr-scale-down"
+              class="mt-4 flex flex-col gap-3 jv-border-rough bg-jv-white px-4 py-1 shadow-brutal-sm sm:flex-row sm:items-center sm:justify-between"
             >
-              <QrCode
-                :scan-u-r-l="`${baseUrl}/join`"
-                :quiz-code="code"
-                :size="450"
-              />
+              <p class="min-w-0 text-[18px] text-jv-ink sm:text-[22px]">
+                Join at
+                <strong class="break-all">{{
+                  joinUrl.replace(/^https?:\/\//, "")
+                }}</strong>
+              </p>
+              <button
+                id="URL-input-container"
+                type="button"
+                class="inline-flex h-11 w-fit shrink-0 items-center gap-2 rounded-[999px] border-[3px] border-jv-ink bg-jv-white px-4 text-[16px] font-bold shadow-[2px_2px_0_#2D2D2D] transition-transform hover:rotate-[1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+                @click="copyToClipBoard(joinUrlWithCode)"
+              >
+                <Copy class="size-4" :stroke-width="2.5" />
+                <span>Copy</span>
+              </button>
             </div>
           </div>
-          <div class="d-flex justify-content-center align-items-center">
-            <button type="submit" class="btn btn-primary btn-lg bg-primary">
-              Start Quiz
-            </button>
+
+          <div class="mt-2 flex flex-1 flex-col px-4 py-6 sm:px-10">
+            <div
+              class="-mt-12 flex flex-col gap-3 jv-border-rough bg-jv-white p-3 shadow-brutal sm:flex-row sm:items-center sm:justify-between"
+            >
+              <div class="flex min-w-0 items-center gap-4">
+                <span
+                  class="grid size-11 shrink-0 place-items-center border-[2px] border-jv-ink/25 bg-jv-white text-jv-muted"
+                >
+                  <Keyboard class="size-5" :stroke-width="2.2" />
+                </span>
+                <h3 class="code font-feature text-[26px] font-semibold">
+                  {{ code }}
+                </h3>
+              </div>
+              <button
+                id="OTP-input-container"
+                type="button"
+                class="inline-flex h-12 w-fit shrink-0 items-center gap-2 rounded-[999px] border-[3px] border-jv-ink bg-jv-coral px-5 text-[17px] font-bold text-white shadow-[2px_2px_0_#2D2D2D] transition-transform hover:rotate-[-1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+                @click="copyToClipBoard(code)"
+              >
+                <span>Copy</span>
+                <Copy class="size-4" :stroke-width="2.5" />
+              </button>
+            </div>
+
+            <div
+              class="my-6 flex items-center justify-center gap-4 text-[13px] font-black uppercase tracking-[0.12em] text-jv-muted"
+            >
+              <span
+                class="h-px w-24 border-t-2 border-dashed border-jv-ink/40"
+              ></span>
+              <span>Or Scan QR Code</span>
+              <span
+                class="h-px w-24 border-t-2 border-dashed border-jv-ink/40"
+              ></span>
+            </div>
+
+            <div class="flex justify-center">
+              <div
+                class="qr-card grid size-[220px] place-items-center rounded-[18px] bg-jv-white p-4 shadow-[0_18px_32px_rgba(45,45,45,0.16)] sm:size-[240px]"
+              >
+                <QrCode :scan-u-r-l="joinUrl" :quiz-code="code" :size="200" />
+              </div>
+            </div>
+
+            <div class="mt-auto pt-6">
+              <button
+                type="submit"
+                class="mx-auto flex h-16 w-full max-w-[390px] rotate-[-1deg] items-center justify-center rounded-[999px] border-[3px] border-jv-ink bg-jv-mint px-6 text-[18px] font-black text-jv-ink shadow-brutal-sm transition-transform hover:rotate-[1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+              >
+                Start Quiz Now
+              </button>
+              <p
+                class="mt-4 flex items-center justify-center gap-2 text-center text-[13px] text-jv-muted"
+              >
+                <Info class="size-4" :stroke-width="2.3" />
+                <span>Host can start the quiz at any time</span>
+              </p>
+            </div>
           </div>
         </form>
+
+        <aside
+          class="relative flex min-h-[700px] rotate-[0.4deg] flex-col bg-jv-white px-6 py-10 shadow-brutal-lg jv-border-rough sm:px-10"
+        >
+          <span
+            class="absolute left-1/2 top-[-10px] h-4 w-12 -translate-x-1/2 rotate-[1deg] bg-jv-salmon"
+            aria-hidden="true"
+          ></span>
+
+          <div class="flex items-center justify-between gap-4">
+            <div class="flex min-w-0 items-center gap-4">
+              <span
+                class="grid size-12 shrink-0 rotate-[-3deg] place-items-center jv-border-rough bg-jv-mint"
+              >
+                <Users class="size-6" :stroke-width="2.4" />
+              </span>
+              <h2 class="font-headings text-jv-ink text-[50px]">
+                Participants
+              </h2>
+            </div>
+            <span
+              class="grid size-14 rotate-[3deg] place-items-center border-[3px] border-jv-ink bg-jv-yellow font-feature text-[30px] font-black shadow-brutal-sm"
+            >
+              {{ participantCount }}
+            </span>
+          </div>
+
+          <div class="my-6 border-t-2 border-dashed border-jv-ink/20"></div>
+
+          <div
+            v-if="participantCount"
+            class="flex max-h-[430px] flex-col gap-4 overflow-y-auto pr-1"
+          >
+            <div
+              v-for="(user, index) in listUsers"
+              :key="user.UserId || user.UserName || index"
+              class="flex min-h-16 items-center justify-between gap-3 jv-border-rough bg-jv-white px-3 py-2 shadow-[2px_2px_0_#2D2D2D]"
+            >
+              <div class="flex min-w-0 items-center gap-3">
+                <span
+                  class="grid size-10 shrink-0 rotate-[-2deg] place-items-center border-[2px] border-jv-ink"
+                  :class="
+                    participantAccentClasses[
+                      index % participantAccentClasses.length
+                    ]
+                  "
+                >
+                  <Smile
+                    v-if="index % 3 === 0"
+                    class="size-5"
+                    :stroke-width="2.2"
+                  />
+                  <UserRound v-else class="size-5" :stroke-width="2.2" />
+                </span>
+                <span class="truncate text-[20px] font-semibold text-jv-ink">
+                  {{ getParticipantName(user) }}
+                </span>
+              </div>
+              <span
+                class="grid size-9 shrink-0 rotate-[2deg] place-items-center border-[2px] border-jv-ink bg-jv-mint"
+                aria-label="Joined"
+              >
+                <Check class="size-5" :stroke-width="2.4" />
+              </span>
+            </div>
+          </div>
+
+          <div
+            v-else
+            class="grid flex-1 place-items-center border-2 border-dashed border-jv-ink/20 bg-jv-canvas/50 p-8 text-center"
+          >
+            <div>
+              <div
+                class="mx-auto grid size-16 place-items-center rounded-full border-[3px] border-jv-ink bg-jv-mint shadow-brutal-sm"
+              >
+                <Users class="size-8" :stroke-width="2.4" />
+              </div>
+              <p class="mt-5 text-[22px] font-bold text-jv-muted">
+                Waiting for Participants..
+              </p>
+            </div>
+          </div>
+
+          <div class="mt-auto pt-8">
+            <div class="border-t-2 border-jv-ink/15 pt-6 text-center">
+              <div class="mb-4 flex justify-center gap-2">
+                <span class="size-3 rounded-full bg-jv-coral"></span>
+                <span class="size-3 rounded-full bg-jv-yellow"></span>
+                <span class="size-3 rounded-full bg-jv-mint"></span>
+              </div>
+              <p class="text-[22px] text-jv-muted sm:text-[24px]">
+                Waiting for more players...
+              </p>
+            </div>
+          </div>
+        </aside>
       </div>
-      <div class="col-md-4">
-        <ListJoinUser></ListJoinUser>
-      </div>
-    </div>
-  </div>
+
+      <footer
+        class="mt-10 border-t-2 border-dashed border-jv-ink/15 pt-6 text-center text-[16px] text-jv-muted"
+      >
+        &copy; 2026 Jovvix Platform &bull; Let's Play!
+      </footer>
+    </section>
+  </main>
   <Frame
     v-else
     :music-component="true"
@@ -197,16 +373,21 @@ watch(
 }
 
 .code {
-  letter-spacing: 0.5rem;
+  letter-spacing: 0.4rem;
 }
 
 .join-page-title {
-  color: #663399;
+  color: var(--jv-ink);
 }
 
 @media (max-width: 768px) {
-  .qr-scale-down {
-    transform: scale(0.8);
+  .code {
+    letter-spacing: 0.22rem;
   }
+}
+
+.qr-card :deep(svg) {
+  width: 100%;
+  height: 100%;
 }
 </style>
