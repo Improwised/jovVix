@@ -144,9 +144,9 @@ watch(
 <template>
   <main
     v-if="isAdmin"
-    class="min-h-screen bg-jv-canvas px-4 py-5 text-jv-ink sm:px-6 md:px-8 md:py-6 lg:px-8 xl:px-10"
+    class="flex min-h-screen flex-col gap-8 bg-jv-canvas px-4 py-5 text-jv-ink sm:gap-10 sm:px-6 md:px-8 md:py-6"
   >
-    <section class="mx-auto w-full max-w-[1220px]">
+    <section class="mx-auto flex w-full max-w-[1220px] flex-1 flex-col">
       <header class="mb-7 text-center sm:mb-9">
         <h1
           class="font-headings text-[38px] leading-none text-jv-ink min-[420px]:text-[44px] sm:text-[52px] md:text-[56px]"
@@ -161,7 +161,7 @@ watch(
       </header>
 
       <div
-        class="grid gap-6 md:gap-7 xl:grid-cols-[minmax(0,1fr)_minmax(340px,0.95fr)] xl:items-stretch"
+        class="grid flex-1 gap-6 md:gap-7 xl:grid-cols-[minmax(0,1fr)_minmax(340px,0.95fr)] xl:items-stretch"
       >
         <form
           class="relative flex min-h-0 rotate-[-0.4deg] flex-col overflow-hidden bg-jv-white shadow-brutal-sm jv-border-rough sm:shadow-brutal-lg xl:min-h-[640px]"
@@ -172,7 +172,7 @@ watch(
             aria-hidden="true"
           ></span>
 
-          <div class="bg-jv-yellow px-4 pb-6 pt-6 sm:px-8 md:px-10">
+          <div class="bg-jv-yellow px-4 pb-7 pt-6 sm:px-8 sm:pb-9 md:px-10">
             <h2
               class="font-headings text-[30px] leading-tight text-jv-ink min-[420px]:text-[34px] sm:text-[42px] lg:text-[48px]"
             >
@@ -180,20 +180,26 @@ watch(
             </h2>
 
             <div
-              class="mt-4 flex flex-col gap-3 jv-border-rough bg-jv-white px-3 py-3 shadow-brutal-sm sm:flex-row sm:items-center sm:justify-between sm:px-4"
+              class="mt-4 flex flex-col gap-3 jv-border-rough bg-jv-white p-3 shadow-brutal-sm sm:flex-row sm:items-center sm:justify-between sm:p-4"
             >
-              <p
-                class="min-w-0 text-[15px] leading-[1.45] text-jv-ink min-[420px]:text-[16px] sm:text-[20px] md:text-[22px]"
+              <div
+                class="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1"
               >
-                Join at
-                <strong class="break-all">{{
-                  joinUrl.replace(/^https?:\/\//, "")
-                }}</strong>
-              </p>
+                <p
+                  class="shrink-0 font-body text-[12px] font-black uppercase tracking-[0.08em] text-jv-muted"
+                >
+                  Join at
+                </p>
+                <p
+                  class="min-w-0 break-all font-body text-[16px] font-extrabold leading-[1.35] text-jv-ink min-[420px]:text-[17px] sm:text-[20px] md:text-[22px]"
+                >
+                  {{ joinUrl.replace(/^https?:\/\//, "") }}
+                </p>
+              </div>
               <button
                 id="URL-input-container"
                 type="button"
-                class="inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-[999px] border-[3px] border-jv-ink bg-jv-white px-4 text-[15px] font-bold shadow-[2px_2px_0_#2D2D2D] transition-transform hover:rotate-[1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none sm:w-fit sm:text-[16px]"
+                class="inline-flex h-11 w-full shrink-0 rotate-[-1deg] items-center justify-center gap-2 rounded-[999px] border-[3px] border-jv-ink bg-jv-coral px-5 font-body text-[16px] font-bold text-white shadow-brutal-sm transition-transform hover:rotate-[1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none sm:h-12 sm:w-fit"
                 @click="copyToClipBoard(joinUrlWithCode)"
               >
                 <Copy class="size-4" :stroke-width="2.5" />
@@ -202,42 +208,49 @@ watch(
             </div>
           </div>
 
-          <div
-            class="mt-2 flex flex-1 flex-col px-4 py-5 sm:px-8 sm:py-6 md:px-10"
-          >
+          <div class="flex flex-1 flex-col px-4 py-5 sm:px-8 sm:py-6 md:px-10">
             <div
-              class="-mt-9 flex flex-col gap-3 jv-border-rough bg-jv-white p-3 shadow-brutal-sm sm:-mt-12 sm:flex-row sm:items-center sm:justify-between sm:shadow-brutal"
+              class="-mt-11 flex flex-col gap-3 jv-border-rough bg-jv-white p-3 shadow-brutal-sm sm:-mt-14 sm:flex-row sm:items-center sm:justify-between sm:p-4 sm:shadow-brutal"
             >
               <div class="flex min-w-0 items-center gap-3 sm:gap-4">
                 <span
-                  class="grid size-10 shrink-0 place-items-center border-[2px] border-jv-ink/25 bg-jv-white text-jv-muted sm:size-11"
+                  class="grid size-10 shrink-0 place-items-center border-[2px] border-jv-ink bg-jv-mint text-jv-ink sm:size-11"
                 >
                   <Keyboard class="size-5" :stroke-width="2.2" />
                 </span>
-                <h3
-                  class="code min-w-0 break-all font-feature text-[22px] font-semibold min-[420px]:text-[24px] sm:text-[26px]"
+                <div
+                  class="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1"
                 >
-                  {{ code }}
-                </h3>
+                  <p
+                    class="shrink-0 font-body text-[12px] font-black uppercase tracking-[0.08em] text-jv-muted"
+                  >
+                    Quiz code
+                  </p>
+                  <h3
+                    class="code min-w-0 break-all font-feature text-[22px] font-black leading-none text-jv-ink min-[420px]:text-[24px] sm:text-[26px]"
+                  >
+                    {{ code }}
+                  </h3>
+                </div>
               </div>
               <button
                 id="OTP-input-container"
                 type="button"
-                class="inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-[999px] border-[3px] border-jv-ink bg-jv-coral px-5 text-[16px] font-bold text-white shadow-[2px_2px_0_#2D2D2D] transition-transform hover:rotate-[-1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none sm:h-12 sm:w-fit sm:text-[17px]"
+                class="inline-flex h-11 w-full shrink-0 rotate-[-1deg] items-center justify-center gap-2 rounded-[999px] border-[3px] border-jv-ink bg-jv-coral px-5 font-body text-[16px] font-bold text-white shadow-brutal-sm transition-transform hover:rotate-[1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none sm:h-12 sm:w-fit"
                 @click="copyToClipBoard(code)"
               >
-                <span>Copy</span>
                 <Copy class="size-4" :stroke-width="2.5" />
+                <span>Copy</span>
               </button>
             </div>
 
             <div
-              class="my-5 flex items-center justify-center gap-3 text-center text-[11px] font-black uppercase tracking-[0.08em] text-jv-muted min-[420px]:text-[12px] sm:my-6 sm:gap-4 sm:text-[13px]"
+              class="my-5 flex items-center justify-center gap-3 text-center font-body text-[11px] font-black uppercase tracking-[0.08em] text-jv-muted min-[420px]:text-[12px] sm:my-6 sm:gap-4 sm:text-[13px]"
             >
               <span
                 class="h-px min-w-8 flex-1 border-t-2 border-dashed border-jv-ink/40 sm:max-w-24"
               ></span>
-              <span class="shrink-0">Or Scan QR Code</span>
+              <span class="shrink-0">Or scan QR code</span>
               <span
                 class="h-px min-w-8 flex-1 border-t-2 border-dashed border-jv-ink/40 sm:max-w-24"
               ></span>
@@ -245,7 +258,7 @@ watch(
 
             <div class="flex justify-center">
               <div
-                class="qr-card grid size-[176px] place-items-center rounded-[12px] bg-jv-white p-3 shadow-[0_12px_24px_rgba(45,45,45,0.14)] min-[420px]:size-[196px] sm:size-[220px] sm:rounded-[16px] sm:p-4 md:size-[240px]"
+                class="qr-card grid size-[176px] place-items-center bg-jv-white p-3 shadow-brutal-sm jv-border-rough min-[420px]:size-[196px] sm:size-[220px] sm:p-4 md:size-[240px]"
               >
                 <QrCode :scan-u-r-l="joinUrl" :quiz-code="code" :size="200" />
               </div>
@@ -254,12 +267,12 @@ watch(
             <div class="mt-auto pt-5 sm:pt-6">
               <button
                 type="submit"
-                class="mx-auto flex h-[52px] w-full max-w-[390px] rotate-[-1deg] items-center justify-center rounded-[999px] border-[3px] border-jv-ink bg-jv-mint px-5 text-[16px] font-black text-jv-ink shadow-brutal-sm transition-transform hover:rotate-[1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none sm:h-16 sm:px-6 sm:text-[18px]"
+                class="mx-auto flex h-[52px] w-full max-w-[390px] rotate-[-1deg] items-center justify-center rounded-[999px] border-[3px] border-jv-ink bg-jv-mint px-5 font-headings text-[16px] text-jv-ink shadow-brutal-sm transition-transform hover:rotate-[1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none sm:h-16 sm:px-6 sm:text-[18px]"
               >
-                Start Quiz Now
+                Start Quiz
               </button>
               <p
-                class="mt-4 flex items-center justify-center gap-2 text-center text-[12px] leading-[1.4] text-jv-muted sm:text-[13px]"
+                class="mt-4 flex items-center justify-center gap-2 text-center font-body text-[12px] leading-[1.4] text-jv-muted sm:text-[13px]"
               >
                 <Info class="size-4" :stroke-width="2.3" />
                 <span>Host can start the quiz at any time</span>
@@ -328,7 +341,7 @@ watch(
                   <UserRound v-else class="size-5" :stroke-width="2.2" />
                 </span>
                 <span
-                  class="truncate text-[16px] font-semibold text-jv-ink sm:text-[20px]"
+                  class="truncate font-body text-[16px] font-semibold text-jv-ink sm:text-[20px]"
                 >
                   {{ getParticipantName(user) }}
                 </span>
@@ -353,9 +366,9 @@ watch(
                 <Users class="size-7 sm:size-8" :stroke-width="2.4" />
               </div>
               <p
-                class="mt-5 text-[18px] font-bold text-jv-muted sm:text-[22px]"
+                class="mt-5 font-body text-[18px] font-bold text-jv-muted sm:text-[22px]"
               >
-                Waiting for Participants..
+                Waiting for participants...
               </p>
             </div>
           </div>
@@ -372,7 +385,7 @@ watch(
                 <span class="size-2.5 rounded-full bg-jv-mint sm:size-3"></span>
               </div>
               <p
-                class="text-[18px] text-jv-muted sm:text-[22px] md:text-[24px]"
+                class="font-body text-[18px] text-jv-muted sm:text-[22px] md:text-[24px]"
               >
                 Waiting for more players...
               </p>
@@ -382,7 +395,7 @@ watch(
       </div>
 
       <footer
-        class="mt-8 border-t-2 border-dashed border-jv-ink/15 pt-5 text-center text-[13px] text-jv-muted sm:mt-10 sm:pt-6 sm:text-[16px]"
+        class="mt-8 border-t-2 border-dashed border-jv-ink/15 pt-5 text-center font-body text-[13px] text-jv-muted sm:mt-10 sm:pt-6 sm:text-[16px]"
       >
         &copy; 2026 Jovvix Platform &bull; Let's Play!
       </footer>
@@ -394,22 +407,14 @@ watch(
     page-title="Ready Steady Go"
     :page-message="data.data"
   >
-    <div class="text-center homepage">{{ data.data }}</div>
+    <div class="my-24 text-center font-body text-[30px] text-jv-ink">
+      {{ data.data }}
+    </div>
   </Frame>
 </template>
 <style scoped>
-.homepage {
-  margin-top: 100px;
-  margin-bottom: 100px;
-  font-size: 30px;
-}
-
 .code {
   letter-spacing: 0.4rem;
-}
-
-.join-page-title {
-  color: var(--jv-ink);
 }
 
 @media (max-width: 768px) {

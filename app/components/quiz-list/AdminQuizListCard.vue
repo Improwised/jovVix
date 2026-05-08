@@ -1,6 +1,6 @@
 <template>
   <article
-    class="group relative flex min-h-[342px] flex-col bg-jv-white p-3 shadow-brutal-sm jv-border-rough sm:min-h-[360px] sm:p-4 md:min-h-[372px]"
+    class="group relative flex min-h-[342px] flex-col bg-jv-white p-3 shadow-brutal-sm jv-border-rough sm:min-h-[360px] sm:p-4 md:min-h-[372px] md:p-5"
     :class="tiltClass"
   >
     <span
@@ -17,12 +17,6 @@
         class="absolute inset-2 hidden place-items-center bg-jv-white/70 opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 sm:grid"
       >
         <div class="flex flex-col gap-3">
-          <!-- <NuxtLink
-            :to="viewUrl"
-            class="inline-flex h-11 min-w-44 items-center justify-center rounded-[999px] border-[3px] border-jv-ink bg-jv-coral px-6 font-headings text-[16px] text-white no-underline shadow-brutal-sm transition-transform hover:rotate-[1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
-          >
-            View Quiz
-          </NuxtLink> -->
           <NavigationLink
             :url="viewUrl"
             url-name="View Quiz"
@@ -34,15 +28,6 @@
             :disabled="starting"
             @click="$emit('start-quiz')"
           />
-
-          <!-- <button
-            type="button"
-            class="inline-flex h-11 min-w-44 items-center justify-center rounded-[999px] border-[3px] border-jv-ink bg-jv-yellow px-6 font-headings text-[16px] text-jv-ink shadow-brutal-sm transition-transform hover:rotate-[-1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none disabled:cursor-not-allowed disabled:opacity-70"
-            :disabled="starting"
-            @click="$emit('start-quiz')"
-          >
-            {{ starting ? "Starting..." : "Start Quiz" }}
-          </button> -->
         </div>
       </div>
     </div>
@@ -64,7 +49,10 @@
       </button>
     </div>
 
-    <div class="relative mt-4 flex items-start justify-between gap-3">
+    <div
+      ref="actionsMenuRef"
+      class="relative mt-4 flex items-start justify-between gap-3"
+    >
       <h3
         class="min-w-0 break-words font-body text-[21px] font-black leading-tight text-jv-ink sm:text-[22px] md:text-[24px]"
       >
@@ -74,7 +62,8 @@
         type="button"
         class="grid size-8 shrink-0 place-items-center border-2 border-jv-ink bg-jv-white text-jv-ink shadow-[1px_1px_0_#2D2D2D] transition-transform hover:rotate-[3deg]"
         aria-label="Open quiz actions"
-        @click="actionsOpen = !actionsOpen"
+        :aria-expanded="actionsOpen"
+        @click="toggleActionsMenu"
       >
         <MoreVertical class="size-4" :stroke-width="2.5" />
       </button>
@@ -123,6 +112,7 @@
 
 <script setup>
 import { ref } from "vue";
+import { onClickOutside } from "@vueuse/core";
 import { CircleHelp, MoreVertical, Share2, Trash2 } from "lucide-vue-next";
 import NavigationLink from "@/components/common/NavigationLink.vue";
 
@@ -162,15 +152,26 @@ defineProps({
 });
 
 const emit = defineEmits(["share", "delete", "start-quiz"]);
+const actionsMenuRef = ref(null);
 const actionsOpen = ref(false);
 
-const handleShare = () => {
+const closeActionsMenu = () => {
   actionsOpen.value = false;
+};
+
+const toggleActionsMenu = () => {
+  actionsOpen.value = !actionsOpen.value;
+};
+
+onClickOutside(actionsMenuRef, closeActionsMenu);
+
+const handleShare = () => {
+  closeActionsMenu();
   emit("share");
 };
 
 const handleDelete = () => {
-  actionsOpen.value = false;
+  closeActionsMenu();
   emit("delete");
 };
 </script>
