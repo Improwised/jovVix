@@ -147,12 +147,14 @@ const isQuizListPage = computed(() =>
   route.path.startsWith("/admin/quiz/list-quiz")
 );
 
+const isAdminPage = computed(() => route.path.startsWith("/admin"));
+
 const isLoggedInAdmin = computed(
   () => userDataStore.getUserData()?.role === "admin-user"
 );
 
 const showAdminNav = computed(
-  () => isLoggedInAdmin.value || isQuizListPage.value
+  () => isLoggedInAdmin.value || isQuizListPage.value || isAdminPage.value
 );
 
 const isActiveRoute = (url) => {
@@ -219,14 +221,13 @@ const mobileNavItems = computed(() => {
         label: "Create Quiz",
         url: "/admin/quiz/create-quiz",
         icon: Plus,
-        highlight: true,
       },
     ];
   }
 
   return [
     { label: "Home", url: "/", icon: Home, active: true },
-    { label: "Enter Code", url: "/join", highlight: true },
+    { label: "Enter Code", url: "/join" },
     { label: "Create Quiz", url: "/admin/quiz/create-quiz", icon: Plus },
     { label: "Sign In", url: "/account/login" },
     { label: "Sign Up", url: "/account/register" },
