@@ -1,43 +1,43 @@
 <template>
-  <div class="row mt-3">
-    <div class="col-sm-12 col-md-6">
-      <nav aria-label="Page navigation example">
-        <ul class="pagination pagination-primary">
-          <li class="page-item">
-            <NuxtLink
-              class="page-link"
-              :class="{ disabled: props.page <= 1 }"
-              :to="{
-                path: route.path,
-                query: { ...route.query, page: props.page - 1 },
-              }"
-            >
-              <span aria-hidden="true">
-                <font-awesome-icon icon="caret-left" />
-              </span>
-            </NuxtLink>
-          </li>
+  <div class="flex items-center justify-center gap-2 mt-8">
+    <NuxtLink
+      v-if="props.page > 1"
+      class="flex h-10 w-10 rotate-[-1deg] items-center justify-center jv-border-rough bg-jv-white text-jv-ink shadow-brutal-sm hover:bg-jv-yellow/50 transition-colors"
+      :to="{
+        path: route.path,
+        query: { ...route.query, page: props.page - 1 },
+      }"
+    >
+      <span aria-hidden="true" class="text-xl font-black">&lt;</span>
+    </NuxtLink>
+    <div
+      v-else
+      class="flex h-10 w-10 rotate-[-1deg] items-center justify-center jv-border-rough bg-jv-canvas text-jv-ink/30 shadow-brutal-sm cursor-not-allowed"
+    >
+      <span aria-hidden="true" class="text-xl font-black">&lt;</span>
+    </div>
 
-          <li class="page-item active">
-            <div class="page-link border-circle">{{ props.page }}</div>
-          </li>
+    <div
+      class="flex h-10 w-10 items-center justify-center jv-border-rough bg-jv-coral text-white text-[16px] font-black shadow-brutal-sm rotate-[1deg]"
+    >
+      {{ props.page }}
+    </div>
 
-          <li class="page-item">
-            <NuxtLink
-              class="page-link"
-              :class="{ disabled: props.page >= numOfRecords }"
-              :to="{
-                path: route.path,
-                query: { ...route.query, page: props.page + 1 },
-              }"
-            >
-              <span aria-hidden="true">
-                <font-awesome-icon icon="caret-right" />
-              </span>
-            </NuxtLink>
-          </li>
-        </ul>
-      </nav>
+    <NuxtLink
+      v-if="props.page < props.numOfRecords"
+      class="flex h-10 w-10 rotate-[1deg] items-center justify-center jv-border-rough bg-jv-white text-jv-ink shadow-brutal-sm hover:bg-jv-yellow/50 transition-colors"
+      :to="{
+        path: route.path,
+        query: { ...route.query, page: props.page + 1 },
+      }"
+    >
+      <span aria-hidden="true" class="text-xl font-black">&gt;</span>
+    </NuxtLink>
+    <div
+      v-else
+      class="flex h-10 w-10 rotate-[1deg] items-center justify-center jv-border-rough bg-jv-canvas text-jv-ink/30 shadow-brutal-sm cursor-not-allowed"
+    >
+      <span aria-hidden="true" class="text-xl font-black">&gt;</span>
     </div>
   </div>
 </template>
