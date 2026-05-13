@@ -4,7 +4,7 @@
   >
     <ActionCard
       action-title="Create New Quiz"
-      @card-click="navigateTo('/admin/quiz/create-quiz')"
+      @card-click="navigateTo('/admin/quiz/list-quiz?create=1')"
     >
       <template #image>
         <img src="@/assets/images/add-file.webp" class="card-image" />

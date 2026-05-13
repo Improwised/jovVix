@@ -58,10 +58,14 @@ type QuestionAnalytics struct {
 }
 
 type ResQuestionAnalytics struct {
-	Data            []QuestionAnalytics `json:"data"`
-	QuizPlayedCount int64               `json:"quiz_played_count"`
-	IsQuizEditable  bool                `json:"is_quiz_editable"`
-	Permission      string              `json:"permission"`
+	Data              []QuestionAnalytics `json:"data"`
+	QuizPlayedCount   int64               `json:"quiz_played_count"`
+	IsQuizEditable    bool                `json:"is_quiz_editable"`
+	Permission        string              `json:"permission"`
+	QuizTitle         string              `json:"quiz_title"`
+	QuizDescription   sql.NullString      `json:"quiz_description"`
+	Points            int16               `json:"points"`
+	DurationInSeconds int                 `json:"duration_in_seconds"`
 }
 
 type ResUserWithQuizPermission struct {

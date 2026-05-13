@@ -115,6 +115,49 @@ func (model *QuestionModel) RegisterQuizAndQuestions(userId string, title string
 	return quizId, nil
 }
 
+func (model *QuestionModel) AppendQuestionsToQuiz(transaction *goqu.TxDatabase, quizId string, questions []Question) ([]uuid.UUID, error) {
+	if len(questions) == 0 {
+		return []uuid.UUID{}, nil
+	}
+
+	ids, err := registerQuestions(transaction, questions)
+	if err != nil {
+		return ids, err
+	}
+
+	var previousLastQuestion sql.NullString
+	_, err = transaction.From(constants.QuizQuestionsTable).
+		Select("question_id").
+		Where(goqu.Ex{"quiz_id": quizId, "next_question": nil}).
+		Limit(1).
+		ScanVal(&previousLastQuestion)
+	if err != nil && err != sql.ErrNoRows {
+		return ids, err
+	}
+
+	if previousLastQuestion.Valid {
+		_, err = transaction.Update(constants.QuizQuestionsTable).
+			Set(goqu.Record{"next_question": ids[0]}).
+			Where(goqu.Ex{"quiz_id": quizId, "question_id": previousLastQuestion.String}).
+			Executor().Exec()
+		if err != nil {
+			return ids, err
+		}
+	}
+
+	parsedQuizId, err := uuid.Parse(quizId)
+	if err != nil {
+		return ids, err
+	}
+
+	err = registerQuestionToQuizzes(transaction, parsedQuizId, ids)
+	if err != nil {
+		return ids, err
+	}
+
+	return ids, nil
+}
+
 func registerQuiz(transaction *goqu.TxDatabase, title, description, userId string) (uuid.UUID, error) {
 	quizId, err := uuid.NewUUID()
 
@@ -145,7 +188,19 @@ func registerQuestions(transaction *goqu.TxDatabase, questions []Question) ([]uu
 	ids := []uuid.UUID{}
 	records := []goqu.Record{}
 
+	if len(questions) == 0 {
+		return ids, nil
+	}
+
 	for _, question := range questions {
+		if question.ID == uuid.Nil {
+			questionId, err := uuid.NewUUID()
+			if err != nil {
+				return ids, err
+			}
+			question.ID = questionId
+		}
+
 		options, err := json.Marshal(question.Options)
 		if err != nil {
 			return ids, err
@@ -183,6 +238,10 @@ func registerQuestions(transaction *goqu.TxDatabase, questions []Question) ([]uu
 
 func registerQuestionToQuizzes(transaction *goqu.TxDatabase, quizId uuid.UUID, questionIds []uuid.UUID) error {
 	records := []goqu.Record{}
+	if len(questionIds) == 0 {
+		return nil
+	}
+
 	for questionIdIndex, questionId := range questionIds {
 
 		id, err := uuid.NewUUID()
@@ -293,11 +352,13 @@ func (model *QuestionModel) ListQuestionsWithAnswerByQuizId(QuizId string, media
 			"resource",
 			"points",
 			"type",
+			"duration_in_seconds",
 		).
 		InnerJoin(goqu.T(constants.QuizQuestionsTable), goqu.On(goqu.I(constants.QuizQuestionsTable+".question_id").Eq(goqu.I(constants.QuestionsTable+".id")))).
 		Where(goqu.Ex{
 			constants.QuizQuestionsTable + ".quiz_id": QuizId,
-		})
+		}).
+		Order(goqu.I(constants.QuizQuestionsTable + ".created_at").Asc())
 
 	if media != "" {
 		query = query.Where(goqu.Or(
@@ -476,6 +537,23 @@ func (model *QuestionModel) CreateQuestion(transaction *goqu.TxDatabase, questio
 	}
 
 	return questionId, nil
+}
+
+func (model *QuestionModel) SyncQuizQuestionSettings(transaction *goqu.TxDatabase, quizId string, points int16, durationInSeconds int) error {
+	questionIds := transaction.From(constants.QuizQuestionsTable).
+		Select("question_id").
+		Where(goqu.Ex{"quiz_id": quizId})
+
+	_, err := transaction.Update(QuestionTable).
+		Set(goqu.Record{
+			"points":              points,
+			"duration_in_seconds": durationInSeconds,
+			"updated_at":          goqu.L("now()"),
+		}).
+		Where(goqu.Ex{"id": goqu.Op{"in": questionIds}}).
+		Executor().Exec()
+
+	return err
 }
 
 // Rewire quiz_questions to point at the new question id and fix the previous link.

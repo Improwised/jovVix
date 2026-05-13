@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
+	"os"
+	"strconv"
 	"time"
 
 	"github.com/Improwised/jovvix/api/config"
@@ -20,15 +22,18 @@ import (
 
 type QuestionController struct {
 	questionModel   *models.QuestionModel
+	quizModel       *models.QuizModel
 	activeQuizModel *models.ActiveQuizModel
 	presignedURLSvc *services.PresignURLService
 	quizSvc         *services.QuizService
+	appConfig       *config.AppConfig
 	logger          *zap.Logger
 }
 
 func InitQuestionController(db *goqu.Database, logger *zap.Logger, appConfig *config.AppConfig) (*QuestionController, error) {
 
 	questionModel := models.InitQuestionModel(db, logger)
+	quizModel := models.InitQuizModel(db)
 	activeQuizModel := models.InitActiveQuizModel(db, logger)
 
 	presignedURLSvc, err := services.NewFileUploadServices(&appConfig.AWS)
@@ -40,11 +45,22 @@ func InitQuestionController(db *goqu.Database, logger *zap.Logger, appConfig *co
 
 	return &QuestionController{
 		questionModel:   questionModel,
+		quizModel:       quizModel,
 		activeQuizModel: activeQuizModel,
 		presignedURLSvc: presignedURLSvc,
 		quizSvc:         quizSvc,
+		appConfig:       appConfig,
 		logger:          logger,
 	}, nil
+}
+
+func (ctrl *QuestionController) getDefaultQuestionDuration() int {
+	parsedDuration, err := strconv.Atoi(ctrl.appConfig.Quiz.QuestionTimeLimit)
+	if err != nil || parsedDuration <= 0 {
+		return 0
+	}
+
+	return parsedDuration
 }
 
 // ListQuestionByQuizId to list all questions of quiz with `is_active_quiz_present` and `quiz_played_count`.
@@ -79,10 +95,133 @@ func (ctrl *QuestionController) ListQuestionsWithAnswerByQuizId(c *fiber.Ctx) er
 		return utils.JSONError(c, http.StatusInternalServerError, err.Error())
 	}
 
-	services.ProcessAnalyticsData(questions, ctrl.presignedURLSvc, ctrl.logger)
+	quiz, err := ctrl.quizModel.GetQuizById(QuizId)
+	if err != nil {
+		ctrl.logger.Error("error occured while getting quiz by admin", zap.Error(err))
+		return utils.JSONError(c, http.StatusInternalServerError, err.Error())
+	}
 
-	ctrl.logger.Debug("QuestionController.ListQuestionsWithAnswerByQuizId success", zap.Any("questions", structs.ResQuestionAnalytics{Data: questions, QuizPlayedCount: quizPlayedcount}), zap.Any("quizPlayedcount", quizPlayedcount))
-	return utils.JSONSuccess(c, http.StatusOK, structs.ResQuestionAnalytics{Data: questions, QuizPlayedCount: quizPlayedcount, IsQuizEditable: !isActiveQuizPresent, Permission: permission})
+	services.ProcessAnalyticsData(questions, ctrl.presignedURLSvc, ctrl.logger)
+	settingsPoints := ctrl.appConfig.Quiz.DefaultQuestionPoints
+	settingsDuration := ctrl.getDefaultQuestionDuration()
+	if len(questions) > 0 {
+		settingsPoints = int16(questions[0].Points)
+		if questions[0].DurationInSeconds > 0 {
+			settingsDuration = questions[0].DurationInSeconds
+		}
+	}
+
+	response := structs.ResQuestionAnalytics{
+		Data:              questions,
+		QuizPlayedCount:   quizPlayedcount,
+		IsQuizEditable:    !isActiveQuizPresent,
+		Permission:        permission,
+		QuizTitle:         quiz.Title,
+		QuizDescription:   quiz.Description,
+		Points:            settingsPoints,
+		DurationInSeconds: settingsDuration,
+	}
+
+	ctrl.logger.Debug("QuestionController.ListQuestionsWithAnswerByQuizId success", zap.Any("questions", response), zap.Any("quizPlayedcount", quizPlayedcount))
+	return utils.JSONSuccess(c, http.StatusOK, response)
+}
+
+func (ctrl *QuestionController) CreateQuestion(c *fiber.Ctx) error {
+	quizId := c.Params(constants.QuizId)
+	ctrl.logger.Debug("QuestionController.CreateQuestion called", zap.Any(constants.QuizId, quizId))
+
+	var questionReq structs.ReqCreateQuestion
+	err := json.Unmarshal(c.Body(), &questionReq)
+	if err != nil {
+		ctrl.logger.Error("validate req error", zap.Error(err))
+		return utils.JSONFail(c, http.StatusBadRequest, err.Error())
+	}
+
+	validate := validator.New()
+	err = validate.Struct(questionReq)
+	if err != nil {
+		ctrl.logger.Error("validate req error", zap.Any("questionReq", questionReq))
+		return utils.JSONFail(c, http.StatusBadRequest, utils.ValidatorErrorString(err))
+	}
+
+	_, err = ctrl.quizModel.GetQuizById(quizId)
+	if err != nil {
+		ctrl.logger.Error("error occured while getting quiz settings", zap.Error(err))
+		return utils.JSONError(c, http.StatusInternalServerError, err.Error())
+	}
+
+	points := questionReq.Points
+	durationInSeconds := questionReq.DurationInSeconds
+	defaultDuration := ctrl.getDefaultQuestionDuration()
+	if questionReq.Points == 0 && questionReq.DurationInSeconds == 0 {
+		points = ctrl.appConfig.Quiz.DefaultQuestionPoints
+	}
+	if durationInSeconds <= 0 {
+		durationInSeconds = defaultDuration
+	}
+
+	questionIds, err := ctrl.quizSvc.AppendQuestionsToQuiz(quizId, []models.Question{
+		{
+			Question:          questionReq.Question,
+			Type:              questionReq.Type,
+			Options:           questionReq.Options,
+			Answers:           questionReq.Answers,
+			Points:            points,
+			DurationInSeconds: durationInSeconds,
+			QuestionMedia:     questionReq.QuestionMedia,
+			OptionsMedia:      questionReq.OptionsMedia,
+			Resource:          sql.NullString{String: questionReq.Resource, Valid: questionReq.Resource != ""},
+		},
+	})
+	if err != nil {
+		ctrl.logger.Error("error occured while creating question by admin", zap.Error(err))
+		return utils.JSONError(c, http.StatusInternalServerError, err.Error())
+	}
+
+	if len(questionIds) == 0 {
+		return utils.JSONError(c, http.StatusInternalServerError, "question not created")
+	}
+
+	ctrl.logger.Debug("QuestionController.CreateQuestion success", zap.Any("QuestionId", questionIds[0]))
+	return utils.JSONSuccess(c, http.StatusCreated, questionIds[0])
+}
+
+func (ctrl *QuestionController) ImportQuestionsByCsv(c *fiber.Ctx) error {
+	quizId := c.Params(constants.QuizId)
+	filePath := c.Locals(constants.FileName).(string)
+
+	defer func() {
+		err := os.Remove(filePath)
+		if err != nil {
+			ctrl.logger.Error("error in deleting file", zap.Error(err))
+		}
+	}()
+
+	questions, err := utils.ValidateCSVFileFormat(filePath)
+	if err != nil {
+		ctrl.logger.Error("file validation failed", zap.Error(err))
+		return utils.JSONFail(c, http.StatusBadRequest, err.Error())
+	}
+
+	validQuestions, err := utils.ExtractQuestionsFromCSV(questions, ctrl.appConfig.Quiz.QuestionTimeLimit)
+	if err != nil {
+		ctrl.logger.Error("file validation failed", zap.Error(err))
+		return utils.JSONFail(c, http.StatusBadRequest, constants.ErrParsingFile)
+	}
+
+	_, err = ctrl.quizModel.GetQuizById(quizId)
+	if err != nil {
+		ctrl.logger.Error("error occured while getting quiz settings", zap.Error(err))
+		return utils.JSONError(c, http.StatusInternalServerError, err.Error())
+	}
+
+	questionIds, err := ctrl.quizSvc.AppendQuestionsToQuiz(quizId, validQuestions)
+	if err != nil {
+		ctrl.logger.Error("error occured while importing questions by admin", zap.Error(err))
+		return utils.JSONError(c, http.StatusInternalServerError, err.Error())
+	}
+
+	return utils.JSONSuccess(c, http.StatusAccepted, questionIds)
 }
 
 // GetQuestionById to get question and thier options with answer.

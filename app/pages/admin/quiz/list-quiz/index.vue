@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref, watchEffect } from "vue";
-import { ChevronDown, Filter, Search } from "lucide-vue-next";
+import { ChevronDown, Filter, Search, X } from "lucide-vue-next";
 import { useToast } from "vue-toastification";
 import AdminQuizListCard from "@/components/quiz-list/AdminQuizListCard.vue";
 import usecopyToClipboard from "@/composables/copy_to_clipboard";
@@ -16,11 +16,18 @@ const url = useRuntimeConfig().public;
 const headers = useRequestHeaders(["cookie"]);
 const toast = useToast();
 const router = useRouter();
+const route = useRoute();
 const sessionStore = useSessionStore();
 const listUserStore = useListUserstore();
 
 const searchQuery = ref("");
 const startingQuizId = ref("");
+const createQuizOpen = ref(false);
+const createQuizPending = ref(false);
+const createQuizForm = ref({
+  title: "",
+  description: "",
+});
 const selectedFilter = ref("All Quiz");
 const filterOpen = ref(false);
 const filterOptions = ["All Quiz", "Shared By Me", "Shared With Me"];
@@ -85,6 +92,12 @@ const {
 watchEffect(() => {
   if (quizError.value?.data?.code === 401) {
     navigateTo("/account/login");
+  }
+});
+
+watchEffect(() => {
+  if (route.query.create === "1") {
+    createQuizOpen.value = true;
   }
 });
 
@@ -185,6 +198,47 @@ const handleSelectFilter = (option) => {
   selectedFilter.value = option;
   filterOpen.value = false;
 };
+
+const closeCreateQuizModal = () => {
+  createQuizOpen.value = false;
+  createQuizForm.value = {
+    title: "",
+    description: "",
+  };
+  if (route.query.create === "1") {
+    router.replace({ path: route.path, query: {} });
+  }
+};
+
+const handleCreateQuiz = async () => {
+  try {
+    createQuizPending.value = true;
+    const response = await $fetch(`${url.apiUrl}/quizzes`, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+      },
+      body: createQuizForm.value,
+      credentials: "include",
+    });
+
+    const quizId = response?.data;
+    if (!quizId) {
+      toast.error("Error while creating quiz.");
+      return;
+    }
+
+    toast.success("Quiz created successfully.");
+    closeCreateQuizModal();
+    router.push(`/admin/quiz/list-quiz/${quizId}`);
+  } catch (error) {
+    toast.error(
+      error?.data?.message || error?.message || "Error while creating quiz."
+    );
+  } finally {
+    createQuizPending.value = false;
+  }
+};
 </script>
 
 <template>
@@ -206,9 +260,9 @@ const handleSelectFilter = (option) => {
         ></div>
       </div>
       <NavigationLink
-        url="/admin/quiz/create-quiz"
         url-name="Create Quiz"
         class="w-full bg-jv-coral py-2 font-[500] text-white sm:w-fit md:mt-1"
+        @click="createQuizOpen = true"
       />
     </div>
 
@@ -291,9 +345,9 @@ const handleSelectFilter = (option) => {
         </p>
         <NavigationLink
           v-if="emptyState.showCreateAction"
-          url="/admin/quiz/create-quiz"
           url-name="Create Quiz"
           class="bg-jv-coral text-white font-[500] py-2"
+          @click="createQuizOpen = true"
         />
       </div>
     </section>
@@ -325,5 +379,81 @@ const handleSelectFilter = (option) => {
         @delete="handleDeleteQuiz(quiz.id)"
       />
     </section>
+
+    <Teleport to="body">
+      <div
+        v-if="createQuizOpen"
+        class="fixed inset-0 z-50 grid place-items-center bg-jv-ink/35 px-4 py-6 backdrop-blur-[2px]"
+        @click.self="closeCreateQuizModal"
+      >
+        <form
+          class="w-full max-w-[680px] rotate-[-0.4deg] border-[4px] border-jv-ink bg-jv-white shadow-brutal-lg"
+          @submit.prevent="handleCreateQuiz"
+        >
+          <div
+            class="flex items-center justify-between gap-4 border-b-[3px] border-jv-ink bg-jv-ink px-5 py-4 text-jv-white sm:px-6"
+          >
+            <h2
+              class="font-body text-[24px] font-black leading-none text-jv-white sm:text-[28px]"
+            >
+              Create New Quiz
+            </h2>
+            <button
+              type="button"
+              class="grid size-9 place-items-center text-jv-white transition-transform hover:rotate-[6deg]"
+              aria-label="Close create quiz modal"
+              @click="closeCreateQuizModal"
+            >
+              <X class="size-6" :stroke-width="2.4" />
+            </button>
+          </div>
+
+          <div class="grid gap-5 px-5 py-6 sm:px-8">
+            <label class="grid gap-2">
+              <span
+                class="text-[13px] font-black uppercase tracking-[0.16em] text-jv-ink"
+              >
+                Quiz Title <span class="text-jv-coral">*</span>
+              </span>
+              <input
+                v-model.trim="createQuizForm.title"
+                type="text"
+                required
+                maxlength="50"
+                class="h-14 border-[3px] border-jv-ink bg-jv-canvas px-4 text-[17px] font-semibold text-jv-ink outline-none transition-shadow focus:shadow-brutal-sm"
+              />
+            </label>
+
+            <label class="grid gap-2">
+              <span
+                class="text-[13px] font-black uppercase tracking-[0.16em] text-jv-ink"
+              >
+                Quiz Description
+              </span>
+              <textarea
+                v-model.trim="createQuizForm.description"
+                maxlength="150"
+                rows="5"
+                class="resize-none border-[3px] border-jv-ink bg-jv-canvas px-4 py-3 text-[17px] font-semibold text-jv-ink outline-none transition-shadow focus:shadow-brutal-sm"
+              ></textarea>
+            </label>
+          </div>
+
+          <div
+            class="flex flex-col-reverse gap-3 border-t-[3px] border-jv-ink bg-jv-canvas px-5 py-4 sm:flex-row sm:justify-end sm:px-8"
+          >
+            <NavigationLink
+              url-name="Cancel"
+              class="bg-jv-white font-[500]"
+              @click="closeCreateQuizModal"
+            />
+            <NavigationLink
+              url-name="Create Quiz"
+              class="bg-jv-mint font-[500]"
+            />
+          </div>
+        </form>
+      </div>
+    </Teleport>
   </main>
 </template>
