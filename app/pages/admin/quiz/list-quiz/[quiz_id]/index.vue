@@ -134,7 +134,7 @@
           </NavigationLink>
           <NavigationLink
             url-name="Add Question"
-            class="rounded-[999px] bg-jv-mint"
+            class="rounded-[999px] bg-jv-accent-green text-white"
             @click="openNewQuestionForm"
           >
             <Plus class="size-4" :stroke-width="2.4" />
@@ -170,11 +170,11 @@
         <article
           v-for="(question, index) in questions"
           :key="question.question_id"
-          class="jv-border-rough bg-jv-white p-4 shadow-brutal-sm transition-transform hover:rotate-[0.25deg] sm:p-5"
           :class="
-            editingQuestionId === question.question_id ? 'bg-jv-yellow/10' : ''
+            editingQuestionId === question.question_id
+              ? ''
+              : 'jv-border-rough bg-jv-white p-4 shadow-brutal-sm transition-transform hover:rotate-[0.25deg] sm:p-5'
           "
-          @click="canEditQuiz && startEditQuestion(question)"
         >
           <QuestionFormCard
             v-if="editingQuestionId === question.question_id"
@@ -189,11 +189,13 @@
           <template v-else>
             <div class="flex items-start justify-between gap-4">
               <div class="min-w-0">
-                <p class="text-[14px] font-black text-jv-coral">
-                  Question: {{ index + 1 }}
+                <p
+                  class="text-[12px] font-bold uppercase tracking-[0.14em] text-jv-coral"
+                >
+                  Question {{ index + 1 }}
                 </p>
                 <h2
-                  class="mt-1 break-words text-[20px] font-black leading-snug text-jv-ink sm:text-[22px]"
+                  class="mt-1 break-words text-[20px] font-bold leading-snug text-jv-ink sm:text-[22px]"
                 >
                   {{ question.question }}
                 </h2>
@@ -218,7 +220,7 @@
 
             <div
               v-if="question.question_media === 'image' && question.resource"
-              class="mt-3 flex justify-center border-[3px] border-jv-ink bg-jv-canvas p-2"
+              class="mt-3 flex justify-center rounded-md bg-jv-canvas p-2"
               @click.stop
             >
               <img
@@ -232,28 +234,30 @@
               v-else-if="
                 question.question_media === 'code' && question.resource
               "
-              class="mt-3 min-w-0 overflow-x-auto border-none border-jv-ink bg-jv-canvas"
+              class="mt-3 min-w-0 overflow-x-auto"
               @click.stop
             >
               <CodeBlockComponent :code="question.resource" />
             </div>
 
-            <div class="mt-4 grid gap-3 sm:grid-cols-2">
-              <div
+            <ul class="mt-4 flex flex-col">
+              <li
                 v-for="(option, key) in question.options"
                 :key="key"
-                class="flex min-w-0 min-h-12 items-center gap-3 border-[3px] border-jv-ink bg-jv-white px-3 py-2 text-[15px] font-semibold text-jv-ink"
-                :class="isCorrectAnswer(question, key) ? 'bg-jv-mint/45' : ''"
+                class="flex min-w-0 items-center gap-3 border-b border-jv-ink/10 py-3 pl-3 pr-2 text-[15px] font-medium text-jv-ink last:border-b-0"
+                :class="
+                  isCorrectAnswer(question, key)
+                    ? 'border-l-4 border-l-jv-accent-green bg-jv-accent-green/25 pl-2'
+                    : 'border-l-4 border-l-transparent'
+                "
               >
-                <span
-                  class="grid size-7 shrink-0 place-items-center rounded-full border-2 border-jv-ink bg-jv-white text-[13px] font-black"
-                >
-                  {{ optionLabel(key) }}
+                <span class="w-5 shrink-0 text-[14px] font-bold text-jv-coral">
+                  {{ optionLabel(key) }}.
                 </span>
 
                 <div
                   v-if="question.options_media === 'image' && option"
-                  class="flex min-w-0 flex-1 justify-center"
+                  class="flex min-w-0 flex-1 justify-start"
                   @click.stop
                 >
                   <img
@@ -274,8 +278,14 @@
                 <span v-else class="min-w-0 flex-1 break-words">
                   {{ option }}
                 </span>
-              </div>
-            </div>
+
+                <Check
+                  v-if="isCorrectAnswer(question, key)"
+                  class="size-5 shrink-0 text-jv-accent-green"
+                  :stroke-width="3"
+                />
+              </li>
+            </ul>
           </template>
         </article>
       </section>
@@ -357,7 +367,7 @@
             </button>
             <button
               type="submit"
-              class="inline-flex h-12 items-center justify-center border-[3px] border-jv-ink bg-jv-mint px-6 text-[17px] font-black text-jv-ink shadow-brutal-sm transition-transform hover:rotate-[1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none disabled:cursor-not-allowed disabled:opacity-60"
+              class="inline-flex h-12 items-center justify-center border-[3px] border-jv-ink bg-jv-accent-green px-6 text-[17px] font-black text-jv-ink shadow-brutal-sm transition-transform hover:rotate-[1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none disabled:cursor-not-allowed disabled:opacity-60"
               :disabled="importPending"
             >
               {{ importPending ? "Adding..." : "Add Questions" }}
@@ -371,7 +381,16 @@
 
 <script setup>
 import { computed, ref, watch } from "vue";
-import { Pencil, Play, Plus, Share2, Trash2, Upload, X } from "lucide-vue-next";
+import {
+  Check,
+  Pencil,
+  Play,
+  Plus,
+  Share2,
+  Trash2,
+  Upload,
+  X,
+} from "lucide-vue-next";
 import { useToast } from "vue-toastification";
 import QuestionFormCard from "@/components/quiz-manage/QuestionFormCard.vue";
 import CodeBlockComponent from "@/components/CodeBlockComponent.vue";
@@ -425,13 +444,13 @@ const {
 const questions = computed(() => quizData.value?.data?.data || []);
 const quizTitle = computed(() => quizData.value?.data?.quiz_title || "Quiz");
 const quizDescription = computed(
-  () => quizData.value?.data?.quiz_description?.String || "",
+  () => quizData.value?.data?.quiz_description?.String || ""
 );
 const totalSurveyQuestion = computed(() =>
   questions.value.reduce(
     (count, item) => (item.question_type_id === 2 ? count + 1 : count),
-    0,
-  ),
+    0
+  )
 );
 const canEditQuiz = computed(() => {
   const permission = quizData.value?.data?.permission;
@@ -448,7 +467,7 @@ watch(
       duration_in_seconds: Number(data.duration_in_seconds ?? 10),
     };
   },
-  { immediate: true },
+  { immediate: true }
 );
 
 const parseAnswers = (value) => {
@@ -496,7 +515,7 @@ const saveSettings = async () => {
     toast.error(
       error?.data?.message ||
         error?.message ||
-        "Failed to update quiz settings.",
+        "Failed to update quiz settings."
     );
   } finally {
     settingsPending.value = false;
@@ -514,7 +533,7 @@ const validateImage = (file) => {
     toast.error(
       `Please upload an image less than ${
         url.maxImageFileSize / 1024 / 1024
-      } MB.`,
+      } MB.`
     );
     return false;
   }
@@ -567,7 +586,7 @@ const saveNewQuestion = async ({ payload, files }) => {
         headers,
         credentials: "include",
         body: payloadWithDefaults,
-      },
+      }
     );
 
     const questionId = response?.data;
@@ -581,7 +600,7 @@ const saveNewQuestion = async ({ payload, files }) => {
     refresh();
   } catch (error) {
     toast.error(
-      error?.data?.message || error?.message || "Failed to add question.",
+      error?.data?.message || error?.message || "Failed to add question."
     );
   } finally {
     savingNewQuestion.value = false;
@@ -623,7 +642,7 @@ const saveExistingQuestion = async (question, { payload, files }) => {
         headers,
         credentials: "include",
         body: buildUpdatePayload(question, payload),
-      },
+      }
     );
 
     toast.success("Question updated successfully.");
@@ -631,7 +650,7 @@ const saveExistingQuestion = async (question, { payload, files }) => {
     refresh();
   } catch (error) {
     toast.error(
-      error?.data?.message || error?.message || "Failed to update question.",
+      error?.data?.message || error?.message || "Failed to update question."
     );
   } finally {
     savingQuestionId.value = "";
@@ -648,13 +667,13 @@ const deleteQuestion = async (questionId) => {
         method: "DELETE",
         headers,
         credentials: "include",
-      },
+      }
     );
     toast.success("Question deleted successfully.");
     refresh();
   } catch (error) {
     toast.error(
-      error?.data?.message || error?.message || "Failed to delete question.",
+      error?.data?.message || error?.message || "Failed to delete question."
     );
   }
 };
@@ -672,7 +691,7 @@ const deleteQuiz = async () => {
     router.push("/admin/quiz/list-quiz");
   } catch (error) {
     toast.error(
-      error?.data?.message || error?.message || "Failed to delete quiz.",
+      error?.data?.message || error?.message || "Failed to delete quiz."
     );
   }
 };
@@ -717,7 +736,7 @@ const importCsv = async () => {
       error?.data?.data ||
         error?.data?.message ||
         error?.message ||
-        "Failed to import CSV.",
+        "Failed to import CSV."
     );
   } finally {
     importPending.value = false;
@@ -745,7 +764,7 @@ const handleStartQuiz = async () => {
         headers: {
           Accept: "application/json",
         },
-      },
+      }
     );
 
     const activeQuizId = response?.data;

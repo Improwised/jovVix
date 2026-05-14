@@ -1,20 +1,19 @@
 <template>
   <form
     class="jv-border-rough bg-jv-white p-4 shadow-brutal-sm sm:p-5 lg:p-6"
-    :class="mode === 'edit' ? 'rotate-[0.15deg]' : 'rotate-[-0.2deg]'"
     @submit.prevent="submitForm"
   >
     <div
-      class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"
+      class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
     >
       <div>
         <p
-          class="text-[14px] font-black uppercase tracking-[0.12em] text-jv-coral"
+          class="text-[12px] font-bold uppercase tracking-[0.14em] text-jv-coral"
         >
           {{ eyebrow }}
         </p>
         <h2
-          class="mt-1 font-body text-[24px] font-black leading-tight text-jv-ink sm:text-[28px]"
+          class="mt-1 font-body text-[22px] font-bold leading-tight text-jv-ink sm:text-[26px]"
         >
           {{ title }}
         </h2>
@@ -22,163 +21,163 @@
 
       <select
         v-model.number="form.type"
-        class="h-11 border-[3px] border-jv-ink bg-jv-white px-3 text-[15px] font-black text-jv-ink shadow-brutal-sm outline-none"
+        class="h-10 rounded-md border border-jv-ink/30 bg-jv-white px-3 text-[14px] font-semibold text-jv-ink outline-none focus:border-jv-ink"
       >
         <option :value="1">Multiple Choice</option>
         <option :value="2">Survey</option>
       </select>
     </div>
 
-    <div class="mt-5 grid gap-4">
+    <div class="mt-6 space-y-2">
+      <label
+        class="text-[13px] font-semibold uppercase tracking-wide text-jv-muted"
+      >
+        Question
+      </label>
       <input
         v-model.trim="form.question"
         type="text"
         required
         placeholder="Enter question..."
-        class="h-12 w-full border-[3px] border-jv-ink bg-jv-white px-3 text-[15px] font-semibold text-jv-ink outline-none transition-shadow placeholder:text-jv-ink/40 focus:shadow-brutal-sm sm:text-[16px]"
+        class="h-11 w-full rounded-md border border-jv-ink/30 bg-jv-white px-3 text-[15px] font-medium text-jv-ink outline-none placeholder:text-jv-ink/40 focus:border-jv-ink focus:shadow-brutal-sm"
       />
 
-      <div class="grid gap-3 border-y-2 border-dashed border-jv-ink/15 py-4">
-        <div class="flex flex-wrap items-center justify-center gap-2">
+      <div class="flex flex-wrap items-center gap-1.5 pt-1">
+        <NavigationLink
+          v-for="choice in mediaChoices"
+          :key="`question-${choice.value}`"
+          variant="toggle"
+          type="button"
+          :class="
+            form.question_media === choice.value
+              ? 'border-jv-ink bg-jv-ink text-jv-white'
+              : 'border-jv-ink/25 bg-jv-white text-jv-muted hover:border-jv-ink/60 hover:text-jv-ink'
+          "
+          @click="form.question_media = choice.value"
+        >
+          <component :is="choice.icon" class="size-3.5" :stroke-width="2.3" />
+          <span>{{ choice.label }}</span>
+        </NavigationLink>
+      </div>
+
+      <textarea
+        v-if="form.question_media === 'code'"
+        v-model="form.resource"
+        rows="5"
+        placeholder="Enter code..."
+        class="mt-1 w-full resize-none rounded-md border border-jv-ink/30 bg-jv-canvas px-3 py-2 font-mono text-[14px] text-jv-ink outline-none focus:border-jv-ink focus:shadow-brutal-sm"
+      ></textarea>
+
+      <label
+        v-else-if="form.question_media === 'image'"
+        class="mt-1 flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed border-jv-ink/35 bg-jv-canvas px-3 py-3 text-[14px] font-medium text-jv-muted transition-colors hover:bg-jv-yellow/20"
+      >
+        <ImageIcon class="size-4" :stroke-width="2.3" />
+        <span>{{ questionFileName || "Upload question image" }}</span>
+        <input
+          type="file"
+          class="hidden"
+          accept="image/*"
+          @change="handleQuestionImage"
+        />
+      </label>
+    </div>
+
+    <div class="mt-6 space-y-3">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <label
+          class="text-[13px] font-semibold uppercase tracking-wide text-jv-muted"
+        >
+          Options
+        </label>
+        <div class="flex flex-wrap items-center gap-1.5">
           <NavigationLink
             v-for="choice in mediaChoices"
-            :key="`question-${choice.value}`"
+            :key="`options-${choice.value}`"
+            variant="toggle"
             type="button"
-            class="h-9"
             :class="
-              form.question_media === choice.value
-                ? 'bg-jv-ink text-jv-white'
-                : 'bg-jv-white text-jv-ink'
+              form.options_media === choice.value
+                ? 'border-jv-ink bg-jv-ink text-jv-white'
+                : 'border-jv-ink/25 bg-jv-white text-jv-muted hover:border-jv-ink/60 hover:text-jv-ink'
             "
-            @click="form.question_media = choice.value"
+            @click="form.options_media = choice.value"
           >
-            <component :is="choice.icon" class="size-4" :stroke-width="2.3" />
+            <component :is="choice.icon" class="size-3.5" :stroke-width="2.3" />
             <span>{{ choice.label }}</span>
           </NavigationLink>
         </div>
+      </div>
 
-        <textarea
-          v-if="form.question_media === 'code'"
-          v-model="form.resource"
-          rows="5"
-          placeholder="Enter code..."
-          class="w-full resize-none border-[3px] border-jv-ink bg-jv-canvas px-3 py-2 font-mono text-[14px] text-jv-ink outline-none focus:shadow-brutal-sm"
-        ></textarea>
-
-        <label
-          v-else-if="form.question_media === 'image'"
-          class="flex min-h-14 cursor-pointer items-center justify-center gap-2 border-2 border-dashed border-jv-ink/35 bg-jv-canvas px-3 py-3 text-[14px] font-bold text-jv-muted transition-colors hover:bg-jv-yellow/20"
+      <div class="flex flex-col">
+        <div
+          v-for="key in optionKeys"
+          :key="key"
+          class="flex min-w-0 items-center gap-3 border-b border-jv-ink/10 py-2.5 pl-2 pr-1 last:border-b-0"
+          :class="
+            form.type === 1 && Number(key) === Number(correctAnswer)
+              ? 'border-l-4 border-l-jv-accent-green bg-jv-accent-green/25 pl-1'
+              : 'border-l-4 border-l-transparent'
+          "
         >
-          <ImageIcon class="size-4" :stroke-width="2.3" />
-          <span>{{ questionFileName || "Upload question image" }}</span>
           <input
-            type="file"
-            class="hidden"
-            accept="image/*"
-            @change="handleQuestionImage"
+            v-if="form.type === 1"
+            v-model.number="correctAnswer"
+            type="radio"
+            :value="Number(key)"
+            class="size-5 shrink-0 accent-jv-accent-green"
+            :aria-label="`Correct answer option ${key}`"
           />
-        </label>
+
+          <span class="w-6 shrink-0 text-[14px] font-bold text-jv-coral">
+            {{ optionLetter(key) }}.
+          </span>
+
+          <input
+            v-if="form.options_media === 'text'"
+            v-model.trim="form.options[key]"
+            type="text"
+            :required="Number(key) <= 2"
+            :placeholder="`Option ${optionLetter(key)}`"
+            class="h-10 w-full min-w-0 flex-1 rounded-md border border-jv-ink/25 bg-jv-white px-3 text-[15px] font-medium text-jv-ink outline-none placeholder:text-jv-ink/40 focus:border-jv-ink focus:shadow-brutal-sm"
+          />
+
+          <textarea
+            v-else-if="form.options_media === 'code'"
+            v-model="form.options[key]"
+            rows="2"
+            :placeholder="`Code for option ${optionLetter(key)}`"
+            class="min-w-0 flex-1 resize-none rounded-md border border-jv-ink/25 bg-jv-white px-3 py-2 font-mono text-[13px] text-jv-ink outline-none focus:border-jv-ink focus:shadow-brutal-sm"
+          ></textarea>
+
+          <label
+            v-else
+            class="flex h-10 min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-md border border-dashed border-jv-ink/30 bg-jv-white px-3 text-[13px] font-medium text-jv-muted focus-within:shadow-brutal-sm hover:bg-jv-yellow/10"
+          >
+            <ImageIcon class="size-4 shrink-0" :stroke-width="2.3" />
+            <span class="truncate">{{
+              optionFileNames[key] || existingImageLabel(key)
+            }}</span>
+            <input
+              type="file"
+              class="hidden"
+              accept="image/*"
+              @change="handleOptionImage($event, key)"
+            />
+          </label>
+        </div>
       </div>
     </div>
 
-    <div class="mt-5 flex flex-wrap justify-end gap-2">
-      <NavigationLink
-        v-for="choice in mediaChoices"
-        :key="`options-${choice.value}`"
-        type="button"
-        class="h-9"
-        :class="
-          form.options_media === choice.value
-            ? 'bg-jv-ink text-jv-white'
-            : 'bg-jv-white text-jv-ink'
-        "
-        @click="form.options_media = choice.value"
-      >
-        <component :is="choice.icon" class="size-4" :stroke-width="2.3" />
-        <span>{{ choice.label }}</span>
-      </NavigationLink>
-    </div>
-
-    <div class="mt-3 grid gap-3">
-      <div
-        v-for="key in optionKeys"
-        :key="key"
-        class="grid grid-cols-[minmax(0,1fr)_28px] items-center gap-3 sm:grid-cols-[100px_28px_minmax(0,1fr)]"
-      >
-        <label class="text-[14px] font-semibold text-jv-muted">
-          Option {{ key }}
-        </label>
-        <input
-          v-if="form.type === 1"
-          v-model.number="correctAnswer"
-          type="radio"
-          :value="Number(key)"
-          class="size-6 accent-jv-mint"
-          :aria-label="`Correct answer option ${key}`"
-        />
-        <span v-else class="hidden sm:block"></span>
-
-        <input
-          v-if="form.options_media === 'text'"
-          v-model.trim="form.options[key]"
-          type="text"
-          :required="Number(key) <= 2"
-          :placeholder="`Enter option ${key}`"
-          class="col-span-2 h-11 w-full border-[3px] border-jv-ink bg-jv-white px-3 text-[15px] font-semibold text-jv-ink outline-none placeholder:text-jv-ink/40 focus:shadow-brutal-sm sm:col-span-1"
-          :class="
-            form.type === 1 && Number(key) === Number(correctAnswer)
-              ? 'bg-jv-mint/35'
-              : ''
-          "
-        />
-
-        <textarea
-          v-else-if="form.options_media === 'code'"
-          v-model="form.options[key]"
-          rows="2"
-          :placeholder="`Enter code for option ${key}`"
-          class="col-span-2 min-w-0 resize-none border-[3px] border-jv-ink bg-jv-white px-3 py-2 font-mono text-[14px] text-jv-ink outline-none focus:shadow-brutal-sm sm:col-span-1"
-          :class="
-            form.type === 1 && Number(key) === Number(correctAnswer)
-              ? 'bg-jv-mint/35'
-              : ''
-          "
-        ></textarea>
-
-        <label
-          v-else
-          class="col-span-2 flex h-11 min-w-0 cursor-pointer items-center gap-2 border-[3px] border-jv-ink bg-jv-white px-3 text-[14px] font-semibold text-jv-muted focus-within:shadow-brutal-sm sm:col-span-1"
-          :class="
-            form.type === 1 && Number(key) === Number(correctAnswer)
-              ? 'bg-jv-mint/35'
-              : ''
-          "
-        >
-          <ImageIcon class="size-4 shrink-0" :stroke-width="2.3" />
-          <span class="truncate">{{
-            optionFileNames[key] || existingImageLabel(key)
-          }}</span>
-          <input
-            type="file"
-            class="hidden"
-            accept="image/*"
-            @change="handleOptionImage($event, key)"
-          />
-        </label>
-      </div>
-    </div>
-
-    <div
-      class="mt-6 flex flex-col-reverse gap-3 border-t-2 border-dashed border-jv-ink/15 pt-4 sm:flex-row sm:justify-end"
-    >
+    <div class="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
       <NavigationLink
         v-if="showCancel"
-        class="h-11 bg-jv-white font-black text-jv-ink"
+        class="h-11 bg-jv-white text-jv-ink"
         @click="$emit('cancel')"
       >
         Cancel
       </NavigationLink>
-      <NavigationLink class="h-11 bg-jv-mint font-black text-jv-ink">
+      <NavigationLink class="h-11 bg-jv-accent-green text-white">
         {{ saving ? "Saving..." : submitLabel }}
       </NavigationLink>
     </div>
@@ -280,6 +279,8 @@ const optionKeys = computed(() =>
     .sort((a, b) => Number(a) - Number(b))
     .filter((key) => Number(key) <= 5)
 );
+
+const optionLetter = (key) => String.fromCharCode(64 + Number(key));
 
 const title = computed(() =>
   props.mode === "edit" ? "Edit Question" : "New Question"
