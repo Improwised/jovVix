@@ -194,6 +194,11 @@
   border-radius: 4px 12px 8px 6px / 10px 4px 12px 8px;
 }
 
+@utility jv-border-even {
+  border: 3px solid var(--jv-ink);
+  border-radius: 1px;
+}
+
 /* Feature-card icon badge — small asymmetric chip in header */
 @utility jv-badge {
   border-top-left-radius: 8px;
