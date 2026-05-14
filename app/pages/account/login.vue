@@ -89,12 +89,6 @@
               >
                 Password
               </label>
-              <NuxtLink
-                to="/account/forgot-password"
-                class="font-body text-jv-ink/60 hover:text-jv-coral text-xs sm:text-[13px] no-underline transition-colors"
-              >
-                Forgot Password?
-              </NuxtLink>
             </div>
             <div
               class="flex items-center gap-2.5 bg-jv-white border-2 border-jv-ink jv-card shadow-brutal-sm focus-within:translate-x-[1px] focus-within:translate-y-[1px] focus-within:shadow-none transition-all px-3 py-2.5"
@@ -125,6 +119,12 @@
                 <Eye v-else class="size-[18px]" :stroke-width="2.2" />
               </button>
             </div>
+            <NuxtLink
+              to="/account/forgot-password"
+              class="font-body text-jv-ink/60 hover:text-jv-coral text-xs sm:text-[13px] no-underline transition-colors self-end"
+            >
+              Forgot Password?
+            </NuxtLink>
             <p
               v-if="errors.password"
               class="font-body text-jv-accent-red text-xs px-0.5 m-0"
@@ -195,7 +195,6 @@ const errors = ref({
   code: "",
 });
 const kratosUrl = urls.kratosUrl;
-console.log();
 
 (async () => {
   if (process.client) {

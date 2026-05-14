@@ -58,7 +58,14 @@ export const setUserDataStore = async () => {
       throw new Error(response.status);
     } else if (response.status == 200) {
       const data = await response.json();
-      setUserData({ role: data?.data?.role, avatar: data?.data?.avatar });
+      console.log("data ", data);
+
+      setUserData({
+        role: data?.data?.role,
+        avatar: data?.data?.avatar,
+        firstname: data?.data?.firstname,
+        username: data?.data?.username,
+      });
     }
   } catch (error) {
     if (error.message == 401) {

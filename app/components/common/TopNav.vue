@@ -1,53 +1,50 @@
 <template>
-  <header
-    class="sticky top-0 z-40 border-b-[3px] border-jv-ink bg-jv-canvas/95 backdrop-blur"
-  >
+  <header class="sticky top-0 bg-jv-canvas">
     <div
-      class="flex items-center justify-between gap-4 px-4 sm:px-6 md:px-8 py-3 md:py-3.5"
+      class="absolute inset-0 pointer-events-none jv-grid"
+      aria-hidden="true"
+    ></div>
+    <div
+      class="container mx-auto max-w-7xl flex items-center justify-between gap-4 px-6 sm:px-8 py-2.5 lg:py-5"
     >
       <NuxtLink
         to="/"
-        class="flex items-center gap-2 text-[20px] sm:text-[22px] md:text-[24px] font-black tracking-[-0.5px] text-jv-ink no-underline"
+        class="flex items-center gap-2 text-[20px] sm:text-[22px] md:text-[24px] font-black tracking-[-0.5px] text-jv-ink no-underline w-[120px] lg:w-[150px] h-auto"
       >
-        <span
-          class="grid size-8 sm:size-9 rotate-[-6deg] place-items-center rounded-[8px] border-2 border-jv-ink bg-jv-coral text-white shadow-brutal-sm"
-        >
-          <Zap class="size-4 sm:size-[18px]" :stroke-width="2.4" />
-        </span>
-        <span>JovVix</span>
+        <img src="@/assets/images/jovvix-logo.svg" />
       </NuxtLink>
 
-      <nav class="hidden md:flex items-center gap-6 lg:gap-7">
-        <NuxtLink
-          to="/#features"
-          class="text-jv-ink text-sm lg:text-[15px] font-body hover:text-jv-coral transition-colors no-underline"
-        >
-          Features
-        </NuxtLink>
-        <NuxtLink
-          to="/#docs"
-          class="text-jv-ink text-sm lg:text-[15px] font-body hover:text-jv-coral transition-colors no-underline"
-        >
-          Docs
-        </NuxtLink>
-        <NuxtLink
-          to="/#community"
-          class="text-jv-ink text-sm lg:text-[15px] font-body hover:text-jv-coral transition-colors no-underline"
-        >
-          Community
-        </NuxtLink>
-      </nav>
-
-      <NuxtLink
-        to="/join"
-        class="inline-flex items-center justify-center rotate-[-1deg] rounded-[8px] border-2 border-jv-ink bg-jv-yellow-2 text-jv-ink shadow-brutal-sm px-4 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-[13px] font-body no-underline transition-transform hover:rotate-[2deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+      <ul
+        class="hidden lg:flex items-center font-headings gap-8 text-[18px] text-jv-ink"
       >
-        Play a Quiz
-      </NuxtLink>
+        <li v-for="link in navLinks" :key="link.label" class="text-center">
+          <NuxtLink
+            :href="link.href"
+            class="hover:text-jv-coral transition-colors duration-150"
+          >
+            {{ link.label }}
+          </NuxtLink>
+        </li>
+      </ul>
+
+      <NavigationLink
+        url="/join"
+        url-name="Play a Quiz"
+        class="bg-jv-yellow-2"
+      />
     </div>
   </header>
 </template>
 
 <script setup>
-import { Zap } from "lucide-vue-next";
+import NavigationLink from "@/components/common/NavigationLink.vue";
+const navLinks = [
+  { href: "https://jovvix.com/", label: "Home" },
+  { href: "https://jovvix.com/docs/user-guide", label: "User Guide" },
+  { href: "https://jovvix.com/docs/developer-guide", label: "Developer Guide" },
+  {
+    href: "https://jovvix.com/docs/deployment-guide",
+    label: "Deployment Guide",
+  },
+];
 </script>

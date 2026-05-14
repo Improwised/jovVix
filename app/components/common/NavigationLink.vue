@@ -8,14 +8,15 @@
     <slot />
     <span v-if="urlName">{{ urlName }}</span>
   </NuxtLink>
-  <button v-else v-bind="$attrs" :class="cn(baseClasses, props.class)">
+  <Button v-else v-bind="$attrs" :class="cn(baseClasses, props.class)">
     <slot />
     <span v-if="urlName">{{ urlName }}</span>
-  </button>
+  </Button>
 </template>
 
 <script setup>
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 defineOptions({ inheritAttrs: false });
 
