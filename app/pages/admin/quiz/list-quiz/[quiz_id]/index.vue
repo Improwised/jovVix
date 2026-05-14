@@ -338,6 +338,7 @@ definePageMeta({
   layout: "empty",
 });
 
+const app = useNuxtApp();
 const toast = useToast();
 const url = useRuntimeConfig().public;
 const headers = useRequestHeaders(["cookie"]);
@@ -459,15 +460,7 @@ const saveSettings = async () => {
 const validateImage = (file) => {
   if (!file) return true;
 
-  const validImageTypes = [
-    "image/jpeg",
-    "image/png",
-    "image/gif",
-    "image/webp",
-    "image/heic",
-    "image/heif",
-  ];
-  if (!validImageTypes.includes(file.type)) {
+  if (!app.$validImageTypes.includes(file.type)) {
     toast.error("Please upload a valid image file.");
     return false;
   }
@@ -667,7 +660,6 @@ const importCsv = async () => {
         Accept: "application/json",
       },
       body: formData,
-      mode: "cors",
       credentials: "include",
     });
 
@@ -718,11 +710,8 @@ const handleStartQuiz = async () => {
 
     listUserStore.removeAllUsers();
     setSocketObject(null);
+    sessionStore.setSession(activeQuizId);
     router.push(`/admin/arrange/${activeQuizId}`);
-
-    setTimeout(() => {
-      sessionStore.setSession(activeQuizId);
-    }, 1000);
   } catch (error) {
     toast.error(error?.message || "Error while starting quiz.");
   } finally {

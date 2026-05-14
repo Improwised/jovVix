@@ -40,11 +40,11 @@
 
       <div class="grid gap-3 border-y-2 border-dashed border-jv-ink/15 py-4">
         <div class="flex flex-wrap items-center justify-center gap-2">
-          <button
+          <NavigationLink
             v-for="choice in mediaChoices"
             :key="`question-${choice.value}`"
             type="button"
-            class="inline-flex h-9 items-center gap-1.5 border-[2px] border-jv-ink px-3 text-[13px] font-black shadow-[1px_1px_0_#2D2D2D] transition-transform hover:rotate-[1deg]"
+            class="h-9"
             :class="
               form.question_media === choice.value
                 ? 'bg-jv-ink text-jv-white'
@@ -54,7 +54,7 @@
           >
             <component :is="choice.icon" class="size-4" :stroke-width="2.3" />
             <span>{{ choice.label }}</span>
-          </button>
+          </NavigationLink>
         </div>
 
         <textarea
@@ -82,11 +82,11 @@
     </div>
 
     <div class="mt-5 flex flex-wrap justify-end gap-2">
-      <button
+      <NavigationLink
         v-for="choice in mediaChoices"
         :key="`options-${choice.value}`"
         type="button"
-        class="inline-flex h-9 items-center gap-1.5 border-[2px] border-jv-ink px-3 text-[13px] font-black shadow-[1px_1px_0_#2D2D2D] transition-transform hover:rotate-[1deg]"
+        class="h-9"
         :class="
           form.options_media === choice.value
             ? 'bg-jv-ink text-jv-white'
@@ -96,7 +96,7 @@
       >
         <component :is="choice.icon" class="size-4" :stroke-width="2.3" />
         <span>{{ choice.label }}</span>
-      </button>
+      </NavigationLink>
     </div>
 
     <div class="mt-3 grid gap-3">
@@ -171,21 +171,16 @@
     <div
       class="mt-6 flex flex-col-reverse gap-3 border-t-2 border-dashed border-jv-ink/15 pt-4 sm:flex-row sm:justify-end"
     >
-      <button
+      <NavigationLink
         v-if="showCancel"
-        type="button"
-        class="inline-flex h-11 items-center justify-center border-[3px] border-jv-ink bg-jv-white px-5 text-[15px] font-black text-jv-ink shadow-brutal-sm transition-transform hover:rotate-[-1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+        class="h-11 bg-jv-white font-black text-jv-ink"
         @click="$emit('cancel')"
       >
         Cancel
-      </button>
-      <button
-        type="submit"
-        class="inline-flex h-11 items-center justify-center border-[3px] border-jv-ink bg-jv-mint px-5 text-[15px] font-black text-jv-ink shadow-brutal-sm transition-transform hover:rotate-[1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none disabled:cursor-not-allowed disabled:opacity-60"
-        :disabled="saving"
-      >
+      </NavigationLink>
+      <NavigationLink class="h-11 bg-jv-mint font-black text-jv-ink">
         {{ saving ? "Saving..." : submitLabel }}
-      </button>
+      </NavigationLink>
     </div>
   </form>
 </template>
@@ -193,7 +188,7 @@
 <script setup>
 import { computed, reactive, ref, watch } from "vue";
 import { Code2, ImageIcon, Type } from "lucide-vue-next";
-
+import NavigationLink from "../common/NavigationLink.vue";
 const props = defineProps({
   question: {
     type: Object,
