@@ -75,6 +75,23 @@
   --shadow-brutal-sm: 2px 2px 0 0 var(--jv-ink);
   --shadow-brutal: 4px 4px 0 0 var(--jv-ink);
   --shadow-brutal-lg: 8px 8px 0 0 var(--jv-ink);
+
+  /* Animations */
+  --animate-hourglass-flip: hourglass-flip 2.6s ease-in-out infinite;
+}
+
+@keyframes hourglass-flip {
+  0%,
+  30% {
+    transform: rotate(0deg);
+  }
+  50%,
+  80% {
+    transform: rotate(180deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 :root {

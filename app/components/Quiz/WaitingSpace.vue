@@ -1,20 +1,24 @@
 <script setup>
 // core dependencies
-import { useNuxtApp } from "nuxt/app";
+import { useNuxtApp, useRouter } from "nuxt/app";
 import { useToast } from "vue-toastification";
 import { useMusicStore } from "~~/store/music";
 import {
   Check,
   Copy,
+  Hourglass,
   Info,
   Keyboard,
+  LogOut,
   Smile,
   UserRound,
   Users,
+  Volume2,
+  VolumeX,
 } from "lucide-vue-next";
 const { baseUrl } = useRuntimeConfig().public;
 const musicStore = useMusicStore();
-const { getMusic } = musicStore;
+const { getMusic, setMusic } = musicStore;
 
 const music = computed(() => {
   return getMusic();
@@ -23,11 +27,14 @@ const music = computed(() => {
 // define nuxt configs
 const app = useNuxtApp();
 const toast = useToast();
+const router = useRouter();
 
 import { useInvitationCodeStore } from "~/store/invitationcode.js";
 import { useListUserstore } from "~/store/userlist";
+import { useUsersStore } from "~~/store/users";
 import { storeToRefs } from "pinia";
 import usecopyToClipboard from "~~/composables/copy_to_clipboard";
+import { getAvatarUrlByName } from "~~/composables/avatar";
 
 const invitationCodeStore = useInvitationCodeStore();
 const { invitationCode } = storeToRefs(invitationCodeStore);
@@ -35,6 +42,9 @@ const { invitationCode } = storeToRefs(invitationCodeStore);
 const listUserStore = useListUserstore();
 const { removeAllUsers } = listUserStore;
 const { listUsers } = storeToRefs(listUserStore);
+
+const usersStore = useUsersStore();
+const { getUserData } = usersStore;
 
 const startQuiz = ref(false);
 const waitingSound = ref(null);
@@ -59,6 +69,11 @@ const props = defineProps({
     type: Boolean,
     required: false,
   },
+  userName: {
+    default: "",
+    type: String,
+    required: false,
+  },
 });
 const emits = defineEmits(["startQuiz", "terminateQuiz"]);
 
@@ -70,6 +85,36 @@ const joinUrlWithCode = computed(() => `${joinUrl.value}?code=${code.value}`);
 
 const getParticipantName = (user) =>
   user?.UserName || user?.username || user?.name || "Player";
+
+const quizTitle = computed(
+  () =>
+    props.data?.quizTitle ||
+    props.data?.title ||
+    props.data?.data?.quizTitle ||
+    "Live Quiz"
+);
+
+const waitingMessage = computed(() => {
+  const raw = props.data?.data;
+  if (typeof raw === "string" && raw.length) return raw;
+  return "Quiz will start soon..";
+});
+
+const toggleMusic = () => setMusic(!music.value);
+
+const leaveLobby = () => {
+  router.push("/join");
+};
+
+const displayName = computed(() => {
+  const name = (props.userName || "").trim();
+  return name || "Player";
+});
+
+const userAvatar = computed(() => {
+  const stored = getUserData();
+  return getAvatarUrlByName(stored?.avatar || displayName.value);
+});
 
 // watchers
 watch(
@@ -93,7 +138,7 @@ function start_quiz(e) {
 // main function
 function handleEvent(message) {
   if (message.event == app.$SentInvitaionCode) {
-    code.value = invitationCode.value;
+    code.value = invitationCode.value.toString();
   }
 }
 
@@ -401,16 +446,146 @@ watch(
       </footer>
     </section>
   </main>
-  <Frame
-    v-else
-    :music-component="true"
-    page-title="Ready Steady Go"
-    :page-message="data.data"
-  >
-    <div class="my-24 text-center font-body text-[30px] text-jv-ink">
-      {{ data.data }}
+  <main v-else class="flex min-h-screen flex-col bg-jv-canvas text-jv-ink">
+    <header
+      class="flex flex-wrap items-center justify-between gap-3 px-4 py-4 sm:gap-4 sm:px-6 sm:py-5 md:px-10"
+    >
+      <div class="flex min-w-0 items-center gap-3 sm:gap-4">
+        <!-- <span
+          class="grid size-11 shrink-0 -rotate-3 place-items-center rounded-full border-[2px] border-jv-ink bg-jv-coral shadow-brutal-sm sm:size-12"
+        >
+          <Zap
+            class="size-5 text-white sm:size-6"
+            :stroke-width="2.6"
+            fill="white"
+          />
+        </span>
+        <h1 class="font-headings text-[24px] tracking-tight sm:text-[30px]">
+          JovVix
+        </h1>
+        <span
+          class="hidden h-12 w-1 rotate-[10deg] rounded-full bg-jv-ink/20 sm:block"
+          aria-hidden="true"
+        ></span> -->
+        <div class="flex min-w-0 flex-col">
+          <p
+            class="font-body text-[10px] font-bold uppercase tracking-[0.12em] text-jv-muted sm:text-[12px]"
+          >
+            Live Quiz Session
+          </p>
+          <h2
+            class="relative truncate font-headings text-[22px] leading-tight sm:text-[28px] md:text-[32px]"
+          >
+            <span class="relative z-10">{{ quizTitle }}</span>
+            <span
+              class="absolute bottom-[2px] left-0 z-0 h-[6px] w-[60%] max-w-[120px] rotate-[-1deg] bg-jv-yellow/70"
+              aria-hidden="true"
+            ></span>
+          </h2>
+        </div>
+      </div>
+
+      <div class="flex shrink-0 items-center gap-2 sm:gap-3">
+        <button
+          type="button"
+          class="grid size-11 -rotate-2 place-items-center rounded-[8px] border-[2px] border-jv-ink bg-jv-white text-jv-ink shadow-brutal-sm transition-transform hover:rotate-[2deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none sm:size-12"
+          :aria-label="music ? 'Mute music' : 'Unmute music'"
+          @click="toggleMusic"
+        >
+          <Volume2 v-if="music" class="size-5" :stroke-width="2.4" />
+          <VolumeX v-else class="size-5" :stroke-width="2.4" />
+        </button>
+        <button
+          type="button"
+          class="inline-flex h-11 rotate-[0.5deg] items-center justify-center gap-2 rounded-[8px] border-[2px] border-jv-ink bg-jv-white px-4 font-body text-[15px] font-bold text-jv-ink shadow-brutal-sm transition-transform hover:rotate-[-1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none sm:h-12 sm:px-5 sm:text-[18px]"
+          @click="leaveLobby"
+        >
+          <LogOut class="size-4 sm:size-5" :stroke-width="2.4" />
+          <span>Leave Lobby</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="flex justify-center px-4 sm:px-6 md:px-10">
+      <div
+        class="inline-flex max-w-full items-center gap-3 rotate-[-0.5deg] jv-border-rough bg-jv-white px-3 py-2 shadow-brutal-sm sm:gap-4 sm:px-5 sm:py-2.5"
+      >
+        <span
+          class="grid size-10 shrink-0 place-items-center overflow-hidden rounded-full border-[2px] border-jv-ink bg-jv-mint sm:size-12"
+        >
+          <img
+            v-if="userAvatar"
+            :src="userAvatar"
+            :alt="`${displayName} avatar`"
+            class="size-full object-cover"
+          />
+          <UserRound v-else class="size-5 sm:size-6" :stroke-width="2.4" />
+        </span>
+        <div class="flex min-w-0 flex-col">
+          <p
+            class="font-body text-[10px] font-bold uppercase tracking-[0.12em] text-jv-muted sm:text-[12px]"
+          >
+            Playing as
+          </p>
+          <p
+            class="min-w-0 truncate font-headings text-[18px] leading-tight text-jv-ink sm:text-[22px]"
+          >
+            {{ displayName }}
+          </p>
+        </div>
+      </div>
     </div>
-  </Frame>
+
+    <section
+      class="flex flex-1 items-center justify-center px-4 py-6 sm:px-6 sm:py-10 md:px-10 md:py-12"
+    >
+      <div class="relative w-full max-w-[980px] rotate-[-0.5deg]">
+        <span
+          class="absolute left-1/2 top-[-10px] z-10 h-4 w-20 -translate-x-1/2 rotate-2 bg-jv-yellow/80 shadow-[0_1px_3px_rgba(0,0,0,0.1)]"
+          aria-hidden="true"
+        ></span>
+
+        <div
+          class="jv-border-rough bg-jv-white p-6 shadow-brutal-lg sm:p-10 md:p-12"
+        >
+          <div class="border-b-2 border-dashed border-jv-ink/20 pb-6 sm:pb-7">
+            <h2
+              class="font-headings text-[28px] leading-tight sm:text-[36px] md:text-[48px]"
+            >
+              Ready, Steady, Go!
+            </h2>
+            <p
+              class="mt-1 font-body text-[14px] font-bold text-jv-muted sm:text-[18px]"
+            >
+              Quiz will start soon
+            </p>
+          </div>
+
+          <div
+            class="flex flex-wrap items-center justify-center gap-4 px-2 py-12 text-center sm:gap-5 sm:py-20 md:py-24"
+          >
+            <h3
+              class="font-headings text-[30px] leading-tight sm:text-[44px] md:text-[60px]"
+            >
+              {{ waitingMessage }}
+            </h3>
+            <span
+              class="relative grid size-14 shrink-0 rotate-6 place-items-center rounded-full border-[3px] border-jv-ink bg-jv-mint shadow-brutal sm:size-16"
+            >
+              <Hourglass
+                class="size-6 animate-hourglass-flip sm:size-7"
+                :stroke-width="2.4"
+              />
+              <span
+                class="absolute inset-1 rounded-full border border-dashed border-jv-ink/40"
+                aria-hidden="true"
+              ></span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
 </template>
 <style scoped>
 .code {
