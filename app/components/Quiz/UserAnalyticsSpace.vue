@@ -1,4 +1,12 @@
 <script setup>
+import {
+  CheckCircle2,
+  XCircle,
+  MinusCircle,
+  ListChecks,
+  X,
+} from "lucide-vue-next";
+
 const props = defineProps({
   data: {
     type: Object,
@@ -11,8 +19,9 @@ const props = defineProps({
 });
 
 const analysis = ref({});
-const incorrectWidth = ref(0);
 const unattemptedWidth = ref(0);
+const incorrectWidth = ref(0);
+const isOpen = ref(false);
 
 onMounted(() => {
   analysis.value = questionsAnalysis(props.data);
@@ -23,15 +32,6 @@ onMounted(() => {
     100 - analysis.value?.accuracy - unattemptedWidth.value;
 });
 
-const handleMouseEnter = (event) => {
-  event.target.style.transform = "scale(1.05)"; // Scale up on hover
-  event.target.style.transition = "transform 0.3s ease"; // Add transition
-};
-
-const handleMouseLeave = (event) => {
-  event.target.style.transform = "scale(1)"; // Reset scale on leave
-};
-
 const avatar = computed(() => {
   const rankData = props.data?.filter((item) => item.hasOwnProperty("rank"));
 
@@ -40,235 +40,174 @@ const avatar = computed(() => {
   }
   return getAvatarUrlByName("");
 });
+
+const onKeydown = (e) => {
+  if (e.key === "Escape") isOpen.value = false;
+};
+
+watch(isOpen, (open) => {
+  if (typeof document === "undefined") return;
+  if (open) {
+    document.addEventListener("keydown", onKeydown);
+    document.body.style.overflow = "hidden";
+  } else {
+    document.removeEventListener("keydown", onKeydown);
+    document.body.style.overflow = "";
+  }
+});
+
+onBeforeUnmount(() => {
+  if (typeof document !== "undefined") {
+    document.removeEventListener("keydown", onKeydown);
+    document.body.style.overflow = "";
+  }
+});
 </script>
 
 <template>
-  <!-- userQuestionsAnalysis Modal -->
-
-  <div
-    :id="props.userName"
-    class="modal fade"
-    tabindex="-1"
-    aria-labelledby="exampleModalLabel"
-    aria-hidden="true"
+  <!-- Participant card -->
+  <button
+    type="button"
+    class="w-full text-left jv-border-rough bg-jv-white p-5 sm:p-6 shadow-brutal-sm transition-transform hover:translate-y-[-2px] hover:shadow-brutal cursor-pointer"
+    @click="isOpen = true"
   >
+    <!-- Top row: avatar + name | stats -->
     <div
-      class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered"
+      class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
     >
-      <div class="modal-content">
-        <div class="modal-header">
-          <h1 id="exampleModalLabel" class="modal-title fs-5">
+      <div class="flex items-center gap-4 min-w-0">
+        <img
+          :src="avatar"
+          :alt="props.data[0].firstname"
+          class="size-14 shrink-0 rounded-full border-[3px] border-jv-ink bg-jv-slate object-cover shadow-brutal-sm"
+        />
+        <div class="min-w-0">
+          <div
+            class="font-headings text-[22px] leading-tight text-jv-ink sm:text-[24px] truncate"
+          >
+            {{ props.data[0].firstname }}
+          </div>
+          <div class="text-[14px] font-semibold text-jv-muted truncate">
+            ({{ props.data[0].username }})
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-end gap-6 sm:gap-8">
+        <div class="text-center">
+          <div class="text-[22px] font-black text-jv-ink sm:text-[24px]">
+            {{ analysis?.rank }}
+          </div>
+          <div
+            class="mt-0.5 text-[11px] font-black uppercase tracking-[0.14em] text-jv-muted"
+          >
+            Rank
+          </div>
+        </div>
+        <div class="text-center">
+          <div class="text-[22px] font-black text-jv-ink sm:text-[24px]">
+            {{ analysis?.accuracy }}%
+          </div>
+          <div
+            class="mt-0.5 text-[11px] font-black uppercase tracking-[0.14em] text-jv-muted"
+          >
+            Accuracy
+          </div>
+        </div>
+        <div class="text-center">
+          <div class="text-[22px] font-black text-jv-ink sm:text-[24px]">
+            {{ analysis?.totalScore }}
+          </div>
+          <div
+            class="mt-0.5 text-[11px] font-black uppercase tracking-[0.14em] text-jv-muted"
+          >
+            Score
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Multi-segment progress bar -->
+    <div
+      class="mt-5 flex h-2.5 w-full overflow-hidden rounded-full bg-jv-slate"
+    >
+      <div
+        class="h-full bg-jv-accent-green"
+        :style="{ width: `${analysis?.accuracy || 0}%` }"
+      ></div>
+      <div
+        class="h-full bg-jv-coral"
+        :style="{ width: `${Math.max(incorrectWidth, 0)}%` }"
+      ></div>
+      <div
+        class="h-full bg-jv-ink/20"
+        :style="{ width: `${Math.max(unattemptedWidth, 0)}%` }"
+      ></div>
+    </div>
+
+    <!-- Bottom counts row -->
+    <div
+      class="mt-4 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[14px] font-bold text-jv-ink"
+    >
+      <span class="inline-flex items-center gap-1.5">
+        <CheckCircle2 class="size-4 text-jv-accent-green" :stroke-width="2.6" />
+        {{ analysis?.correctAnwers }}
+      </span>
+      <span class="inline-flex items-center gap-1.5">
+        <XCircle class="size-4 text-jv-coral" :stroke-width="2.6" />
+        {{ analysis?.wrongAnwers }}
+      </span>
+      <span class="inline-flex items-center gap-1.5">
+        <MinusCircle class="size-4 text-jv-muted" :stroke-width="2.6" />
+        {{ analysis?.unAttemptedQuestions }}
+      </span>
+      <span
+        v-if="analysis?.totalSurveyQuestions > 0"
+        class="inline-flex items-center gap-1.5"
+      >
+        <ListChecks class="size-4 text-jv-muted" :stroke-width="2.6" />
+        {{ analysis?.attemptedSurveyQuestions }} /
+        {{ analysis?.totalSurveyQuestions }}
+      </span>
+    </div>
+  </button>
+
+  <!-- Per-user Questions Analysis Modal (Vue-controlled, JovVix style) -->
+  <Teleport to="body">
+    <div
+      v-if="isOpen"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+      :aria-labelledby="`${props.userName}-title`"
+    >
+      <div class="absolute inset-0 bg-jv-ink/60" @click="isOpen = false"></div>
+
+      <div
+        class="relative z-10 flex max-h-[90vh] w-full max-w-3xl flex-col jv-border-rough bg-jv-white shadow-brutal-lg"
+      >
+        <div
+          class="flex items-center justify-between gap-4 border-b-2 border-jv-ink/15 px-5 py-4 sm:px-6"
+        >
+          <h2
+            :id="`${props.userName}-title`"
+            class="font-headings text-[22px] leading-tight text-jv-ink sm:text-[26px]"
+          >
             Questions Analysis
-          </h1>
+          </h2>
           <button
             type="button"
-            class="btn-close"
-            data-bs-dismiss="modal"
+            class="flex size-9 shrink-0 items-center justify-center jv-border-rough bg-jv-white text-jv-ink shadow-brutal-sm hover:bg-jv-yellow/50 transition-colors"
             aria-label="Close"
-          ></button>
+            @click="isOpen = false"
+          >
+            <X class="size-5" :stroke-width="2.6" />
+          </button>
         </div>
-        <div class="modal-body">
+        <div class="overflow-y-auto px-5 py-5 sm:px-6 sm:py-6">
           <QuizAnalysis :data="props.data" />
         </div>
       </div>
     </div>
-  </div>
-
-  <!-- Participants Analysis-->
-  <div
-    class="user-analytics-item"
-    type="button"
-    data-bs-toggle="modal"
-    :data-bs-target="`#${props.userName}`"
-    @mouseenter="handleMouseEnter"
-    @mouseleave="handleMouseLeave"
-  >
-    <div class="user-stats-box">
-      <div class="header">
-        <div class="avatar-container">
-          <img class="avatar" :src="avatar" alt="Avatar" />
-          <div class="name">
-            {{ props.data[0].firstname }}
-            <span>({{ props.data[0].username }})</span>
-          </div>
-        </div>
-        <div class="stats">
-          <div class="stat-item">
-            <span class="value">{{ analysis?.rank }}</span>
-            <span class="label">Rank</span>
-          </div>
-          <div class="stat-item">
-            <span class="value">{{ analysis?.accuracy }}%</span>
-            <span class="label">Accuracy</span>
-          </div>
-          <div class="stat-item">
-            <span class="value">{{ analysis?.totalScore }}</span>
-            <span class="label">Score</span>
-          </div>
-        </div>
-      </div>
-      <div class="quiz-header mb-4">
-        <div class="quiz-accuracy position-relative w-100">
-          <div class="progress">
-            <div
-              class="progress-bar bg-success"
-              role="progressbar"
-              :style="{ width: analysis?.accuracy + '%' }"
-              aria-valuenow="70"
-              aria-valuemin="0"
-              aria-valuemax="100"
-            ></div>
-            <div
-              class="progress-bar bg-danger"
-              role="progressbar"
-              :style="{ width: incorrectWidth + '%' }"
-              aria-valuenow="20"
-              aria-valuemin="0"
-              aria-valuemax="100"
-            ></div>
-            <div
-              class="progress-bar bg-secondary"
-              role="progressbar"
-              :style="{ width: unattemptedWidth + '%' }"
-              aria-valuenow="10"
-              aria-valuemin="0"
-              aria-valuemax="100"
-            ></div>
-          </div>
-        </div>
-      </div>
-      <div class="d-flex justify-content-center">
-        &#9989; {{ analysis?.correctAnwers }} &ensp; &#10060;
-        {{ analysis?.wrongAnwers }} &ensp; &#x25CC;
-        {{ analysis?.unAttemptedQuestions }} &ensp;
-        <span v-if="analysis?.totalSurveyQuestions > 0"
-          >&#128203; {{ analysis?.attemptedSurveyQuestions }} /
-          {{ analysis?.totalSurveyQuestions }}</span
-        >
-      </div>
-    </div>
-  </div>
+  </Teleport>
 </template>
-
-<style scoped>
-.user-stats-box {
-  border: 1px solid #ddd;
-  padding: 10px;
-  border-radius: 8px;
-  width: 100%;
-  max-width: 600px;
-  background-color: white;
-  margin: 0 auto;
-  box-sizing: border-box;
-  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
-  /* Box shadow added */
-}
-
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
-}
-
-.avatar-container {
-  display: flex;
-  align-items: center;
-}
-
-.avatar {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-}
-
-.name {
-  font-size: 18px;
-  font-weight: bold;
-  margin-left: 10px;
-}
-
-.stats {
-  display: flex;
-  flex-wrap: nowrap;
-  justify-content: flex-end;
-}
-
-.stat-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-left: 20px;
-}
-
-.label {
-  font-size: 12px;
-  color: #888;
-}
-
-.value {
-  font-size: 14px;
-  font-weight: bold;
-}
-
-.divider {
-  width: 100%;
-  border: none;
-  height: 1px;
-  background-color: #000;
-  margin: 10px 0;
-}
-
-.progress-bar {
-  display: flex;
-  height: 10px;
-  border-radius: 5px;
-  overflow: hidden;
-  width: 100%;
-}
-
-.correct {
-  background-color: #4caf50;
-}
-
-.incorrect {
-  background-color: #f44336;
-}
-
-@media (max-width: 600px) {
-  .header {
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-
-  .avatar-container {
-    margin-bottom: 10px;
-  }
-
-  .stats {
-    justify-content: center;
-    flex-wrap: nowrap;
-  }
-
-  .stat-item {
-    margin-left: 10px;
-    margin-top: 0;
-  }
-}
-
-.user-analytics-item {
-  padding: 10px;
-  margin-bottom: 10px;
-  border: none;
-  /* Remove border */
-  border-radius: 5px;
-  cursor: pointer;
-  transition: transform 0.3s ease;
-  /* Add transition for scale */
-}
-
-.user-analytics-item:hover {
-  transform: scale(1.05);
-  /* Scale up on hover */
-}
-</style>
