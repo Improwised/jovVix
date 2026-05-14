@@ -26,7 +26,7 @@ defineOptions({ inheritAttrs: false });
 
 const props = defineProps({
   url: {
-    type: String,
+    type: [String, Object],
     default: "",
   },
   urlName: {
