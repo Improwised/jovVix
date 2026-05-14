@@ -216,11 +216,33 @@
               </div>
             </div>
 
+            <div
+              v-if="question.question_media === 'image' && question.resource"
+              class="mt-3 flex justify-center border-[3px] border-jv-ink bg-jv-canvas p-2"
+              @click.stop
+            >
+              <img
+                :src="question.resource"
+                :alt="question.question"
+                class="max-h-64 w-auto max-w-full object-contain"
+              />
+            </div>
+
+            <div
+              v-else-if="
+                question.question_media === 'code' && question.resource
+              "
+              class="mt-3 min-w-0 overflow-x-auto border-none border-jv-ink bg-jv-canvas"
+              @click.stop
+            >
+              <CodeBlockComponent :code="question.resource" />
+            </div>
+
             <div class="mt-4 grid gap-3 sm:grid-cols-2">
               <div
                 v-for="(option, key) in question.options"
                 :key="key"
-                class="flex min-h-12 items-center gap-3 border-[3px] border-jv-ink bg-jv-white px-3 py-2 text-[15px] font-semibold text-jv-ink"
+                class="flex min-w-0 min-h-12 items-center gap-3 border-[3px] border-jv-ink bg-jv-white px-3 py-2 text-[15px] font-semibold text-jv-ink"
                 :class="isCorrectAnswer(question, key) ? 'bg-jv-mint/45' : ''"
               >
                 <span
@@ -228,7 +250,30 @@
                 >
                   {{ optionLabel(key) }}
                 </span>
-                <span class="min-w-0 break-words">{{ option }}</span>
+
+                <div
+                  v-if="question.options_media === 'image' && option"
+                  class="flex min-w-0 flex-1 justify-center"
+                  @click.stop
+                >
+                  <img
+                    :src="option"
+                    :alt="`Option ${optionLabel(key)}`"
+                    class="max-h-32 w-auto max-w-full object-contain"
+                  />
+                </div>
+
+                <div
+                  v-else-if="question.options_media === 'code' && option"
+                  class="min-w-0 flex-1 overflow-x-auto"
+                  @click.stop
+                >
+                  <CodeBlockComponent :code="option" />
+                </div>
+
+                <span v-else class="min-w-0 flex-1 break-words">
+                  {{ option }}
+                </span>
               </div>
             </div>
           </template>
@@ -329,6 +374,7 @@ import { computed, ref, watch } from "vue";
 import { Pencil, Play, Plus, Share2, Trash2, Upload, X } from "lucide-vue-next";
 import { useToast } from "vue-toastification";
 import QuestionFormCard from "@/components/quiz-manage/QuestionFormCard.vue";
+import CodeBlockComponent from "@/components/CodeBlockComponent.vue";
 import usecopyToClipboard from "@/composables/copy_to_clipboard";
 import { useListUserstore } from "~/store/userlist";
 import { useSessionStore } from "~~/store/session";
@@ -379,13 +425,13 @@ const {
 const questions = computed(() => quizData.value?.data?.data || []);
 const quizTitle = computed(() => quizData.value?.data?.quiz_title || "Quiz");
 const quizDescription = computed(
-  () => quizData.value?.data?.quiz_description?.String || ""
+  () => quizData.value?.data?.quiz_description?.String || "",
 );
 const totalSurveyQuestion = computed(() =>
   questions.value.reduce(
     (count, item) => (item.question_type_id === 2 ? count + 1 : count),
-    0
-  )
+    0,
+  ),
 );
 const canEditQuiz = computed(() => {
   const permission = quizData.value?.data?.permission;
@@ -402,7 +448,7 @@ watch(
       duration_in_seconds: Number(data.duration_in_seconds ?? 10),
     };
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 const parseAnswers = (value) => {
@@ -450,7 +496,7 @@ const saveSettings = async () => {
     toast.error(
       error?.data?.message ||
         error?.message ||
-        "Failed to update quiz settings."
+        "Failed to update quiz settings.",
     );
   } finally {
     settingsPending.value = false;
@@ -468,7 +514,7 @@ const validateImage = (file) => {
     toast.error(
       `Please upload an image less than ${
         url.maxImageFileSize / 1024 / 1024
-      } MB.`
+      } MB.`,
     );
     return false;
   }
@@ -521,7 +567,7 @@ const saveNewQuestion = async ({ payload, files }) => {
         headers,
         credentials: "include",
         body: payloadWithDefaults,
-      }
+      },
     );
 
     const questionId = response?.data;
@@ -535,7 +581,7 @@ const saveNewQuestion = async ({ payload, files }) => {
     refresh();
   } catch (error) {
     toast.error(
-      error?.data?.message || error?.message || "Failed to add question."
+      error?.data?.message || error?.message || "Failed to add question.",
     );
   } finally {
     savingNewQuestion.value = false;
@@ -577,7 +623,7 @@ const saveExistingQuestion = async (question, { payload, files }) => {
         headers,
         credentials: "include",
         body: buildUpdatePayload(question, payload),
-      }
+      },
     );
 
     toast.success("Question updated successfully.");
@@ -585,7 +631,7 @@ const saveExistingQuestion = async (question, { payload, files }) => {
     refresh();
   } catch (error) {
     toast.error(
-      error?.data?.message || error?.message || "Failed to update question."
+      error?.data?.message || error?.message || "Failed to update question.",
     );
   } finally {
     savingQuestionId.value = "";
@@ -602,13 +648,13 @@ const deleteQuestion = async (questionId) => {
         method: "DELETE",
         headers,
         credentials: "include",
-      }
+      },
     );
     toast.success("Question deleted successfully.");
     refresh();
   } catch (error) {
     toast.error(
-      error?.data?.message || error?.message || "Failed to delete question."
+      error?.data?.message || error?.message || "Failed to delete question.",
     );
   }
 };
@@ -626,7 +672,7 @@ const deleteQuiz = async () => {
     router.push("/admin/quiz/list-quiz");
   } catch (error) {
     toast.error(
-      error?.data?.message || error?.message || "Failed to delete quiz."
+      error?.data?.message || error?.message || "Failed to delete quiz.",
     );
   }
 };
@@ -671,7 +717,7 @@ const importCsv = async () => {
       error?.data?.data ||
         error?.data?.message ||
         error?.message ||
-        "Failed to import CSV."
+        "Failed to import CSV.",
     );
   } finally {
     importPending.value = false;
@@ -699,7 +745,7 @@ const handleStartQuiz = async () => {
         headers: {
           Accept: "application/json",
         },
-      }
+      },
     );
 
     const activeQuizId = response?.data;
