@@ -1,48 +1,51 @@
 <template>
-  <div class="row mt-3">
-    <div class="col-sm-12 col-md-6">
-      <nav aria-label="Page navigation example">
-        <ul class="pagination pagination-primary">
-          <li class="page-item">
-            <NuxtLink
-              class="page-link"
-              :class="{ disabled: props.page <= 1 }"
-              :to="{
-                path: route.path,
-                query: { ...route.query, page: props.page - 1 },
-              }"
-            >
-              <span aria-hidden="true">
-                <font-awesome-icon icon="caret-left" />
-              </span>
-            </NuxtLink>
-          </li>
+  <div class="flex items-center justify-center gap-2 mt-8">
+    <NavigationLink
+      v-if="props.page > 1"
+      :url="{
+        path: route.path,
+        query: { ...route.query, page: props.page - 1 },
+      }"
+      class="h-10 md:p-2 bg-jv-white text-jv-ink"
+    >
+      <span aria-hidden="true" class="text-xl font-black">&lt;</span>
+    </NavigationLink>
+    <NavigationLink
+      v-else
+      disabled
+      class="h-10 md:p-2 bg-jv-white text-jv-ink cursor-not-allowed"
+    >
+      <span aria-hidden="true" class="text-xl font-black">&lt;</span>
+    </NavigationLink>
 
-          <li class="page-item active">
-            <div class="page-link border-circle">{{ props.page }}</div>
-          </li>
-
-          <li class="page-item">
-            <NuxtLink
-              class="page-link"
-              :class="{ disabled: props.page >= numOfRecords }"
-              :to="{
-                path: route.path,
-                query: { ...route.query, page: props.page + 1 },
-              }"
-            >
-              <span aria-hidden="true">
-                <font-awesome-icon icon="caret-right" />
-              </span>
-            </NuxtLink>
-          </li>
-        </ul>
-      </nav>
+    <div
+      class="flex h-10 w-10 items-center justify-center jv-border-rough bg-jv-coral text-white text-[16px] font-black shadow-brutal-sm rotate-[1deg]"
+    >
+      {{ props.page }}
     </div>
+
+    <NavigationLink
+      v-if="props.page < props.numOfRecords"
+      :url="{
+        path: route.path,
+        query: { ...route.query, page: props.page + 1 },
+      }"
+      class="h-10 md:p-2 bg-jv-white text-jv-ink"
+    >
+      <span aria-hidden="true" class="text-xl font-black">&gt;</span>
+    </NavigationLink>
+    <NavigationLink
+      v-else
+      disabled
+      class="h-10 md:p-2 bg-jv-white text-jv-ink cursor-not-allowed"
+    >
+      <span aria-hidden="true" class="text-xl font-black">&gt;</span>
+    </NavigationLink>
   </div>
 </template>
 
 <script setup>
+import NavigationLink from "./common/NavigationLink.vue";
 const route = useRoute();
 const props = defineProps({
   page: {
