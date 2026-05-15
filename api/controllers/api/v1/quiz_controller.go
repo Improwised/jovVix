@@ -2,6 +2,7 @@ package v1
 
 import (
 	"database/sql"
+	"encoding/json"
 	"net/http"
 	"os"
 	"strconv"
@@ -10,11 +11,13 @@ import (
 	"github.com/Improwised/jovvix/api/constants"
 	quizUtilsHelper "github.com/Improwised/jovvix/api/helpers/utils"
 	"github.com/Improwised/jovvix/api/models"
+	"github.com/Improwised/jovvix/api/pkg/structs"
 	"github.com/Improwised/jovvix/api/services"
 	"github.com/Improwised/jovvix/api/utils"
 	"github.com/doug-martin/goqu/v9"
 	fiber "github.com/gofiber/fiber/v2"
 	"go.uber.org/zap"
+	validator "gopkg.in/go-playground/validator.v9"
 )
 
 type QuizController struct {
@@ -77,6 +80,57 @@ func (ctrl *QuizController) GetAdminUploadedQuizzes(c *fiber.Ctx) error {
 	}
 
 	return utils.JSONSuccess(c, http.StatusOK, quizzes)
+}
+
+func (ctrl *QuizController) CreateQuiz(c *fiber.Ctx) error {
+	var quizReq structs.ReqCreateQuiz
+	err := json.Unmarshal(c.Body(), &quizReq)
+	if err != nil {
+		ctrl.logger.Error("validate req error", zap.Error(err))
+		return utils.JSONFail(c, http.StatusBadRequest, err.Error())
+	}
+
+	validate := validator.New()
+	err = validate.Struct(quizReq)
+	if err != nil {
+		ctrl.logger.Error("validate req error", zap.Any("quizReq", quizReq))
+		return utils.JSONFail(c, http.StatusBadRequest, utils.ValidatorErrorString(err))
+	}
+
+	userID := quizUtilsHelper.GetString(c.Locals(constants.ContextUid))
+	quizId, err := ctrl.quizModel.CreateQuiz(quizReq.Title, quizReq.Description, userID)
+	if err != nil {
+		ctrl.logger.Error("error in creating empty quiz", zap.Error(err))
+		return utils.JSONFail(c, http.StatusBadRequest, constants.ErrRegisterQuiz)
+	}
+
+	return utils.JSONSuccess(c, http.StatusCreated, quizId)
+}
+
+func (ctrl *QuizController) UpdateQuizSettings(c *fiber.Ctx) error {
+	quizId := c.Params(constants.QuizId)
+
+	var quizReq structs.ReqUpdateQuizSettings
+	err := json.Unmarshal(c.Body(), &quizReq)
+	if err != nil {
+		ctrl.logger.Error("validate req error", zap.Error(err))
+		return utils.JSONFail(c, http.StatusBadRequest, err.Error())
+	}
+
+	validate := validator.New()
+	err = validate.Struct(quizReq)
+	if err != nil {
+		ctrl.logger.Error("validate req error", zap.Any("quizReq", quizReq))
+		return utils.JSONFail(c, http.StatusBadRequest, utils.ValidatorErrorString(err))
+	}
+
+	err = ctrl.quizSvc.UpdateQuizSettings(quizId, quizReq.Points, quizReq.DurationInSeconds)
+	if err != nil {
+		ctrl.logger.Error("error in updating quiz settings", zap.Error(err))
+		return utils.JSONFail(c, http.StatusBadRequest, "error while updating quiz settings")
+	}
+
+	return utils.JSONSuccess(c, http.StatusOK, "quiz settings update success")
 }
 
 // GetQuizAnalysis for getting quiz details hosted by Admin

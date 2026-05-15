@@ -246,7 +246,9 @@ func setupQuizController(v1 fiber.Router, db *goqu.Database, logger *zap.Logger,
 
 	quizzes.Post(fmt.Sprintf("/:%s/demo_session", constants.QuizId), quizController.GenerateDemoSession)
 	quizzes.Post(fmt.Sprintf("/:%s/upload", constants.QuizTitle), middleware.ValidateCsv, middleware.KratosAuthenticated, quizController.CreateQuizByCsv)
+	quizzes.Post("/", quizController.CreateQuiz)
 	quizzes.Get("/", quizController.GetAdminUploadedQuizzes)
+	quizzes.Put(fmt.Sprintf("/:%s/settings", constants.QuizId), middleware.QuizPermission, middleware.VerifyQuizEditAccess, quizController.UpdateQuizSettings)
 	quizzes.Delete(fmt.Sprintf("/:%s", constants.QuizId), middleware.QuizPermission, middleware.VerifyQuizEditAccess, quizController.DeleteQuizById)
 
 	report := admin.Group("/reports")
@@ -265,6 +267,8 @@ func setupQuestionController(v1 fiber.Router, db *goqu.Database, logger *zap.Log
 	questionRouter.Use(middleware.KratosAuthenticated, middleware.QuizPermission)
 
 	questionRouter.Get("/", questionController.ListQuestionsWithAnswerByQuizId)
+	questionRouter.Post("/", middleware.VerifyQuizEditAccess, questionController.CreateQuestion)
+	questionRouter.Post("/upload", middleware.VerifyQuizEditAccess, middleware.ValidateCsv, questionController.ImportQuestionsByCsv)
 	questionRouter.Get(fmt.Sprintf("/:%s", constants.QuestionId), middleware.VerifyQuizEditAccess, questionController.GetQuestionById)
 	questionRouter.Put(fmt.Sprintf("/:%s", constants.QuestionId), middleware.VerifyQuizEditAccess, questionController.UpdateQuestionById)
 	questionRouter.Delete(fmt.Sprintf("/:%s", constants.QuestionId), middleware.VerifyQuizEditAccess, questionController.DeleteQuestionById)

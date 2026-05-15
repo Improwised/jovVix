@@ -50,12 +50,8 @@ const handleStartDemo = async () => {
 
   removeAllUsers();
   setSocketObject(null);
+  setSession(activeQuizId.value);
   router.push(`/admin/arrange/${activeQuizId.value}`);
-
-  // add session in store after 1 second
-  setTimeout(() => {
-    setSession(activeQuizId.value);
-  }, 1000);
 };
 </script>
 <template>

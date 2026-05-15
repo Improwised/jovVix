@@ -14,7 +14,7 @@
       <template v-if="mounted">
         <NavigationLink
           v-if="showAdminNav"
-          url="/admin/quiz/create-quiz"
+          url="/admin/quiz/list-quiz?create=1"
           url-name="Create Quiz"
         >
           <Plus class="size-[18px]" />
@@ -340,7 +340,7 @@ const mobileNavItems = computed(() => {
       },
       {
         label: "Create Quiz",
-        url: "/admin/quiz/create-quiz",
+        url: "/admin/quiz/list-quiz?create=1",
         icon: Plus,
       },
     ];
@@ -349,7 +349,7 @@ const mobileNavItems = computed(() => {
   return [
     { label: "Home", url: "/", icon: Home, active: true },
     { label: "Enter Code", url: "/join" },
-    { label: "Create Quiz", url: "/admin/quiz/create-quiz", icon: Plus },
+    { label: "Create Quiz", url: "/admin/quiz/list-quiz?create=1", icon: Plus },
     { label: "Sign In", url: "/account/login" },
     { label: "Sign Up", url: "/account/register" },
   ];

@@ -108,6 +108,7 @@
 
 <script setup>
 import { useToast } from "vue-toastification";
+const app = useNuxtApp();
 const url = useRuntimeConfig().public;
 const headers = useRequestHeaders(["cookie"]);
 const toast = useToast();
@@ -155,15 +156,7 @@ const onImageChange = async (e) => {
   // Validate file
   const file = e.target.files[0];
 
-  const validImageTypes = [
-    "image/jpeg",
-    "image/png",
-    "image/gif",
-    "image/webp",
-    "image/heic",
-    "image/heif",
-  ];
-  if (!validImageTypes.includes(file.type)) {
+  if (!app.$validImageTypes.includes(file.type)) {
     toast.error(
       "Please upload a valid image file (JPEG, PNG, GIF, WEBP, HEIC, HEIF)."
     );

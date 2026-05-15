@@ -62,4 +62,14 @@ export default {
 
   // Messages
   CsvUploadSuccess: "File uploaded successfully",
+
+  // Image upload
+  validImageTypes: [
+    "image/jpeg",
+    "image/png",
+    "image/gif",
+    "image/webp",
+    "image/heic",
+    "image/heif",
+  ],
 };

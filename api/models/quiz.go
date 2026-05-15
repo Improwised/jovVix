@@ -65,7 +65,19 @@ func (model *QuizModel) GetQuizzesByAdmin(creator_id string) ([]QuizWithQuestion
 		Select(goqu.COUNT("question_id")).
 		Where(goqu.C("quiz_id").Eq(goqu.I("quizzes.id")))
 
-	rows, err := model.db.From("quizzes").Select(goqu.L("*"), questionsCountSubquery.As("total_questions")).Order(goqu.I("created_at").Desc()).Where(goqu.I("creator_id").Eq(creator_id)).Executor().Query()
+	rows, err := model.db.From("quizzes").
+		Select(
+			goqu.I("quizzes.id"),
+			goqu.I("quizzes.title"),
+			goqu.I("quizzes.description"),
+			goqu.I("quizzes.creator_id"),
+			goqu.I("quizzes.created_at"),
+			goqu.I("quizzes.updated_at"),
+			questionsCountSubquery.As("total_questions"),
+		).
+		Order(goqu.I("created_at").Desc()).
+		Where(goqu.I("creator_id").Eq(creator_id)).
+		Executor().Query()
 
 	if err != nil {
 		return nil, err
@@ -94,6 +106,60 @@ func (model *QuizModel) GetQuizzesByAdmin(creator_id string) ([]QuizWithQuestion
 		quizzes = append(quizzes, quizWithQuestions)
 	}
 	return quizzes, nil
+}
+
+func (model *QuizModel) CreateQuiz(title, description, userId string) (uuid.UUID, error) {
+	quizId, err := uuid.NewUUID()
+	if err != nil {
+		return quizId, err
+	}
+
+	ok, err := model.db.Insert(QuizzesTable).Rows(
+		goqu.Record{
+			"id":          quizId,
+			"title":       title,
+			"description": sql.NullString{Valid: description != "", String: description},
+			"creator_id":  userId,
+		},
+	).Returning("id").Executor().ScanVal(&quizId)
+	if err != nil {
+		return quizId, err
+	}
+	if !ok {
+		return quizId, sql.ErrNoRows
+	}
+
+	return quizId, nil
+}
+
+func (model *QuizModel) GetQuizById(quizId string) (QuizWithQuestions, error) {
+	var quiz QuizWithQuestions
+	found, err := model.db.From(QuizzesTable).
+		Select(
+			"id",
+			"title",
+			"description",
+			"creator_id",
+			"created_at",
+			"updated_at",
+		).
+		Where(goqu.Ex{"id": quizId}).
+		Limit(1).
+		ScanStruct(&quiz)
+	if err != nil {
+		return quiz, err
+	}
+	if !found {
+		return quiz, sql.ErrNoRows
+	}
+
+	decodedTitle, err := url.QueryUnescape(quiz.Title)
+	if err != nil {
+		return quiz, err
+	}
+	quiz.Title = decodedTitle
+
+	return quiz, nil
 }
 
 func (model *QuizModel) GetSharedQuestions(invitationCode int) ([]Question, sql.NullTime, error) {
