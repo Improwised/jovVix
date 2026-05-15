@@ -91,7 +91,10 @@
       </div>
 
       <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
-        <div class="flex flex-wrap items-center gap-4">
+        <div
+          v-if="questions.length > 0"
+          class="flex flex-wrap items-center gap-4"
+        >
           <label
             class="inline-flex items-center gap-2 text-[15px] font-semibold text-jv-muted"
           >
@@ -103,7 +106,6 @@
               max="20"
               :disabled="!canEditQuiz || settingsPending"
               class="h-10 w-14 border-[3px] border-jv-ink bg-jv-white px-2 text-center text-[16px] font-black text-jv-ink shadow-brutal-sm outline-none disabled:opacity-60"
-              @change="saveSettings"
             />
           </label>
           <label
@@ -116,7 +118,6 @@
               min="1"
               :disabled="!canEditQuiz || settingsPending"
               class="h-10 w-16 border-[3px] border-jv-ink bg-jv-white px-2 text-center text-[16px] font-black text-jv-ink shadow-brutal-sm outline-none disabled:opacity-60"
-              @change="saveSettings"
             />
           </label>
         </div>
@@ -125,6 +126,13 @@
           v-if="canEditQuiz"
           class="flex flex-col gap-3 sm:flex-row sm:justify-end"
         >
+          <NavigationLink
+            v-if="canEditQuiz && hasUnsavedSettings"
+            url-name="Save Changes"
+            class="rounded-[999px] bg-jv-white"
+            :disabled="settingsPending"
+            @click="saveSettings"
+          />
           <NavigationLink
             url-name="Import Question by .CSV"
             class="rounded-[999px] bg-jv-white"
@@ -456,6 +464,16 @@ const canEditQuiz = computed(() => {
   const permission = quizData.value?.data?.permission;
   const isEditable = quizData.value?.data?.is_quiz_editable;
   return (permission === "write" || permission === "share") && isEditable;
+});
+
+const hasUnsavedSettings = computed(() => {
+  const data = quizData.value?.data;
+  if (!data) return false;
+  return (
+    Number(settings.value.points) !== Number(data.points ?? 10) ||
+    Number(settings.value.duration_in_seconds) !==
+      Number(data.duration_in_seconds ?? 10)
+  );
 });
 
 watch(
