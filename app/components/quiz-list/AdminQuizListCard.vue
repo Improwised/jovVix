@@ -12,41 +12,6 @@
       <div class="relative h-[104px] overflow-hidden sm:h-[112px] md:h-[124px]">
         <img :src="image" :alt="title" class="size-full object-cover" />
       </div>
-
-      <div
-        class="absolute inset-2 hidden place-items-center bg-jv-white/70 opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 sm:grid"
-      >
-        <div class="flex flex-col gap-3">
-          <NavigationLink
-            :url="viewUrl"
-            url-name="View Quiz"
-            class="bg-jv-coral text-white rounded-[999px]"
-          />
-          <NavigationLink
-            :url-name="starting ? 'Starting...' : 'Start Quiz'"
-            class="rounded-[999px]"
-            :disabled="starting"
-            @click="$emit('start-quiz')"
-          />
-        </div>
-      </div>
-    </div>
-
-    <div class="mt-3 grid grid-cols-2 gap-2 sm:hidden">
-      <NuxtLink
-        :to="viewUrl"
-        class="inline-flex h-10 items-center justify-center rounded-[8px] border-[3px] border-jv-ink bg-jv-coral px-3 text-[14px] font-bold text-white no-underline shadow-brutal-sm"
-      >
-        View Quiz
-      </NuxtLink>
-      <button
-        type="button"
-        class="inline-flex h-10 items-center justify-center rounded-[8px] border-[3px] border-jv-ink bg-jv-yellow px-3 text-[14px] font-bold text-jv-ink shadow-brutal-sm disabled:cursor-not-allowed disabled:opacity-70"
-        :disabled="starting"
-        @click="$emit('start-quiz')"
-      >
-        {{ starting ? "Starting..." : "Start Quiz" }}
-      </button>
     </div>
 
     <div
@@ -99,13 +64,25 @@
       {{ description }}
     </p>
 
-    <div class="mt-auto border-t-2 border-dashed border-jv-ink/15 pt-3">
-      <span
-        class="inline-flex max-w-full items-center gap-1.5 rounded-[5px] border border-jv-ink/30 bg-jv-white px-2.5 py-1 text-[12px] leading-none text-jv-muted shadow-[1px_1px_0_rgba(45,45,45,0.25)] sm:text-[13px]"
-      >
-        <CircleHelp class="size-3.5" :stroke-width="2.2" />
-        <span class="truncate">{{ questionCount }} Questions</span>
-      </span>
+    <span
+      class="inline-flex max-w-full items-center gap-1.5 px-2.5 py-1 text-[12px] leading-none text-jv-muted sm:text-[13px]"
+    >
+      <CircleHelp class="size-3.5" :stroke-width="2.2" />
+      <span class="truncate">{{ questionCount }} Questions</span>
+    </span>
+    <div class="mt-3 border-t-2 border-dashed border-jv-ink/15 pt-3">
+      <div class="mt-3 grid grid-cols-2 gap-2">
+        <NavigationLink
+          url-name="View Quiz"
+          :url="viewUrl"
+          class="h-8 rounded-full bg-jv-coral text-white shadow-none"
+        />
+        <NavigationLink
+          url-name="Start Quiz"
+          class="h-8 rounded-full shadow-none"
+          @click="$emit('start-quiz')"
+        />
+      </div>
     </div>
   </article>
 </template>
