@@ -194,15 +194,16 @@ onBeforeUnmount(() => {
       :full-screen-enabled="myRef"
       @is-full-screen="handleCustomChange"
     >
-      <UserName :user-name="firstname"></UserName>
+      <!-- <UserName :user-name="firstname"></UserName> -->
 
-      <QuizLoadingSpace
+      <QuizWaitingSpacePlayerSkeleton
         v-if="currentComponent === 'Loading'"
-      ></QuizLoadingSpace>
+      ></QuizWaitingSpacePlayerSkeleton>
       <QuizWaitingSpace
         v-else-if="currentComponent === 'Waiting'"
         :data="data"
         :is-admin="false"
+        :user-name="firstname"
         @start-quiz="startQuiz"
       >
       </QuizWaitingSpace>

@@ -223,7 +223,7 @@ definePageMeta({
   <div class="bg-image"></div>
   <Playground :full-screen-enabled="myRef" @is-full-screen="handleCustomChange">
     <div
-      v-if="currentComponent !== 'Waiting'"
+      v-if="currentComponent !== 'Waiting' && currentComponent !== 'Loading'"
       class="code-display flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-end sm:px-6 md:px-8"
     >
       <div
@@ -262,7 +262,9 @@ definePageMeta({
       :model-positive-message="confirmNeeded.positive"
       @confirm-message="(c) => handleModal(c)"
     ></UtilsConfirmModal>
-    <QuizLoadingSpace v-if="currentComponent == 'Loading'"></QuizLoadingSpace>
+    <QuizWaitingSpaceSkeleton
+      v-if="currentComponent == 'Loading'"
+    ></QuizWaitingSpaceSkeleton>
     <QuizWaitingSpace
       v-else-if="currentComponent == 'Waiting'"
       :data="data"
