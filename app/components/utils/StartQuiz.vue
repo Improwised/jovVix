@@ -2,6 +2,7 @@
 import { useToast } from "vue-toastification";
 import { useListUserstore } from "~/store/userlist";
 import { useSessionStore } from "~~/store/session";
+import NavigationLink from "@/components/common/NavigationLink.vue";
 const sessionStore = useSessionStore();
 const { setSession } = sessionStore;
 const listUserStore = useListUserstore();
@@ -55,19 +56,10 @@ const handleStartDemo = async () => {
 };
 </script>
 <template>
-  <button
-    v-if="requestPending"
-    type="button"
-    class="btn text-white btn-primary me-0"
-  >
-    Pending...
-  </button>
-  <button
-    v-else
-    type="button"
-    class="btn text-white btn-primary me-0"
+  <NavigationLink
+    :url-name="requestPending ? 'Pending...' : 'Start Quiz'"
+    class="h-8 rounded-full shadow-none"
+    :disabled="requestPending"
     @click="handleStartDemo"
-  >
-    Start Quiz
-  </button>
+  />
 </template>

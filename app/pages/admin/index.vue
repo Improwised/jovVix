@@ -189,10 +189,11 @@
             >
               Played Quiz List
             </h2>
-            <NavigationLink
-              url="/admin/played_quiz"
-              url-name="Played Quiz"
-              class="w-full bg-jv-white py-2 text-jv-ink sm:w-fit"
+            <input
+              v-model="titleInput"
+              type="text"
+              placeholder="Search quiz"
+              class="h-12 w-full border-2 border-jv-ink bg-jv-canvas px-4 text-[16px] font-semibold text-jv-ink outline-none placeholder:text-jv-ink/35 focus:bg-jv-white sm:w-64"
             />
           </div>
 
@@ -209,7 +210,7 @@
 
             <template v-else>
               <div
-                v-if="quizList == null || quizList.length < 1"
+                v-if="playedQuizzes == null || playedQuizzes.length < 1"
                 class="grid min-h-[210px] place-items-center text-center"
               >
                 <div>
@@ -225,15 +226,24 @@
                 </div>
               </div>
 
-              <div v-else class="grid gap-5 md:grid-cols-2">
+              <template v-else>
                 <div
-                  v-for="(details, index) in quizList"
-                  :key="index"
-                  class="min-w-0"
+                  class="grid gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 2xl:grid-cols-4"
                 >
-                  <QuizListCard :details="details" :is-played-quiz="true" />
+                  <QuizListCard
+                    v-for="(details, index) in playedQuizzes"
+                    :key="index"
+                    :details="details"
+                    :is-played-quiz="true"
+                  />
                 </div>
-              </div>
+
+                <Pagination
+                  v-if="playedQuizCount > 10"
+                  :page="page"
+                  :num-of-records="playedQuizCount / 10"
+                />
+              </template>
             </template>
           </div>
         </section>
@@ -247,6 +257,7 @@ import { useUsersStore } from "~~/store/users";
 import { getAvatarUrlByName } from "~~/composables/avatar";
 import { useToast } from "vue-toastification";
 import { Archive, Save } from "lucide-vue-next";
+import debounce from "lodash/debounce";
 import NavigationLink from "@/components/common/NavigationLink.vue";
 
 definePageMeta({
@@ -259,9 +270,13 @@ const userStore = useUsersStore();
 const { getUserData, setUserData } = userStore;
 const url = useRuntimeConfig().public;
 const headers = useRequestHeaders(["cookie"]);
+const route = useRoute();
 const updateuserError = ref(false);
 const updateuserPending = ref(false);
 const cancleButton = ref(false);
+const page = computed(() => Number(route.query.page) || 1);
+const title = computed(() => route.query.title || "");
+const titleInput = ref(route.query.title || "");
 const avatar = computed(() => {
   const user = getUserData();
   return getAvatarUrlByName(user?.avatar);
@@ -291,12 +306,28 @@ const {
   headers: headers,
   mode: "cors",
   credentials: "include",
-  transform: (quizList) => {
-    if (quizList?.data?.data) {
-      return quizList?.data?.data.slice(0, 8);
-    }
-    return quizList?.data?.data;
+  query: {
+    page,
+    title,
   },
+});
+
+const playedQuizzes = computed(() => quizList.value?.data?.data ?? []);
+const playedQuizCount = computed(() => quizList.value?.data?.count ?? 0);
+
+const debouncedNavigateTo = debounce((query) => {
+  navigateTo({
+    path: route.path,
+    query: query,
+  });
+}, 500);
+
+watch(titleInput, (newValue) => {
+  debouncedNavigateTo({
+    ...route.query,
+    page: 1,
+    title: newValue,
+  });
 });
 
 const userData = reactive({
