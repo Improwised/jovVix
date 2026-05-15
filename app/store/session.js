@@ -4,6 +4,7 @@ export const useSessionStore = defineStore(
   () => {
     const session = ref(false);
     const lastComponent = ref("");
+    const activeQuizTitle = ref("");
 
     const getSession = () => {
       return session.value;
@@ -21,6 +22,14 @@ export const useSessionStore = defineStore(
       lastComponent.value = data;
     };
 
+    const getActiveQuizTitle = () => activeQuizTitle.value;
+
+    const setActiveQuizTitle = (title) => {
+      if (typeof title === "string" && title.trim()) {
+        activeQuizTitle.value = title.trim();
+      }
+    };
+
     return {
       session,
       getSession,
@@ -28,6 +37,9 @@ export const useSessionStore = defineStore(
       lastComponent,
       getLastComponent,
       setLastComponent,
+      activeQuizTitle,
+      getActiveQuizTitle,
+      setActiveQuizTitle,
     };
   },
   {

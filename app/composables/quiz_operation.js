@@ -237,16 +237,21 @@ export default class QuizHandler {
     const sessionStore = useSessionStore();
     const { setSession } = sessionStore;
     setSession(null);
-    let error;
+    let error = null;
     try {
-      const response = await useFetch(this.apiUrl + "/quiz/terminate", {
+      await $fetch(this.apiUrl + "/quiz/terminate", {
         method: "GET",
         credentials: "include",
         mode: "cors",
       });
-      error = response.error.value;
     } catch (err) {
+      // Terminate is fire-and-forget; surface but don't block the scoreboard.
       error = err;
+      console.warn(
+        "[quiz] terminate request failed",
+        err?.statusCode,
+        err?.data?.message || err?.message
+      );
     }
 
     return { error };

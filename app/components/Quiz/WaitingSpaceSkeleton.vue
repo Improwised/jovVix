@@ -196,12 +196,6 @@ import { Skeleton } from "@/components/ui/skeleton";
           </div>
         </aside>
       </div>
-
-      <footer
-        class="mt-8 border-t-2 border-dashed border-jv-ink/15 pt-5 text-center font-body text-[13px] text-jv-muted sm:mt-10 sm:pt-6 sm:text-[16px]"
-      >
-        &copy; 2026 Jovvix Platform &bull; Let's Play!
-      </footer>
     </section>
     <span class="sr-only">Loading quiz lobby…</span>
   </main>

@@ -13,7 +13,8 @@ import { useUserThatSubmittedAnswer } from "~/store/userSubmittedAnswer";
 import { storeToRefs } from "pinia";
 import { useSessionStore } from "~~/store/session";
 const sessionStore = useSessionStore();
-const { setSession, setLastComponent, getLastComponent } = sessionStore;
+const { setSession, setLastComponent, getLastComponent, setActiveQuizTitle } =
+  sessionStore;
 
 const invitationCodeStore = useInvitationCodeStore();
 const { invitationCode } = storeToRefs(invitationCodeStore);
@@ -147,6 +148,16 @@ const handleQuizEvents = async (message) => {
       show: false,
     };
 
+    // Capture the quiz title whenever it shows up so the post-quiz
+    // scoreboard view can display it without an extra API call.
+    const inboundTitle =
+      message?.data?.quizTitle ||
+      message?.data?.title ||
+      message?.data?.data?.quizTitle;
+    if (inboundTitle) {
+      setActiveQuizTitle(inboundTitle);
+    }
+
     if (currentComponent.value == "Waiting") {
       if (
         invitationCode.value != undefined &&
@@ -233,7 +244,7 @@ definePageMeta({
           Code:
         </span>
         <span
-          class="min-w-0 break-all font-feature text-[22px] font-black text-jv-ink sm:text-[28px]"
+          class="min-w-0 break-all font-feature text-[22px] font-black text-jv-coral sm:text-[28px]"
         >
           {{ invitationCode }}
         </span>
