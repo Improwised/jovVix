@@ -158,127 +158,136 @@
             v-for="(quiz, index) in quizAnalysis.data"
             :id="`question-${index + 1}`"
             :key="index"
-            class="jv-border-rough bg-jv-white p-5 shadow-brutal-sm sm:p-6 md:p-7 scroll-mt-24"
+            role="button"
+            tabindex="0"
+            class="jv-border-rough bg-jv-white p-4 shadow-brutal-sm sm:p-5 scroll-mt-24 cursor-pointer transition-transform hover:rotate-[0.25deg] focus:outline-none focus:shadow-brutal"
+            @click="openQuestionModal(quiz, index)"
+            @keydown.enter.prevent="openQuestionModal(quiz, index)"
+            @keydown.space.prevent="openQuestionModal(quiz, index)"
           >
             <!-- Question header row -->
             <div
               class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"
             >
-              <div class="flex flex-wrap items-center gap-3">
-                <span
-                  class="inline-flex items-center gap-1.5 jv-border-rough bg-jv-canvas px-2.5 py-1 text-[12px] font-black uppercase tracking-[0.1em] text-jv-ink shadow-brutal-sm"
+              <div class="min-w-0">
+                <p
+                  class="text-[12px] font-bold uppercase tracking-[0.14em] text-jv-coral"
                 >
-                  <CheckSquare class="size-3.5" :stroke-width="2.6" />
-                  {{ quiz.type === 1 ? "MCQ" : "Survey" }}
-                </span>
-                <span class="text-[15px] font-bold text-jv-muted">
                   Question {{ index + 1 }}
-                </span>
+                </p>
+                <h3
+                  class="mt-1 break-words text-[20px] font-bold leading-snug text-jv-ink sm:text-[22px]"
+                >
+                  {{ quiz.question }}
+                </h3>
               </div>
 
-              <div class="flex flex-wrap items-end gap-5 text-right">
+              <div
+                class="flex shrink-0 flex-wrap items-start gap-4 text-right sm:gap-5"
+              >
                 <div>
                   <div
-                    class="text-[10px] font-black uppercase tracking-[0.12em] text-jv-muted"
+                    class="text-[10px] font-bold uppercase tracking-[0.12em] text-jv-muted"
                   >
-                    Avg. time taken
+                    Avg. time
                   </div>
-                  <div class="mt-0.5 text-[15px] font-black text-jv-ink">
+                  <div class="mt-0.5 text-[14px] font-bold text-jv-ink">
                     {{ Math.abs((quiz.avg_response_time / 1000).toFixed(2)) }}
                     sec
                   </div>
                 </div>
                 <div>
                   <div
-                    class="text-[10px] font-black uppercase tracking-[0.12em] text-jv-muted"
+                    class="text-[10px] font-bold uppercase tracking-[0.12em] text-jv-muted"
                   >
                     Correct
                   </div>
                   <div
-                    class="mt-0.5 text-[15px] font-black text-jv-accent-green"
+                    class="mt-0.5 text-[14px] font-bold text-jv-accent-green"
                   >
                     {{ correctCountFor(quiz) }}
                   </div>
                 </div>
                 <div>
                   <div
-                    class="text-[10px] font-black uppercase tracking-[0.12em] text-jv-muted"
+                    class="text-[10px] font-bold uppercase tracking-[0.12em] text-jv-muted"
                   >
                     Incorrect
                   </div>
-                  <div class="mt-0.5 text-[15px] font-black text-jv-coral">
+                  <div class="mt-0.5 text-[14px] font-bold text-jv-coral">
                     {{ incorrectCountFor(quiz) }}
                   </div>
                 </div>
               </div>
             </div>
 
-            <!-- Question content -->
-            <h3
-              class="mt-5 font-headings text-[22px] leading-tight text-jv-ink sm:text-[26px]"
-            >
-              {{ quiz.question }}
-            </h3>
-
             <div
-              v-if="quiz.question_media === 'image'"
-              class="mt-4 flex justify-center"
+              v-if="quiz.question_media === 'image' && quiz.resource"
+              class="mt-3 flex justify-center rounded-md bg-jv-canvas p-2"
+              @click.stop
             >
               <img
                 :src="quiz.resource"
                 :alt="quiz.question"
-                class="max-h-72 rounded-md border-2 border-jv-ink object-contain shadow-brutal-sm"
+                class="max-h-64 w-auto max-w-full object-contain"
               />
             </div>
-            <CodeBlockComponent
-              v-else-if="quiz.question_media === 'code'"
-              :code="quiz.resource"
-              class="mt-4"
-            />
+            <div
+              v-else-if="quiz.question_media === 'code' && quiz.resource"
+              class="mt-3 min-w-0 overflow-x-auto"
+              @click.stop
+            >
+              <CodeBlockComponent :code="quiz.resource" />
+            </div>
 
             <!-- Options -->
-            <div class="mt-5 flex flex-col gap-3">
-              <div
+            <ul class="mt-4 flex flex-col">
+              <li
                 v-for="(option, order) in quiz.options"
                 :key="order"
-                class="flex items-center gap-3 jv-border-rough px-4 py-3 shadow-brutal-sm"
+                class="flex min-w-0 items-center gap-3 border-b border-jv-ink/10 py-3 pl-3 pr-2 text-[15px] font-medium text-jv-ink last:border-b-0"
                 :class="
                   quiz.correct_answer.includes(Number(order))
-                    ? 'bg-[#d1f4e0]'
-                    : 'bg-jv-white'
+                    ? 'border-l-4 border-l-jv-accent-green bg-jv-accent-green/25 pl-2'
+                    : 'border-l-4 border-l-transparent'
                 "
               >
-                <span
-                  class="flex size-8 shrink-0 items-center justify-center jv-border-rough bg-jv-white text-[14px] font-black text-jv-ink"
-                >
-                  {{ String.fromCharCode(65 + Number(order)) }}
+                <span class="w-5 shrink-0 text-[14px] font-bold text-jv-coral">
+                  {{ String.fromCharCode(64 + Number(order)) }}.
                 </span>
-                <div class="flex-1 min-w-0">
+
+                <div
+                  v-if="quiz.options_media === 'image' && option"
+                  class="flex min-w-0 flex-1 justify-start"
+                  @click.stop
+                >
                   <img
-                    v-if="quiz.options_media === 'image'"
                     :src="option"
                     :alt="option"
-                    class="max-h-32 rounded-md border-2 border-jv-ink object-contain"
+                    class="max-h-32 w-auto max-w-full object-contain"
                   />
-                  <CodeBlockComponent
-                    v-else-if="quiz.options_media === 'code'"
-                    :code="option"
-                  />
-                  <span
-                    v-else
-                    class="text-[15px] font-bold text-jv-ink sm:text-[16px]"
-                  >
-                    {{ option }}
-                  </span>
                 </div>
-                <span
-                  class="inline-flex items-center gap-1.5 text-[14px] font-black text-jv-muted"
+
+                <div
+                  v-else-if="quiz.options_media === 'code' && option"
+                  class="min-w-0 flex-1 overflow-x-auto"
+                  @click.stop
                 >
-                  <Users class="size-4" :stroke-width="2.6" />
+                  <CodeBlockComponent :code="option" />
+                </div>
+
+                <span v-else class="min-w-0 flex-1 break-words">
+                  {{ option }}
+                </span>
+
+                <span
+                  class="inline-flex shrink-0 items-center gap-1 text-[13px] font-semibold text-jv-muted"
+                >
+                  <Users class="size-4" :stroke-width="2.4" />
                   {{ quiz.selected_answers[order]?.length || 0 }}
                 </span>
-              </div>
-            </div>
+              </li>
+            </ul>
           </article>
         </div>
       </template>
@@ -315,12 +324,20 @@
         />
       </div>
     </template>
+
+    <QuizQuestionDetailModal
+      :is-open="!!selectedQuestion"
+      :question="selectedQuestion"
+      :index="selectedQuestionIndex"
+      :rows="selectedQuestionRows"
+      @close="closeQuestionModal"
+    />
   </main>
 </template>
 
 <script setup>
 import { computed, onMounted, ref } from "vue";
-import { Zap, ListOrdered, CheckSquare, Users } from "lucide-vue-next";
+import { Zap, ListOrdered, Users } from "lucide-vue-next";
 import lodash from "lodash";
 import PageLayout from "~~/components/reports/PageLayout.vue";
 import CodeBlockComponent from "~~/components/CodeBlockComponent.vue";
@@ -547,5 +564,27 @@ onMounted(() => {
 
 const changeTab = (data) => {
   currentTab.value = data;
+};
+
+// Per-question detail modal
+const selectedQuestion = ref(null);
+const selectedQuestionIndex = ref(0);
+
+const rowsByQuestion = computed(() =>
+  lodash.groupBy(analysisJson.value || [], "question")
+);
+
+const selectedQuestionRows = computed(() => {
+  if (!selectedQuestion.value) return [];
+  return rowsByQuestion.value[selectedQuestion.value.question] || [];
+});
+
+const openQuestionModal = (quiz, index) => {
+  selectedQuestion.value = quiz;
+  selectedQuestionIndex.value = index + 1;
+};
+
+const closeQuestionModal = () => {
+  selectedQuestion.value = null;
 };
 </script>
