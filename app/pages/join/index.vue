@@ -393,28 +393,27 @@ const join_quiz = async () => {
   );
 };
 
-// get user data
+// get user data — 401 is the expected guest case, so don't throw on it.
 (async () => {
   try {
-    await $fetch(apiUrl + "/user/who", {
+    const response = await $fetch.raw(apiUrl + "/user/who", {
       method: "GET",
       credentials: "include",
-      headers: {
-        Accept: "application/json",
-      },
-      onResponse({ response }) {
-        if (response.status == 200) {
-          isUserLoggedIn.value = true;
-          firstname.value = response._data?.data?.firstname;
-          username.value = response._data?.data?.username;
-        }
-      },
+      headers: { Accept: "application/json" },
+      ignoreResponseError: true,
     });
-  } catch (error) {
-    if (error.status != 401) {
-      userError.value = error.message;
+    if (response.status === 200) {
+      isUserLoggedIn.value = true;
+      firstname.value = response._data?.data?.firstname;
+      username.value = response._data?.data?.username;
+    } else if (response.status === 401) {
+      isUserLoggedIn.value = false;
+    } else {
+      userError.value =
+        response._data?.message || `Unexpected status ${response.status}`;
     }
-    isUserLoggedIn.value = error.status == 401 ? false : isUserLoggedIn.value;
+  } catch (error) {
+    userError.value = error?.message || "Failed to load user";
   } finally {
     authChecking.value = false;
   }

@@ -3,15 +3,29 @@ const url = "/final_score/user";
 const route = useRoute();
 const username = computed(() => route.params.user);
 const userPlayedQuiz = computed(() => route.query.user_played_quiz);
+
+definePageMeta({
+  layout: "empty",
+  hideSidebar: true,
+});
+
+useHead({
+  title: "Quiz Results - Jovvix",
+  meta: [
+    {
+      name: "description",
+      content:
+        "View your quiz results, ranking, and per-question analysis after the game.",
+    },
+  ],
+});
 </script>
 
 <template>
-  <div class="w-100">
-    <FinalScoreBoard
-      :is-admin="false"
-      :user-name="username"
-      :user-u-r-l="url"
-      :user-played-quiz="userPlayedQuiz"
-    />
-  </div>
+  <FinalScoreBoard
+    :is-admin="false"
+    :user-name="username"
+    :user-u-r-l="url"
+    :user-played-quiz="userPlayedQuiz"
+  />
 </template>

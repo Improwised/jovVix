@@ -1,6 +1,11 @@
 <script setup>
 const url = "/final_score/admin";
 
+definePageMeta({
+  layout: "empty",
+  hideSidebar: true,
+});
+
 useHead({
   title: "Quiz Scoreboard - Admin Dashboard",
   meta: [
@@ -14,7 +19,5 @@ useHead({
 </script>
 
 <template>
-  <div class="w-100">
-    <FinalScoreBoard :is-admin="true" :user-u-r-l="url" />
-  </div>
+  <FinalScoreBoard :is-admin="true" :user-u-r-l="url" />
 </template>
