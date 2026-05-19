@@ -124,7 +124,7 @@ func (ctrl *QuizController) UpdateQuizSettings(c *fiber.Ctx) error {
 		return utils.JSONFail(c, http.StatusBadRequest, utils.ValidatorErrorString(err))
 	}
 
-	err = ctrl.quizSvc.UpdateQuizSettings(quizId, quizReq.Points, quizReq.DurationInSeconds)
+	err = ctrl.quizSvc.UpdateQuizSettings(quizId, quizReq.Points, quizReq.DurationInSeconds, quizReq.QuestionIds)
 	if err != nil {
 		ctrl.logger.Error("error in updating quiz settings", zap.Error(err))
 		return utils.JSONFail(c, http.StatusBadRequest, "error while updating quiz settings")
