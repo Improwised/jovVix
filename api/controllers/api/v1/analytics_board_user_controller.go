@@ -7,7 +7,6 @@ import (
 	"github.com/Improwised/jovvix/api/config"
 	"github.com/Improwised/jovvix/api/constants"
 	"github.com/Improwised/jovvix/api/models"
-	"github.com/Improwised/jovvix/api/services"
 	"github.com/Improwised/jovvix/api/utils"
 	"github.com/doug-martin/goqu/v9"
 	fiber "github.com/gofiber/fiber/v2"
@@ -16,7 +15,6 @@ import (
 
 type AnalyticsBoardUserController struct {
 	analyticsBoardUserModel *models.AnalyticsBoardUserModel
-	presignedURLSvc         *services.PresignURLService
 	logger                  *zap.Logger
 }
 
@@ -26,14 +24,8 @@ func NewAnalyticsBoardUserController(goqu *goqu.Database, logger *zap.Logger, ap
 		return nil, err
 	}
 
-	presignedURLSvc, err := services.NewFileUploadServices(&appConfig.AWS)
-	if err != nil {
-		return nil, err
-	}
-
 	return &AnalyticsBoardUserController{
 		analyticsBoardUserModel: &analyticsBoardUserModel,
-		presignedURLSvc:         presignedURLSvc,
 		logger:                  logger,
 	}, nil
 
@@ -69,8 +61,6 @@ func (fc *AnalyticsBoardUserController) GetAnalyticsForUser(ctx *fiber.Ctx) erro
 		return utils.JSONFail(ctx, http.StatusInternalServerError, errors.New("internal server error").Error())
 	}
 	fc.logger.Debug("analyticsBoardUserModel.GetAnalyticsForUser success", zap.Any("analyticsBoardData", analyticsBoardData))
-
-	services.ProcessAnalyticsData(analyticsBoardData, fc.presignedURLSvc, fc.logger)
 
 	fc.logger.Debug("AnalyticsBoardUserController.GetAnalyticsForUser success", zap.Any("analyticsBoardData", analyticsBoardData))
 

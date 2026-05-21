@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	"time"
 
 	"github.com/Improwised/jovvix/api/config"
 	"github.com/Improwised/jovvix/api/constants"
@@ -24,7 +23,6 @@ type QuestionController struct {
 	questionModel   *models.QuestionModel
 	quizModel       *models.QuizModel
 	activeQuizModel *models.ActiveQuizModel
-	presignedURLSvc *services.PresignURLService
 	quizSvc         *services.QuizService
 	appConfig       *config.AppConfig
 	logger          *zap.Logger
@@ -36,18 +34,12 @@ func InitQuestionController(db *goqu.Database, logger *zap.Logger, appConfig *co
 	quizModel := models.InitQuizModel(db)
 	activeQuizModel := models.InitActiveQuizModel(db, logger)
 
-	presignedURLSvc, err := services.NewFileUploadServices(&appConfig.AWS)
-	if err != nil {
-		return nil, err
-	}
-
 	quizSvc := services.NewQuizService(db, logger)
 
 	return &QuestionController{
 		questionModel:   questionModel,
 		quizModel:       quizModel,
 		activeQuizModel: activeQuizModel,
-		presignedURLSvc: presignedURLSvc,
 		quizSvc:         quizSvc,
 		appConfig:       appConfig,
 		logger:          logger,
@@ -101,7 +93,6 @@ func (ctrl *QuestionController) ListQuestionsWithAnswerByQuizId(c *fiber.Ctx) er
 		return utils.JSONError(c, http.StatusInternalServerError, err.Error())
 	}
 
-	services.ProcessAnalyticsData(questions, ctrl.presignedURLSvc, ctrl.logger)
 	settingsPoints := ctrl.appConfig.Quiz.DefaultQuestionPoints
 	settingsDuration := ctrl.getDefaultQuestionDuration()
 	if len(questions) > 0 {
@@ -248,23 +239,6 @@ func (ctrl *QuestionController) GetQuestionById(c *fiber.Ctx) error {
 		return utils.JSONError(c, http.StatusInternalServerError, err.Error())
 	}
 
-	if question.QuestionsMedia == "image" {
-		presignedURL, err := ctrl.presignedURLSvc.GetPresignedURL(question.Resource, 5*time.Minute)
-		if err != nil {
-			ctrl.logger.Error("error while getting presigned url", zap.Error(err))
-		}
-		question.Resource = presignedURL
-	}
-
-	if question.OptionsMedia == "image" {
-		for key, value := range question.Options {
-			presignedURL, err := ctrl.presignedURLSvc.GetPresignedURL(value, 5*time.Minute)
-			if err != nil {
-				ctrl.logger.Error("error while getting presigned url", zap.Error(err))
-			}
-			question.Options[key] = presignedURL
-		}
-	}
 	ctrl.logger.Debug("QuestionController.GetQuestionById success", zap.Any("question", question))
 	return utils.JSONSuccess(c, http.StatusOK, question)
 }

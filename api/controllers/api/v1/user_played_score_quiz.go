@@ -10,7 +10,6 @@ import (
 	quizUtilsHelper "github.com/Improwised/jovvix/api/helpers/utils"
 	"github.com/Improwised/jovvix/api/models"
 	"github.com/Improwised/jovvix/api/pkg/structs"
-	"github.com/Improwised/jovvix/api/services"
 	"github.com/Improwised/jovvix/api/utils"
 	goqu "github.com/doug-martin/goqu/v9"
 	fiber "github.com/gofiber/fiber/v2"
@@ -22,7 +21,6 @@ type UserPlayedQuizeController struct {
 	userPlayedQuizModel   *models.UserPlayedQuizModel
 	activeQuizModel       *models.ActiveQuizModel
 	userQuizResponseModel *models.UserQuizResponseModel
-	presignedURLSvc       *services.PresignURLService
 	logger                *zap.Logger
 }
 
@@ -34,16 +32,10 @@ func NewUserPlayedQuizeController(goqu *goqu.Database, logger *zap.Logger, appCo
 
 	userQuizResponseModel := models.InitUserQuizResponseModel(goqu)
 
-	presignedURLSvc, err := services.NewFileUploadServices(&appConfig.AWS)
-	if err != nil {
-		return nil, err
-	}
-
 	return &UserPlayedQuizeController{
 		userPlayedQuizModel:   userPlayedQuizModel,
 		activeQuizModel:       activeQuizModel,
 		userQuizResponseModel: userQuizResponseModel,
-		presignedURLSvc:       presignedURLSvc,
 		logger:                logger,
 	}, nil
 }
@@ -106,8 +98,6 @@ func (ctrl *UserPlayedQuizeController) ListUserPlayedQuizesWithQuestionById(c *f
 	if err != nil {
 		return err
 	}
-
-	services.ProcessAnalyticsData(userPlayedQuizesWithQuestion, ctrl.presignedURLSvc, ctrl.logger)
 
 	ctrl.logger.Debug("UserPlayedQuizeController.ListUserPlayedQuizesWithQuestionById success", zap.Any("userPlayedQuizesWithQuestion", userPlayedQuizesWithQuestion))
 	return utils.JSONSuccess(c, http.StatusOK, userPlayedQuizesWithQuestion)

@@ -9,8 +9,8 @@ export default defineNuxtConfig({
       baseUrl: process.env.NUXT_PUBLIC_BASE_URL || "http://127.0.0.1:3001",
       apiUrl: process.env.NUXT_PUBLIC_API_URL || "http://127.0.0.1:3000/api/v1",
       maxImageFileSize: parseInt(
-        process.env.NUXT_PUBLIC_MAX_IMAGE_FILE_SIZE || "1048576"
-      ), //1MB default
+        process.env.NUXT_PUBLIC_MAX_IMAGE_FILE_SIZE || "512000"
+      ), // 500 KB default (bytes)
       apiSocketUrl:
         process.env.NUXT_PUBLIC_API_SOCKET_URL ||
         "ws://127.0.0.1:3000/api/v1/socket",

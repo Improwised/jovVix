@@ -187,7 +187,13 @@
 <script setup>
 import { computed, reactive, ref, watch } from "vue";
 import { Code2, ImageIcon, Type } from "lucide-vue-next";
+import { useToast } from "vue-toastification";
 import NavigationLink from "../common/NavigationLink.vue";
+
+const app = useNuxtApp();
+const toast = useToast();
+const { maxImageFileSize } = useRuntimeConfig().public;
+
 const props = defineProps({
   question: {
     type: Object,
@@ -226,9 +232,7 @@ const form = reactive({
 });
 
 const correctAnswer = ref(1);
-const questionFile = ref(null);
 const questionFileName = ref("");
-const optionFiles = ref({});
 const optionFileNames = ref({});
 
 const parseAnswers = (value) => {
@@ -262,9 +266,7 @@ const resetForm = () => {
 
   const answers = parseAnswers(question?.correct_answer);
   correctAnswer.value = Number(answers[0] || 1);
-  questionFile.value = null;
   questionFileName.value = "";
-  optionFiles.value = {};
   optionFileNames.value = {};
 };
 
@@ -293,20 +295,48 @@ const showCancel = computed(
   () => props.mode === "edit" || props.mode === "create"
 );
 
-const handleQuestionImage = (event) => {
+const validateImageFile = (file) => {
+  if (!app.$validImageTypes.includes(file.type)) {
+    toast.error(
+      "Please upload a valid image file (JPEG, PNG, GIF, WEBP, HEIC, HEIF)."
+    );
+    return false;
+  }
+  if (file.size > maxImageFileSize) {
+    const limitKb = Math.round(maxImageFileSize / 1024);
+    toast.error(`Please upload an image less than ${limitKb} KB.`);
+    return false;
+  }
+  return true;
+};
+
+const readAsBase64 = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => resolve(e.target.result);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+
+const handleQuestionImage = async (event) => {
   const file = event.target.files?.[0];
   if (!file) return;
-  questionFile.value = file;
+  if (!validateImageFile(file)) {
+    event.target.value = "";
+    return;
+  }
+  form.resource = await readAsBase64(file);
   questionFileName.value = file.name;
 };
 
-const handleOptionImage = (event, key) => {
+const handleOptionImage = async (event, key) => {
   const file = event.target.files?.[0];
   if (!file) return;
-  optionFiles.value = {
-    ...optionFiles.value,
-    [key]: file,
-  };
+  if (!validateImageFile(file)) {
+    event.target.value = "";
+    return;
+  }
+  form.options[key] = await readAsBase64(file);
   optionFileNames.value = {
     ...optionFileNames.value,
     [key]: file.name,
@@ -336,10 +366,6 @@ const submitForm = () => {
       question_media: form.question_media,
       options_media: form.options_media,
       resource: form.resource,
-    },
-    files: {
-      question: questionFile.value,
-      options: { ...optionFiles.value },
     },
   });
 };
