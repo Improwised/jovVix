@@ -339,39 +339,45 @@ func (model *QuestionModel) ListQuestionsWithAnswerByQuizId(QuizId string, media
 		return questionAnalytics, quizPlayedCount, sql.ErrNoRows
 	}
 
-	query := model.db.
-		From(QuestionTable).
-		Select(
-			goqu.I(constants.QuestionsTable+".id").As("question_id"),
-			goqu.I(constants.QuestionsTable+".answers").As("correct_answer"),
-			"question",
-			"options",
-			"question_media",
-			"options_media",
-			"resource",
-			"points",
-			"type",
-			"duration_in_seconds",
-		).
-		InnerJoin(goqu.T(constants.QuizQuestionsTable), goqu.On(goqu.I(constants.QuizQuestionsTable+".question_id").Eq(goqu.I(constants.QuestionsTable+".id")))).
-		Where(goqu.Ex{
-			constants.QuizQuestionsTable + ".quiz_id": QuizId,
-		}).
-		Order(goqu.I(constants.QuizQuestionsTable + ".created_at").Asc())
+	// Walk the next_question chain so the listing reflects admin-defined order.
+	// chain.pos is the primary sort; created_at is a fallback for legacy quizzes whose
+	// next_question column was never populated (all rows would land at pos=1 there).
+	rawSQL := `
+		WITH RECURSIVE chain AS (
+			SELECT qq.question_id, qq.next_question, qq.created_at, 1 AS pos
+			FROM quiz_questions qq
+			WHERE qq.quiz_id = $1
+				AND NOT EXISTS (
+					SELECT 1 FROM quiz_questions qq2
+					WHERE qq2.quiz_id = $1 AND qq2.next_question = qq.question_id
+				)
+			UNION ALL
+			SELECT qq.question_id, qq.next_question, qq.created_at, chain.pos + 1
+			FROM quiz_questions qq
+			JOIN chain ON qq.question_id = chain.next_question
+			WHERE qq.quiz_id = $1 AND chain.pos < 10000
+		)
+		SELECT q.id AS question_id,
+			   q.answers AS correct_answer,
+			   q.question,
+			   q.options,
+			   q.question_media,
+			   q.options_media,
+			   q.resource,
+			   q.points,
+			   q.type,
+			   q.duration_in_seconds
+		FROM chain
+		JOIN questions q ON q.id = chain.question_id`
 
+	args := []interface{}{QuizId}
 	if media != "" {
-		query = query.Where(goqu.Or(
-			goqu.I("questions.question_media").Eq(media),
-			goqu.I("questions.options_media").Eq(media),
-		))
+		rawSQL += ` WHERE (q.question_media = $2 OR q.options_media = $2)`
+		args = append(args, media)
 	}
+	rawSQL += ` ORDER BY chain.pos, chain.created_at`
 
-	sql, args, err := query.ToSQL()
-	if err != nil {
-		return questionAnalytics, quizPlayedCount, err
-	}
-
-	err = model.db.ScanStructs(&questionAnalytics, sql, args...)
+	err = model.db.ScanStructs(&questionAnalytics, rawSQL, args...)
 	if err != nil {
 		return nil, quizPlayedCount, err
 	}
@@ -510,6 +516,64 @@ func (model *QuestionModel) SyncQuizQuestionSettings(transaction *goqu.TxDatabas
 		Executor().Exec()
 
 	return err
+}
+
+// ValidateQuestionSet confirms the incoming ids match the quiz's question set exactly.
+// Guards against stale clients reordering against a quiz that has had questions added/removed.
+func (model *QuestionModel) ValidateQuestionSet(transaction *goqu.TxDatabase, quizId string, ids []string) error {
+	var dbIds []string
+	err := transaction.From(constants.QuizQuestionsTable).
+		Select("question_id").
+		Where(goqu.Ex{"quiz_id": quizId}).
+		Executor().ScanVals(&dbIds)
+	if err != nil {
+		return err
+	}
+
+	if len(dbIds) != len(ids) {
+		return fmt.Errorf("question set mismatch: quiz has %d questions but %d were provided", len(dbIds), len(ids))
+	}
+
+	dbSet := make(map[string]struct{}, len(dbIds))
+	for _, id := range dbIds {
+		dbSet[id] = struct{}{}
+	}
+	seen := make(map[string]struct{}, len(ids))
+	for _, id := range ids {
+		if _, dup := seen[id]; dup {
+			return fmt.Errorf("question set mismatch: duplicate id %s", id)
+		}
+		seen[id] = struct{}{}
+		if _, ok := dbSet[id]; !ok {
+			return fmt.Errorf("question set mismatch: id %s does not belong to quiz", id)
+		}
+	}
+
+	return nil
+}
+
+// ReorderQuestions rewrites the next_question chain for a quiz to match the given order.
+// Caller must validate set equality first (see ValidateQuestionSet).
+func (model *QuestionModel) ReorderQuestions(transaction *goqu.TxDatabase, quizId string, ids []string) error {
+	_, err := transaction.Update(constants.QuizQuestionsTable).
+		Set(goqu.Record{"next_question": nil}).
+		Where(goqu.Ex{"quiz_id": quizId}).
+		Executor().Exec()
+	if err != nil {
+		return err
+	}
+
+	for i := 0; i < len(ids)-1; i++ {
+		_, err := transaction.Update(constants.QuizQuestionsTable).
+			Set(goqu.Record{"next_question": ids[i+1]}).
+			Where(goqu.Ex{"quiz_id": quizId, "question_id": ids[i]}).
+			Executor().Exec()
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // Rewire quiz_questions to point at the new question id and fix the previous link.

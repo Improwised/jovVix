@@ -75,6 +75,7 @@
     "unplugin-auto-import": "^0.18.5",
     "vue-chartjs": "^5.3.1",
     "vue-toastification": "^2.0.0-rc.5",
+    "vuedraggable": "^4.1.0",
     "yarn": "^1.22.21"
   },
   "lint-staged": {

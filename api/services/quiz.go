@@ -133,7 +133,7 @@ func (quizSvc *QuizService) AppendQuestionsToQuiz(quizId string, questions []mod
 	return questionIds, nil
 }
 
-func (quizSvc *QuizService) UpdateQuizSettings(quizId string, points int16, durationInSeconds int) error {
+func (quizSvc *QuizService) UpdateQuizSettings(quizId string, points int16, durationInSeconds int, questionIds []string) error {
 	isOk := false
 	transaction, err := quizSvc.db.Begin()
 	if err != nil {
@@ -159,7 +159,17 @@ func (quizSvc *QuizService) UpdateQuizSettings(quizId string, points int16, dura
 		return err
 	}
 
+	err = quizSvc.questionModel.ValidateQuestionSet(transaction, quizId, questionIds)
+	if err != nil {
+		return err
+	}
+
 	err = quizSvc.questionModel.SyncQuizQuestionSettings(transaction, quizId, points, durationInSeconds)
+	if err != nil {
+		return err
+	}
+
+	err = quizSvc.questionModel.ReorderQuestions(transaction, quizId, questionIds)
 	if err != nil {
 		return err
 	}

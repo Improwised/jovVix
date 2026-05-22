@@ -174,129 +174,160 @@
         </div>
       </section>
 
-      <section v-else class="grid gap-5">
-        <article
-          v-for="(question, index) in questions"
-          :key="question.question_id"
-          :class="
-            editingQuestionId === question.question_id
-              ? ''
-              : 'jv-border-rough bg-jv-white p-4 shadow-brutal-sm transition-transform hover:rotate-[0.25deg] sm:p-5'
-          "
-        >
-          <QuestionFormCard
-            v-if="editingQuestionId === question.question_id"
-            mode="edit"
-            :question="question"
-            :saving="savingQuestionId === question.question_id"
-            @save="(data) => saveExistingQuestion(question, data)"
-            @cancel="editingQuestionId = ''"
-            @click.stop
-          />
-
-          <template v-else>
-            <div class="flex items-start justify-between gap-4">
-              <div class="min-w-0">
-                <p
-                  class="text-[12px] font-bold uppercase tracking-[0.14em] text-jv-coral"
-                >
-                  Question {{ index + 1 }}
-                </p>
-                <h2
-                  class="mt-1 break-words text-[20px] font-bold leading-snug text-jv-ink sm:text-[22px]"
-                >
-                  {{ question.question }}
-                </h2>
-              </div>
-              <div v-if="canEditQuiz" class="flex shrink-0 gap-2">
-                <NavigationLink
-                  class="rounded-full size-10 px-2 py-1 sm:px-2 sm:py-1 md:px-2 md:py-1"
-                  aria-label="Edit question"
-                  @click.stop="startEditQuestion(question)"
-                >
-                  <Pencil class="size-4" :stroke-width="2.4" />
-                </NavigationLink>
-                <NavigationLink
-                  class="rounded-full bg-jv-coral text-white size-10 px-2 py-1 sm:px-2 sm:py-1 md:px-2 md:py-1"
-                  aria-label="Delete question"
-                  @click.stop="deleteQuestion(question.question_id)"
-                >
-                  <Trash2 class="size-4" :stroke-width="2.4" />
-                </NavigationLink>
-              </div>
-            </div>
-
-            <div
-              v-if="question.question_media === 'image' && question.resource"
-              class="mt-3 flex justify-center rounded-md bg-jv-canvas p-2"
+      <draggable
+        v-else
+        v-model="orderedQuestions"
+        :component-data="{
+          tag: 'section',
+          name: 'flip-list',
+          type: 'transition-group',
+        }"
+        class="grid gap-5"
+        item-key="question_id"
+        handle=".drag-handle"
+        :disabled="!canEditQuiz"
+        :animation="180"
+        :scroll="scrollContainer"
+        :bubble-scroll="true"
+        :force-autoscroll-fallback="true"
+        :scroll-sensitivity="80"
+        :scroll-speed="14"
+      >
+        <template #item="{ element: question, index }">
+          <article
+            :class="
+              editingQuestionId === question.question_id
+                ? ''
+                : 'jv-border-rough bg-jv-white p-4 shadow-brutal-sm transition-transform hover:rotate-[0.25deg] sm:p-5'
+            "
+          >
+            <QuestionFormCard
+              v-if="editingQuestionId === question.question_id"
+              mode="edit"
+              :question="question"
+              :saving="savingQuestionId === question.question_id"
+              @save="(data) => saveExistingQuestion(question, data)"
+              @cancel="editingQuestionId = ''"
               @click.stop
-            >
-              <img
-                :src="question.resource"
-                :alt="question.question"
-                class="max-h-64 w-auto max-w-full object-contain"
-              />
-            </div>
+            />
 
-            <div
-              v-else-if="
-                question.question_media === 'code' && question.resource
-              "
-              class="mt-3 min-w-0 overflow-x-auto"
-              @click.stop
-            >
-              <CodeBlockComponent :code="question.resource" />
-            </div>
+            <template v-else>
+              <div class="flex items-start justify-between gap-4">
+                <div class="flex min-w-0 items-start gap-2">
+                  <button
+                    v-if="canEditQuiz"
+                    type="button"
+                    class="drag-handle mt-1 grid size-7 shrink-0 cursor-grab place-items-center rounded text-jv-muted hover:bg-jv-canvas hover:text-jv-ink active:cursor-grabbing"
+                    aria-label="Drag to reorder"
+                    @click.stop
+                  >
+                    <GripVertical class="size-4" :stroke-width="2.4" />
+                  </button>
+                  <div class="min-w-0">
+                    <p
+                      class="text-[12px] font-bold uppercase tracking-[0.14em] text-jv-coral"
+                    >
+                      Question {{ index + 1 }}
+                    </p>
+                    <h2
+                      class="mt-1 break-words text-[20px] font-bold leading-snug text-jv-ink sm:text-[22px]"
+                    >
+                      {{ question.question }}
+                    </h2>
+                  </div>
+                </div>
+                <div v-if="canEditQuiz" class="flex shrink-0 gap-2">
+                  <NavigationLink
+                    class="rounded-full size-10 px-2 py-1 sm:px-2 sm:py-1 md:px-2 md:py-1"
+                    aria-label="Edit question"
+                    @click.stop="startEditQuestion(question)"
+                  >
+                    <Pencil class="size-4" :stroke-width="2.4" />
+                  </NavigationLink>
+                  <NavigationLink
+                    class="rounded-full bg-jv-coral text-white size-10 px-2 py-1 sm:px-2 sm:py-1 md:px-2 md:py-1"
+                    aria-label="Delete question"
+                    @click.stop="deleteQuestion(question.question_id)"
+                  >
+                    <Trash2 class="size-4" :stroke-width="2.4" />
+                  </NavigationLink>
+                </div>
+              </div>
 
-            <ul class="mt-4 flex flex-col">
-              <li
-                v-for="(option, key) in question.options"
-                :key="key"
-                class="flex min-w-0 items-center gap-3 border-b border-jv-ink/10 py-3 pl-3 pr-2 text-[15px] font-medium text-jv-ink last:border-b-0"
-                :class="
-                  isCorrectAnswer(question, key)
-                    ? 'border-l-4 border-l-jv-accent-green bg-jv-accent-green/25 pl-2'
-                    : 'border-l-4 border-l-transparent'
-                "
+              <div
+                v-if="question.question_media === 'image' && question.resource"
+                class="mt-3 flex justify-center rounded-md bg-jv-canvas p-2"
+                @click.stop
               >
-                <span class="w-5 shrink-0 text-[14px] font-bold text-jv-coral">
-                  {{ optionLabel(key) }}.
-                </span>
-
-                <div
-                  v-if="question.options_media === 'image' && option"
-                  class="flex min-w-0 flex-1 justify-start"
-                  @click.stop
-                >
-                  <img
-                    :src="option"
-                    :alt="`Option ${optionLabel(key)}`"
-                    class="max-h-32 w-auto max-w-full object-contain"
-                  />
-                </div>
-
-                <div
-                  v-else-if="question.options_media === 'code' && option"
-                  class="min-w-0 flex-1 overflow-x-auto"
-                  @click.stop
-                >
-                  <CodeBlockComponent :code="option" />
-                </div>
-
-                <span v-else class="min-w-0 flex-1 break-words">
-                  {{ option }}
-                </span>
-
-                <Check
-                  v-if="isCorrectAnswer(question, key)"
-                  class="size-5 shrink-0 text-jv-accent-green"
-                  :stroke-width="3"
+                <img
+                  :src="question.resource"
+                  :alt="question.question"
+                  class="max-h-64 w-auto max-w-full object-contain"
                 />
-              </li>
-            </ul>
-          </template>
-        </article>
-      </section>
+              </div>
+
+              <div
+                v-else-if="
+                  question.question_media === 'code' && question.resource
+                "
+                class="mt-3 min-w-0 overflow-x-auto"
+                @click.stop
+              >
+                <CodeBlockComponent :code="question.resource" />
+              </div>
+
+              <ul class="mt-4 flex flex-col">
+                <li
+                  v-for="(option, key) in question.options"
+                  :key="key"
+                  class="flex min-w-0 items-center gap-3 border-b border-jv-ink/10 py-3 pl-3 pr-2 text-[15px] font-medium text-jv-ink last:border-b-0"
+                  :class="
+                    isCorrectAnswer(question, key)
+                      ? 'border-l-4 border-l-jv-accent-green bg-jv-accent-green/25 pl-2'
+                      : 'border-l-4 border-l-transparent'
+                  "
+                >
+                  <span
+                    class="w-5 shrink-0 text-[14px] font-bold text-jv-coral"
+                  >
+                    {{ optionLabel(key) }}.
+                  </span>
+
+                  <div
+                    v-if="question.options_media === 'image' && option"
+                    class="flex min-w-0 flex-1 justify-start"
+                    @click.stop
+                  >
+                    <img
+                      :src="option"
+                      :alt="`Option ${optionLabel(key)}`"
+                      class="max-h-32 w-auto max-w-full object-contain"
+                    />
+                  </div>
+
+                  <div
+                    v-else-if="question.options_media === 'code' && option"
+                    class="min-w-0 flex-1 overflow-x-auto"
+                    @click.stop
+                  >
+                    <CodeBlockComponent :code="option" />
+                  </div>
+
+                  <span v-else class="min-w-0 flex-1 break-words">
+                    {{ option }}
+                  </span>
+
+                  <Check
+                    v-if="isCorrectAnswer(question, key)"
+                    class="size-5 shrink-0 text-jv-accent-green"
+                    :stroke-width="3"
+                  />
+                </li>
+              </ul>
+            </template>
+          </article>
+        </template>
+      </draggable>
     </section>
 
     <Teleport to="body">
@@ -388,9 +419,10 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import {
   Check,
+  GripVertical,
   Pencil,
   Play,
   Plus,
@@ -400,6 +432,7 @@ import {
   X,
 } from "lucide-vue-next";
 import { useToast } from "vue-toastification";
+import draggable from "vuedraggable";
 import QuestionFormCard from "@/components/quiz-manage/QuestionFormCard.vue";
 import CodeBlockComponent from "@/components/CodeBlockComponent.vue";
 import usecopyToClipboard from "@/composables/copy_to_clipboard";
@@ -435,6 +468,15 @@ const settings = ref({
   points: 10,
   duration_in_seconds: 10,
 });
+const orderedQuestions = ref([]);
+const originalOrderIds = ref([]);
+const scrollContainer = ref(null);
+
+onMounted(() => {
+  scrollContainer.value =
+    document.querySelector(".lg\\:overflow-y-auto") ||
+    document.scrollingElement;
+});
 
 const {
   refresh,
@@ -468,10 +510,15 @@ const canEditQuiz = computed(() => {
 const hasUnsavedSettings = computed(() => {
   const data = quizData.value?.data;
   if (!data) return false;
+  const currentIds = orderedQuestions.value.map((q) => q.question_id);
+  const orderChanged =
+    currentIds.length !== originalOrderIds.value.length ||
+    currentIds.some((id, i) => id !== originalOrderIds.value[i]);
   return (
     Number(settings.value.points) !== Number(data.points ?? 10) ||
     Number(settings.value.duration_in_seconds) !==
-      Number(data.duration_in_seconds ?? 10)
+      Number(data.duration_in_seconds ?? 10) ||
+    orderChanged
   );
 });
 
@@ -483,6 +530,9 @@ watch(
       points: Number(data.points ?? 10),
       duration_in_seconds: Number(data.duration_in_seconds ?? 10),
     };
+    const serverQuestions = data.data || [];
+    orderedQuestions.value = [...serverQuestions];
+    originalOrderIds.value = serverQuestions.map((q) => q.question_id);
   },
   { immediate: true }
 );
@@ -524,7 +574,10 @@ const saveSettings = async () => {
       method: "PUT",
       headers,
       credentials: "include",
-      body: settings.value,
+      body: {
+        ...settings.value,
+        question_ids: orderedQuestions.value.map((q) => q.question_id),
+      },
     });
     toast.success("Quiz settings updated.");
     refresh();
@@ -725,3 +778,9 @@ const handleStartQuiz = async () => {
   }
 };
 </script>
+
+<style scoped>
+.flip-list-move {
+  transition: transform 0.4s ease;
+}
+</style>

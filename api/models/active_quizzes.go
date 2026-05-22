@@ -106,28 +106,37 @@ func (model *ActiveQuizModel) GetSessionByCode(invitationCode string) (ActiveQui
 
 func (model *ActiveQuizModel) GetQuestionsCopy(activeQuizId uuid.UUID, quizId string) error {
 
-	rows, err := model.db.From(goqu.T("quiz_questions").As("qq")).
-		Select(goqu.I("qq.question_id")).
-		Where(goqu.I("qq.quiz_id").Eq(quizId)).Executor().Query()
+	// Walk the next_question chain so playback honors admin-defined order.
+	// Falls back to created_at for legacy quizzes whose chain was never populated.
+	rawSQL := `
+		WITH RECURSIVE chain AS (
+			SELECT qq.question_id, qq.next_question, qq.created_at, 1 AS pos
+			FROM quiz_questions qq
+			WHERE qq.quiz_id = $1
+				AND NOT EXISTS (
+					SELECT 1 FROM quiz_questions qq2
+					WHERE qq2.quiz_id = $1 AND qq2.next_question = qq.question_id
+				)
+			UNION ALL
+			SELECT qq.question_id, qq.next_question, qq.created_at, chain.pos + 1
+			FROM quiz_questions qq
+			JOIN chain ON qq.question_id = chain.next_question
+			WHERE qq.quiz_id = $1 AND chain.pos < 10000
+		)
+		SELECT question_id FROM chain ORDER BY pos, created_at`
 
+	var questionIDs []uuid.UUID
+	err := model.db.ScanVals(&questionIDs, rawSQL, quizId)
 	if err != nil {
 		return err
 	}
-	defer rows.Close()
 
 	activeQuizResponses := []goqu.Record{}
 	previousRecord := goqu.Record{}
 	order := 1
 
-	for rows.Next() {
-		var questionID uuid.UUID
-
-		if err := rows.Scan(&questionID); err != nil {
-			return err
-		}
-
+	for _, questionID := range questionIDs {
 		id, err := uuid.NewUUID()
-
 		if err != nil {
 			return err
 		}
