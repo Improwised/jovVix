@@ -117,11 +117,6 @@ func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config confi
 		return err
 	}
 
-	err = setupImageController(v1, goqu, logger, middleware, config)
-	if err != nil {
-		return err
-	}
-
 	err = setupSharedQuizzesController(v1, goqu, logger, middleware, config)
 	if err != nil {
 		return err
@@ -323,17 +318,6 @@ func setupUserPlayedQuizeController(v1 fiber.Router, goqu *goqu.Database, logger
 	userRouter.Get("/", middlewares.KratosAuthenticated, userPlayedQuizeController.ListUserPlayedQuizes)
 	userRouter.Get(fmt.Sprintf("/:%s", constants.UserPlayedQuizId), userPlayedQuizeController.ListUserPlayedQuizesWithQuestionById)
 	userRouter.Post(fmt.Sprintf("/:%s", constants.QuizSessionInvitationCode), middlewares.Authenticated, userPlayedQuizeController.PlayedQuizValidation)
-	return nil
-}
-
-func setupImageController(v1 fiber.Router, goqu *goqu.Database, logger *zap.Logger, middlewares middlewares.Middleware, config config.AppConfig) error {
-	imageController, err := controller.NewImageController(goqu, logger, &config)
-	if err != nil {
-		return err
-	}
-
-	imageRouter := v1.Group("/images")
-	imageRouter.Post("/", middlewares.KratosAuthenticated, imageController.InsertImage)
 	return nil
 }
 

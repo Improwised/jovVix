@@ -411,7 +411,6 @@ definePageMeta({
   layout: "empty",
 });
 
-const app = useNuxtApp();
 const toast = useToast();
 const url = useRuntimeConfig().public;
 const headers = useRequestHeaders(["cookie"]);
@@ -540,56 +539,7 @@ const saveSettings = async () => {
   }
 };
 
-const validateImage = (file) => {
-  if (!file) return true;
-
-  if (!app.$validImageTypes.includes(file.type)) {
-    toast.error("Please upload a valid image file.");
-    return false;
-  }
-  if (file.size > url.maxImageFileSize) {
-    toast.error(
-      `Please upload an image less than ${
-        url.maxImageFileSize / 1024 / 1024
-      } MB.`
-    );
-    return false;
-  }
-  return true;
-};
-
-const uploadImages = async (questionId, files) => {
-  const imageForm = new FormData();
-  let hasImages = false;
-
-  if (files?.question) {
-    if (!validateImage(files.question)) return false;
-    imageForm.append("image-attachment", files.question, questionId);
-    hasImages = true;
-  }
-
-  Object.entries(files?.options || {}).forEach(([key, file]) => {
-    if (!validateImage(file)) return;
-    imageForm.append("image-attachment", file, `${key}_${questionId}`);
-    hasImages = true;
-  });
-
-  if (!hasImages) return true;
-
-  await $fetch(`${url.apiUrl}/images?quiz_id=${quizId.value}`, {
-    method: "POST",
-    headers: {
-      Accept: "application/json",
-    },
-    body: imageForm,
-    mode: "cors",
-    credentials: "include",
-  });
-
-  return true;
-};
-
-const saveNewQuestion = async ({ payload, files }) => {
+const saveNewQuestion = async ({ payload }) => {
   try {
     savingNewQuestion.value = true;
     const payloadWithDefaults = {
@@ -597,20 +547,12 @@ const saveNewQuestion = async ({ payload, files }) => {
       points: Number(settings.value.points),
       duration_in_seconds: Number(settings.value.duration_in_seconds),
     };
-    const response = await $fetch(
-      `${url.apiUrl}/quizzes/${quizId.value}/questions`,
-      {
-        method: "POST",
-        headers,
-        credentials: "include",
-        body: payloadWithDefaults,
-      }
-    );
-
-    const questionId = response?.data;
-    if (questionId) {
-      await uploadImages(questionId, files);
-    }
+    await $fetch(`${url.apiUrl}/quizzes/${quizId.value}/questions`, {
+      method: "POST",
+      headers,
+      credentials: "include",
+      body: payloadWithDefaults,
+    });
 
     toast.success("Question added successfully.");
     showNewQuestionForm.value = false;
@@ -625,41 +567,22 @@ const saveNewQuestion = async ({ payload, files }) => {
   }
 };
 
-const buildUpdatePayload = (question, payload) => {
-  const questionId = question.question_id;
-  const options = { ...payload.options };
-
-  if (payload.options_media === "image") {
-    Object.keys(options).forEach((key) => {
-      options[key] = `${quizId.value}/${key}_${questionId}`;
-    });
-  }
-
-  return {
-    ...payload,
-    options,
-    points: Number(settings.value.points),
-    duration_in_seconds: Number(settings.value.duration_in_seconds),
-    resource:
-      payload.question_media === "image"
-        ? `${quizId.value}/${questionId}`
-        : payload.resource,
-  };
-};
-
-const saveExistingQuestion = async (question, { payload, files }) => {
+const saveExistingQuestion = async (question, { payload }) => {
   const questionId = question.question_id;
 
   try {
     savingQuestionId.value = questionId;
-    await uploadImages(questionId, files);
     await $fetch(
       `${url.apiUrl}/quizzes/${quizId.value}/questions/${questionId}`,
       {
         method: "PUT",
         headers,
         credentials: "include",
-        body: buildUpdatePayload(question, payload),
+        body: {
+          ...payload,
+          points: Number(settings.value.points),
+          duration_in_seconds: Number(settings.value.duration_in_seconds),
+        },
       }
     );
 

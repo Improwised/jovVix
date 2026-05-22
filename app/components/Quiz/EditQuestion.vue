@@ -147,13 +147,12 @@ const changeCode = (data, order) => {
   editableQuestion.value.resource = data;
 };
 
-const onImageChange = async (e) => {
+const onImageChange = (e) => {
   if (e.target.files.length === 0) {
     toast.error("Please select a file to upload.");
     return;
   }
 
-  // Validate file
   const file = e.target.files[0];
 
   if (!app.$validImageTypes.includes(file.type)) {
@@ -163,66 +162,26 @@ const onImageChange = async (e) => {
     return;
   }
 
-  // 2 MB max
-  if (file.size > 2000000) {
-    toast.error("Please upload an image less than 2 MB.");
+  if (file.size > url.maxImageFileSize) {
+    const limitKb = Math.round(url.maxImageFileSize / 1024);
+    toast.error(`Please upload an image less than ${limitKb} KB.`);
     return;
   }
 
-  if (e.target.id === "image-attachment-option" && file) {
-    const order = e.target.name[0];
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      editableOptions.value[order] = e.target.result;
-    };
-    reader.readAsDataURL(file);
-  } else if (file) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      editableQuestion.value.resource = e.target.result;
-    };
-    reader.readAsDataURL(file);
-  }
-
-  const imageForm = new FormData();
-  imageForm.append("image-attachment", e.target.files[0], e.target.name);
-
-  try {
-    await $fetch(encodeURI(`${url.apiUrl}/images?quiz_id=${props.quizId}`), {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-      },
-      body: imageForm,
-      mode: "cors",
-      credentials: "include",
-      onResponse({ response }) {
-        if (response.status != 200) {
-          toast.error("error upload image");
-          return;
-        }
-        if (response.status == 200) {
-          toast.success(response._data?.data);
-        }
-      },
-    });
-  } catch (error) {
-    toast.error(error.message);
-    imageRequestPending.value = false;
-    return;
-  }
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    if (e.target.id === "image-attachment-option") {
+      const order = e.target.name[0];
+      editableOptions.value[order] = ev.target.result;
+    } else {
+      editableQuestion.value.resource = ev.target.result;
+    }
+  };
+  reader.readAsDataURL(file);
 };
 
 const updateQuestion = async () => {
   try {
-    if (props.question.options_media === "image") {
-      Object.entries(editableOptions.value).forEach(([key]) => {
-        editableOptions.value[
-          key
-        ] = `${props.quizId}/${key}_${props.questionId}`;
-      });
-    }
-
     const payload = {
       question: editableQuestion.value.question,
       type: props.question.question_type_id,
@@ -235,10 +194,7 @@ const updateQuestion = async () => {
       duration_in_seconds: props.question.duration_in_seconds,
       question_media: props.question.question_media,
       options_media: props.question.options_media,
-      resource:
-        props.question.question_media === "image"
-          ? props.quizId + "/" + props.questionId
-          : editableQuestion.value.resource,
+      resource: editableQuestion.value.resource,
     };
 
     await $fetch(

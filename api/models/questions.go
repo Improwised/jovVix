@@ -3,7 +3,6 @@ package models
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"time"
 
 	"github.com/Improwised/jovvix/api/constants"
@@ -455,49 +454,6 @@ func (model *QuestionModel) GetTotalQuestionCount(activeQuizId string) (int64, e
 	return model.db.From(ActiveQuizQuestionsTable).Where(goqu.Ex{
 		"active_quiz_id": activeQuizId,
 	}).Count()
-}
-
-func (model *QuestionModel) UpdateResourceOfQuestionById(id, resource string) error {
-
-	result, err := model.db.Update(QuestionTable).Set(goqu.Record{
-		"resource":   resource,
-		"updated_at": goqu.L("now()"),
-	}).Where(goqu.I("id").Eq(id)).Executor().Exec()
-	if err != nil {
-		return err
-	}
-
-	affectedRow, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-
-	if affectedRow == 0 {
-		return sql.ErrNoRows
-	}
-	return nil
-}
-
-func (model *QuestionModel) UpdateOptionsOfQuestionById(id, keyPath, data string) error {
-
-	jsonValue := fmt.Sprintf("\"%s\"", data)
-
-	result, err := model.db.Update(QuestionTable).Set(goqu.Record{
-		"options": goqu.L("jsonb_set(options::jsonb, '{" + keyPath + "}', '" + jsonValue + "')"),
-	}).Where(goqu.I("id").Eq(id)).Executor().Exec()
-	if err != nil {
-		return err
-	}
-
-	affectedRow, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-
-	if affectedRow == 0 {
-		return sql.ErrNoRows
-	}
-	return nil
 }
 
 func (model *QuestionModel) CreateQuestion(transaction *goqu.TxDatabase, question Question) (uuid.UUID, error) {

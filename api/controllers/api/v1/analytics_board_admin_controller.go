@@ -7,7 +7,6 @@ import (
 	"github.com/Improwised/jovvix/api/config"
 	"github.com/Improwised/jovvix/api/constants"
 	"github.com/Improwised/jovvix/api/models"
-	"github.com/Improwised/jovvix/api/services"
 	"github.com/Improwised/jovvix/api/utils"
 	"github.com/doug-martin/goqu/v9"
 	fiber "github.com/gofiber/fiber/v2"
@@ -16,7 +15,6 @@ import (
 
 type AnalyticsBoardAdminController struct {
 	AnalyticsBoardAdminModel *models.AnalyticsBoardAdminModel
-	presignedURLSvc          *services.PresignURLService
 	logger                   *zap.Logger
 }
 
@@ -26,14 +24,8 @@ func NewAnalyticsBoardAdminController(goqu *goqu.Database, logger *zap.Logger, a
 		return nil, err
 	}
 
-	presignedURLSvc, err := services.NewFileUploadServices(&appConfig.AWS)
-	if err != nil {
-		return nil, err
-	}
-
 	return &AnalyticsBoardAdminController{
 		AnalyticsBoardAdminModel: &analyticsBoardAdminModel,
-		presignedURLSvc:          presignedURLSvc,
 		logger:                   logger,
 	}, nil
 
@@ -67,8 +59,6 @@ func (fc *AnalyticsBoardAdminController) GetAnalyticsForAdmin(ctx *fiber.Ctx) er
 		fc.logger.Error("Error while getting analytics for admin", zap.Error(err))
 		return utils.JSONFail(ctx, http.StatusInternalServerError, errors.New("internal server error").Error())
 	}
-
-	services.ProcessAnalyticsData(analyticsBoardData, fc.presignedURLSvc, fc.logger)
 
 	return utils.JSONSuccess(ctx, http.StatusOK, analyticsBoardData)
 

@@ -15,7 +15,6 @@ import (
 	"github.com/Improwised/jovvix/api/models"
 	"github.com/Improwised/jovvix/api/pkg/redis"
 	"github.com/Improwised/jovvix/api/pkg/structs"
-	"github.com/Improwised/jovvix/api/services"
 	"github.com/Improwised/jovvix/api/utils"
 	"github.com/doug-martin/goqu/v9"
 	"github.com/gofiber/contrib/websocket"
@@ -50,7 +49,6 @@ type quizSocketController struct {
 	userPlayedQuizModel   *models.UserPlayedQuizModel
 	questionModel         *models.QuestionModel
 	userQuizResponseModel *models.UserQuizResponseModel
-	presignedURLSvc       *services.PresignURLService
 	appConfig             *config.AppConfig
 	logger                *zap.Logger
 	redis                 *redis.RedisPubSub
@@ -64,18 +62,12 @@ func InitQuizConfig(db *goqu.Database, appConfig *config.AppConfig, logger *zap.
 	questionModel := models.InitQuestionModel(db, logger)
 	userQuizResponseModel := models.InitUserQuizResponseModel(db)
 
-	presignedURLSvc, err := services.NewFileUploadServices(&appConfig.AWS)
-	if err != nil {
-		return nil, err
-	}
-
 	return &quizSocketController{
 		activeQuizModel:       activeQuizModel,
 		quizModel:             quizModel,
 		userPlayedQuizModel:   userPlayedQuizModel,
 		questionModel:         questionModel,
 		userQuizResponseModel: userQuizResponseModel,
-		presignedURLSvc:       presignedURLSvc,
 		appConfig:             appConfig,
 		logger:                logger,
 		redis:                 redis,
@@ -968,24 +960,6 @@ func listenAllEvents(c *websocket.Conn, qc *quizSocketController, response *Quiz
 func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.WaitGroup, response *QuizSendResponse, session models.ActiveQuiz, question models.Question, lastQuestionTimeStamp sql.NullTime, chanSkipEvent chan bool, chanSkipTimer chan bool, chanPauseQuiz chan bool, totalQuestions int64, arrangeMu *sync.Mutex) {
 
 	defer wg.Done()
-
-	if question.QuestionMedia == "image" {
-		presignedURL, err := qc.presignedURLSvc.GetPresignedURL(question.Resource.String, 5*time.Minute)
-		if err != nil {
-			qc.logger.Error("error while generating presign url")
-		}
-		question.Resource = sql.NullString{String: presignedURL, Valid: true}
-	}
-
-	if question.OptionsMedia == "image" {
-		for i, v := range question.Options {
-			presignedURL, err := qc.presignedURLSvc.GetPresignedURL(v, 1*time.Minute)
-			if err != nil {
-				qc.logger.Error("error while generating presign url")
-			}
-			question.Options[i] = presignedURL
-		}
-	}
 
 	totalUserJoin, err := qc.userPlayedQuizModel.GetCountOfTotalJoinUsers(session.ID.String())
 	if err != nil {

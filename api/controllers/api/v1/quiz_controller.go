@@ -24,7 +24,6 @@ type QuizController struct {
 	quizModel       *models.QuizModel
 	questionModel   *models.QuestionModel
 	activeQuizModel *models.ActiveQuizModel
-	presignedURLSvc *services.PresignURLService
 	quizSvc         *services.QuizService
 	appConfig       *config.AppConfig
 	logger          *zap.Logger
@@ -36,18 +35,12 @@ func InitQuizController(db *goqu.Database, logger *zap.Logger, appConfig *config
 	questionModel := models.InitQuestionModel(db, logger)
 	activeQuizModel := models.InitActiveQuizModel(db, logger)
 
-	presignedURLSvc, err := services.NewFileUploadServices(&appConfig.AWS)
-	if err != nil {
-		return nil, err
-	}
-
 	quizSvc := services.NewQuizService(db, logger)
 
 	return &QuizController{
 		quizModel:       quizModel,
 		questionModel:   questionModel,
 		activeQuizModel: activeQuizModel,
-		presignedURLSvc: presignedURLSvc,
 		quizSvc:         quizSvc,
 		appConfig:       appConfig,
 		logger:          logger,
@@ -158,8 +151,6 @@ func (qc *QuizController) GetQuizAnalysis(c *fiber.Ctx) error {
 		qc.logger.Error("error while get quiz analysis", zap.Error(err))
 		return utils.JSONError(c, http.StatusInternalServerError, err.Error())
 	}
-
-	services.ProcessAnalyticsData(quizAnalysis, qc.presignedURLSvc, qc.logger)
 
 	return utils.JSONSuccess(c, http.StatusOK, quizAnalysis)
 }

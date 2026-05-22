@@ -66,7 +66,6 @@ const (
 	ErrRegisterQuiz                = "error while creating quiz"
 	ErrCreatingDemoQuiz            = "error while creating demo quiz"
 	ErrGetTotalJoinUser            = "error while getting count of user joined in quiz"
-	ErrInsertImage                 = "error while inserting image"
 	ErrShareQuiz                   = "error while sharing quiz"
 	ErrListShareQuiz               = "error while getting list of shared quizzes"
 	ErrFetchAuthorizedUsersError   = "Error fetching authorized users for the selected quiz."
