@@ -11,6 +11,7 @@ import (
 	"github.com/doug-martin/goqu/v9"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
+	"fmt"
 )
 
 const ActiveQuizQuestionsTable = "active_quiz_questions"

@@ -1,8 +1,7 @@
 import { useUsersStore } from "~~/store/users";
-const userData = useUsersStore();
-const { setUserData } = userData;
 
 export const handleLogout = async () => {
+  const { setUserData } = useUsersStore();
   const { kratosUrl } = useRuntimeConfig().public;
   try {
     // Step 1: Fetch logout URL and token from the first API endpoint
@@ -45,6 +44,7 @@ export const handleLogout = async () => {
 };
 
 export const setUserDataStore = async () => {
+  const { setUserData } = useUsersStore();
   const { apiUrl } = useRuntimeConfig().public;
   const headers = useRequestHeaders(["cookie"]);
   try {

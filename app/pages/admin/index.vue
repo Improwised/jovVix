@@ -27,12 +27,70 @@
         {{ userError.data }}
       </div>
 
-      <div
-        v-else-if="userPending"
-        class="jv-border-rough bg-jv-white p-5 text-center text-[18px] font-semibold text-jv-muted shadow-brutal-sm"
-      >
-        Pending...
-      </div>
+      <!-- Skeleton: mirrors the real profile + played-quiz cards 1:1 so the
+           page doesn't reflow when data arrives. -->
+      <template v-else-if="userPending || !user">
+        <section
+          class="rotate-[-0.2deg] jv-border-rough bg-jv-white shadow-brutal-lg"
+          aria-busy="true"
+          aria-label="Loading profile"
+        >
+          <div class="p-5 sm:p-7 md:p-8">
+            <div class="flex flex-col gap-5 md:flex-row md:items-center">
+              <Skeleton
+                class="size-24 shrink-0 rounded-full border-[3px] border-jv-ink/10 sm:size-28"
+              />
+              <div class="min-w-0 flex-1 space-y-3">
+                <Skeleton class="h-9 w-3/4 max-w-[280px] sm:h-11" />
+                <Skeleton class="h-5 w-2/3 max-w-[220px]" />
+                <div class="mt-5 flex flex-wrap gap-3">
+                  <Skeleton class="h-10 w-36 rounded-[999px]" />
+                  <Skeleton class="h-10 w-40 rounded-[999px]" />
+                  <Skeleton class="h-10 w-36 rounded-[999px]" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div
+            class="border-t-2 border-dashed border-jv-ink/15 p-5 sm:p-7 md:p-8"
+          >
+            <div class="grid gap-5 md:grid-cols-2 md:gap-6">
+              <div class="space-y-2">
+                <Skeleton class="h-3.5 w-24" />
+                <Skeleton class="h-14 w-full" />
+              </div>
+              <div class="space-y-2">
+                <Skeleton class="h-3.5 w-24" />
+                <Skeleton class="h-14 w-full" />
+              </div>
+            </div>
+            <div class="mt-6 space-y-2">
+              <Skeleton class="h-3.5 w-16" />
+              <Skeleton class="h-14 w-full" />
+            </div>
+            <div class="mt-7">
+              <Skeleton class="h-11 w-40" />
+            </div>
+          </div>
+        </section>
+
+        <section
+          class="rotate-[0.2deg] jv-border-rough bg-jv-white shadow-brutal-lg"
+          aria-busy="true"
+          aria-label="Loading played quizzes card"
+        >
+          <div
+            class="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:p-6"
+          >
+            <div class="min-w-0 flex-1 space-y-2">
+              <Skeleton class="h-8 w-48 sm:h-9 sm:w-60" />
+              <Skeleton class="h-4 w-2/3 max-w-[260px]" />
+            </div>
+            <Skeleton class="h-10 w-full sm:w-52" />
+          </div>
+        </section>
+      </template>
 
       <template v-else>
         <section
@@ -182,8 +240,9 @@
           class="rotate-[0.2deg] jv-border-rough bg-jv-white shadow-brutal-lg"
         >
           <div
-            class="flex flex-col gap-4 border-b-2 border-jv-ink p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6"
+            class="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:p-6"
           >
+<<<<<<< Updated upstream
             <h2
               class="font-headings text-[28px] leading-tight text-jv-ink sm:text-[32px]"
             >
@@ -245,6 +304,25 @@
                 />
               </template>
             </template>
+=======
+            <div class="min-w-0">
+              <h2
+                class="font-headings text-[28px] leading-tight text-jv-ink sm:text-[32px]"
+              >
+                Played Quizzes
+              </h2>
+              <p
+                class="mt-1 text-[14px] font-semibold text-jv-muted sm:text-[15px]"
+              >
+                Review every quiz you've played so far.
+              </p>
+            </div>
+            <NavigationLink
+              url="/admin/quiz/list-quiz"
+              url-name="View Played Quizzes"
+              class="w-full bg-jv-yellow py-2 text-jv-ink sm:w-fit"
+            />
+>>>>>>> Stashed changes
           </div>
         </section>
       </template>
@@ -256,8 +334,12 @@
 import { useUsersStore } from "~~/store/users";
 import { getAvatarUrlByName } from "~~/composables/avatar";
 import { useToast } from "vue-toastification";
+<<<<<<< Updated upstream
 import { Archive, Save } from "lucide-vue-next";
 import debounce from "lodash/debounce";
+=======
+import { Save } from "lucide-vue-next";
+>>>>>>> Stashed changes
 import NavigationLink from "@/components/common/NavigationLink.vue";
 
 definePageMeta({
@@ -286,15 +368,19 @@ const saveButtonText = computed(() =>
   updateuserPending.value ? "Pending..." : "Save Changes"
 );
 
+// useLazyFetch + server:false: skip SSR for this request so the server renders
+// only the skeleton; the real fetch runs after hydration, eliminating the
+// SSR/CSR mismatches we were seeing on /admin.
 const {
   data: user,
   pending: userPending,
   error: userError,
-} = useFetch(url.apiUrl + "/kratos/whoami", {
+} = useLazyFetch(url.apiUrl + "/kratos/whoami", {
   method: "GET",
   headers: headers,
   mode: "cors",
   credentials: "include",
+<<<<<<< Updated upstream
 });
 
 const {
@@ -310,6 +396,9 @@ const {
     page,
     title,
   },
+=======
+  server: false,
+>>>>>>> Stashed changes
 });
 
 const playedQuizzes = computed(() => quizList.value?.data?.data ?? []);

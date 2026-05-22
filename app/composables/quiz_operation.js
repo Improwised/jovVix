@@ -235,15 +235,29 @@ export default class QuizHandler {
 
   async handleTerminate() {
     const sessionStore = useSessionStore();
-    const { setSession } = sessionStore;
+    const { getSession, setSession } = sessionStore;
+    // Read the session id BEFORE clearing it — the API requires it as a query
+    // param and would otherwise reject the request with 400.
+    const sessionId = getSession();
     setSession(null);
+
     let error = null;
+    if (!sessionId) {
+      // Nothing to terminate; the API would 400 on an empty id.
+      return { error };
+    }
+
     try {
-      await $fetch(this.apiUrl + "/quiz/terminate", {
-        method: "GET",
-        credentials: "include",
-        mode: "cors",
-      });
+      await $fetch(
+        `${this.apiUrl}/quiz/terminate?session_id=${encodeURIComponent(
+          sessionId
+        )}`,
+        {
+          method: "GET",
+          credentials: "include",
+          mode: "cors",
+        }
+      );
     } catch (err) {
       // Terminate is fire-and-forget; surface but don't block the scoreboard.
       error = err;
