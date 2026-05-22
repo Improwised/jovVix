@@ -4,5 +4,9 @@
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>
+    <RunningQuizBanner />
   </div>
 </template>
+<script setup>
+import RunningQuizBanner from "@/components/common/RunningQuizBanner.vue";
+</script>
