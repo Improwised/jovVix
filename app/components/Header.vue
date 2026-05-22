@@ -89,53 +89,14 @@
       </div>
     </nav>
   </div>
-  <div
-    v-if="activeSession && isKratosUser"
-    class="alert bg-light-primary text-black d-flex justify-content-center align-items-center"
-    role="alert"
-  >
-    <div class="doodle">&#128641;</div>
-    <div class="row w-100">
-      <div class="col-6 text-end">
-        <span>
-          <span>Your quiz is still runnig... check it out!</span>
-          <font-awesome-icon
-            type="button"
-            class="ml-2 scale-110"
-            :icon="['fas', 'arrow-up-right-from-square']"
-            @click="navigateTo(`/admin/arrange/${activeSession}`)"
-          />
-        </span>
-      </div>
-      <div class="col-6">
-        <span class="ml-5">
-          <span>If you want to stop the running quiz please click here</span>
-
-          <font-awesome-icon
-            type="button"
-            class="ml-2 scale-110"
-            :icon="['fas', 'ban']"
-            @click="stopQuiz"
-          />
-        </span>
-      </div>
-    </div>
-  </div>
 </template>
 
 <script setup>
 const router = useRouter();
-const { apiUrl } = useRuntimeConfig().public;
-import { useToast } from "vue-toastification";
-const toast = useToast();
 import { setUserDataStore } from "~~/composables/auth";
 import { useUsersStore } from "~~/store/users";
 const userData = useUsersStore();
 const { getUserData } = userData;
-import { useSessionStore } from "~~/store/session";
-const sessionStore = useSessionStore();
-const { getSession, setSession } = sessionStore;
-const activeSession = computed(() => getSession());
 
 const navigate = (url) => {
   router.push(url);
@@ -152,49 +113,11 @@ const isKratosUser = computed(() => {
 onMounted(() => {
   setUserDataStore();
 });
-
-const stopQuiz = async () => {
-  if (!activeSession.value) {
-    return;
-  }
-
-  try {
-    await $fetch(`${apiUrl}/quiz/terminate?session_id=${activeSession.value}`, {
-      method: "GET",
-      credentials: "include",
-    });
-    setSession(null);
-    toast.success("Quiz stopped successfully.");
-  } catch (error) {
-    console.error("failed to stop quiz from header", error);
-    toast.error("Failed to stop running quiz.");
-  }
-};
 </script>
 
 <style scoped>
 .logo {
   height: 48px;
-}
-
-@keyframes doodle-animation {
-  0% {
-    left: calc(100% + 50px);
-  }
-
-  100% {
-    left: -50px;
-  }
-}
-
-.scale-110 {
-  transform: scale(1.2);
-}
-
-.doodle {
-  position: absolute;
-  animation: doodle-animation 5s linear infinite;
-  font-size: 24px;
 }
 
 .nav-link-button {
