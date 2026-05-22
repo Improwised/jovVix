@@ -39,6 +39,8 @@ const props = defineProps({
 
 const emits = defineEmits(["deleteQuestion", "editQuestion"]);
 
+const showDeleteDialog = ref(false);
+
 const deleteQuestion = (questionId) => emits("deleteQuestion", questionId);
 const editQuestion = (questionId) => emits("editQuestion", questionId);
 
@@ -137,13 +139,14 @@ const userResultChip = computed(() => {
           type="button"
           class="grid size-9 place-items-center rounded-[8px] border-[2px] border-jv-ink bg-jv-coral text-white shadow-brutal-sm transition-transform hover:rotate-[-2deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
           title="Delete question"
-          data-bs-toggle="modal"
-          data-bs-target="#deleteQuestion"
+          @click="showDeleteDialog = true"
         >
           <Trash2 class="size-4" :stroke-width="2.4" />
         </button>
         <DeleteDialog
-          id="deleteQuestion"
+          v-model="showDeleteDialog"
+          title="Delete question"
+          message="Once deleted, this question cannot be recovered. Do you want to proceed?"
           @confirm-delete="deleteQuestion(props.question?.question_id)"
         />
       </div>

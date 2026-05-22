@@ -182,10 +182,6 @@
   }
 }
 
-@utility text-para {
-  /* @apply text-[16px] leading-[20px] md:text-[18px] md:leading-[28px] tracking-[0.02em] font-normal text-colorprimarytext; */
-  @apply text-[18px] leading-[20px] md:text-[20px] md:leading-[1.6] font-normal tracking-normal;
-}
 @utility small-text {
   @apply text-[16px] leading-[24px] tracking-normal font-normal;
 }
@@ -214,14 +210,6 @@
 @utility jv-border-even {
   border: 3px solid var(--jv-ink);
   border-radius: 1px;
-}
-
-/* Feature-card icon badge — small asymmetric chip in header */
-@utility jv-badge {
-  border-top-left-radius: 8px;
-  border-top-right-radius: 6px;
-  border-bottom-right-radius: 10px;
-  border-bottom-left-radius: 4px;
 }
 
 /* Carousel prev/next nav button — brutalist hand-drawn pill */

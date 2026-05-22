@@ -1,5 +1,5 @@
 <template>
-  <div class="d-flex flex-column align-items-center">
+  <div class="flex flex-col items-center">
     <qrcode-vue :value="qrUrl" :size="props.size" level="H" render-as="svg" />
   </div>
 </template>

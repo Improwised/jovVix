@@ -1,4 +1,8 @@
 <script setup>
+definePageMeta({
+  layout: "empty",
+});
+
 const route = useRoute();
 
 const status = ref(
@@ -8,5 +12,7 @@ const message = ref(route.query.error);
 </script>
 
 <template>
-  <Frame :page-title="status?.toUpperCase()" :page-message="message"></Frame>
+  <div class="bg-jv-canvas">
+    <Frame :page-title="status?.toUpperCase()" :page-message="message" />
+  </div>
 </template>

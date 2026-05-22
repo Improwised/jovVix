@@ -1,113 +1,135 @@
 <template>
-  <div class="row m-2">
-    <div class="col-lg-12">
+  <div class="flex flex-col gap-5">
+    <div class="flex flex-col gap-2">
+      <label
+        for="edit-question-text"
+        class="font-body text-xs font-bold uppercase tracking-wide text-jv-ink"
+      >
+        Question
+      </label>
       <input
+        id="edit-question-text"
         v-model="editableQuestion.question"
-        class="form-control font-bold my-2"
         placeholder="Edit Question"
+        class="jv-card w-full border-2 border-jv-ink bg-jv-white px-4 py-3 font-body text-base font-bold text-jv-ink shadow-brutal-sm outline-none transition-all focus:translate-x-[1px] focus:translate-y-[1px] focus:shadow-none"
       />
     </div>
-    <div v-if="editableQuestion.question_media == 'image'" class="col-lg-12">
-      <v-file-input
-        id="image-attachment-question"
-        prepend-icon="mdi-camera"
-        type="file"
-        class="col-12"
-        :name="editableQuestion.question_id"
-        label="Image Upload"
-        accept="image/*"
-        show-size
-        variant="outlined"
-        @change="onImageChange"
-      >
-      </v-file-input>
-    </div>
+
     <div
       v-if="editableQuestion.question_media === 'image'"
-      class="d-flex align-items-center justify-content-center"
+      class="flex flex-col gap-3"
     >
-      <img
-        v-if="editableQuestion.resource"
-        :src="editableQuestion.resource"
-        :alt="editableQuestion.resource"
-        class="rounded img-thumbnail"
-      />
+      <label
+        class="jv-card flex w-fit cursor-pointer items-center gap-2 border-2 border-jv-ink bg-jv-yellow px-4 py-2 font-headings text-sm text-jv-ink shadow-brutal-sm transition-transform hover:rotate-[1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+      >
+        <Camera class="size-4" :stroke-width="2.4" />
+        Replace Image
+        <input
+          id="image-attachment-question"
+          type="file"
+          accept="image/*"
+          class="hidden"
+          :name="editableQuestion.question_id"
+          @change="onImageChange"
+        />
+      </label>
+      <div v-if="editableQuestion.resource" class="flex justify-center">
+        <img
+          :src="editableQuestion.resource"
+          :alt="editableQuestion.question"
+          class="max-h-[240px] w-auto border-2 border-jv-ink bg-jv-white object-contain shadow-brutal-sm"
+        />
+      </div>
     </div>
+
     <CodeBlockComponent
       v-if="editableQuestion.question_media === 'code'"
       :code="editableQuestion.resource"
       :read-only="false"
       @code-change="changeCode"
     />
-  </div>
-  <div class="row d-flex align-items-stretch m-2">
-    <div
-      v-for="(option, order) in props.question.options"
-      :key="order"
-      class="col-lg-6 col-md-12"
-    >
-      <div class="option-box wrong-option">
-        <div class="d-flex mb-2">
-          <div
-            v-if="props.question.options_media == 'image'"
-            class="container flex-column"
-          >
-            <v-file-input
-              id="image-attachment-option"
-              :key="index"
-              :name="order + '_' + props.question.question_id"
-              :label="'Option ' + order"
-              prepend-icon="mdi-camera"
-              type="file"
-              class="form-control mb-2"
-              accept="image/*"
-              @change="onImageChange"
-            >
-            </v-file-input>
-            <div class="d-flex justify-content-center mb-2">
-              <img
-                :src="editableOptions[order]"
-                :alt="option"
-                class="rounded img-thumbnail"
-              />
-            </div>
-          </div>
 
-          <CodeBlockComponent
-            v-if="editableQuestion.options_media === 'code'"
-            :code="option"
-            :read-only="false"
-            :option-order="Number(order)"
-            @code-change="changeCode"
-          />
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div
+        v-for="(option, order) in props.question.options"
+        :key="order"
+        class="jv-card flex flex-col gap-3 border-2 border-jv-ink bg-jv-white p-4 shadow-brutal-sm"
+      >
+        <div
+          v-if="props.question.options_media === 'image'"
+          class="flex flex-col gap-2"
+        >
+          <label
+            class="jv-card flex w-fit cursor-pointer items-center gap-2 border-2 border-jv-ink bg-jv-yellow-soft px-3 py-1.5 font-headings text-xs text-jv-ink shadow-brutal-sm transition-transform hover:rotate-[1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+          >
+            <Camera class="size-3.5" :stroke-width="2.4" />
+            Option {{ order }}
+            <input
+              :id="`image-attachment-option-${order}`"
+              type="file"
+              accept="image/*"
+              class="hidden"
+              :name="`${order}_${props.question.question_id}`"
+              @change="onImageChange"
+            />
+          </label>
+          <div v-if="editableOptions[order]" class="flex justify-center">
+            <img
+              :src="editableOptions[order]"
+              :alt="option"
+              class="max-h-[160px] w-auto border-2 border-jv-ink bg-jv-white object-contain shadow-brutal-sm"
+            />
+          </div>
+        </div>
+
+        <CodeBlockComponent
+          v-if="editableQuestion.options_media === 'code'"
+          :code="option"
+          :read-only="false"
+          :option-order="Number(order)"
+          @code-change="changeCode"
+        />
+
+        <input
+          v-if="editableQuestion.options_media === 'text'"
+          v-model="editableOptions[order]"
+          placeholder="Edit Option"
+          class="jv-card w-full border-2 border-jv-ink bg-jv-white px-3 py-2 font-body text-sm text-jv-ink shadow-brutal-sm outline-none transition-all focus:translate-x-[1px] focus:translate-y-[1px] focus:shadow-none"
+        />
+
+        <label
+          v-if="props.question.question_type_id == 1"
+          class="inline-flex cursor-pointer items-center gap-2 font-body text-sm font-bold text-jv-ink"
+        >
           <input
-            v-if="editableQuestion.options_media === 'text'"
-            v-model="editableOptions[order]"
-            class="form-control"
-            placeholder="Edit Option"
-          />
-          <input
-            v-if="props.question.question_type_id == 1"
-            :id="order"
+            :id="`correct-${order}`"
             v-model="picked"
             type="radio"
             :value="order"
-            class="ml-1"
+            class="size-4 accent-jv-coral"
           />
-          <!-- <input v-else  type="checkbox" :id="order"  :value="order" v-model="checkedNames" class="ml-1"/> -->
-        </div>
+          Correct answer
+        </label>
       </div>
     </div>
-  </div>
-  <div class="text-right">
-    <button class="btn btn-primary" @click="updateQuestion">
-      Save Changes
-    </button>
+
+    <div class="flex justify-end">
+      <button
+        type="button"
+        class="jv-card inline-flex h-11 items-center justify-center gap-2 border-2 border-jv-ink bg-jv-coral px-6 font-headings text-base text-white shadow-brutal-sm transition-transform hover:rotate-[1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+        @click="updateQuestion"
+      >
+        <Save class="size-4" :stroke-width="2.4" />
+        Save Changes
+      </button>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { useToast } from "vue-toastification";
+import { Camera, Save } from "lucide-vue-next";
+
 const app = useNuxtApp();
 const url = useRuntimeConfig().public;
 const headers = useRequestHeaders(["cookie"]);
@@ -117,9 +139,7 @@ const props = defineProps({
   question: {
     type: Object,
     required: true,
-    default: () => {
-      return {};
-    },
+    default: () => ({}),
   },
   quizId: {
     type: String,
@@ -170,7 +190,7 @@ const onImageChange = (e) => {
 
   const reader = new FileReader();
   reader.onload = (ev) => {
-    if (e.target.id === "image-attachment-option") {
+    if (e.target.id.startsWith("image-attachment-option")) {
       const order = e.target.name[0];
       editableOptions.value[order] = ev.target.result;
     } else {
