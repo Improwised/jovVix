@@ -1,6 +1,7 @@
 <script setup>
 import { useUsersStore } from "~~/store/users";
 import { getAvatarUrlByName } from "~~/composables/avatar";
+
 const userData = useUsersStore();
 const { getUserData } = userData;
 
@@ -19,36 +20,18 @@ const avatar = computed(() => {
 </script>
 
 <template>
-  <div class="container-fluid mb-5">
-    <div class="row justify-content-center">
-      <div class="col-6 col-md-4 mt-5 d-flex justify-content-center">
-        <div
-          class="border border-1 p-1 border-radius d-flex align-items-center"
-        >
-          <!-- its added here beacause avatar value return empty value -->
-          <img
-            v-if="!avatar"
-            src="https://api.dicebear.com/9.x/bottts/svg?seed=Eden"
-            height="70"
-            width="70"
-            class="me-3"
-          />
-          <img
-            v-if="avatar"
-            :src="avatar"
-            height="70"
-            width="70"
-            class="me-3"
-          />
-          <h5 class="text-center text-sm fs-5 mb-0">{{ props.userName }}</h5>
-        </div>
-      </div>
+  <div class="mb-8 flex justify-center">
+    <div
+      class="jv-card flex items-center gap-3 border-2 border-jv-ink bg-jv-white py-1.5 pl-1.5 pr-5 shadow-brutal-sm"
+    >
+      <img
+        :src="avatar || 'https://api.dicebear.com/9.x/bottts/svg?seed=Eden'"
+        :alt="props.userName"
+        class="size-[60px] shrink-0 rounded-full border-2 border-jv-ink object-cover"
+      />
+      <h5 class="m-0 font-headings text-base text-jv-ink sm:text-lg">
+        {{ props.userName }}
+      </h5>
     </div>
   </div>
 </template>
-
-<style scoped>
-.border-radius {
-  border-radius: 2rem !important;
-}
-</style>

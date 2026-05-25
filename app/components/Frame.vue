@@ -1,11 +1,12 @@
 <script setup>
 import { useRouter } from "nuxt/app";
 import { useToast } from "vue-toastification";
+import { Volume2, VolumeX } from "lucide-vue-next";
 import { useMusicStore } from "~~/store/music";
+
 const musicStore = useMusicStore();
 const { getMusic, setMusic } = musicStore;
 
-// Define props using defineProps
 const props = defineProps({
   pageTitle: {
     type: String,
@@ -33,6 +34,7 @@ const toastError = () => {
     toast.error(errorQueryParam);
   }
 };
+
 onMounted(() => {
   if (process.client) {
     toastError();
@@ -44,58 +46,53 @@ watch(
   () => toastError()
 );
 
-const music = computed(() => {
-  return getMusic();
-});
+const music = computed(() => getMusic());
 </script>
 
 <template>
-  <div class="d-flex justify-content-center container p-0 bg-transparent">
-    <div class="border p-2 m-0 m-sm-5 p-sm-5 max-width rounded bg-white shadow">
-      <div class="d-flex flex-row">
-        <div class="flex-grow-1">
-          <h1 class="join-page-title text-primary">{{ pageTitle }}</h1>
-          <h6 v-if="props.pageMessage">{{ pageMessage }}</h6>
+  <div class="flex min-h-[60vh] justify-center px-4 py-6 sm:px-6 sm:py-10">
+    <div
+      class="jv-border-rough relative w-full max-w-[800px] -rotate-[0.4deg] bg-jv-white p-5 shadow-brutal-lg sm:p-8"
+    >
+      <span
+        class="absolute left-1/2 top-[-12px] z-10 h-4 w-16 -translate-x-1/2 rotate-[1deg] bg-jv-coral"
+        aria-hidden="true"
+      ></span>
+
+      <div class="flex flex-row items-start gap-4">
+        <div class="flex-1">
+          <h1
+            class="font-headings text-[26px] leading-tight text-jv-ink sm:text-[34px]"
+          >
+            {{ props.pageTitle }}
+          </h1>
+          <p
+            v-if="props.pageMessage"
+            class="mt-2 font-body text-[14px] font-bold text-jv-muted sm:text-[15px]"
+          >
+            {{ props.pageMessage }}
+          </p>
         </div>
         <div>
           <slot name="sub-title"></slot>
         </div>
       </div>
 
-      <hr class="m-2" />
+      <hr class="my-4 border-t-[2px] border-dashed border-jv-ink/25" />
+
       <slot></slot>
-      <div v-if="props.musicComponent" class="d-flex justify-content-end">
-        <button v-if="music" class="" @click="setMusic(false)">
-          <font-awesome-icon :icon="['fas', 'volume-high']" />
-        </button>
-        <button v-else class="" @click="setMusic(true)">
-          <font-awesome-icon :icon="['fas', 'volume-xmark']" />
+
+      <div v-if="props.musicComponent" class="mt-4 flex justify-end">
+        <button
+          type="button"
+          class="grid size-10 place-items-center rounded-[8px] border-[2px] border-jv-ink bg-jv-yellow text-jv-ink shadow-brutal-sm transition-transform hover:rotate-[2deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+          :aria-label="music ? 'Mute music' : 'Unmute music'"
+          @click="setMusic(!music)"
+        >
+          <Volume2 v-if="music" class="size-5" :stroke-width="2.4" />
+          <VolumeX v-else class="size-5" :stroke-width="2.4" />
         </button>
       </div>
     </div>
   </div>
 </template>
-
-<style scoped>
-.max-width {
-  width: 800px;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-}
-
-.join-page-title {
-  color: #663399;
-}
-
-@media (max-width: 576px) {
-  .max-width {
-    width: 100%;
-    padding: 1rem;
-    margin: 0.5rem;
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
-  }
-}
-
-.shadow {
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-}
-</style>
