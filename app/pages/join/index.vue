@@ -246,7 +246,7 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import { useToast } from "vue-toastification";
+import { usePush } from "notivue";
 import { useUsersStore } from "~~/store/users";
 import { getRandomAvatarName, getAvatarUrlByName } from "~~/composables/avatar";
 import {
@@ -278,7 +278,7 @@ const firstname = ref("");
 const isUserLoggedIn = ref(false);
 const { apiUrl } = useRuntimeConfig().public;
 const router = useRouter();
-const toast = useToast();
+const toast = usePush();
 const userError = ref(false);
 const quickUserPending = ref(false);
 const userPlayedQuiz = ref("");

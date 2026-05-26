@@ -171,7 +171,7 @@
 <script setup>
 import { ref } from "vue";
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2 } from "lucide-vue-next";
-import { useToast } from "vue-toastification";
+import { usePush } from "notivue";
 import { useUsersStore } from "~~/store/users";
 import NavigationLink from "@/components/common/NavigationLink.vue";
 
@@ -183,7 +183,7 @@ const userData = useUsersStore();
 const { getUserData } = userData;
 const route = useRoute();
 const router = useRouter();
-const toast = useToast();
+const toast = usePush();
 const csrfToken = ref();
 const loginURLWithFlowQuery = ref("");
 const urls = useRuntimeConfig().public;

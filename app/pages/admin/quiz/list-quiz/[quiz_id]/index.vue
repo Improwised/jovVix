@@ -434,7 +434,7 @@ import {
   Upload,
   X,
 } from "lucide-vue-next";
-import { useToast } from "vue-toastification";
+import { usePush } from "notivue";
 import draggable from "vuedraggable";
 import QuestionFormCard from "@/components/quiz-manage/QuestionFormCard.vue";
 import CodeBlockComponent from "@/components/CodeBlockComponent.vue";
@@ -447,7 +447,7 @@ definePageMeta({
   layout: "empty",
 });
 
-const toast = useToast();
+const toast = usePush();
 const url = useRuntimeConfig().public;
 const headers = useRequestHeaders(["cookie"]);
 const route = useRoute();

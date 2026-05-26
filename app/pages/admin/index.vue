@@ -211,7 +211,7 @@
 <script setup>
 import { useUsersStore } from "~~/store/users";
 import { getAvatarUrlByName } from "~~/composables/avatar";
-import { useToast } from "vue-toastification";
+import { usePush } from "notivue";
 import { Save } from "lucide-vue-next";
 import NavigationLink from "@/components/common/NavigationLink.vue";
 
@@ -220,7 +220,7 @@ definePageMeta({
 });
 
 const config = useRuntimeConfig();
-const toast = useToast();
+const toast = usePush();
 const userStore = useUsersStore();
 const { getUserData, setUserData } = userStore;
 const url = useRuntimeConfig().public;

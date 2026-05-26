@@ -160,12 +160,12 @@
 <script setup>
 import { computed, ref } from "vue";
 import { Ban, ExternalLink, Sparkle } from "lucide-vue-next";
-import { useToast } from "vue-toastification";
+import { usePush } from "notivue";
 import { useSessionStore } from "~~/store/session";
 import { useUsersStore } from "~~/store/users";
 
 const { apiUrl } = useRuntimeConfig().public;
-const toast = useToast();
+const toast = usePush();
 const router = useRouter();
 
 const sessionStore = useSessionStore();

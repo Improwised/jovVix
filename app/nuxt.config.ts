@@ -47,7 +47,12 @@ export default defineNuxtConfig({
     },
   },
 
-  css: ["@/assets/css/main.css"],
+  css: [
+    "@/assets/css/main.css",
+    "notivue/notification.css",
+    "notivue/animations.css",
+    "notivue/notification-progress.css",
+  ],
   modules: [
     "@nuxt/test-utils/module",
     [
@@ -57,7 +62,19 @@ export default defineNuxtConfig({
       },
     ],
     "shadcn-nuxt",
+    "notivue/nuxt",
   ],
+  notivue: {
+    position: "top-center",
+    limit: 4,
+    enqueue: true,
+    avoidDuplicates: true,
+    notifications: {
+      global: {
+        duration: 8000,
+      },
+    },
+  },
   shadcn: {
     prefix: "",
     componentDir: "@/components/ui",
@@ -90,10 +107,6 @@ export default defineNuxtConfig({
       include: ["chart.js"],
     },
     plugins: [tailwindcss()],
-  },
-
-  build: {
-    transpile: ["vue-toastification"],
   },
 
   ssr: true,

@@ -1,6 +1,6 @@
 <script setup>
 import { useRouter } from "nuxt/app";
-import { useToast } from "vue-toastification";
+import { usePush } from "notivue";
 import { Volume2, VolumeX } from "lucide-vue-next";
 import { useMusicStore } from "~~/store/music";
 
@@ -26,7 +26,7 @@ const props = defineProps({
 });
 
 const router = useRouter();
-const toast = useToast();
+const toast = usePush();
 
 const toastError = () => {
   const errorQueryParam = router.currentRoute.value.query?.error;

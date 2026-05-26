@@ -1,12 +1,12 @@
 <script setup>
-import { useToast } from "vue-toastification";
+import { usePush } from "notivue";
 import { Mail, ArrowRight } from "lucide-vue-next";
 
 definePageMeta({
   layout: "auth",
 });
 
-const toast = useToast();
+const toast = usePush();
 const urls = useRuntimeConfig().public;
 const kratosUrl = urls.kratosUrl;
 const email = ref("");

@@ -1,5 +1,5 @@
 <script setup>
-import { useToast } from "vue-toastification";
+import { usePush } from "notivue";
 import { useListUserstore } from "~/store/userlist";
 import { useSessionStore } from "~~/store/session";
 import NavigationLink from "@/components/common/NavigationLink.vue";
@@ -9,7 +9,7 @@ const listUserStore = useListUserstore();
 const { removeAllUsers } = listUserStore;
 let urls = useRuntimeConfig().public;
 const router = useRouter();
-const toast = useToast();
+const toast = usePush();
 const requestPending = ref(false);
 const activeQuizId = ref(false);
 const props = defineProps({
