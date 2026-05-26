@@ -185,6 +185,9 @@
         class="grid gap-5"
         item-key="question_id"
         handle=".drag-handle"
+        ghost-class="question-ghost"
+        chosen-class="question-chosen"
+        drag-class="question-drag"
         :disabled="!canEditQuiz"
         :animation="180"
         :scroll="scrollContainer"
@@ -782,5 +785,34 @@ const handleStartQuiz = async () => {
 <style scoped>
 .flip-list-move {
   transition: transform 0.4s ease;
+}
+
+/* Drop indicator: faded preview of the card in its drop position. */
+.question-ghost {
+  position: relative;
+  opacity: 0.4 !important;
+  background-color: var(--jv-white) !important;
+  border: 3px dashed var(--jv-coral) !important;
+  box-shadow: none !important;
+  transform: none !important;
+  transition: opacity 0.15s ease, border-color 0.15s ease;
+}
+
+/* Disable the hover tilt on the ghost while it's acting as drop placeholder. */
+.question-ghost:hover {
+  transform: none !important;
+}
+
+/* Floating clone: the faded preview that follows the cursor. */
+.question-drag {
+  opacity: 0.92 !important;
+  transform: rotate(1.5deg) !important;
+  box-shadow: 8px 8px 0 0 var(--jv-ink) !important;
+  cursor: grabbing !important;
+}
+
+/* Origin item: subtly dimmed so users see where it came from. */
+.question-chosen {
+  cursor: grabbing;
 }
 </style>
