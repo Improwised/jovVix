@@ -1,11 +1,7 @@
 <template>
   <main class="min-h-screen bg-jv-canvas px-4 py-5 sm:px-6 md:px-8 md:py-6">
-    <div v-if="quizPending" class="py-8">
-      <UtilsQuizListWaiting />
-    </div>
-
     <div
-      v-else-if="quizError?.data?.code == 401"
+      v-if="quizError?.data?.code == 401"
       class="jv-border-rough bg-jv-white p-5 text-[18px] font-semibold text-jv-coral shadow-brutal-sm"
     >
       {{ navigateTo("/account/login") }}
@@ -467,30 +463,32 @@ const editingQuestionId = ref("");
 const savingQuestionId = ref("");
 const settingsPending = ref(false);
 const startingQuiz = ref(false);
-const settings = ref({
-  points: 10,
-  duration_in_seconds: 10,
+
+const {
+  refresh,
+  data: quizData,
+  error: quizError,
+} = await useFetch(`${url.apiUrl}/quizzes/${quizId.value}/questions`, {
+  method: "GET",
+  headers: headers,
+  mode: "cors",
+  credentials: "include",
 });
-const orderedQuestions = ref([]);
-const originalOrderIds = ref([]);
+
+const settings = ref({
+  points: Number(quizData.value?.data?.points ?? 10),
+  duration_in_seconds: Number(quizData.value?.data?.duration_in_seconds ?? 10),
+});
+const orderedQuestions = ref([...(quizData.value?.data?.data || [])]);
+const originalOrderIds = ref(
+  (quizData.value?.data?.data || []).map((q) => q.question_id)
+);
 const scrollContainer = ref(null);
 
 onMounted(() => {
   scrollContainer.value =
     document.querySelector(".lg\\:overflow-y-auto") ||
     document.scrollingElement;
-});
-
-const {
-  refresh,
-  data: quizData,
-  pending: quizPending,
-  error: quizError,
-} = useFetch(`${url.apiUrl}/quizzes/${quizId.value}/questions`, {
-  method: "GET",
-  headers: headers,
-  mode: "cors",
-  credentials: "include",
 });
 
 const questions = computed(() => quizData.value?.data?.data || []);
@@ -536,8 +534,7 @@ watch(
     const serverQuestions = data.data || [];
     orderedQuestions.value = [...serverQuestions];
     originalOrderIds.value = serverQuestions.map((q) => q.question_id);
-  },
-  { immediate: true }
+  }
 );
 
 const parseAnswers = (value) => {
