@@ -71,12 +71,13 @@ func (ctrl *UserController) GetUserMeta(c *fiber.Ctx) error {
 		}
 
 		ctrl.logger.Debug("UserController.GetUserMeta success", zap.Any("user", user))
-		return utils.JSONSuccess(c, http.StatusOK, map[string]string{
-			"username":  user.Username,
-			"firstname": user.FirstName,
-			"email":     user.Email,
-			"role":      "admin-user",
-			"avatar":    user.ImageKey,
+		return utils.JSONSuccess(c, http.StatusOK, map[string]any{
+			"username":               user.Username,
+			"firstname":              user.FirstName,
+			"email":                  user.Email,
+			"role":                   "admin-user",
+			"avatar":                 user.ImageKey,
+			"can_create_public_quiz": ctrl.config.Quiz.IsPublicQuizAdmin(user.Email),
 		})
 	}
 
@@ -93,12 +94,13 @@ func (ctrl *UserController) GetUserMeta(c *fiber.Ctx) error {
 	ctrl.logger.Debug("userModel.GetById success", zap.Any("user", user))
 	ctrl.logger.Debug("UserController.GetUserMeta success", zap.Any("user", user))
 
-	return utils.JSONSuccess(c, http.StatusOK, map[string]string{
-		"username":  user.Username,
-		"firstname": user.FirstName,
-		"email":     user.Email,
-		"role":      "guest-user",
-		"avatar":    user.ImageKey,
+	return utils.JSONSuccess(c, http.StatusOK, map[string]any{
+		"username":               user.Username,
+		"firstname":              user.FirstName,
+		"email":                  user.Email,
+		"role":                   "guest-user",
+		"avatar":                 user.ImageKey,
+		"can_create_public_quiz": false,
 	})
 }
 

@@ -109,6 +109,7 @@ func (ctrl *QuestionController) ListQuestionsWithAnswerByQuizId(c *fiber.Ctx) er
 		Permission:        permission,
 		QuizTitle:         quiz.Title,
 		QuizDescription:   quiz.Description,
+		IsPublic:          quiz.IsPublic,
 		Points:            settingsPoints,
 		DurationInSeconds: settingsDuration,
 	}
@@ -327,7 +328,7 @@ func (ctrl *QuestionController) DeleteQuestionById(c *fiber.Ctx) error {
 	}
 	if isActiveQuizPresent {
 		ctrl.logger.Error("error occured while getting questions by admin", zap.Error(err))
-		return utils.JSONError(c, http.StatusBadRequest, constants.InvalidCredentials)
+		return utils.JSONError(c, http.StatusBadRequest, constants.ErrActiveDeleteQuiz)
 	}
 
 	err = ctrl.quizSvc.DeleteQuestionById(questionId)

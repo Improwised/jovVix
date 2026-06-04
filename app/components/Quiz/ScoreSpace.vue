@@ -192,20 +192,28 @@ onUnmounted(() => {
             v-for="(answer, key) in options"
             :key="key"
             :class="[
-              'flex w-full items-center gap-3 border-[2px] border-jv-ink px-3 py-3 shadow-brutal-sm sm:gap-4 sm:px-4 sm:py-4',
+              'relative flex w-full items-center gap-3 border-[2px] border-jv-ink px-3 py-3 shadow-brutal-sm sm:gap-4 sm:px-4 sm:py-4',
               answer.isAnswer
                 ? 'bg-jv-mint'
-                : !answer.isAnswer && Number(key) === selectedAnswer
+                : Number(key) === Number(selectedAnswer)
                 ? 'bg-jv-salmon/40'
                 : 'bg-jv-white',
-              !answer.isAnswer &&
-              !isAdmin &&
+              selectedAnswer && Number(key) === Number(selectedAnswer)
+                ? 'outline-[3px] outline-offset-[2px] outline-jv-ink'
+                : '',
               selectedAnswer &&
-              Number(key) !== selectedAnswer
+              !answer.isAnswer &&
+              Number(key) !== Number(selectedAnswer)
                 ? 'opacity-60'
                 : '',
             ]"
           >
+            <span
+              v-if="selectedAnswer && Number(key) === Number(selectedAnswer)"
+              class="absolute -top-3 right-3 inline-flex items-center gap-1 rounded-full border-[2px] border-jv-ink bg-jv-yellow px-2 py-0.5 font-body text-[10px] font-black uppercase tracking-wider text-jv-ink shadow-brutal-sm sm:text-[11px]"
+            >
+              Your pick
+            </span>
             <span
               v-if="answer.isAnswer"
               class="grid size-10 shrink-0 place-items-center rounded-[6px] border-[2px] border-jv-ink bg-jv-white text-jv-ink sm:size-11"
@@ -214,7 +222,9 @@ onUnmounted(() => {
               <Check class="size-5" :stroke-width="3" />
             </span>
             <span
-              v-else-if="!isAdmin && Number(key) === selectedAnswer"
+              v-else-if="
+                selectedAnswer && Number(key) === Number(selectedAnswer)
+              "
               class="grid size-10 shrink-0 place-items-center rounded-[6px] border-[2px] border-jv-ink bg-jv-white text-jv-coral sm:size-11"
               aria-label="Your incorrect answer"
             >

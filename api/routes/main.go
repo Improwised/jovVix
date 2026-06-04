@@ -219,7 +219,10 @@ func setupQuizSocketController(v1 fiber.Router, db *goqu.Database, logger *zap.L
 		return err
 	}
 
-	v1.Get(fmt.Sprintf("/socket/admin/arrange/:%s", constants.SessionIDParam), middleware.CheckSessionId, middleware.KratosAuthenticated, websocket.New(quizSocketController.Arrange))
+	// CustomAuthenticated (not kratos-only) so guests can host public quizzes too.
+	// GetOrActivateSession still enforces admin_id == userId, so a guest can only
+	// arrange a session they themselves created.
+	v1.Get(fmt.Sprintf("/socket/admin/arrange/:%s", constants.SessionIDParam), middleware.CheckSessionId, middleware.CustomAuthenticated, websocket.New(quizSocketController.Arrange))
 	v1.Get(fmt.Sprintf("/socket/join/:%s", constants.QuizSessionInvitationCode), middleware.CheckSessionCode, middleware.CustomAuthenticated, websocket.New(quizSocketController.Join))
 	v1.Post("/quiz/answer", middleware.Authenticated, middleware.CustomAuthenticated, quizSocketController.SetAnswer)
 	v1.Get("/quiz/terminate", middleware.Authenticated, quizSocketController.Terminate)
@@ -235,6 +238,15 @@ func setupQuizController(v1 fiber.Router, db *goqu.Database, logger *zap.Logger,
 
 	admin := v1.Group("/admin")
 	admin.Use(middleware.KratosAuthenticated)
+
+	// Public quizzes listing — must be registered BEFORE the auth-guarded /quizzes group
+	// so it is not protected by KratosAuthenticated.
+	v1.Get("/quizzes/public", quizController.GetPublicQuizzes)
+
+	// Hosting a public quiz is open to guests as well as registered users, so it uses
+	// Authenticated (guest JWT or kratos) instead of the kratos-only /quizzes group.
+	// The handler itself enforces that the quiz is actually public.
+	v1.Post(fmt.Sprintf("/quizzes/:%s/public_session", constants.QuizId), middleware.Authenticated, quizController.GeneratePublicSession)
 
 	quizzes := v1.Group("/quizzes")
 	quizzes.Use(middleware.KratosAuthenticated)

@@ -12,9 +12,11 @@ import { useListUserstore } from "~/store/userlist";
 import { useUserThatSubmittedAnswer } from "~/store/userSubmittedAnswer";
 import { storeToRefs } from "pinia";
 import { useSessionStore } from "~~/store/session";
+import { useUsersStore } from "~~/store/users";
 const sessionStore = useSessionStore();
 const { setSession, setLastComponent, getLastComponent, setActiveQuizTitle } =
   sessionStore;
+const usersStore = useUsersStore();
 
 const invitationCodeStore = useInvitationCodeStore();
 const { invitationCode } = storeToRefs(invitationCodeStore);
@@ -31,6 +33,7 @@ const route = useRoute();
 const router = useRouter();
 const toast = usePush();
 const app = useNuxtApp();
+const { apiUrl } = useRuntimeConfig().public;
 useSystemEnv();
 
 // define props and emits
@@ -49,6 +52,47 @@ const analysisTab = ref("ranking");
 const session_id = route.params.session_id;
 const runningQuizJoinUser = ref(0);
 const isPauseQuiz = ref(false);
+const selectedAnswer = ref(0);
+
+// Public-quiz guests land here with session_id="new" and a quiz_id query — they
+// need to pick a display name before the guest user + public session are created.
+const PENDING_SENTINEL = "new";
+const pendingQuizId = computed(() =>
+  session_id === PENDING_SENTINEL ? route.query.quiz_id || "" : ""
+);
+const showHostNameModal = ref(
+  session_id === PENDING_SENTINEL && route.query.public === "1"
+);
+const hostNameSubmitting = ref(false);
+
+// Public-quiz host-also-plays support.
+// `public=1` is set by the homepage when a visitor starts a public quiz.
+const isPublicPlay = computed(() => route.query.public === "1");
+const canPlay = ref(false);
+const hostUserPlayedQuiz = ref(null);
+const hostPlayedQuizRequested = ref(false);
+
+// When hosting a public quiz, try to register the host as a player too. The API
+// allows this only for public quizzes started by someone other than the creator;
+// a creator hosting their own quiz gets a 403 and simply stays host-only.
+const tryEnableHostPlay = async (code) => {
+  if (!isPublicPlay.value || hostPlayedQuizRequested.value || !code) return;
+  hostPlayedQuizRequested.value = true;
+  try {
+    const res = await $fetch(`${apiUrl}/user_played_quizes/${code}`, {
+      method: "POST",
+      credentials: "include",
+    });
+    hostUserPlayedQuiz.value = res?.data?.user_played_quiz || null;
+    canPlay.value = !!hostUserPlayedQuiz.value;
+  } catch (error) {
+    // 403 => host is the quiz creator and may only host, not play. Expected; stay host-only.
+    toast.warning(
+      "Host is the quiz creator and may only host the public quiz, not play."
+    );
+    canPlay.value = false;
+  }
+};
 const quizState = computed(() =>
   isPauseQuiz.value ? app.$Pause : app.$Running
 );
@@ -63,32 +107,91 @@ const handleCustomChange = (isFullScreenEvent) => {
 
 // main functions
 onMounted(() => {
-  if (process.client) {
-    try {
-      const lastRenderedComponent = getLastComponent();
-      if (socketObject && lastRenderedComponent !== "Waiting") {
-        adminOperationHandler.value = new AdminOperations(
-          session_id,
-          handleQuizEvents,
-          handleNetworkEvent,
-          confirmSkip
-        );
-        continueAdmin();
-      } else {
-        adminOperationHandler.value = new AdminOperations(
-          session_id,
-          handleQuizEvents,
-          handleNetworkEvent,
-          confirmSkip
-        );
-        connectAdmin();
-      }
-    } catch (err) {
-      console.error(err);
-      toast.info(app.$ReloadRequired);
+  if (!process.client) return;
+  // Guests with a pending session pick a name first; the socket setup runs
+  // after the name modal submission redirects to the real session URL.
+  if (showHostNameModal.value) return;
+  try {
+    const lastRenderedComponent = getLastComponent();
+    if (socketObject && lastRenderedComponent !== "Waiting") {
+      adminOperationHandler.value = new AdminOperations(
+        session_id,
+        handleQuizEvents,
+        handleNetworkEvent,
+        confirmSkip
+      );
+      continueAdmin();
+    } else {
+      adminOperationHandler.value = new AdminOperations(
+        session_id,
+        handleQuizEvents,
+        handleNetworkEvent,
+        confirmSkip
+      );
+      connectAdmin();
     }
+  } catch (err) {
+    console.error(err);
+    toast.info(app.$ReloadRequired);
   }
 });
+
+const handleHostNameSubmit = async ({ name, avatarName }) => {
+  if (hostNameSubmitting.value) return;
+  if (!pendingQuizId.value) {
+    toast.error("Missing quiz to host. Please pick a quiz again.");
+    await router.replace("/");
+    return;
+  }
+  hostNameSubmitting.value = true;
+  try {
+    const userRes = await $fetch(
+      `${apiUrl}/user/${encodeURIComponent(
+        name
+      )}?avatar_name=${encodeURIComponent(avatarName)}`,
+      {
+        method: "POST",
+        credentials: "include",
+        headers: { Accept: "application/json" },
+      }
+    );
+    const guest = userRes?.data;
+    if (guest) {
+      usersStore.setUserData({
+        role: "guest-user",
+        avatar: guest.img_key || avatarName,
+        firstname: guest.first_name || name,
+        username: guest.username || name,
+      });
+    }
+
+    const sessionRes = await $fetch(
+      `${apiUrl}/quizzes/${pendingQuizId.value}/public_session`,
+      {
+        method: "POST",
+        credentials: "include",
+        headers: { Accept: "application/json" },
+      }
+    );
+    const newSessionId = sessionRes?.data;
+    if (!newSessionId) {
+      toast.error("Error while starting quiz.");
+      return;
+    }
+
+    removeAllUsers();
+    setSocketObject(null);
+    setSession(newSessionId);
+    showHostNameModal.value = false;
+    await router.replace(`/admin/arrange/${newSessionId}?public=1`);
+  } catch (error) {
+    toast.error(
+      error?.data?.message || error?.message || "Error while starting quiz."
+    );
+  } finally {
+    hostNameSubmitting.value = false;
+  }
+};
 
 onUnmounted(() => {
   setLastComponent(currentComponent.value);
@@ -103,6 +206,17 @@ const handleQuizEvents = async (message) => {
     invitationCode.value = undefined;
     removeAllUsers();
     setSession(null);
+    // A host who also played sees their own player scoreboard (the admin scoreboard
+    // endpoint is Kratos-only and would 401 for guests). Host-only/creators keep the
+    // admin scoreboard + analytics they can revisit.
+    if (canPlay.value && hostUserPlayedQuiz.value) {
+      const playerName = usersStore.getUserData()?.username || "player";
+      return await router.push(
+        `/join/${encodeURIComponent(playerName)}/scoreboard?user_played_quiz=${
+          hostUserPlayedQuiz.value
+        }`
+      );
+    }
     return await router.push(
       "/admin/scoreboard?winner_ui=true&aqi=" + session_id
     );
@@ -144,6 +258,9 @@ const handleQuizEvents = async (message) => {
     }
     data.value = message;
     currentComponent.value = message.component;
+    if (message.component === "Question") {
+      selectedAnswer.value = 0;
+    }
     confirmNeeded.value = {
       show: false,
     };
@@ -167,6 +284,8 @@ const handleQuizEvents = async (message) => {
       }
       if (message.data.code !== undefined) {
         invitationCode.value = message.data.code;
+        // Code is now known — register the host as a player if this is a public session.
+        tryEnableHostPlay(message.data.code);
       }
     }
   }
@@ -188,8 +307,21 @@ const startQuiz = () => {
   adminOperationHandler.value.quizStartRequest();
 };
 
-const sendAnswer = (answers) => {
-  adminOperationHandler.value.handleSendAnswer(answers);
+const sendAnswer = async (answers) => {
+  if (!canPlay.value || !hostUserPlayedQuiz.value) return;
+  selectedAnswer.value = 0;
+  const { error } = await adminOperationHandler.value.handleSendAnswer(
+    answers,
+    hostUserPlayedQuiz.value,
+    session_id
+  );
+  if (error) {
+    toast.error(error);
+    return;
+  }
+  if (answers.length > 0) {
+    selectedAnswer.value = answers[0];
+  }
 };
 
 const askSkip = () => {
@@ -226,12 +358,21 @@ const handleAnalysisTabChange = (tab) => (analysisTab.value = tab);
 definePageMeta({
   layout: "empty",
   hideSidebar: true,
+  // Public-quiz guests transition from /admin/arrange/new?... to /admin/arrange/<sessionId>?...
+  // — keying on fullPath forces a fresh mount so the captured `session_id` const picks up
+  // the real session id and the admin socket connects against it.
+  key: (route) => route.fullPath,
 });
 // custom class to bind component with
 </script>
 
 <template>
   <div class="bg-image"></div>
+  <QuizHostNameModal
+    v-if="showHostNameModal"
+    :submitting="hostNameSubmitting"
+    @submit="handleHostNameSubmit"
+  />
   <Playground :full-screen-enabled="myRef" @is-full-screen="handleCustomChange">
     <div
       v-if="currentComponent !== 'Waiting' && currentComponent !== 'Loading'"
@@ -287,6 +428,7 @@ definePageMeta({
       v-else-if="currentComponent == 'Question'"
       :data="data"
       :is-admin="true"
+      :can-play="canPlay"
       @send-answer="sendAnswer"
       @ask-skip="askSkip"
     ></QuizQuestionSpace>
@@ -294,6 +436,7 @@ definePageMeta({
       v-else-if="currentComponent == 'Score'"
       :data="data"
       :is-admin="true"
+      :selected-answer="selectedAnswer"
       :analysis-tab="analysisTab"
       :quiz-state="quizState"
       @change-analysis-tab="handleAnalysisTabChange"

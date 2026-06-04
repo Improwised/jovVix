@@ -48,6 +48,7 @@ type ReqCreateQuiz struct {
 	Description       string `json:"description"`
 	Points            int16  `json:"points"`
 	DurationInSeconds int    `json:"duration_in_seconds"`
+	IsPublic          bool   `json:"is_public"`
 }
 
 type ReqUpdateQuizSettings struct {

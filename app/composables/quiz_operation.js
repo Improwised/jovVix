@@ -110,6 +110,11 @@ export default class QuizHandler {
     ) {
       this.currentQuestion = message.data.id;
       this.currentQuestionGetTime = new Date();
+    } else if (this.currentComponent == constants.Question) {
+      // In-question events (e.g. another player's answer-submitted broadcast that
+      // the host receives in a public quiz) must not clobber the host's response
+      // timer — otherwise the next submit sends response_time=0 and the API's
+      // `required` validator rejects it with "responsetime fields are invalid".
     } else if (
       this.currentComponent == constants.Score &&
       this.currentEvent == constants.ShowScore

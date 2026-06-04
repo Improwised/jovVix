@@ -19,11 +19,21 @@
         class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between"
       >
         <div class="min-w-0">
-          <h1
-            class="break-words font-headings text-[38px] leading-none text-jv-ink min-[420px]:text-[44px] sm:text-[52px] md:text-[56px]"
-          >
-            {{ quizTitle }}
-          </h1>
+          <div class="flex flex-wrap items-center gap-3">
+            <h1
+              class="break-words font-headings text-[38px] leading-none text-jv-ink min-[420px]:text-[44px] sm:text-[52px] md:text-[56px]"
+            >
+              {{ quizTitle }}
+            </h1>
+            <span
+              v-if="isPublicQuiz"
+              class="inline-flex rotate-[-2deg] items-center gap-1.5 border-[3px] border-jv-ink bg-jv-mint px-3 py-1.5 text-[13px] font-black uppercase tracking-[0.16em] text-jv-ink shadow-brutal-sm sm:text-[14px]"
+              aria-label="Public quiz"
+            >
+              <Globe class="size-4" :stroke-width="2.6" />
+              Public
+            </span>
+          </div>
           <div
             class="ml-1 mt-1 h-3 w-24 rounded-full border-b-[3px] border-jv-coral sm:ml-2 sm:w-32"
           ></div>
@@ -421,6 +431,7 @@
 import { computed, onMounted, ref, watch } from "vue";
 import {
   Check,
+  Globe,
   GripVertical,
   Pencil,
   Play,
@@ -496,6 +507,7 @@ const quizTitle = computed(() => quizData.value?.data?.quiz_title || "Quiz");
 const quizDescription = computed(
   () => quizData.value?.data?.quiz_description?.String || ""
 );
+const isPublicQuiz = computed(() => !!quizData.value?.data?.is_public);
 const totalSurveyQuestion = computed(() =>
   questions.value.reduce(
     (count, item) => (item.question_type_id === 2 ? count + 1 : count),
