@@ -1,7 +1,7 @@
 <script setup>
 // core dependencies
 import { useNuxtApp, useRouter } from "nuxt/app";
-import { useToast } from "vue-toastification";
+import { usePush } from "notivue";
 import { useMusicStore } from "~~/store/music";
 import {
   Check,
@@ -26,7 +26,7 @@ const music = computed(() => {
 
 // define nuxt configs
 const app = useNuxtApp();
-const toast = useToast();
+const toast = usePush();
 const router = useRouter();
 
 import { useInvitationCodeStore } from "~/store/invitationcode.js";

@@ -91,7 +91,7 @@
 </template>
 
 <script setup>
-import { useToast } from "vue-toastification";
+import { usePush } from "notivue";
 import { ShieldCheck, ArrowRight } from "lucide-vue-next";
 
 definePageMeta({
@@ -100,7 +100,7 @@ definePageMeta({
 
 const { kratosUrl } = useRuntimeConfig().public;
 const route = useRoute("");
-const toast = useToast();
+const toast = usePush();
 
 const code = ref("");
 const csrfToken = ref("");

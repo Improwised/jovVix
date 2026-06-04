@@ -227,6 +227,10 @@
   transition: opacity 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
+.Notivue__notification {
+  @apply font-headings;
+}
+
 .jv-carousel-nav:hover {
   transform: rotate(3deg) !important;
   box-shadow: 5px 5px 0 0 var(--jv-ink) !important;

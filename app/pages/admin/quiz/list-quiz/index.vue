@@ -1,7 +1,7 @@
 <script setup>
 import { computed, ref, watchEffect } from "vue";
 import { ChevronDown, Filter, Search, X } from "lucide-vue-next";
-import { useToast } from "vue-toastification";
+import { usePush } from "notivue";
 import AdminQuizListCard from "@/components/quiz-list/AdminQuizListCard.vue";
 import usecopyToClipboard from "@/composables/copy_to_clipboard";
 import { useListUserstore } from "~/store/userlist";
@@ -14,7 +14,7 @@ definePageMeta({
 
 const url = useRuntimeConfig().public;
 const headers = useRequestHeaders(["cookie"]);
-const toast = useToast();
+const toast = usePush();
 const router = useRouter();
 const route = useRoute();
 const sessionStore = useSessionStore();

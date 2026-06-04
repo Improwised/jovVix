@@ -52,6 +52,7 @@
     "embla-carousel-vue": "^8.6.0",
     "highlight.js": "^11.10.0",
     "lucide-vue-next": "^1.0.0",
+    "notivue": "^2.4.5",
     "pinia": "^3.0.3",
     "pinia-plugin-persistedstate": "^4.4.1",
     "qrcode.vue": "^3.5.1",
@@ -61,7 +62,6 @@
     "tailwindcss": "^4.2.4",
     "unplugin-auto-import": "^0.18.5",
     "vue-chartjs": "^5.3.1",
-    "vue-toastification": "^2.0.0-rc.5",
     "vuedraggable": "^4.1.0"
   },
   "lint-staged": {

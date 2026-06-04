@@ -127,13 +127,13 @@
 </template>
 
 <script setup>
-import { useToast } from "vue-toastification";
+import { usePush } from "notivue";
 import { Camera, Save } from "lucide-vue-next";
 
 const app = useNuxtApp();
 const url = useRuntimeConfig().public;
 const headers = useRequestHeaders(["cookie"]);
-const toast = useToast();
+const toast = usePush();
 
 const props = defineProps({
   question: {

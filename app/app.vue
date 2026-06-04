@@ -5,6 +5,11 @@
       <NuxtPage />
     </NuxtLayout>
     <RunningQuizBanner />
+    <Notivue v-slot="item">
+      <Notification :item="item" :theme="pastelTheme">
+        <NotificationProgress :item="item" :theme="pastelTheme" />
+      </Notification>
+    </Notivue>
   </div>
 </template>
 <script setup>

@@ -1,6 +1,6 @@
 <script setup>
 // core dependencies
-import { useToast } from "vue-toastification";
+import { usePush } from "notivue";
 import { useRouter } from "nuxt/app";
 
 // custom component
@@ -10,7 +10,7 @@ import { useSystemEnv } from "~/composables/envs.js";
 // define nuxt configs
 const route = useRoute();
 const router = useRouter();
-const toast = useToast();
+const toast = usePush();
 const app = useNuxtApp();
 useSystemEnv();
 

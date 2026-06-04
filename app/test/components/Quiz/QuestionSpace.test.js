@@ -5,8 +5,8 @@ import constants from "~/config/constants";
 import QuizQuestionAnalysis from "~/components/Quiz/QuestionAnalysis.vue";
 import { VProgressCircular } from "vuetify/components";
 
-vi.mock("vue-toastification", () => ({
-  useToast: vi.fn(() => ({
+vi.mock("notivue", () => ({
+  usePush: vi.fn(() => ({
     error: vi.fn(),
     warning: vi.fn(),
   })),

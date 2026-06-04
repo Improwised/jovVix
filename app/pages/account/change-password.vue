@@ -148,7 +148,7 @@
 </template>
 
 <script setup>
-import { useToast } from "vue-toastification";
+import { usePush } from "notivue";
 import { toRef } from "vue";
 import { Lock, AlertCircle } from "lucide-vue-next";
 import { useUserPasswordRules } from "@/composables/user_password_rules";
@@ -157,7 +157,7 @@ definePageMeta({
   layout: "auth",
 });
 
-const toast = useToast();
+const toast = usePush();
 const url = useRuntimeConfig().public;
 
 const password = reactive({

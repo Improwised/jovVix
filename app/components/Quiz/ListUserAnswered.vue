@@ -1,12 +1,12 @@
 <script setup>
 import { useUserThatSubmittedAnswer } from "~/store/userSubmittedAnswer";
 import { useNuxtApp } from "nuxt/app";
-import { useToast } from "vue-toastification";
+import { usePush } from "notivue";
 import { Check, Users } from "lucide-vue-next";
 import { getAvatarUrlByName } from "~~/composables/avatar";
 
 const app = useNuxtApp();
-const toast = useToast();
+const toast = usePush();
 
 const usersThatSubmittedAnswer = useUserThatSubmittedAnswer();
 const { usersSubmittedAnswers } = usersThatSubmittedAnswer;

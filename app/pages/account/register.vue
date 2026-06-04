@@ -9,7 +9,7 @@ import {
   Loader2,
   AlertCircle,
 } from "lucide-vue-next";
-import { useToast } from "vue-toastification";
+import { usePush } from "notivue";
 import { useUsersStore } from "~~/store/users";
 import { useUserPasswordRules } from "@/composables/user_password_rules";
 import NavigationLink from "@/components/common/NavigationLink.vue";
@@ -22,7 +22,7 @@ const userData = useUsersStore();
 const { getUserData } = userData;
 const route = useRoute();
 const router = useRouter();
-const toast = useToast();
+const toast = usePush();
 const firstname = ref();
 const lastname = ref();
 const email = ref();

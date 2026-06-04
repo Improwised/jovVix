@@ -1,7 +1,7 @@
 <script setup>
 // core dependencies
 import { useNuxtApp } from "nuxt/app";
-import { useToast } from "vue-toastification";
+import { usePush } from "notivue";
 import { useMusicStore } from "~~/store/music";
 import { Check, SkipForward, Trophy, Volume2, VolumeX } from "lucide-vue-next";
 
@@ -15,7 +15,7 @@ const toggleMusic = () => setMusic(!music.value);
 
 // define nuxt configs
 const app = useNuxtApp();
-const toast = useToast();
+const toast = usePush();
 
 // define props and emits
 const props = defineProps({

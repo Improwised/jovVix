@@ -187,11 +187,11 @@
 <script setup>
 import { computed, reactive, ref, watch } from "vue";
 import { Code2, ImageIcon, Type } from "lucide-vue-next";
-import { useToast } from "vue-toastification";
+import { usePush } from "notivue";
 import NavigationLink from "../common/NavigationLink.vue";
 
 const app = useNuxtApp();
-const toast = useToast();
+const toast = usePush();
 const { maxImageFileSize } = useRuntimeConfig().public;
 
 const props = defineProps({

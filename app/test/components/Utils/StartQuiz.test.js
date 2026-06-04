@@ -2,9 +2,20 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { mount } from "@vue/test-utils";
 import StartQuiz from "~/components/utils/StartQuiz.vue";
 
-// Mock Vue Toastification
-vi.mock("vue-toastification", () => ({
-  useToast: vi.fn(),
+// Mock Notivue
+vi.mock("notivue", () => ({
+  usePush: vi.fn(() => ({
+    success: vi.fn(),
+    error: vi.fn(),
+    warning: vi.fn(),
+    info: vi.fn(),
+  })),
+  push: {
+    success: vi.fn(),
+    error: vi.fn(),
+    warning: vi.fn(),
+    info: vi.fn(),
+  },
 }));
 
 let wrapper = mount(StartQuiz, {

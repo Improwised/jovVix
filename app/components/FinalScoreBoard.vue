@@ -1,5 +1,5 @@
 <script setup>
-import { useToast } from "vue-toastification";
+import { usePush } from "notivue";
 import {
   BarChart3,
   Crown,
@@ -19,7 +19,7 @@ const scoreboardData = ref([]);
 const route = useRoute();
 const router = useRouter();
 const activeQuizId = ref("");
-const toast = useToast();
+const toast = usePush();
 const app = useNuxtApp();
 useSystemEnv();
 

@@ -1,11 +1,7 @@
 <template>
   <main class="min-h-screen bg-jv-canvas px-4 py-5 sm:px-6 md:px-8 md:py-6">
-    <div v-if="quizPending" class="py-8">
-      <UtilsQuizListWaiting />
-    </div>
-
     <div
-      v-else-if="quizError?.data?.code == 401"
+      v-if="quizError?.data?.code == 401"
       class="jv-border-rough bg-jv-white p-5 text-[18px] font-semibold text-jv-coral shadow-brutal-sm"
     >
       {{ navigateTo("/account/login") }}
@@ -185,6 +181,9 @@
         class="grid gap-5"
         item-key="question_id"
         handle=".drag-handle"
+        ghost-class="question-ghost"
+        chosen-class="question-chosen"
+        drag-class="question-drag"
         :disabled="!canEditQuiz"
         :animation="180"
         :scroll="scrollContainer"
@@ -431,7 +430,7 @@ import {
   Upload,
   X,
 } from "lucide-vue-next";
-import { useToast } from "vue-toastification";
+import { usePush } from "notivue";
 import draggable from "vuedraggable";
 import QuestionFormCard from "@/components/quiz-manage/QuestionFormCard.vue";
 import CodeBlockComponent from "@/components/CodeBlockComponent.vue";
@@ -444,7 +443,7 @@ definePageMeta({
   layout: "empty",
 });
 
-const toast = useToast();
+const toast = usePush();
 const url = useRuntimeConfig().public;
 const headers = useRequestHeaders(["cookie"]);
 const route = useRoute();
@@ -464,30 +463,32 @@ const editingQuestionId = ref("");
 const savingQuestionId = ref("");
 const settingsPending = ref(false);
 const startingQuiz = ref(false);
-const settings = ref({
-  points: 10,
-  duration_in_seconds: 10,
+
+const {
+  refresh,
+  data: quizData,
+  error: quizError,
+} = await useFetch(`${url.apiUrl}/quizzes/${quizId.value}/questions`, {
+  method: "GET",
+  headers: headers,
+  mode: "cors",
+  credentials: "include",
 });
-const orderedQuestions = ref([]);
-const originalOrderIds = ref([]);
+
+const settings = ref({
+  points: Number(quizData.value?.data?.points ?? 10),
+  duration_in_seconds: Number(quizData.value?.data?.duration_in_seconds ?? 10),
+});
+const orderedQuestions = ref([...(quizData.value?.data?.data || [])]);
+const originalOrderIds = ref(
+  (quizData.value?.data?.data || []).map((q) => q.question_id)
+);
 const scrollContainer = ref(null);
 
 onMounted(() => {
   scrollContainer.value =
     document.querySelector(".lg\\:overflow-y-auto") ||
     document.scrollingElement;
-});
-
-const {
-  refresh,
-  data: quizData,
-  pending: quizPending,
-  error: quizError,
-} = useFetch(`${url.apiUrl}/quizzes/${quizId.value}/questions`, {
-  method: "GET",
-  headers: headers,
-  mode: "cors",
-  credentials: "include",
 });
 
 const questions = computed(() => quizData.value?.data?.data || []);
@@ -533,8 +534,7 @@ watch(
     const serverQuestions = data.data || [];
     orderedQuestions.value = [...serverQuestions];
     originalOrderIds.value = serverQuestions.map((q) => q.question_id);
-  },
-  { immediate: true }
+  }
 );
 
 const parseAnswers = (value) => {
@@ -782,5 +782,34 @@ const handleStartQuiz = async () => {
 <style scoped>
 .flip-list-move {
   transition: transform 0.4s ease;
+}
+
+/* Drop indicator: faded preview of the card in its drop position. */
+.question-ghost {
+  position: relative;
+  opacity: 0.4 !important;
+  background-color: var(--jv-white) !important;
+  border: 3px dashed var(--jv-coral) !important;
+  box-shadow: none !important;
+  transform: none !important;
+  transition: opacity 0.15s ease, border-color 0.15s ease;
+}
+
+/* Disable the hover tilt on the ghost while it's acting as drop placeholder. */
+.question-ghost:hover {
+  transform: none !important;
+}
+
+/* Floating clone: the faded preview that follows the cursor. */
+.question-drag {
+  opacity: 0.92 !important;
+  transform: rotate(1.5deg) !important;
+  box-shadow: 8px 8px 0 0 var(--jv-ink) !important;
+  cursor: grabbing !important;
+}
+
+/* Origin item: subtly dimmed so users see where it came from. */
+.question-chosen {
+  cursor: grabbing;
 }
 </style>
