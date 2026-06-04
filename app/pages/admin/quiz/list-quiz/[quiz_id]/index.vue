@@ -101,31 +101,69 @@
           v-if="questions.length > 0"
           class="flex flex-wrap items-center gap-4"
         >
-          <label
-            class="inline-flex items-center gap-2 text-[15px] font-semibold text-jv-muted"
-          >
-            <span>Points</span>
-            <input
-              v-model.number="settings.points"
-              type="number"
-              min="0"
-              max="20"
-              :disabled="!canEditQuiz || settingsPending"
-              class="h-10 w-14 border-[3px] border-jv-ink bg-jv-white px-2 text-center text-[16px] font-black text-jv-ink shadow-brutal-sm outline-none disabled:opacity-60"
-            />
-          </label>
-          <label
-            class="inline-flex items-center gap-2 text-[15px] font-semibold text-jv-muted"
-          >
-            <span>Duration (seconds)</span>
-            <input
-              v-model.number="settings.duration_in_seconds"
-              type="number"
-              min="1"
-              :disabled="!canEditQuiz || settingsPending"
-              class="h-10 w-16 border-[3px] border-jv-ink bg-jv-white px-2 text-center text-[16px] font-black text-jv-ink shadow-brutal-sm outline-none disabled:opacity-60"
-            />
-          </label>
+          <TooltipProvider>
+            <label
+              class="inline-flex items-center gap-2 text-[15px] font-semibold text-jv-muted"
+            >
+              <span class="inline-flex items-center gap-1.5">
+                Points
+                <Tooltip>
+                  <TooltipTrigger as-child>
+                    <button
+                      type="button"
+                      class="inline-flex size-5 items-center justify-center rounded-full border-[2px] border-jv-ink bg-jv-white text-jv-ink shadow-brutal-sm transition-transform hover:-rotate-[2deg] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
+                      aria-label="What does Points mean?"
+                    >
+                      <Info class="size-3" :stroke-width="2.6" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" align="start">
+                    Maximum points awarded for answering this quiz's questions
+                    correctly. Players who answer faster earn closer to the full
+                    amount; slower correct answers earn proportionally less.
+                  </TooltipContent>
+                </Tooltip>
+              </span>
+              <input
+                v-model.number="settings.points"
+                type="number"
+                min="0"
+                max="20"
+                :disabled="!canEditQuiz || settingsPending"
+                class="h-10 w-14 border-[3px] border-jv-ink bg-jv-white px-2 text-center text-[16px] font-black text-jv-ink shadow-brutal-sm outline-none disabled:opacity-60"
+              />
+            </label>
+            <label
+              class="inline-flex items-center gap-2 text-[15px] font-semibold text-jv-muted"
+            >
+              <span class="inline-flex items-center gap-1.5">
+                Duration (seconds)
+                <Tooltip>
+                  <TooltipTrigger as-child>
+                    <button
+                      type="button"
+                      class="inline-flex size-5 items-center justify-center rounded-full border-[2px] border-jv-ink bg-jv-white text-jv-ink shadow-brutal-sm transition-transform hover:-rotate-[2deg] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
+                      aria-label="What does Duration mean?"
+                    >
+                      <Info class="size-3" :stroke-width="2.6" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" align="start">
+                    Time in seconds each player has to answer a question before
+                    it auto-skips. Shorter durations make the quiz faster-paced
+                    but harder.
+                  </TooltipContent>
+                </Tooltip>
+              </span>
+              <input
+                v-model.number="settings.duration_in_seconds"
+                type="number"
+                min="1"
+                :disabled="!canEditQuiz || settingsPending"
+                class="h-10 w-16 border-[3px] border-jv-ink bg-jv-white px-2 text-center text-[16px] font-black text-jv-ink shadow-brutal-sm outline-none disabled:opacity-60"
+              />
+            </label>
+          </TooltipProvider>
         </div>
 
         <div
@@ -433,6 +471,7 @@ import {
   Check,
   Globe,
   GripVertical,
+  Info,
   Pencil,
   Play,
   Plus,
@@ -449,6 +488,12 @@ import usecopyToClipboard from "@/composables/copy_to_clipboard";
 import { useListUserstore } from "~/store/userlist";
 import { useSessionStore } from "~~/store/session";
 import NavigationLink from "~/components/common/NavigationLink.vue";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 definePageMeta({
   layout: "empty",

@@ -261,7 +261,10 @@ onUnmounted(() => {
   <!-- Question view -->
   <main
     v-else
-    class="flex min-h-screen flex-col bg-jv-canvas px-3 py-4 text-jv-ink sm:px-6 sm:py-6 md:px-10 md:py-8"
+    :class="[
+      'flex flex-col bg-jv-canvas px-3 py-4 text-jv-ink sm:px-6 sm:py-6 md:px-10 md:py-8',
+      isAdmin ? '' : 'min-h-screen',
+    ]"
   >
     <section class="mx-auto w-full max-w-[1180px]">
       <article
