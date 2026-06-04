@@ -59,6 +59,35 @@ export default class AdminOperations extends QuizHandler {
     this.sendMessage(this.currentComponent, constants.StartQuiz);
   }
 
+  // For public quizzes the host can also play, so they submit answers through the
+  // same HTTP endpoint a regular player uses. Mirrors UserOperation.handleSendAnswer.
+  async handleSendAnswer(answers, user_played_quiz, session_id) {
+    const responseTime = this.getAnswerResponseTime();
+    try {
+      const response = await fetch(
+        `${this.apiUrl}/quiz/answer?user_played_quiz=${user_played_quiz}&session_id=${session_id}`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            id: this.currentQuestion,
+            keys: answers || [],
+            response_time: responseTime,
+          }),
+          credentials: "include",
+          mode: "cors",
+        }
+      );
+
+      if (response.status !== 202) {
+        return { error: `Failed to submit answer` };
+      }
+
+      return { error: null };
+    } catch (err) {
+      return { error: err.message || "An unknown error occurred." };
+    }
+  }
+
   requestSkip(force = false) {
     this.sendMessage(
       this.currentComponent,

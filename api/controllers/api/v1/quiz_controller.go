@@ -91,13 +91,34 @@ func (ctrl *QuizController) CreateQuiz(c *fiber.Ctx) error {
 	}
 
 	userID := quizUtilsHelper.GetString(c.Locals(constants.ContextUid))
-	quizId, err := ctrl.quizModel.CreateQuiz(quizReq.Title, quizReq.Description, userID)
+
+	// Only configured admin emails may publish public quizzes; silently coerce otherwise.
+	isPublic := quizReq.IsPublic
+	if isPublic {
+		user, ok := quizUtilsHelper.ConvertType[models.User](c.Locals(constants.ContextUser))
+		if !ok || !ctrl.appConfig.Quiz.IsPublicQuizAdmin(user.Email) {
+			isPublic = false
+		}
+	}
+
+	quizId, err := ctrl.quizModel.CreateQuiz(quizReq.Title, quizReq.Description, userID, isPublic)
 	if err != nil {
 		ctrl.logger.Error("error in creating empty quiz", zap.Error(err))
 		return utils.JSONFail(c, http.StatusBadRequest, constants.ErrRegisterQuiz)
 	}
 
 	return utils.JSONSuccess(c, http.StatusCreated, quizId)
+}
+
+// GetPublicQuizzes lists every quiz that has been published publicly.
+// Unauthenticated; the homepage uses this to populate "Explore Public Quizzes".
+func (ctrl *QuizController) GetPublicQuizzes(c *fiber.Ctx) error {
+	quizzes, err := ctrl.quizModel.GetPublicQuizzes()
+	if err != nil {
+		ctrl.logger.Error("error occured while listing public quizzes", zap.Error(err))
+		return utils.JSONError(c, http.StatusInternalServerError, err.Error())
+	}
+	return utils.JSONSuccess(c, http.StatusOK, quizzes)
 }
 
 func (ctrl *QuizController) UpdateQuizSettings(c *fiber.Ctx) error {
@@ -297,6 +318,42 @@ func (ctrl *QuizController) GenerateDemoSession(c *fiber.Ctx) error {
 	return utils.JSONSuccess(c, http.StatusAccepted, sessionId)
 }
 
+// GeneratePublicSession lets ANY visitor (guest or registered) host a public quiz.
+// Unlike demo_session, it does not require Kratos auth, but it only works for
+// quizzes flagged is_public. The starter becomes the session host; whether they
+// may also play is decided later at PlayedQuizValidation (creators stay host-only).
+func (ctrl *QuizController) GeneratePublicSession(c *fiber.Ctx) error {
+	quizId := c.Params(constants.QuizId)
+	userId := quizUtilsHelper.GetString(c.Locals(constants.ContextUid))
+
+	quiz, err := ctrl.quizModel.GetQuizById(quizId)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return utils.JSONFail(c, http.StatusBadRequest, constants.ErrQuizNotFound)
+		}
+		ctrl.logger.Error("error fetching quiz for public session", zap.Error(err))
+		return utils.JSONError(c, http.StatusInternalServerError, err.Error())
+	}
+
+	if !quiz.IsPublic {
+		return utils.JSONFail(c, http.StatusForbidden, constants.ErrQuizNotPublic)
+	}
+
+	sessionId, err := ctrl.activeQuizModel.CreateActiveQuiz("public session", quizId, userId, sql.NullTime{}, sql.NullTime{})
+	if err != nil {
+		ctrl.logger.Error("error in creating public session", zap.Error(err))
+		return utils.JSONFail(c, http.StatusBadRequest, constants.ErrCreatingDemoQuiz)
+	}
+
+	err = ctrl.activeQuizModel.GetQuestionsCopy(sessionId, quizId)
+	if err != nil {
+		ctrl.logger.Error("error in creating public session questions", zap.Error(err))
+		return utils.JSONFail(c, http.StatusBadRequest, constants.ErrCreatingDemoQuiz)
+	}
+
+	return utils.JSONSuccess(c, http.StatusAccepted, sessionId)
+}
+
 // DeleteQuizById to delete quiz that created by user (if no active quiz is present).
 // swagger:route DELETE /v1/quizzes/{quiz_id} Quiz DeleteQuizById
 //
@@ -321,7 +378,7 @@ func (ctrl *QuizController) DeleteQuizById(c *fiber.Ctx) error {
 		return utils.JSONError(c, http.StatusInternalServerError, err.Error())
 	}
 	if isActiveQuizPresent {
-		return utils.JSONError(c, http.StatusBadRequest, constants.InvalidCredentials)
+		return utils.JSONError(c, http.StatusBadRequest, constants.ErrActiveDeleteQuiz)
 	}
 
 	err = ctrl.quizSvc.DeleteQuizById(quizId)

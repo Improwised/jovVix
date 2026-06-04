@@ -54,6 +54,7 @@ type QuizWithQuestions struct {
 	Title          string         `json:"title" db:"title" validate:"required"`
 	Description    sql.NullString `json:"description,omitempty" db:"description"`
 	CreatorID      string         `json:"creator_id,omitempty" db:"creator_id"`
+	IsPublic       bool           `json:"is_public" db:"is_public"`
 	CreatedAt      time.Time      `json:"created_at,omitempty" db:"created_at,omitempty"`
 	UpdatedAt      time.Time      `json:"updated_at,omitempty" db:"updated_at,omitempty"`
 	TotalQuestions int            `json:"total_questions" db:"total_questions"`
@@ -71,6 +72,7 @@ func (model *QuizModel) GetQuizzesByAdmin(creator_id string) ([]QuizWithQuestion
 			goqu.I("quizzes.title"),
 			goqu.I("quizzes.description"),
 			goqu.I("quizzes.creator_id"),
+			goqu.I("quizzes.is_public"),
 			goqu.I("quizzes.created_at"),
 			goqu.I("quizzes.updated_at"),
 			questionsCountSubquery.As("total_questions"),
@@ -90,7 +92,7 @@ func (model *QuizModel) GetQuizzesByAdmin(creator_id string) ([]QuizWithQuestion
 	for rows.Next() {
 		var quizWithQuestions QuizWithQuestions
 
-		err := rows.Scan(&quizWithQuestions.ID, &quizWithQuestions.Title, &quizWithQuestions.Description, &quizWithQuestions.CreatorID, &quizWithQuestions.CreatedAt, &quizWithQuestions.UpdatedAt, &quizWithQuestions.TotalQuestions)
+		err := rows.Scan(&quizWithQuestions.ID, &quizWithQuestions.Title, &quizWithQuestions.Description, &quizWithQuestions.CreatorID, &quizWithQuestions.IsPublic, &quizWithQuestions.CreatedAt, &quizWithQuestions.UpdatedAt, &quizWithQuestions.TotalQuestions)
 
 		if err != nil {
 			return quizzes, err
@@ -108,7 +110,7 @@ func (model *QuizModel) GetQuizzesByAdmin(creator_id string) ([]QuizWithQuestion
 	return quizzes, nil
 }
 
-func (model *QuizModel) CreateQuiz(title, description, userId string) (uuid.UUID, error) {
+func (model *QuizModel) CreateQuiz(title, description, userId string, isPublic bool) (uuid.UUID, error) {
 	quizId, err := uuid.NewUUID()
 	if err != nil {
 		return quizId, err
@@ -120,6 +122,7 @@ func (model *QuizModel) CreateQuiz(title, description, userId string) (uuid.UUID
 			"title":       title,
 			"description": sql.NullString{Valid: description != "", String: description},
 			"creator_id":  userId,
+			"is_public":   isPublic,
 		},
 	).Returning("id").Executor().ScanVal(&quizId)
 	if err != nil {
@@ -132,6 +135,49 @@ func (model *QuizModel) CreateQuiz(title, description, userId string) (uuid.UUID
 	return quizId, nil
 }
 
+// GetPublicQuizzes returns quizzes whose creator has marked them public,
+// most recent first, with their question counts attached.
+func (model *QuizModel) GetPublicQuizzes() ([]QuizWithQuestions, error) {
+	questionsCountSubquery := model.db.From("quiz_questions").
+		Select(goqu.COUNT("question_id")).
+		Where(goqu.C("quiz_id").Eq(goqu.I("quizzes.id")))
+
+	rows, err := model.db.From("quizzes").
+		Select(
+			goqu.I("quizzes.id"),
+			goqu.I("quizzes.title"),
+			goqu.I("quizzes.description"),
+			goqu.I("quizzes.creator_id"),
+			goqu.I("quizzes.is_public"),
+			goqu.I("quizzes.created_at"),
+			goqu.I("quizzes.updated_at"),
+			questionsCountSubquery.As("total_questions"),
+		).
+		Where(goqu.I("is_public").Eq(true)).
+		Order(goqu.I("created_at").Desc()).
+		Executor().Query()
+
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	quizzes := []QuizWithQuestions{}
+	for rows.Next() {
+		var q QuizWithQuestions
+		if err := rows.Scan(&q.ID, &q.Title, &q.Description, &q.CreatorID, &q.IsPublic, &q.CreatedAt, &q.UpdatedAt, &q.TotalQuestions); err != nil {
+			return quizzes, err
+		}
+		decodedTitle, err := url.QueryUnescape(q.Title)
+		if err != nil {
+			return quizzes, err
+		}
+		q.Title = decodedTitle
+		quizzes = append(quizzes, q)
+	}
+	return quizzes, nil
+}
+
 func (model *QuizModel) GetQuizById(quizId string) (QuizWithQuestions, error) {
 	var quiz QuizWithQuestions
 	found, err := model.db.From(QuizzesTable).
@@ -140,6 +186,7 @@ func (model *QuizModel) GetQuizById(quizId string) (QuizWithQuestions, error) {
 			"title",
 			"description",
 			"creator_id",
+			"is_public",
 			"created_at",
 			"updated_at",
 		).

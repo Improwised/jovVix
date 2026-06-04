@@ -65,6 +65,8 @@ export const setUserDataStore = async () => {
         avatar: data?.data?.avatar,
         firstname: data?.data?.firstname,
         username: data?.data?.username,
+        email: data?.data?.email,
+        canCreatePublicQuiz: !!data?.data?.can_create_public_quiz,
       });
     }
   } catch (error) {

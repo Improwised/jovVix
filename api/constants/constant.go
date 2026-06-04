@@ -65,6 +65,7 @@ const (
 	ErrKratosCookieTime            = "error while parsing the expiration time of the cookie"
 	ErrRegisterQuiz                = "error while creating quiz"
 	ErrCreatingDemoQuiz            = "error while creating demo quiz"
+	ErrQuizNotPublic               = "this quiz is not public"
 	ErrGetTotalJoinUser            = "error while getting count of user joined in quiz"
 	ErrShareQuiz                   = "error while sharing quiz"
 	ErrListShareQuiz               = "error while getting list of shared quizzes"
@@ -116,8 +117,8 @@ const (
 	ErrSingleAnswerLength       = "in single answer there should be only one correct answer"
 	ErrQuestionType             = "please provide a proper question type"
 	ErrQuestionId               = "question type id not exists"
-	ErrEmptyFile 				= "The uploaded file is empty. Please choose a file with content."
-    ErrUnsupportedFileType 		= "The uploaded file is not a valid CSV. Please check the format and try again."
+	ErrEmptyFile                = "The uploaded file is empty. Please choose a file with content."
+	ErrUnsupportedFileType      = "The uploaded file is not a valid CSV. Please check the format and try again."
 
 	// quiz-id
 	QuizId       = "quiz_id"
@@ -246,6 +247,8 @@ const (
 	// Event 9. Terminate quiz
 	EventTerminateQuiz  = "terminate_quiz"
 	ActionTerminateQuiz = "terminate quiz after completing"
+
+	ErrActiveDeleteQuiz = "Cannot terminate the quiz while it is still active."
 
 	// Event 10. unhandled event
 	UnknownError  = "unknown_error"

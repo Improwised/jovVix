@@ -661,7 +661,18 @@ func handleCodeGeneration(c *websocket.Conn, qc *quizSocketController, session m
 					if err != nil {
 						qc.logger.Error("error while unmarshaling redis inside updateUserData", zap.Error(err))
 					}
-					if len(usersData) != 0 && isBreak == constants.EventStartQuiz {
+
+					// A public-quiz host can also be a player. Such a host is recorded in
+					// user_played_quizzes but never in the redis join list (that is only
+					// populated by the join socket), so fall back to the DB participant
+					// count to allow starting with the host playing solo.
+					participantCount, countErr := qc.userPlayedQuizModel.GetCountOfTotalJoinUsers(session.ID.String())
+					if countErr != nil {
+						qc.logger.Error(constants.ErrGetTotalJoinUser, zap.Error(countErr))
+					}
+					hasParticipants := len(usersData) != 0 || participantCount > 0
+
+					if hasParticipants && isBreak == constants.EventStartQuiz {
 
 						// quiz is start publish for admin to stop looking for user
 						err := qc.redis.PubSubModel.Client.Publish(qc.redis.PubSubModel.Ctx, constants.EventStartQuizByAdmin, constants.EventStartQuizByAdmin).Err()

@@ -88,6 +88,8 @@ function onSubmit(event) {
                   return;
                 }
                 if (message.id === 4000007) {
+                  console.log("messsae-------", message);
+
                   toast.error("An account with the same email exists already!");
                 } else {
                   toast.error(message.text);

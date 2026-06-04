@@ -12,6 +12,14 @@
       <div class="relative h-[104px] overflow-hidden sm:h-[112px] md:h-[124px]">
         <img :src="image" :alt="title" class="size-full object-cover" />
       </div>
+      <span
+        v-if="isPublic"
+        class="absolute right-[-6px] top-[-10px] z-10 inline-flex rotate-[4deg] items-center gap-1 border-[2.5px] border-jv-ink bg-jv-mint px-2 py-[3px] text-[11px] font-black uppercase tracking-[0.12em] text-jv-ink shadow-[2px_2px_0_#2D2D2D]"
+        aria-label="Public quiz"
+      >
+        <Globe class="size-3" :stroke-width="2.6" />
+        Public
+      </span>
     </div>
 
     <div
@@ -24,6 +32,7 @@
         {{ title }}
       </h3>
       <button
+        v-if="showActions"
         type="button"
         class="grid size-8 shrink-0 place-items-center border-2 border-jv-ink bg-jv-white text-jv-ink shadow-[1px_1px_0_#2D2D2D] transition-transform hover:rotate-[3deg]"
         aria-label="Open quiz actions"
@@ -34,7 +43,7 @@
       </button>
 
       <div
-        v-if="actionsOpen"
+        v-if="showActions && actionsOpen"
         class="absolute right-0 top-10 z-20 w-32 rotate-[1deg] border-[3px] border-jv-ink bg-jv-yellow p-2 shadow-brutal-sm jv-card"
       >
         <button
@@ -71,8 +80,12 @@
       <span class="truncate">{{ questionCount }} Questions</span>
     </span>
     <div class="mt-3 border-t-2 border-dashed border-jv-ink/15 pt-3">
-      <div class="mt-3 grid grid-cols-2 gap-2">
+      <div
+        class="mt-3 grid gap-2"
+        :class="showActions ? 'grid-cols-2' : 'grid-cols-1'"
+      >
         <NavigationLink
+          v-if="showActions"
           url-name="View Quiz"
           :url="viewUrl"
           class="h-8 rounded-full bg-jv-coral text-white shadow-none"
@@ -90,7 +103,13 @@
 <script setup>
 import { ref } from "vue";
 import { onClickOutside } from "@vueuse/core";
-import { CircleHelp, MoreVertical, Share2, Trash2 } from "lucide-vue-next";
+import {
+  CircleHelp,
+  Globe,
+  MoreVertical,
+  Share2,
+  Trash2,
+} from "lucide-vue-next";
 import NavigationLink from "@/components/common/NavigationLink.vue";
 
 defineProps({
@@ -123,6 +142,14 @@ defineProps({
     required: true,
   },
   starting: {
+    type: Boolean,
+    default: false,
+  },
+  showActions: {
+    type: Boolean,
+    default: true,
+  },
+  isPublic: {
     type: Boolean,
     default: false,
   },

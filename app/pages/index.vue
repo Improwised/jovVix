@@ -17,5 +17,3 @@ definePageMeta({
   layout: "empty",
 });
 </script>
-
-<style scoped></style>

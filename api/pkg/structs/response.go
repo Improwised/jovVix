@@ -64,6 +64,7 @@ type ResQuestionAnalytics struct {
 	Permission        string              `json:"permission"`
 	QuizTitle         string              `json:"quiz_title"`
 	QuizDescription   sql.NullString      `json:"quiz_description"`
+	IsPublic          bool                `json:"is_public"`
 	Points            int16               `json:"points"`
 	DurationInSeconds int                 `json:"duration_in_seconds"`
 }

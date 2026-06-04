@@ -31,8 +31,18 @@ const props = defineProps({
     type: Boolean,
     required: false,
   },
+  // When true, an admin (public-quiz host) is also allowed to answer questions.
+  canPlay: {
+    default: false,
+    type: Boolean,
+    required: false,
+  },
 });
 const emits = defineEmits(["sendAnswer", "askSkip"]);
+
+// A participant can answer when they are not the admin, or when they are a
+// public-quiz host who is permitted to play alongside the others.
+const answerable = computed(() => !props.isAdmin || props.canPlay);
 
 const clockOffset = ref(0); // Calculated once, used for all timers
 const isOffsetCalculated = ref(false);
@@ -177,7 +187,7 @@ function handleCounter(counterSound) {
 }
 
 function handleOptionClick(key) {
-  if (props.isAdmin || isSubmitted.value) return;
+  if (!answerable.value || isSubmitted.value) return;
   if (props.data?.data?.options === undefined) {
     toast.warning(app.$NoAnswerFound);
     return;
@@ -329,17 +339,17 @@ onUnmounted(() => {
             v-for="(value, key) in question.options"
             :key="key"
             type="button"
-            :disabled="isAdmin || isSubmitted"
+            :disabled="!answerable || isSubmitted"
             :class="[
               'group flex w-full items-center gap-3 border-[2px] border-jv-ink bg-jv-white px-3 py-3 text-left transition-all sm:gap-4 sm:px-4 sm:py-4',
-              !isAdmin && !isSubmitted
+              answerable && !isSubmitted
                 ? 'cursor-pointer shadow-brutal-sm hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none'
                 : 'shadow-brutal-sm',
               isSubmitted && selectedKey === Number(key)
                 ? 'bg-jv-yellow outline-[3px] outline-offset-[2px] outline-jv-ink'
                 : '',
               isSubmitted && selectedKey !== Number(key) ? 'opacity-50' : '',
-              isAdmin ? 'cursor-default' : '',
+              !answerable ? 'cursor-default' : '',
             ]"
             @click="handleOptionClick(key)"
           >
@@ -420,7 +430,7 @@ onUnmounted(() => {
 
         <!-- User submission acknowledgement -->
         <div
-          v-if="!isAdmin && isSubmitted"
+          v-if="answerable && isSubmitted"
           class="mt-6 flex items-center justify-center gap-2 rounded-full border-[2px] border-dashed border-jv-ink/40 px-4 py-2 font-body text-[13px] font-bold text-jv-muted sm:text-[14px]"
         >
           <Check class="size-4" :stroke-width="2.6" />

@@ -6,6 +6,7 @@ import AdminQuizListCard from "@/components/quiz-list/AdminQuizListCard.vue";
 import usecopyToClipboard from "@/composables/copy_to_clipboard";
 import { useListUserstore } from "~/store/userlist";
 import { useSessionStore } from "~~/store/session";
+import { useUsersStore } from "~~/store/users";
 import NavigationLink from "@/components/common/NavigationLink.vue";
 
 definePageMeta({
@@ -19,6 +20,11 @@ const router = useRouter();
 const route = useRoute();
 const sessionStore = useSessionStore();
 const listUserStore = useListUserstore();
+const usersStore = useUsersStore();
+
+const canCreatePublicQuiz = computed(
+  () => !!usersStore.userData?.canCreatePublicQuiz
+);
 
 const searchQuery = ref("");
 const startingQuizId = ref("");
@@ -27,6 +33,7 @@ const createQuizPending = ref(false);
 const createQuizForm = ref({
   title: "",
   description: "",
+  is_public: false,
 });
 const selectedFilter = ref("All Quiz");
 const filterOpen = ref(false);
@@ -124,6 +131,7 @@ const quizzes = computed(() =>
     image: quizImages[index % quizImages.length],
     tiltClass: tiltClasses[index % tiltClasses.length],
     viewUrl: `/admin/quiz/list-quiz/${quiz.id}`,
+    isPublic: !!quiz.is_public,
   }))
 );
 
@@ -190,7 +198,9 @@ const handleDeleteQuiz = async (quizId) => {
     refresh();
   } catch (error) {
     console.error("Failed to delete quiz", error);
-    toast.error("Failed to delete quiz.");
+    toast.error(
+      error?.data?.message || error?.message || "Failed to delete quiz."
+    );
   }
 };
 
@@ -204,6 +214,7 @@ const closeCreateQuizModal = () => {
   createQuizForm.value = {
     title: "",
     description: "",
+    is_public: false,
   };
   if (route.query.create === "1") {
     router.replace({ path: route.path, query: {} });
@@ -373,6 +384,7 @@ const handleCreateQuiz = async () => {
         :image="quiz.image"
         :tilt-class="quiz.tiltClass"
         :view-url="quiz.viewUrl"
+        :is-public="quiz.isPublic"
         :starting="startingQuizId === quiz.id"
         @start-quiz="handleStartQuiz(quiz.id)"
         @share="handleShareQuiz(quiz)"
@@ -436,6 +448,28 @@ const handleCreateQuiz = async () => {
                 rows="5"
                 class="resize-none border-[3px] border-jv-ink bg-jv-canvas px-4 py-3 text-[17px] font-semibold text-jv-ink outline-none transition-shadow focus:shadow-brutal-sm"
               ></textarea>
+            </label>
+
+            <label
+              v-if="canCreatePublicQuiz"
+              class="flex cursor-pointer items-start gap-3 jv-border-rough bg-jv-canvas p-4"
+            >
+              <input
+                v-model="createQuizForm.is_public"
+                type="checkbox"
+                class="mt-1 size-5 shrink-0 cursor-pointer accent-jv-coral"
+              />
+              <span class="flex flex-col gap-1">
+                <span
+                  class="text-[14px] font-black uppercase tracking-[0.14em] text-jv-ink"
+                >
+                  Make this quiz public
+                </span>
+                <span class="text-[14px] font-medium text-jv-muted">
+                  Public quizzes appear under "Explore Public Quizzes" on the
+                  homepage. Anyone can discover them.
+                </span>
+              </span>
             </label>
           </div>
 
