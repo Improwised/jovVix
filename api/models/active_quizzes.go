@@ -104,6 +104,26 @@ func (model *ActiveQuizModel) GetSessionByCode(invitationCode string) (ActiveQui
 	return activeQuiz, nil
 }
 
+func (model *ActiveQuizModel) GetActiveQuizByQuizIDAndAdminID(quizID string, adminID string) (ActiveQuiz, error) {
+	var activeQuiz ActiveQuiz = ActiveQuiz{}
+
+	found, err := model.db.Select("*").From(ActiveQuizzesTable).Where(
+		goqu.I("quiz_id").Eq(quizID),
+		goqu.I("admin_id").Eq(adminID),
+		goqu.I("is_active").Eq(true),
+	).Order(goqu.I("updated_at").Desc()).Limit(1).ScanStruct(&activeQuiz)
+
+	if err != nil {
+		return activeQuiz, err
+	}
+
+	if !found {
+		return activeQuiz, sql.ErrNoRows
+	}
+
+	return activeQuiz, nil
+}
+
 func (model *ActiveQuizModel) GetQuestionsCopy(activeQuizId uuid.UUID, quizId string) error {
 
 	// Walk the next_question chain so playback honors admin-defined order.
