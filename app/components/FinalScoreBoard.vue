@@ -342,7 +342,7 @@ const podiumName = (winner) =>
               <template v-if="step.winner">
                 <!-- Name tag -->
                 <span
-                  class="inline-flex max-w-full rotate-[-1deg] items-center justify-center rounded-[6px] border-[2px] border-jv-ink bg-jv-ink px-2.5 py-1 font-feature text-[11px] font-black uppercase tracking-[0.06em] text-white shadow-brutal-sm sm:text-[12px]"
+                  class="relative z-10 inline-flex max-w-full rotate-[-1deg] items-center justify-center rounded-[6px] border-[2px] border-jv-ink bg-jv-ink px-2.5 py-1 font-feature text-[11px] font-black uppercase tracking-[0.06em] text-white shadow-brutal-sm sm:text-[12px]"
                 >
                   <span class="block max-w-[88px] truncate sm:max-w-[120px]">
                     {{ podiumName(step.winner) }}
@@ -352,7 +352,7 @@ const podiumName = (winner) =>
                 <!-- Crown for 1st -->
                 <Crown
                   v-if="step.rank === 1"
-                  class="mt-1 size-6 text-jv-yellow-2 drop-shadow sm:size-7"
+                  class="relative z-10 mt-1 size-6 text-jv-yellow-2 drop-shadow sm:size-7"
                   :stroke-width="2.4"
                   fill="currentColor"
                 />
@@ -360,7 +360,7 @@ const podiumName = (winner) =>
                 <!-- Avatar: colored ring matches the podium color of this rank. -->
                 <span
                   :class="[
-                    'mt-1 grid place-items-center overflow-hidden rounded-full border-[3px] border-jv-ink bg-jv-white shadow-brutal-sm ring-4 ring-offset-[2px] ring-offset-jv-canvas',
+                    'relative z-10 mt-1 grid place-items-center overflow-hidden rounded-full border-[3px] border-jv-ink bg-jv-white shadow-brutal-sm ring-4 ring-offset-[2px] ring-offset-jv-canvas',
                     step.ring,
                     step.rank === 1
                       ? 'size-[72px] sm:size-[88px]'
@@ -385,7 +385,7 @@ const podiumName = (winner) =>
                   <!-- Spotlight glow behind 1st place -->
                   <span
                     v-if="step.highlight"
-                    class="pointer-events-none absolute -top-[100%] left-1/2 h-full w-[80%] -translate-x-1/2 bg-gradient-to-b from-jv-yellow/45 via-jv-yellow/15 to-transparent"
+                    class="pointer-events-none absolute -top-[76%] left-1/2 h-[140%] w-[160%] -translate-x-1/2 bg-gradient-to-b from-jv-yellow/45 via-jv-yellow/25 to-transparent [clip-path:polygon(30%_0%,70%_0%,100%_100%,0%_100%)]"
                     aria-hidden="true"
                   ></span>
                   <span
