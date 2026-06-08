@@ -601,24 +601,30 @@ const podiumName = (winner) =>
           role="group"
           aria-label="Admin controls"
         >
-          <button
-            type="button"
+          <NuxtLink
+            to="/"
+            class="inline-flex h-11 items-center justify-center gap-2 rounded-full border-[2px] border-jv-ink bg-jv-white px-6 font-body text-[14px] font-black text-jv-ink shadow-brutal-sm transition-transform hover:-rotate-[1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none sm:h-12 sm:text-[15px]"
+            aria-label="Return to home"
+          >
+            <Home class="size-4" :stroke-width="2.4" />
+            Home
+          </NuxtLink>
+          <NuxtLink
             class="inline-flex h-11 items-center justify-center gap-2 rounded-full border-[2px] border-jv-ink bg-jv-white px-6 font-body text-[14px] font-black text-jv-ink shadow-brutal-sm transition-transform hover:-rotate-[1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none sm:h-12 sm:text-[15px]"
             aria-label="View detailed quiz analysis"
             @click="showAnalysis"
           >
             <BarChart3 class="size-4" :stroke-width="2.4" />
             Show Analysis
-          </button>
-          <button
-            type="button"
-            class="inline-flex h-11 items-center justify-center gap-2 rounded-full border-[2px] border-jv-ink bg-jv-coral px-6 font-body text-[14px] font-black text-white shadow-brutal-sm transition-transform hover:rotate-[1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none sm:h-12 sm:text-[15px]"
+          </NuxtLink>
+          <NuxtLink
+            class="inline-flex h-11 items-center justify-center gap-2 rounded-full border-[2px] border-jv-ink bg-jv-coral px-6 font-body text-[14px] font-black text-white shadow-brutal-sm transition-transform hover:-rotate-[1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none sm:h-12 sm:text-[15px]"
             aria-label="Switch to winners podium view"
             @click="changeUI(true)"
           >
             <Crown class="size-4" :stroke-width="2.4" />
             Show Winners
-          </button>
+          </NuxtLink>
         </div>
 
         <!-- USER ANALYSIS -->
