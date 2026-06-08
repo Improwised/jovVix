@@ -201,7 +201,7 @@ const kratosUrl = urls.kratosUrl;
     const user = getUserData();
     const isReauth = !!route.query.returnTo;
 
-    if (!isReauth && user) {
+    if (!isReauth && user && user.role !== "guest-user") {
       navigateTo("/");
       return;
     }
