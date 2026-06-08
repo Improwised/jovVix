@@ -462,6 +462,8 @@
         </form>
       </div>
     </Teleport>
+
+    <ShareQuizModal v-model="shareModalOpen" :quiz-id="quizId" />
   </main>
 </template>
 
@@ -484,7 +486,7 @@ import { usePush } from "notivue";
 import draggable from "vuedraggable";
 import QuestionFormCard from "@/components/quiz-manage/QuestionFormCard.vue";
 import CodeBlockComponent from "@/components/CodeBlockComponent.vue";
-import usecopyToClipboard from "@/composables/copy_to_clipboard";
+import ShareQuizModal from "@/components/Quiz/ShareQuizModal.vue";
 import { useListUserstore } from "~/store/userlist";
 import { useSessionStore } from "~~/store/session";
 import NavigationLink from "~/components/common/NavigationLink.vue";
@@ -509,6 +511,7 @@ const listUserStore = useListUserstore();
 
 const quizId = computed(() => route.params.quiz_id || "");
 const importModalOpen = ref(false);
+const shareModalOpen = ref(false);
 const importPending = ref(false);
 const csvFile = ref(null);
 const csvFileName = ref("");
@@ -795,8 +798,7 @@ const importCsv = async () => {
 };
 
 const handleShareQuiz = () => {
-  if (!import.meta.client) return;
-  usecopyToClipboard(window.location.href);
+  shareModalOpen.value = true;
 };
 
 const handleStartQuiz = async () => {
