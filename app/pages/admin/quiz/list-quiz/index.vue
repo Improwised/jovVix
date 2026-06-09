@@ -3,7 +3,7 @@ import { computed, ref, watchEffect } from "vue";
 import { ChevronDown, Filter, Search, X } from "lucide-vue-next";
 import { usePush } from "notivue";
 import AdminQuizListCard from "@/components/quiz-list/AdminQuizListCard.vue";
-import usecopyToClipboard from "@/composables/copy_to_clipboard";
+import ShareQuizModal from "@/components/Quiz/ShareQuizModal.vue";
 import { useListUserstore } from "~/store/userlist";
 import { useSessionStore } from "~~/store/session";
 import { useUsersStore } from "~~/store/users";
@@ -28,6 +28,8 @@ const canCreatePublicQuiz = computed(
 
 const searchQuery = ref("");
 const startingQuizId = ref("");
+const shareModalOpen = ref(false);
+const shareQuizId = ref("");
 const createQuizOpen = ref(false);
 const createQuizPending = ref(false);
 const createQuizForm = ref({
@@ -182,9 +184,8 @@ const handleStartQuiz = async (quizId) => {
 };
 
 const handleShareQuiz = (quiz) => {
-  if (!import.meta.client) return;
-
-  usecopyToClipboard(`${window.location.origin}${quiz.viewUrl}`);
+  shareQuizId.value = quiz.id;
+  shareModalOpen.value = true;
 };
 
 const handleDeleteQuiz = async (quizId) => {
@@ -489,5 +490,7 @@ const handleCreateQuiz = async () => {
         </form>
       </div>
     </Teleport>
+
+    <ShareQuizModal v-model="shareModalOpen" :quiz-id="shareQuizId" />
   </main>
 </template>
