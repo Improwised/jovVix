@@ -10,7 +10,6 @@ import (
 	quizUtilsHelper "github.com/Improwised/jovvix/api/helpers/utils"
 	"github.com/Improwised/jovvix/api/models"
 	"github.com/Improwised/jovvix/api/pkg/structs"
-	"github.com/Improwised/jovvix/api/services"
 	"github.com/Improwised/jovvix/api/utils"
 	goqu "github.com/doug-martin/goqu/v9"
 	fiber "github.com/gofiber/fiber/v2"
@@ -22,7 +21,7 @@ type UserPlayedQuizeController struct {
 	userPlayedQuizModel   *models.UserPlayedQuizModel
 	activeQuizModel       *models.ActiveQuizModel
 	userQuizResponseModel *models.UserQuizResponseModel
-	presignedURLSvc       *services.PresignURLService
+	quizModel             *models.QuizModel
 	logger                *zap.Logger
 }
 
@@ -34,16 +33,13 @@ func NewUserPlayedQuizeController(goqu *goqu.Database, logger *zap.Logger, appCo
 
 	userQuizResponseModel := models.InitUserQuizResponseModel(goqu)
 
-	presignedURLSvc, err := services.NewFileUploadServices(&appConfig.AWS)
-	if err != nil {
-		return nil, err
-	}
+	quizModel := models.InitQuizModel(goqu)
 
 	return &UserPlayedQuizeController{
 		userPlayedQuizModel:   userPlayedQuizModel,
 		activeQuizModel:       activeQuizModel,
 		userQuizResponseModel: userQuizResponseModel,
-		presignedURLSvc:       presignedURLSvc,
+		quizModel:             quizModel,
 		logger:                logger,
 	}, nil
 }
@@ -107,8 +103,6 @@ func (ctrl *UserPlayedQuizeController) ListUserPlayedQuizesWithQuestionById(c *f
 		return err
 	}
 
-	services.ProcessAnalyticsData(userPlayedQuizesWithQuestion, ctrl.presignedURLSvc, ctrl.logger)
-
 	ctrl.logger.Debug("UserPlayedQuizeController.ListUserPlayedQuizesWithQuestionById success", zap.Any("userPlayedQuizesWithQuestion", userPlayedQuizesWithQuestion))
 	return utils.JSONSuccess(c, http.StatusOK, userPlayedQuizesWithQuestion)
 }
@@ -149,9 +143,21 @@ func (ctrl *UserPlayedQuizeController) PlayedQuizValidation(c *fiber.Ctx) error 
 	}
 	ctrl.logger.Debug("activeQuizModel.activeQuizModel success", zap.Any("session", session))
 
+	// The host normally cannot play their own session. Exception: for a PUBLIC quiz,
+	// whoever started it (the host) may also play — unless they are the quiz creator,
+	// who stays host-only. This is the gate that distinguishes the two cases.
 	if userId == session.AdminID {
-		ctrl.logger.Error(constants.ErrAdminCannotBeUser)
-		return utils.JSONFail(c, http.StatusInternalServerError, constants.ErrAdminCannotBeUser)
+		quiz, err := ctrl.quizModel.GetQuizById(session.QuizID.String())
+		if err != nil {
+			ctrl.logger.Error("error fetching quiz during PlayedQuizValidation", zap.Error(err))
+			return utils.JSONFail(c, http.StatusInternalServerError, constants.ErrUserQuizSessionValidation)
+		}
+
+		hostMayPlay := quiz.IsPublic && quiz.CreatorID != userId
+		if !hostMayPlay {
+			ctrl.logger.Error(constants.ErrAdminCannotBeUser)
+			return utils.JSONFail(c, http.StatusForbidden, constants.ErrAdminCannotBeUser)
+		}
 	}
 
 	ctrl.logger.Debug("userPlayedQuizModel.CreateUserPlayedQuizIfNotExists called", zap.Any("userId", userId), zap.Any("sessionID", session.ID))

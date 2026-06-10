@@ -1,79 +1,49 @@
 <script setup>
-import { useListUserstore } from "~/store/userlist";
+import { Users } from "lucide-vue-next";
 import { storeToRefs } from "pinia";
+import { useListUserstore } from "~/store/userlist";
+import { getAvatarUrlByName } from "~~/composables/avatar";
 
 const listUserStore = useListUserstore();
 const { listUsers } = storeToRefs(listUserStore);
-import { getAvatarUrlByName } from "~~/composables/avatar";
 </script>
 
 <template>
-  <div class="container" style="max-width: 800px">
-    <div class="row justify-content-center mb-2">
+  <div class="mx-auto w-full max-w-[800px]">
+    <div class="mb-4 flex justify-center">
       <div
-        v-if="listUsers.length == 0"
-        class="col-7 col-md-4 mt-5 mb-5 border border-radius"
+        class="jv-border-rough inline-flex items-center gap-3 border-2 border-jv-ink bg-jv-yellow px-5 py-2.5 shadow-brutal-sm"
       >
-        <div
-          class="d-flex justify-content-center align-items-center px-3 py-2 py-md-4 gap-3"
+        <Users class="size-5 text-jv-ink" :stroke-width="2.4" />
+        <h5
+          v-if="listUsers.length === 0"
+          class="m-0 font-headings text-base text-jv-ink sm:text-lg"
         >
-          <font-awesome-icon icon="fa-solid fa-users" size="xl" />
-          <h5 class="text-center mb-0">Waiting for Participants..</h5>
-        </div>
-      </div>
-
-      <div v-else class="col-6 col-md-4 mt-5 border border-radius">
-        <div
-          class="d-flex justify-content-center align-items-center px-3 py-2 py-md-4 gap-3"
-        >
-          <font-awesome-icon icon="fa-solid fa-users" size="xl" />
-          <h5 class="text-center text-sm fs-5 mb-0">
-            {{ listUsers.length }} Participants
-          </h5>
-        </div>
+          Waiting for Participants...
+        </h5>
+        <h5 v-else class="m-0 font-headings text-base text-jv-ink sm:text-lg">
+          {{ listUsers.length }} Participants
+        </h5>
       </div>
     </div>
 
-    <v-card
-      v-if="listUsers.length"
-      :flat="true"
-      class="mb-2 d-flex flex-wrap justify-content-center"
-      color="#00000000"
-    >
-      <div v-for="user in listUsers" :key="user.UserId" class="chip m-2">
+    <div v-if="listUsers.length" class="flex flex-wrap justify-center gap-3">
+      <div
+        v-for="user in listUsers"
+        :key="user.UserId"
+        class="jv-card flex items-center gap-3 border-2 border-jv-ink bg-jv-white pr-4 shadow-brutal-sm"
+      >
         <img
           :src="getAvatarUrlByName(user?.Avatar)"
-          alt="Person"
-          width="96"
-          height="96"
+          alt=""
+          width="48"
+          height="48"
+          class="size-12 rounded-full border-2 border-jv-ink object-cover"
         />
-        {{ user.UserName }}
+        <span class="pr-2 font-body text-sm font-bold text-jv-ink sm:text-base">
+          {{ user.UserName }}
+        </span>
       </div>
-    </v-card>
+    </div>
   </div>
 </template>
-
-<style scoped>
-.border-radius {
-  border-radius: 2rem !important;
-}
-
-.chip {
-  display: inline-block;
-  padding: 0 25px;
-  height: 50px;
-  font-size: 16px;
-  line-height: 50px;
-  border-radius: 25px;
-  max-width: 600px;
-  background-color: #f1f1f1;
-}
-
-.chip img {
-  float: left;
-  margin: 0 10px 0 -25px;
-  height: 50px;
-  width: 50px;
-  border-radius: 50%;
-}
-</style>

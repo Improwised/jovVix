@@ -1,5 +1,5 @@
-import { useToast } from "vue-toastification";
-const toast = useToast();
+import { usePush } from "notivue";
+const toast = usePush();
 
 export default function usecopyToClipboard(text) {
   navigator.clipboard

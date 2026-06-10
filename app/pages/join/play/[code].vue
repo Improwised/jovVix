@@ -1,6 +1,6 @@
 <script setup>
 // core dependencies
-import { useToast } from "vue-toastification";
+import { usePush } from "notivue";
 import { useRouter } from "nuxt/app";
 
 // custom component
@@ -10,7 +10,7 @@ import { useSystemEnv } from "~/composables/envs.js";
 // define nuxt configs
 const route = useRoute();
 const router = useRouter();
-const toast = useToast();
+const toast = usePush();
 const app = useNuxtApp();
 useSystemEnv();
 
@@ -165,6 +165,7 @@ const sendAnswer = async (answers) => {
 
 definePageMeta({
   layout: "empty",
+  hideSidebar: true,
 });
 
 onBeforeUnmount(() => {
@@ -193,15 +194,16 @@ onBeforeUnmount(() => {
       :full-screen-enabled="myRef"
       @is-full-screen="handleCustomChange"
     >
-      <UserName :user-name="firstname"></UserName>
+      <!-- <UserName :user-name="firstname"></UserName> -->
 
-      <QuizLoadingSpace
+      <QuizWaitingSpacePlayerSkeleton
         v-if="currentComponent === 'Loading'"
-      ></QuizLoadingSpace>
+      ></QuizWaitingSpacePlayerSkeleton>
       <QuizWaitingSpace
         v-else-if="currentComponent === 'Waiting'"
         :data="data"
         :is-admin="false"
+        :user-name="firstname"
         @start-quiz="startQuiz"
       >
       </QuizWaitingSpace>

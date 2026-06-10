@@ -117,11 +117,6 @@ func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config confi
 		return err
 	}
 
-	err = setupImageController(v1, goqu, logger, middleware, config)
-	if err != nil {
-		return err
-	}
-
 	err = setupSharedQuizzesController(v1, goqu, logger, middleware, config)
 	if err != nil {
 		return err
@@ -224,7 +219,10 @@ func setupQuizSocketController(v1 fiber.Router, db *goqu.Database, logger *zap.L
 		return err
 	}
 
-	v1.Get(fmt.Sprintf("/socket/admin/arrange/:%s", constants.SessionIDParam), middleware.CheckSessionId, middleware.KratosAuthenticated, websocket.New(quizSocketController.Arrange))
+	// CustomAuthenticated (not kratos-only) so guests can host public quizzes too.
+	// GetOrActivateSession still enforces admin_id == userId, so a guest can only
+	// arrange a session they themselves created.
+	v1.Get(fmt.Sprintf("/socket/admin/arrange/:%s", constants.SessionIDParam), middleware.CheckSessionId, middleware.CustomAuthenticated, websocket.New(quizSocketController.Arrange))
 	v1.Get(fmt.Sprintf("/socket/join/:%s", constants.QuizSessionInvitationCode), middleware.CheckSessionCode, middleware.CustomAuthenticated, websocket.New(quizSocketController.Join))
 	v1.Post("/quiz/answer", middleware.Authenticated, middleware.CustomAuthenticated, quizSocketController.SetAnswer)
 	v1.Get("/quiz/terminate", middleware.Authenticated, quizSocketController.Terminate)
@@ -241,12 +239,23 @@ func setupQuizController(v1 fiber.Router, db *goqu.Database, logger *zap.Logger,
 	admin := v1.Group("/admin")
 	admin.Use(middleware.KratosAuthenticated)
 
+	// Public quizzes listing — must be registered BEFORE the auth-guarded /quizzes group
+	// so it is not protected by KratosAuthenticated.
+	v1.Get("/quizzes/public", quizController.GetPublicQuizzes)
+
+	// Hosting a public quiz is open to guests as well as registered users, so it uses
+	// Authenticated (guest JWT or kratos) instead of the kratos-only /quizzes group.
+	// The handler itself enforces that the quiz is actually public.
+	v1.Post(fmt.Sprintf("/quizzes/:%s/public_session", constants.QuizId), middleware.Authenticated, quizController.GeneratePublicSession)
+
 	quizzes := v1.Group("/quizzes")
 	quizzes.Use(middleware.KratosAuthenticated)
 
 	quizzes.Post(fmt.Sprintf("/:%s/demo_session", constants.QuizId), quizController.GenerateDemoSession)
 	quizzes.Post(fmt.Sprintf("/:%s/upload", constants.QuizTitle), middleware.ValidateCsv, middleware.KratosAuthenticated, quizController.CreateQuizByCsv)
+	quizzes.Post("/", quizController.CreateQuiz)
 	quizzes.Get("/", quizController.GetAdminUploadedQuizzes)
+	quizzes.Put(fmt.Sprintf("/:%s/settings", constants.QuizId), middleware.QuizPermission, middleware.VerifyQuizEditAccess, quizController.UpdateQuizSettings)
 	quizzes.Delete(fmt.Sprintf("/:%s", constants.QuizId), middleware.QuizPermission, middleware.VerifyQuizEditAccess, quizController.DeleteQuizById)
 
 	report := admin.Group("/reports")
@@ -265,6 +274,8 @@ func setupQuestionController(v1 fiber.Router, db *goqu.Database, logger *zap.Log
 	questionRouter.Use(middleware.KratosAuthenticated, middleware.QuizPermission)
 
 	questionRouter.Get("/", questionController.ListQuestionsWithAnswerByQuizId)
+	questionRouter.Post("/", middleware.VerifyQuizEditAccess, questionController.CreateQuestion)
+	questionRouter.Post("/upload", middleware.VerifyQuizEditAccess, middleware.ValidateCsv, questionController.ImportQuestionsByCsv)
 	questionRouter.Get(fmt.Sprintf("/:%s", constants.QuestionId), middleware.VerifyQuizEditAccess, questionController.GetQuestionById)
 	questionRouter.Put(fmt.Sprintf("/:%s", constants.QuestionId), middleware.VerifyQuizEditAccess, questionController.UpdateQuestionById)
 	questionRouter.Delete(fmt.Sprintf("/:%s", constants.QuestionId), middleware.VerifyQuizEditAccess, questionController.DeleteQuestionById)
@@ -319,17 +330,6 @@ func setupUserPlayedQuizeController(v1 fiber.Router, goqu *goqu.Database, logger
 	userRouter.Get("/", middlewares.KratosAuthenticated, userPlayedQuizeController.ListUserPlayedQuizes)
 	userRouter.Get(fmt.Sprintf("/:%s", constants.UserPlayedQuizId), userPlayedQuizeController.ListUserPlayedQuizesWithQuestionById)
 	userRouter.Post(fmt.Sprintf("/:%s", constants.QuizSessionInvitationCode), middlewares.Authenticated, userPlayedQuizeController.PlayedQuizValidation)
-	return nil
-}
-
-func setupImageController(v1 fiber.Router, goqu *goqu.Database, logger *zap.Logger, middlewares middlewares.Middleware, config config.AppConfig) error {
-	imageController, err := controller.NewImageController(goqu, logger, &config)
-	if err != nil {
-		return err
-	}
-
-	imageRouter := v1.Group("/images")
-	imageRouter.Post("/", middlewares.KratosAuthenticated, imageController.InsertImage)
 	return nil
 }
 

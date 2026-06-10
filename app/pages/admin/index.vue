@@ -1,180 +1,226 @@
 <template>
-  <div class="container">
-    <h3 class="d-flex align-item-center justify-content-center">My Profile</h3>
-    <div v-if="userError?.data?.code == 401">
-      {{ navigateTo("/account/login") }}
-    </div>
-    <div v-if="userError" class="alert alert-danger" role="alert">
-      {{ userError.data }}
-    </div>
-    <div v-else-if="userPending" class="text-center">Pending...</div>
-    <div v-else class="row">
-      <div class="col-md-5 mt-4">
-        <div class="card d-flex justify-content-center align-items-center">
-          <img
-            :src="avatar"
-            class="card-img-top mt-3"
-            style="width: 14rem"
-            alt="..."
-          />
-          <div class="card-body text-center">
-            <h5 class="card-title">{{ userData.full_name }}</h5>
-            <h5 class="card-title">{{ userData.email }}</h5>
-            <div
-              type="button"
-              class="btn btn-primary btn-sm text-white mx-1"
-              @click="handleChangePasswordClick"
-            >
-              Change Password
-            </div>
-            <div
-              type="button"
-              class="btn btn-danger btn-sm text-white mx-1"
-              @click="deleteAccount"
-            >
-              Delete Account
-            </div>
-            <div
-              type="button"
-              class="btn btn-sm text-white mx-1"
-              :class="userData.email_verify ? 'btn-dark' : 'btn-success'"
-              :style="
-                userData.email_verify
-                  ? {
-                      opacity: 0.4,
-                      pointerEvents: 'none',
-                      cursor: 'not-allowed',
-                    }
-                  : {}
-              "
-              @click="handleEmailVerification"
-            >
-              {{ userData.email_verify ? "Verified" : "Verify Your Account" }}
+  <main
+    class="flex flex-col gap-8 bg-jv-canvas sm:gap-10 px-4 sm:px-6 md:px-8 py-5 md:py-6"
+  >
+    <div class="mx-auto flex w-full flex-col gap-8 sm:gap-10">
+      <div class="min-w-0">
+        <h1
+          class="font-headings text-[38px] leading-none text-jv-ink min-[420px]:text-[44px] sm:text-[52px] md:text-[56px]"
+        >
+          Profile Settings
+        </h1>
+        <div
+          class="ml-12 mt-1 h-3 w-28 rounded-full border-b-[3px] border-jv-yellow sm:ml-14 sm:w-32"
+          aria-hidden="true"
+        ></div>
+      </div>
+
+      <div v-if="userError?.data?.code == 401" class="sr-only">
+        {{ navigateTo("/account/login") }}
+      </div>
+
+      <div
+        v-if="userError"
+        class="jv-border-rough bg-jv-white p-5 text-[18px] font-semibold text-jv-coral shadow-brutal-sm"
+        role="alert"
+      >
+        {{ userError.data }}
+      </div>
+
+      <div
+        v-else-if="userPending"
+        class="jv-border-rough bg-jv-white p-5 text-center text-[18px] font-semibold text-jv-muted shadow-brutal-sm"
+      >
+        Pending...
+      </div>
+
+      <template v-else>
+        <section
+          class="rotate-[-0.2deg] jv-border-rough bg-jv-white shadow-brutal-lg"
+        >
+          <div class="p-5 sm:p-7 md:p-8">
+            <div class="flex flex-col gap-5 md:flex-row md:items-center">
+              <img
+                :src="avatar"
+                class="size-24 shrink-0 rounded-full border-[3px] border-jv-ink bg-jv-slate object-cover shadow-brutal-sm sm:size-28"
+                :alt="userData.full_name"
+              />
+
+              <div class="min-w-0 flex-1">
+                <h2
+                  class="font-headings text-[32px] leading-tight text-jv-ink sm:text-[38px]"
+                >
+                  {{ userData.full_name }}
+                </h2>
+                <p
+                  class="mt-1 break-all text-[16px] font-semibold text-jv-muted sm:text-[18px]"
+                >
+                  {{ userData.email }}
+                </p>
+
+                <div class="mt-5 flex flex-wrap gap-3">
+                  <NavigationLink
+                    :url-name="
+                      userData.email_verify
+                        ? 'Email Verified'
+                        : 'Verify Yourself'
+                    "
+                    :disabled="userData.email_verify"
+                    :title="
+                      userData.email_verify
+                        ? 'Email already verified'
+                        : 'Click to verify your email'
+                    "
+                    :class="
+                      userData.email_verify
+                        ? 'rounded-[999px] bg-jv-slate'
+                        : 'rounded-[999px] bg-jv-mint'
+                    "
+                    @click="handleEmailVerification"
+                  />
+                  <NavigationLink
+                    url-name="Change Password"
+                    class="rounded-[999px]"
+                    @click="handleChangePasswordClick"
+                  />
+
+                  <NavigationLink
+                    url-name="Delete Account"
+                    class="rounded-[999px] bg-jv-coral text-white"
+                    @click="deleteAccount"
+                  />
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
-      <div class="col-md-7 mt-4">
-        <div class="card">
-          <div class="card-body">
-            <form @submit.prevent="changeUserMetaData">
-              <div class="form-group">
-                <label for="name" class="form-label">First Name</label>
+
+          <form
+            class="border-t-2 border-dashed border-jv-ink/15 p-5 sm:p-7 md:p-8"
+            @submit.prevent="changeUserMetaData"
+          >
+            <div class="grid gap-5 md:grid-cols-2 md:gap-6">
+              <label class="flex min-w-0 flex-col gap-2">
+                <span
+                  class="text-[13px] font-black uppercase tracking-[0.16em] text-jv-muted"
+                >
+                  First Name
+                </span>
                 <input
-                  id="name"
+                  id="first-name"
                   v-model="userData.first_name"
                   type="text"
-                  class="form-control"
+                  class="h-14 w-full border-2 border-jv-ink bg-jv-canvas px-4 text-[17px] font-semibold text-jv-ink outline-none transition-colors placeholder:text-jv-ink/35 focus:bg-jv-white"
                   placeholder="Pending..."
                   required
                   @focus="showCancleButton"
                 />
-              </div>
-              <div class="form-group">
-                <label for="name" class="form-label">Last Name</label>
+              </label>
+
+              <label class="flex min-w-0 flex-col gap-2">
+                <span
+                  class="text-[13px] font-black uppercase tracking-[0.16em] text-jv-muted"
+                >
+                  Last Name
+                </span>
                 <input
-                  id="name"
+                  id="last-name"
                   v-model="userData.last_name"
                   type="text"
-                  class="form-control"
+                  class="h-14 w-full border-2 border-jv-ink bg-jv-canvas px-4 text-[17px] font-semibold text-jv-ink outline-none transition-colors placeholder:text-jv-ink/35 focus:bg-jv-white"
                   placeholder="Pending..."
                   required
                   @focus="showCancleButton"
                 />
-              </div>
-              <div class="form-group">
-                <label for="email" class="form-label">Email</label>
-                <input
-                  id="email"
-                  v-model="userData.email"
-                  type="email"
-                  class="form-control"
-                  placeholder="Pending..."
-                  disabled
-                />
-              </div>
-              <!-- Error message for password mismatch -->
-              <div
-                v-if="updateuserError"
-                class="alert alert-danger"
-                role="alert"
-              >
-                {{ updateuserError.data }}
-              </div>
-              <div v-else-if="updateuserPending">
-                <button class="btn btn-primary">Pending...</button>
-              </div>
-              <div v-else class="form-group">
-                <button type="submit" class="btn btn-primary text-white">
-                  Save Changes
-                </button>
-                <div
-                  v-if="cancleButton"
-                  class="btn btn-secondary ml-2"
-                  @click="hideCancleButton"
-                >
-                  Cancel
-                </div>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-      <div class="d-flex flex-column justify-content-center">
-        <!-- list loader -->
-        <UtilsQuizListWaiting v-if="quizPending" />
-
-        <div v-else-if="quizError" class="alert alert-danger" role="alert">
-          {{ quizError.data }}
-        </div>
-
-        <!-- quiz details -->
-        <div v-else>
-          <!-- show quiz list -->
-          <div class="mt-4">
-            <div class="card">
-              <div class="card-header">
-                <nav class="navbar">
-                  <div class="container-fluid p-0">
-                    <h3 class="mb-0">Played Quiz List</h3>
-                    <NuxtLink
-                      class="btn text-white btn-primary"
-                      to="/admin/played_quiz"
-                    >
-                      Played Quiz
-                    </NuxtLink>
-                  </div>
-                </nav>
-              </div>
-              <div
-                v-if="quizList == null || quizList.length < 1"
-                class="no-quiz-list d-flex flex-column align-items-center my-4"
-              >
-                <h2>No Quiz Played By You !</h2>
-              </div>
-              <div class="row p-2">
-                <div
-                  v-for="(details, index) in quizList"
-                  :key="index"
-                  class="col-md-6 mb-5"
-                >
-                  <QuizListCard :details="details" :is-played-quiz="true" />
-                </div>
-              </div>
+              </label>
             </div>
+
+            <label class="mt-6 flex min-w-0 flex-col gap-2">
+              <span
+                class="text-[13px] font-black uppercase tracking-[0.16em] text-jv-muted"
+              >
+                Email
+              </span>
+              <input
+                id="email"
+                v-model="userData.email"
+                type="email"
+                class="h-14 w-full border-2 border-jv-ink bg-jv-canvas px-4 text-[17px] font-semibold text-jv-ink outline-none disabled:text-jv-ink/80"
+                placeholder="Pending..."
+                disabled
+              />
+            </label>
+
+            <div
+              v-if="updateuserError"
+              class="mt-5 jv-border-rough bg-jv-white p-3 text-[15px] font-semibold text-jv-coral shadow-brutal-sm"
+              role="alert"
+            >
+              {{ updateuserError.data }}
+            </div>
+
+            <div class="mt-7 flex flex-wrap gap-3">
+              <NavigationLink
+                :url-name="saveButtonText"
+                type="submit"
+                :disabled="updateuserPending"
+                class="bg-jv-coral text-white"
+              >
+                <Save class="size-5" :stroke-width="2.4" />
+              </NavigationLink>
+
+              <NavigationLink
+                v-if="cancleButton"
+                url-name="Cancel"
+                class="bg-jv-white text-jv-ink"
+                @click="hideCancleButton"
+              />
+            </div>
+          </form>
+        </section>
+
+        <section
+          class="rotate-[0.2deg] jv-border-rough bg-jv-white shadow-brutal-lg"
+        >
+          <div
+            class="flex flex-col gap-4 border-b-2 border-jv-ink p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6"
+          >
+            <div class="min-w-0">
+              <h2
+                class="font-headings text-[28px] leading-tight text-jv-ink sm:text-[32px]"
+              >
+                Played Quizzes
+              </h2>
+              <p
+                class="mt-1 text-[14px] font-semibold text-jv-muted sm:text-[15px]"
+              >
+                Review every quiz you've played so far.
+              </p>
+            </div>
+            <NavigationLink
+              url="/admin/quiz/list-quiz"
+              url-name="View Played Quizzes"
+              class="w-full bg-jv-yellow py-2 text-jv-ink sm:w-fit"
+            />
           </div>
-        </div>
-      </div>
+        </section>
+      </template>
     </div>
-  </div>
+  </main>
 </template>
 
 <script setup>
 import { useUsersStore } from "~~/store/users";
 import { getAvatarUrlByName } from "~~/composables/avatar";
-import { useToast } from "vue-toastification";
+import { usePush } from "notivue";
+import { Save } from "lucide-vue-next";
+import NavigationLink from "@/components/common/NavigationLink.vue";
+
+definePageMeta({
+  layout: "empty",
+});
+
 const config = useRuntimeConfig();
-const toast = useToast();
+const toast = usePush();
 const userStore = useUsersStore();
 const { getUserData, setUserData } = userStore;
 const url = useRuntimeConfig().public;
@@ -187,6 +233,10 @@ const avatar = computed(() => {
   return getAvatarUrlByName(user?.avatar);
 });
 
+const saveButtonText = computed(() =>
+  updateuserPending.value ? "Pending..." : "Save Changes"
+);
+
 const {
   data: user,
   pending: userPending,
@@ -196,23 +246,7 @@ const {
   headers: headers,
   mode: "cors",
   credentials: "include",
-});
-
-const {
-  data: quizList,
-  pending: quizPending,
-  error: quizError,
-} = useFetch(url.apiUrl + "/user_played_quizes", {
-  method: "GET",
-  headers: headers,
-  mode: "cors",
-  credentials: "include",
-  transform: (quizList) => {
-    if (quizList?.data?.data) {
-      return quizList?.data?.data.slice(0, 8);
-    }
-    return quizList?.data?.data;
-  },
+  server: false,
 });
 
 const userData = reactive({
@@ -368,17 +402,3 @@ const handleEmailVerification = async () => {
   }
 };
 </script>
-
-<style scoped>
-.profile-page {
-  padding: 20px;
-}
-
-.user-info {
-  margin-bottom: 20px;
-}
-
-.form-group {
-  margin-bottom: 20px;
-}
-</style>

@@ -1,7 +1,12 @@
 <script setup>
-import { useToast } from "vue-toastification";
+import { usePush } from "notivue";
+import { Mail, ArrowRight } from "lucide-vue-next";
 
-const toast = useToast();
+definePageMeta({
+  layout: "auth",
+});
+
+const toast = usePush();
 const urls = useRuntimeConfig().public;
 const kratosUrl = urls.kratosUrl;
 const email = ref("");
@@ -57,39 +62,96 @@ const handleForgotPassword = async () => {
 </script>
 
 <template>
-  <Frame
-    page-title="Forgot Password"
-    page-message="Enter your email and we'll send you a reset code."
-  >
-    <form @submit.prevent="handleForgotPassword">
-      <!-- Email -->
-      <div class="mb-3">
-        <label for="email" class="form-label">Email</label>
-        <input
-          id="email"
-          v-model="email"
-          type="email"
-          class="form-control"
-          placeholder="Enter your email"
-          required
-        />
-      </div>
+  <div class="relative z-10 mx-auto w-full max-w-[440px]">
+    <div class="relative rotate-1">
+      <span
+        class="jv-card absolute -top-[8px] left-1/2 z-20 h-3 w-12 -translate-x-1/2 border-2 border-jv-ink bg-jv-slate shadow-brutal-sm"
+        aria-hidden="true"
+      ></span>
 
-      <!-- Submit Button -->
-      <div class="d-grid mb-4">
-        <button
-          type="submit"
-          class="btn btn-primary text-white"
-          :disabled="isLoading"
+      <div
+        class="jv-card border-2 border-jv-ink bg-jv-white px-6 py-7 shadow-brutal-lg sm:px-8 sm:py-9"
+      >
+        <header class="mb-6 flex flex-col items-center gap-1.5">
+          <div class="relative inline-block">
+            <h1
+              class="m-0 font-headings text-[26px] leading-none text-jv-ink sm:text-[32px]"
+            >
+              Forgot Password
+            </h1>
+            <svg
+              class="absolute -bottom-2 left-1/2 -translate-x-1/2 text-jv-mint"
+              width="140"
+              height="14"
+              viewBox="0 0 140 14"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+            >
+              <path
+                d="M3 9 Q 25 1, 50 7 T 95 6 T 137 4"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                fill="none"
+              />
+            </svg>
+          </div>
+          <p
+            class="mt-2 text-center font-body text-sm text-jv-ink/70 sm:text-[15px]"
+          >
+            Enter your email and we'll send you a reset code.
+          </p>
+        </header>
+
+        <form
+          class="flex flex-col gap-4"
+          @submit.prevent="handleForgotPassword"
         >
-          {{ isLoading ? "Sending..." : "Send Reset Password Code" }}
-        </button>
-      </div>
+          <div class="flex flex-col gap-1.5">
+            <label
+              for="email"
+              class="px-0.5 font-body text-xs font-bold uppercase tracking-wide text-jv-ink sm:text-[13px]"
+            >
+              Email Address
+            </label>
+            <div
+              class="jv-card flex items-center gap-2.5 border-2 border-jv-ink bg-jv-white px-3 py-2.5 shadow-brutal-sm transition-all focus-within:translate-x-[1px] focus-within:translate-y-[1px] focus-within:shadow-none"
+            >
+              <Mail
+                class="size-[18px] shrink-0 text-jv-ink/70"
+                :stroke-width="2.2"
+              />
+              <input
+                id="email"
+                v-model="email"
+                type="email"
+                placeholder="you@example.com"
+                class="min-w-0 flex-1 border-0 bg-transparent font-body text-sm text-jv-ink outline-none placeholder:text-jv-ink/40 sm:text-base"
+                required
+              />
+            </div>
+          </div>
 
-      <!-- Back to login -->
-      <div class="text-center">
-        <NuxtLink to="/account/login" class="fs-5"> Back to Sign In </NuxtLink>
+          <button
+            type="submit"
+            :disabled="isLoading"
+            class="jv-card mt-2 inline-flex h-12 items-center justify-center gap-2 border-2 border-jv-ink bg-jv-coral font-headings text-base text-white shadow-brutal-sm transition-transform hover:rotate-[1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:rotate-0 sm:text-lg"
+          >
+            {{ isLoading ? "Sending..." : "Send Reset Code" }}
+            <ArrowRight v-if="!isLoading" class="size-5" :stroke-width="2.4" />
+          </button>
+        </form>
+
+        <div class="mt-5 text-center font-body text-sm text-jv-ink/70">
+          <NuxtLink
+            to="/account/login"
+            class="font-bold text-jv-coral hover:underline"
+          >
+            Back to Sign In
+          </NuxtLink>
+        </div>
       </div>
-    </form>
-  </Frame>
+    </div>
+  </div>
 </template>

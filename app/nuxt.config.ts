@@ -1,5 +1,5 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
-import vuetify, { transformAssetUrls } from "vite-plugin-vuetify";
+import tailwindcss from "@tailwindcss/vite";
 
 export default defineNuxtConfig({
   // please refer https://nuxt.com/docs/guide/going-further/runtime-config#environment-variables for setting up environment variables.
@@ -8,8 +8,8 @@ export default defineNuxtConfig({
       baseUrl: process.env.NUXT_PUBLIC_BASE_URL || "http://127.0.0.1:3001",
       apiUrl: process.env.NUXT_PUBLIC_API_URL || "http://127.0.0.1:3000/api/v1",
       maxImageFileSize: parseInt(
-        process.env.NUXT_PUBLIC_MAX_IMAGE_FILE_SIZE || "1048576"
-      ), //1MB default
+        process.env.NUXT_PUBLIC_MAX_IMAGE_FILE_SIZE || "512000"
+      ), // 500 KB default (bytes)
       apiSocketUrl:
         process.env.NUXT_PUBLIC_API_SOCKET_URL ||
         "ws://127.0.0.1:3000/api/v1/socket",
@@ -29,35 +29,59 @@ export default defineNuxtConfig({
         { charset: "utf-8" },
         { name: "viewport", content: "width=device-width, initial-scale=1" },
       ],
-      script: [
-        //This is just for example how to add js
-        //you can  include js  by this method direact include or via import individual method as per below link
-        //https://github.com/Debonex/samples/blob/master/nuxt3-bootstrap5/app.vue
-      ],
       link: [
-        // Preconnect to Google Fonts for faster loading
         { rel: "preconnect", href: "https://fonts.googleapis.com" },
         {
           rel: "preconnect",
           href: "https://fonts.gstatic.com",
           crossorigin: "",
         },
-        // Load Google Fonts with font-display: swap - critical for performance
         {
           rel: "stylesheet",
           href: "https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap",
           media: "print",
           onload: "this.media='all'",
         },
-        // Add your favicon here
         { rel: "icon", type: "image/x-icon", href: "/favicon.ico" },
+        {
+          rel: "icon",
+          type: "image/png",
+          sizes: "16x16",
+          href: "/favicon-16x16.png",
+        },
+        {
+          rel: "icon",
+          type: "image/png",
+          sizes: "32x32",
+          href: "/favicon-32x32.png",
+        },
+        {
+          rel: "icon",
+          type: "image/png",
+          sizes: "48x48",
+          href: "/favicon-48x48.png",
+        },
+        {
+          rel: "icon",
+          type: "image/png",
+          sizes: "180x180",
+          href: "/favicon-180x180.png",
+        },
+        {
+          rel: "icon",
+          type: "image/png",
+          sizes: "256x256",
+          href: "/favicon-256x256.png",
+        },
       ],
     },
   },
 
   css: [
-    "@/assets/scss/theme.scss",
-    "@fortawesome/fontawesome-svg-core/styles.css",
+    "@/assets/css/main.css",
+    "notivue/notification.css",
+    "notivue/animations.css",
+    "notivue/notification-progress.css",
   ],
   modules: [
     "@nuxt/test-utils/module",
@@ -67,29 +91,25 @@ export default defineNuxtConfig({
         autoImports: ["defineStore", "acceptHMRUpdate"],
       },
     ],
-    (_options, nuxt) => {
-      nuxt.hooks.hook("vite:extendConfig", (config) => {
-        // @ts-expect-error error 'config.plugins' is possibly 'undefined'
-        config.plugins.push(vuetify({ autoImport: true }));
-      });
-    },
+    "shadcn-nuxt",
+    "notivue/nuxt",
   ],
-
-  vite: {
-    // Temporary solution to silence Bootstrap SCSS deprecation warnings
-    // Reference: https://github.com/twbs/bootstrap/issues/40962
-    css: {
-      preprocessorOptions: {
-        scss: {
-          silenceDeprecations: [
-            "mixed-decls",
-            "color-functions",
-            "global-builtin",
-            "import",
-          ],
-        },
+  notivue: {
+    position: "top-center",
+    limit: 4,
+    enqueue: true,
+    avoidDuplicates: true,
+    notifications: {
+      global: {
+        duration: 8000,
       },
     },
+  },
+  shadcn: {
+    prefix: "",
+    componentDir: "@/components/ui",
+  },
+  vite: {
     define: {
       "process.env.DEBUG": false,
     },
@@ -97,57 +117,36 @@ export default defineNuxtConfig({
       template: {
         transformAssetUrls: {
           includeAbsolute: false,
-          tags: transformAssetUrls,
         },
       },
     },
     build: {
-      // Code splitting optimizations - only include actual JS modules
       rollupOptions: {
         output: {
           manualChunks: (id) => {
-            // Chunk large libraries separately
             if (id.includes("node_modules")) {
-              if (id.includes("vuetify")) return "vendor-vuetify";
               if (id.includes("chart.js")) return "vendor-charts";
-              if (id.includes("bootstrap")) return "vendor-bootstrap";
-              if (id.includes("@fortawesome")) return "vendor-icons";
               if (id.includes("highlight.js")) return "vendor-highlight";
             }
           },
         },
       },
-      // Reduce chunk size warnings
       chunkSizeWarningLimit: 1000,
     },
-    // Optimize dependencies - only JS modules
     optimizeDeps: {
-      include: ["vuetify", "chart.js", "bootstrap"],
+      include: ["chart.js"],
     },
+    plugins: [tailwindcss()],
   },
 
-  build: {
-    transpile: [
-      "vue-toastification",
-      "vuetify",
-      "@fortawesome/vue-fontawesome",
-      "@fortawesome/fontawesome-svg-core",
-      "@fortawesome/pro-solid-svg-icons",
-      "@fortawesome/pro-regular-svg-icons",
-      "@fortawesome/free-brands-svg-icons",
-    ],
-  },
-
-  // Performance optimizations
-  ssr: true, // Enable SSR for better performance
+  ssr: true,
   experimental: {
-    payloadExtraction: false, // Improve initial load
+    payloadExtraction: false,
   },
 
-  // Critical performance optimizations
   nitro: {
-    compressPublicAssets: true, // Enable compression
-    minify: true, // Minify output
+    compressPublicAssets: true,
+    minify: true,
   },
 
   plugins: ["@/plugins/chart.js"],

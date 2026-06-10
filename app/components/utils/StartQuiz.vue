@@ -1,14 +1,15 @@
 <script setup>
-import { useToast } from "vue-toastification";
+import { usePush } from "notivue";
 import { useListUserstore } from "~/store/userlist";
 import { useSessionStore } from "~~/store/session";
+import NavigationLink from "@/components/common/NavigationLink.vue";
 const sessionStore = useSessionStore();
 const { setSession } = sessionStore;
 const listUserStore = useListUserstore();
 const { removeAllUsers } = listUserStore;
 let urls = useRuntimeConfig().public;
 const router = useRouter();
-const toast = useToast();
+const toast = usePush();
 const requestPending = ref(false);
 const activeQuizId = ref(false);
 const props = defineProps({
@@ -50,28 +51,15 @@ const handleStartDemo = async () => {
 
   removeAllUsers();
   setSocketObject(null);
+  setSession(activeQuizId.value);
   router.push(`/admin/arrange/${activeQuizId.value}`);
-
-  // add session in store after 1 second
-  setTimeout(() => {
-    setSession(activeQuizId.value);
-  }, 1000);
 };
 </script>
 <template>
-  <button
-    v-if="requestPending"
-    type="button"
-    class="btn text-white btn-primary me-0"
-  >
-    Pending...
-  </button>
-  <button
-    v-else
-    type="button"
-    class="btn text-white btn-primary me-0"
+  <NavigationLink
+    :url-name="requestPending ? 'Pending...' : 'Start Quiz'"
+    class="h-8 rounded-full shadow-none"
+    :disabled="requestPending"
     @click="handleStartDemo"
-  >
-    Start Quiz
-  </button>
+  />
 </template>

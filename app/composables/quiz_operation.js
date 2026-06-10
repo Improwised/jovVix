@@ -110,6 +110,11 @@ export default class QuizHandler {
     ) {
       this.currentQuestion = message.data.id;
       this.currentQuestionGetTime = new Date();
+    } else if (this.currentComponent == constants.Question) {
+      // In-question events (e.g. another player's answer-submitted broadcast that
+      // the host receives in a public quiz) must not clobber the host's response
+      // timer — otherwise the next submit sends response_time=0 and the API's
+      // `required` validator rejects it with "responsetime fields are invalid".
     } else if (
       this.currentComponent == constants.Score &&
       this.currentEvent == constants.ShowScore
@@ -235,18 +240,37 @@ export default class QuizHandler {
 
   async handleTerminate() {
     const sessionStore = useSessionStore();
-    const { setSession } = sessionStore;
+    const { getSession, setSession } = sessionStore;
+    // Read the session id BEFORE clearing it — the API requires it as a query
+    // param and would otherwise reject the request with 400.
+    const sessionId = getSession();
     setSession(null);
-    let error;
+
+    let error = null;
+    if (!sessionId) {
+      // Nothing to terminate; the API would 400 on an empty id.
+      return { error };
+    }
+
     try {
-      const response = await useFetch(this.apiUrl + "/quiz/terminate", {
-        method: "GET",
-        credentials: "include",
-        mode: "cors",
-      });
-      error = response.error.value;
+      await $fetch(
+        `${this.apiUrl}/quiz/terminate?session_id=${encodeURIComponent(
+          sessionId
+        )}`,
+        {
+          method: "GET",
+          credentials: "include",
+          mode: "cors",
+        }
+      );
     } catch (err) {
+      // Terminate is fire-and-forget; surface but don't block the scoreboard.
       error = err;
+      console.warn(
+        "[quiz] terminate request failed",
+        err?.statusCode,
+        err?.data?.message || err?.message
+      );
     }
 
     return { error };

@@ -1,18 +1,44 @@
 <template>
-  <div v-if="questionPending">Pending...</div>
-  <div v-else-if="questionError">{{ questionError }}</div>
-  <div v-else class="container mt-3">
-    <div class="card mb-3 row pb-2">
-      <QuizEditQuestion
-        :question="questionData?.data"
-        :quiz-id="quizId"
-        :question-id="questionId"
-      />
+  <div class="min-h-screen bg-jv-canvas px-4 py-6 sm:px-6 sm:py-10">
+    <div class="mx-auto max-w-5xl">
+      <div
+        v-if="questionPending"
+        class="jv-border-rough flex items-center justify-center gap-3 border-2 border-jv-ink bg-jv-white p-8 font-body text-jv-muted shadow-brutal-sm"
+      >
+        <span
+          class="size-3 animate-pulse rounded-full bg-jv-coral"
+          aria-hidden="true"
+        ></span>
+        Loading question...
+      </div>
+
+      <div
+        v-else-if="questionError"
+        role="alert"
+        class="jv-border-rough border-2 border-jv-coral bg-jv-coral/10 p-4 font-body text-jv-ink"
+      >
+        {{ questionError }}
+      </div>
+
+      <div
+        v-else
+        class="jv-border-rough border-2 border-jv-ink bg-jv-white p-4 shadow-brutal sm:p-6"
+      >
+        <QuizEditQuestion
+          :question="questionData?.data"
+          :quiz-id="quizId"
+          :question-id="questionId"
+        />
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
+definePageMeta({
+  layout: "empty",
+});
+
 const url = useRuntimeConfig().public;
 const headers = useRequestHeaders(["cookie"]);
 const route = useRoute();

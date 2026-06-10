@@ -33,7 +33,6 @@ type AppConfig struct {
 	DB            DBConfig
 	Kratos        KratosConfig
 	MQ            MQConfig
-	AWS           AWSConfig
 	Quiz          QuizConfig
 	SMTP          SMTPConfig
 }

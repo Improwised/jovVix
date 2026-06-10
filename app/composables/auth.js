@@ -1,8 +1,7 @@
 import { useUsersStore } from "~~/store/users";
-const userData = useUsersStore();
-const { setUserData } = userData;
 
 export const handleLogout = async () => {
+  const { setUserData } = useUsersStore();
   const { kratosUrl } = useRuntimeConfig().public;
   try {
     // Step 1: Fetch logout URL and token from the first API endpoint
@@ -45,6 +44,7 @@ export const handleLogout = async () => {
 };
 
 export const setUserDataStore = async () => {
+  const { setUserData } = useUsersStore();
   const { apiUrl } = useRuntimeConfig().public;
   const headers = useRequestHeaders(["cookie"]);
   try {
@@ -58,7 +58,16 @@ export const setUserDataStore = async () => {
       throw new Error(response.status);
     } else if (response.status == 200) {
       const data = await response.json();
-      setUserData({ role: data?.data?.role, avatar: data?.data?.avatar });
+      console.log("data ", data);
+
+      setUserData({
+        role: data?.data?.role,
+        avatar: data?.data?.avatar,
+        firstname: data?.data?.firstname,
+        username: data?.data?.username,
+        email: data?.data?.email,
+        canCreatePublicQuiz: !!data?.data?.can_create_public_quiz,
+      });
     }
   } catch (error) {
     if (error.message == 401) {

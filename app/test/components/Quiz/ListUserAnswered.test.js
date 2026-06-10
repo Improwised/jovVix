@@ -5,8 +5,8 @@ import { createTestingPinia } from "@pinia/testing";
 import { useUserThatSubmittedAnswer } from "~/store/userSubmittedAnswer";
 import constants from "~/test/constants";
 
-vi.mock("vue-toastification", () => ({
-  useToast: vi.fn(() => ({
+vi.mock("notivue", () => ({
+  usePush: vi.fn(() => ({
     error: vi.fn(),
   })),
 }));

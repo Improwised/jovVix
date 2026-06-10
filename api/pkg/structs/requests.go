@@ -43,6 +43,32 @@ type ReqUpdateQuestion struct {
 	Resource          string            `json:"resource"`
 }
 
+type ReqCreateQuiz struct {
+	Title             string `json:"title" validate:"required"`
+	Description       string `json:"description"`
+	Points            int16  `json:"points"`
+	DurationInSeconds int    `json:"duration_in_seconds"`
+	IsPublic          bool   `json:"is_public"`
+}
+
+type ReqUpdateQuizSettings struct {
+	Points            int16    `json:"points" validate:"min=0,max=20"`
+	DurationInSeconds int      `json:"duration_in_seconds" validate:"required,min=1"`
+	QuestionIds       []string `json:"question_ids" validate:"required,min=1,dive,uuid"`
+}
+
+type ReqCreateQuestion struct {
+	Question          string            `json:"question" validate:"required"`
+	Type              int               `json:"type" validate:"required"`
+	Options           map[string]string `json:"options" validate:"required"`
+	Answers           []int             `json:"answers" validate:"required"`
+	Points            int16             `json:"points" validate:"omitempty,min=0,max=20"`
+	DurationInSeconds int               `json:"duration_in_seconds" validate:"omitempty,min=1"`
+	QuestionMedia     string            `json:"question_media" validate:"required"`
+	OptionsMedia      string            `json:"options_media" validate:"required"`
+	Resource          string            `json:"resource"`
+}
+
 type ReqShareQuiz struct {
 	Email      string `json:"email" validate:"required,email"`
 	Permission string `json:"permission" validate:"required"`

@@ -98,6 +98,86 @@ func (quizSvc *QuizService) DeleteQuestionById(questionId string) error {
 	return nil
 }
 
+func (quizSvc *QuizService) AppendQuestionsToQuiz(quizId string, questions []models.Question) ([]string, error) {
+	isOk := false
+	transaction, err := quizSvc.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() {
+		if isOk {
+			err := transaction.Commit()
+			if err != nil {
+				quizSvc.logger.Error("error during commit in append questions", zap.Error(err))
+			}
+		} else {
+			err := transaction.Rollback()
+			if err != nil {
+				quizSvc.logger.Error("error during rollback in append questions", zap.Error(err))
+			}
+		}
+	}()
+
+	ids, err := quizSvc.questionModel.AppendQuestionsToQuiz(transaction, quizId, questions)
+	if err != nil {
+		return nil, err
+	}
+
+	questionIds := make([]string, 0, len(ids))
+	for _, id := range ids {
+		questionIds = append(questionIds, id.String())
+	}
+
+	isOk = true
+	return questionIds, nil
+}
+
+func (quizSvc *QuizService) UpdateQuizSettings(quizId string, points int16, durationInSeconds int, questionIds []string) error {
+	isOk := false
+	transaction, err := quizSvc.db.Begin()
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		if isOk {
+			err := transaction.Commit()
+			if err != nil {
+				quizSvc.logger.Error("error during commit in update quiz settings", zap.Error(err))
+			}
+		} else {
+			err := transaction.Rollback()
+			if err != nil {
+				quizSvc.logger.Error("error during rollback in update quiz settings", zap.Error(err))
+			}
+		}
+	}()
+
+	_, err = quizSvc.quizModel.GetQuizById(quizId)
+	if err != nil {
+		return err
+	}
+
+	err = quizSvc.questionModel.ValidateQuestionSet(transaction, quizId, questionIds)
+	if err != nil {
+		return err
+	}
+
+	err = quizSvc.questionModel.SyncQuizQuestionSettings(transaction, quizId, points, durationInSeconds)
+	if err != nil {
+		return err
+	}
+
+	err = quizSvc.questionModel.ReorderQuestions(transaction, quizId, questionIds)
+	if err != nil {
+		return err
+	}
+
+	isOk = true
+	return nil
+}
+
 // Edit question by creating a new question row and rewiring quiz_questions to the new id.
 // This preserves historical sessions and reports that still point to the old question id.
 func (quizSvc *QuizService) EditQuestionById(quizId, oldQuestionId string, question models.Question) (string, error) {

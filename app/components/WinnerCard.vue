@@ -1,77 +1,44 @@
-<template>
-  <article
-    class="winner-card"
-    :aria-label="`${getOrdinal(props.winner.rank)} place winner: ${
-      props.winner.firstname
-    } ${props.winner.username} with score ${props.winner.score}`"
-    role="article"
-  >
-    <img
-      v-if="props.winner.rank == 1"
-      src="@/assets/images/medal/1.webp"
-      class="bg-image"
-      alt="First place gold medal background"
-      role="img"
-    />
-    <img
-      v-if="props.winner.rank == 2"
-      src="@/assets/images/medal/2.webp"
-      class="bg-image"
-      alt="Second place silver medal background"
-      role="img"
-    />
-    <img
-      v-if="props.winner.rank == 3"
-      src="@/assets/images/medal/3.webp"
-      class="bg-image"
-      alt="Third place bronze medal background"
-      role="img"
-    />
-    <img
-      :src="avatar + '&scale=60'"
-      class="avatar-image overlay"
-      :alt="`Avatar for ${props.winner.firstname} ${props.winner.username}`"
-      role="img"
-    />
-    <div class="winner-details overlay">
-      <div class="card-body text-center py-3">
-        <h2
-          :id="`winner-name-${props.winner.rank}`"
-          class="mb-0 text-h4 text-light"
-        >
-          {{ props.winner.firstname.toUpperCase() }}
-        </h2>
-        <div
-          class="text-light"
-          :aria-labelledby="`winner-name-${props.winner.rank}`"
-        >
-          {{ props.winner.username }}
-        </div>
-        <div
-          class="mb-0 text-h4 text-light"
-          role="text"
-          :aria-label="`Score: ${props.winner.score} points`"
-        >
-          {{ props.winner.score }}
-        </div>
-      </div>
-    </div>
-  </article>
-</template>
-
 <script setup>
+import { Crown, Medal, Award } from "lucide-vue-next";
+import { getAvatarUrlByName } from "~~/composables/avatar";
+
 const props = defineProps({
   winner: {
     type: Object,
     required: true,
-    default: () => {
-      return {};
-    },
+    default: () => ({}),
   },
 });
 
-const avatar = computed(() => {
-  return getAvatarUrlByName(props.winner?.img_key);
+const avatar = computed(() => getAvatarUrlByName(props.winner?.img_key));
+
+const rankConfig = computed(() => {
+  const rank = Number(props.winner?.rank);
+  if (rank === 1) {
+    return {
+      bg: "bg-jv-yellow",
+      icon: Crown,
+      label: "1st",
+      rotate: "rotate-[-1deg]",
+      scale: "sm:scale-110",
+    };
+  }
+  if (rank === 2) {
+    return {
+      bg: "bg-jv-salmon",
+      icon: Medal,
+      label: "2nd",
+      rotate: "rotate-[1deg]",
+      scale: "",
+    };
+  }
+  return {
+    bg: "bg-jv-mint",
+    icon: Award,
+    label: "3rd",
+    rotate: "rotate-[-0.5deg]",
+    scale: "",
+  };
 });
 
 const getOrdinal = (rank) => {
@@ -81,41 +48,69 @@ const getOrdinal = (rank) => {
 };
 </script>
 
-<style>
-.winner-card {
-  position: relative;
-  width: 100%;
-  max-width: 300px;
-  height: 75%;
-  max-width: 500px;
-}
+<template>
+  <article
+    :class="[
+      'relative flex w-full max-w-[280px] flex-col items-center gap-3 jv-border-rough p-5 shadow-brutal-lg sm:gap-4 sm:p-6',
+      rankConfig.bg,
+      rankConfig.rotate,
+      rankConfig.scale,
+    ]"
+    :aria-label="`${getOrdinal(props.winner.rank)} place: ${
+      props.winner.firstname
+    } with score ${props.winner.score}`"
+    role="article"
+  >
+    <span
+      class="absolute left-1/2 top-[-12px] z-10 h-4 w-16 -translate-x-1/2 rotate-[2deg] bg-jv-coral"
+      aria-hidden="true"
+    ></span>
 
-.bg-image {
-  height: 100%;
-  width: 100%;
-}
+    <div
+      class="inline-flex items-center gap-2 rounded-full border-[2px] border-jv-ink bg-jv-white px-3 py-1 font-feature text-[14px] font-black text-jv-ink shadow-brutal-sm sm:text-[15px]"
+    >
+      <component
+        :is="rankConfig.icon"
+        class="size-4 text-jv-ink"
+        :stroke-width="2.4"
+      />
+      {{ rankConfig.label }} Place
+    </div>
 
-.avatar-image {
-  display: block;
-  width: 35%;
-  height: 40%;
-}
+    <div
+      class="grid size-24 place-items-center overflow-hidden rounded-full border-[3px] border-jv-ink bg-jv-white shadow-brutal-sm sm:size-28"
+    >
+      <img
+        :src="avatar"
+        :alt="`Avatar for ${props.winner.firstname}`"
+        class="size-full object-cover"
+      />
+    </div>
 
-.overlay {
-  position: absolute;
-  top: 15%;
-  color: #f1f1f1;
-  width: 100%;
-  opacity: 1;
-  color: white;
-  text-align: center;
-}
+    <div class="flex w-full flex-col items-center gap-1 text-center">
+      <h2
+        :id="`winner-name-${props.winner.rank}`"
+        class="break-words font-headings text-[22px] uppercase leading-tight text-jv-ink sm:text-[26px]"
+      >
+        {{ props.winner.firstname }}
+      </h2>
+      <p
+        v-if="props.winner.username"
+        class="font-body text-[12px] font-bold text-jv-muted sm:text-[13px]"
+      >
+        @{{ props.winner.username }}
+      </p>
+    </div>
 
-.winner-details {
-  background-color: rgba(0, 0, 0, 0);
-  border-radius: 10px;
-  top: 64%;
-  width: 80%;
-  left: 10%;
-}
-</style>
+    <div
+      class="mt-1 inline-flex items-baseline gap-2 rounded-full border-[2px] border-jv-ink bg-jv-white px-4 py-1.5 shadow-brutal-sm"
+    >
+      <span class="font-body text-[11px] font-bold text-jv-muted">SCORE</span>
+      <span
+        class="font-feature text-[22px] font-black tabular-nums text-jv-ink sm:text-[26px]"
+      >
+        {{ props.winner.score }}
+      </span>
+    </div>
+  </article>
+</template>

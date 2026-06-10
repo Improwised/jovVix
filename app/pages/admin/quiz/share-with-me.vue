@@ -1,5 +1,11 @@
 <script setup>
+import { Inbox } from "lucide-vue-next";
 import NavigationButton from "~~/components/utils/NavigationButton.vue";
+
+definePageMeta({
+  layout: "empty",
+});
+
 const url = useRuntimeConfig().public;
 const headers = useRequestHeaders(["cookie"]);
 
@@ -14,45 +20,55 @@ const {
   credentials: "include",
 });
 </script>
+
 <template>
-  <div class="container max-width p-0">
-    <div class="d-flex flex-column justify-content-center">
-      <!-- list loader -->
+  <div class="min-h-screen bg-jv-canvas px-4 py-8 sm:px-6 sm:py-10">
+    <div class="mx-auto max-w-[922px]">
       <UtilsQuizListWaiting v-if="quizPending" />
 
-      <div v-else-if="quizError">{{ quizError.message }}</div>
+      <div
+        v-else-if="quizError"
+        class="jv-border-rough border-2 border-jv-coral bg-jv-coral/10 p-4 font-body text-jv-ink"
+      >
+        {{ quizError.message }}
+      </div>
 
-      <!-- quiz details -->
-      <div v-else>
+      <template v-else>
         <div
           v-if="quizList?.data.length < 1"
-          class="no-quiz-list d-flex flex-column align-items-center mt-5"
+          class="jv-border-rough flex flex-col items-center gap-4 border-2 border-jv-ink bg-jv-white p-8 text-center shadow-brutal sm:p-12"
         >
-          <h1>No Quiz Is Shared With You !</h1>
-          <p class="font-italic">Tell Your Friends To Share Quiz</p>
-          <NavigationButton :title="'Go Back'" :navigate-to="'/admin/quiz'" />
+          <div
+            class="grid size-16 place-items-center rounded-[12px] border-2 border-jv-ink bg-jv-yellow shadow-brutal-sm"
+          >
+            <Inbox class="size-8 text-jv-ink" :stroke-width="2.4" />
+          </div>
+          <h1
+            class="font-headings text-[26px] leading-tight text-jv-ink sm:text-[32px]"
+          >
+            No Quiz Is Shared With You!
+          </h1>
+          <p class="font-body text-sm italic text-jv-muted sm:text-base">
+            Tell your friends to share a quiz.
+          </p>
+          <NavigationButton title="Go Back" navigate-to="/admin/quiz" />
         </div>
 
-        <!-- show quiz list -->
-        <div v-else>
-          <!-- Heading -->
-          <nav class="navbar pb-4">
-            <div class="container-fluid p-0">
-              <h1 class="mb-0">Quiz List</h1>
-            </div>
-          </nav>
-          <div class="d-flex flex-column gap-3">
-            <div v-for="(details, index) in quizList?.data" :key="index">
-              <QuizListCard :details="details" />
-            </div>
-          </div>
+        <div v-else class="flex flex-col gap-4">
+          <header class="mb-2">
+            <h1
+              class="font-headings text-[28px] leading-tight text-jv-ink sm:text-[36px]"
+            >
+              Shared With Me
+            </h1>
+          </header>
+          <QuizListCard
+            v-for="(details, index) in quizList?.data"
+            :key="index"
+            :details="details"
+          />
         </div>
-      </div>
+      </template>
     </div>
   </div>
 </template>
-<style scoped>
-.max-width {
-  max-width: 922px;
-}
-</style>

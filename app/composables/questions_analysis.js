@@ -10,14 +10,20 @@ export function questionsAnalysis(data) {
     unAttemptedQuestions: 0,
     accuracy: 0,
   };
-  data.filter((item) => {
+
+  if (!Array.isArray(data)) return questionAnalysis;
+
+  // A leading entry carries the user's rank/total_score; subsequent entries
+  // are question rows. We accumulate per-question score on top of the seed
+  // total_score so the final value matches the server-side aggregate.
+  data.forEach((item) => {
+    if (!item) return;
     if (item.rank) {
-      questionAnalysis.rank = item.rank;
-      questionAnalysis.totalScore = item.total_score;
+      questionAnalysis.rank = Number(item.rank) || 0;
+      questionAnalysis.totalScore = Number(item.total_score) || 0;
       return;
     }
     questionAnalysis.totalQuestions++;
-    let correctIncorrectFlag = false;
 
     if (!item.is_attend) {
       if (item.question_type == "survey") {
@@ -25,9 +31,8 @@ export function questionsAnalysis(data) {
       }
       questionAnalysis.unAttemptedQuestions++;
     } else if (item.question_type != "survey" && item.is_attend) {
-      //check if the answer is correct or not
-      correctIncorrectFlag = isCorrectAnswer(
-        item.selected_answer.String,
+      const correctIncorrectFlag = isCorrectAnswer(
+        item.selected_answer?.String,
         item.correct_answer
       );
 
@@ -40,17 +45,23 @@ export function questionsAnalysis(data) {
       questionAnalysis.totalSurveyQuestions++;
       questionAnalysis.attemptedSurveyQuestions++;
     }
-    questionAnalysis.totalScore += item.calculated_score;
+
+    const score = Number(item.calculated_score);
+    if (Number.isFinite(score)) {
+      questionAnalysis.totalScore += score;
+    }
   });
 
-  questionAnalysis.accuracy = Number(
-    (
-      ((questionAnalysis.attemptedSurveyQuestions +
-        questionAnalysis.correctAnwers) /
-        questionAnalysis.totalQuestions) *
-      100
-    ).toFixed(2)
-  );
+  questionAnalysis.accuracy = questionAnalysis.totalQuestions
+    ? Number(
+        (
+          ((questionAnalysis.attemptedSurveyQuestions +
+            questionAnalysis.correctAnwers) /
+            questionAnalysis.totalQuestions) *
+          100
+        ).toFixed(2)
+      )
+    : 0;
 
   return questionAnalysis;
 }

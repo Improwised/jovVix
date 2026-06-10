@@ -115,6 +115,49 @@ func (model *QuestionModel) RegisterQuizAndQuestions(userId string, title string
 	return quizId, nil
 }
 
+func (model *QuestionModel) AppendQuestionsToQuiz(transaction *goqu.TxDatabase, quizId string, questions []Question) ([]uuid.UUID, error) {
+	if len(questions) == 0 {
+		return []uuid.UUID{}, nil
+	}
+
+	ids, err := registerQuestions(transaction, questions)
+	if err != nil {
+		return ids, err
+	}
+
+	var previousLastQuestion sql.NullString
+	_, err = transaction.From(constants.QuizQuestionsTable).
+		Select("question_id").
+		Where(goqu.Ex{"quiz_id": quizId, "next_question": nil}).
+		Limit(1).
+		ScanVal(&previousLastQuestion)
+	if err != nil && err != sql.ErrNoRows {
+		return ids, err
+	}
+
+	if previousLastQuestion.Valid {
+		_, err = transaction.Update(constants.QuizQuestionsTable).
+			Set(goqu.Record{"next_question": ids[0]}).
+			Where(goqu.Ex{"quiz_id": quizId, "question_id": previousLastQuestion.String}).
+			Executor().Exec()
+		if err != nil {
+			return ids, err
+		}
+	}
+
+	parsedQuizId, err := uuid.Parse(quizId)
+	if err != nil {
+		return ids, err
+	}
+
+	err = registerQuestionToQuizzes(transaction, parsedQuizId, ids)
+	if err != nil {
+		return ids, err
+	}
+
+	return ids, nil
+}
+
 func registerQuiz(transaction *goqu.TxDatabase, title, description, userId string) (uuid.UUID, error) {
 	quizId, err := uuid.NewUUID()
 
@@ -145,7 +188,19 @@ func registerQuestions(transaction *goqu.TxDatabase, questions []Question) ([]uu
 	ids := []uuid.UUID{}
 	records := []goqu.Record{}
 
+	if len(questions) == 0 {
+		return ids, nil
+	}
+
 	for _, question := range questions {
+		if question.ID == uuid.Nil {
+			questionId, err := uuid.NewUUID()
+			if err != nil {
+				return ids, err
+			}
+			question.ID = questionId
+		}
+
 		options, err := json.Marshal(question.Options)
 		if err != nil {
 			return ids, err
@@ -183,6 +238,10 @@ func registerQuestions(transaction *goqu.TxDatabase, questions []Question) ([]uu
 
 func registerQuestionToQuizzes(transaction *goqu.TxDatabase, quizId uuid.UUID, questionIds []uuid.UUID) error {
 	records := []goqu.Record{}
+	if len(questionIds) == 0 {
+		return nil
+	}
+
 	for questionIdIndex, questionId := range questionIds {
 
 		id, err := uuid.NewUUID()
@@ -281,37 +340,45 @@ func (model *QuestionModel) ListQuestionsWithAnswerByQuizId(QuizId string, media
 		return questionAnalytics, quizPlayedCount, sql.ErrNoRows
 	}
 
-	query := model.db.
-		From(QuestionTable).
-		Select(
-			goqu.I(constants.QuestionsTable+".id").As("question_id"),
-			goqu.I(constants.QuestionsTable+".answers").As("correct_answer"),
-			"question",
-			"options",
-			"question_media",
-			"options_media",
-			"resource",
-			"points",
-			"type",
-		).
-		InnerJoin(goqu.T(constants.QuizQuestionsTable), goqu.On(goqu.I(constants.QuizQuestionsTable+".question_id").Eq(goqu.I(constants.QuestionsTable+".id")))).
-		Where(goqu.Ex{
-			constants.QuizQuestionsTable + ".quiz_id": QuizId,
-		})
+	// Walk the next_question chain so the listing reflects admin-defined order.
+	// chain.pos is the primary sort; created_at is a fallback for legacy quizzes whose
+	// next_question column was never populated (all rows would land at pos=1 there).
+	rawSQL := `
+		WITH RECURSIVE chain AS (
+			SELECT qq.question_id, qq.next_question, qq.created_at, 1 AS pos
+			FROM quiz_questions qq
+			WHERE qq.quiz_id = $1
+				AND NOT EXISTS (
+					SELECT 1 FROM quiz_questions qq2
+					WHERE qq2.quiz_id = $1 AND qq2.next_question = qq.question_id
+				)
+			UNION ALL
+			SELECT qq.question_id, qq.next_question, qq.created_at, chain.pos + 1
+			FROM quiz_questions qq
+			JOIN chain ON qq.question_id = chain.next_question
+			WHERE qq.quiz_id = $1 AND chain.pos < 10000
+		)
+		SELECT q.id AS question_id,
+			   q.answers AS correct_answer,
+			   q.question,
+			   q.options,
+			   q.question_media,
+			   q.options_media,
+			   q.resource,
+			   q.points,
+			   q.type,
+			   q.duration_in_seconds
+		FROM chain
+		JOIN questions q ON q.id = chain.question_id`
 
+	args := []interface{}{QuizId}
 	if media != "" {
-		query = query.Where(goqu.Or(
-			goqu.I("questions.question_media").Eq(media),
-			goqu.I("questions.options_media").Eq(media),
-		))
+		rawSQL += ` WHERE (q.question_media = $2 OR q.options_media = $2)`
+		args = append(args, media)
 	}
+	rawSQL += ` ORDER BY chain.pos, chain.created_at`
 
-	sql, args, err := query.ToSQL()
-	if err != nil {
-		return questionAnalytics, quizPlayedCount, err
-	}
-
-	err = model.db.ScanStructs(&questionAnalytics, sql, args...)
+	err = model.db.ScanStructs(&questionAnalytics, rawSQL, args...)
 	if err != nil {
 		return nil, quizPlayedCount, err
 	}
@@ -396,49 +463,6 @@ func (model *QuestionModel) GetTotalQuestionCount(activeQuizId string) (int64, e
 	}).Count()
 }
 
-func (model *QuestionModel) UpdateResourceOfQuestionById(id, resource string) error {
-
-	result, err := model.db.Update(QuestionTable).Set(goqu.Record{
-		"resource":   resource,
-		"updated_at": goqu.L("now()"),
-	}).Where(goqu.I("id").Eq(id)).Executor().Exec()
-	if err != nil {
-		return err
-	}
-
-	affectedRow, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-
-	if affectedRow == 0 {
-		return sql.ErrNoRows
-	}
-	return nil
-}
-
-func (model *QuestionModel) UpdateOptionsOfQuestionById(id, keyPath, data string) error {
-
-	jsonValue := fmt.Sprintf("\"%s\"", data)
-
-	result, err := model.db.Update(QuestionTable).Set(goqu.Record{
-		"options": goqu.L("jsonb_set(options::jsonb, '{" + keyPath + "}', '" + jsonValue + "')"),
-	}).Where(goqu.I("id").Eq(id)).Executor().Exec()
-	if err != nil {
-		return err
-	}
-
-	affectedRow, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-
-	if affectedRow == 0 {
-		return sql.ErrNoRows
-	}
-	return nil
-}
-
 func (model *QuestionModel) CreateQuestion(transaction *goqu.TxDatabase, question Question) (uuid.UUID, error) {
 	options, err := json.Marshal(question.Options)
 	if err != nil {
@@ -476,6 +500,81 @@ func (model *QuestionModel) CreateQuestion(transaction *goqu.TxDatabase, questio
 	}
 
 	return questionId, nil
+}
+
+func (model *QuestionModel) SyncQuizQuestionSettings(transaction *goqu.TxDatabase, quizId string, points int16, durationInSeconds int) error {
+	questionIds := transaction.From(constants.QuizQuestionsTable).
+		Select("question_id").
+		Where(goqu.Ex{"quiz_id": quizId})
+
+	_, err := transaction.Update(QuestionTable).
+		Set(goqu.Record{
+			"points":              points,
+			"duration_in_seconds": durationInSeconds,
+			"updated_at":          goqu.L("now()"),
+		}).
+		Where(goqu.Ex{"id": goqu.Op{"in": questionIds}}).
+		Executor().Exec()
+
+	return err
+}
+
+// ValidateQuestionSet confirms the incoming ids match the quiz's question set exactly.
+// Guards against stale clients reordering against a quiz that has had questions added/removed.
+func (model *QuestionModel) ValidateQuestionSet(transaction *goqu.TxDatabase, quizId string, ids []string) error {
+	var dbIds []string
+	err := transaction.From(constants.QuizQuestionsTable).
+		Select("question_id").
+		Where(goqu.Ex{"quiz_id": quizId}).
+		Executor().ScanVals(&dbIds)
+	if err != nil {
+		return err
+	}
+
+	if len(dbIds) != len(ids) {
+		return fmt.Errorf("question set mismatch: quiz has %d questions but %d were provided", len(dbIds), len(ids))
+	}
+
+	dbSet := make(map[string]struct{}, len(dbIds))
+	for _, id := range dbIds {
+		dbSet[id] = struct{}{}
+	}
+	seen := make(map[string]struct{}, len(ids))
+	for _, id := range ids {
+		if _, dup := seen[id]; dup {
+			return fmt.Errorf("question set mismatch: duplicate id %s", id)
+		}
+		seen[id] = struct{}{}
+		if _, ok := dbSet[id]; !ok {
+			return fmt.Errorf("question set mismatch: id %s does not belong to quiz", id)
+		}
+	}
+
+	return nil
+}
+
+// ReorderQuestions rewrites the next_question chain for a quiz to match the given order.
+// Caller must validate set equality first (see ValidateQuestionSet).
+func (model *QuestionModel) ReorderQuestions(transaction *goqu.TxDatabase, quizId string, ids []string) error {
+	_, err := transaction.Update(constants.QuizQuestionsTable).
+		Set(goqu.Record{"next_question": nil}).
+		Where(goqu.Ex{"quiz_id": quizId}).
+		Executor().Exec()
+	if err != nil {
+		return err
+	}
+
+	for i := 0; i < len(ids)-1; i++ {
+		_, err := transaction.Update(constants.QuizQuestionsTable).
+			Set(goqu.Record{"next_question": ids[i+1]}).
+			Where(goqu.Ex{"quiz_id": quizId, "question_id": ids[i]}).
+			Executor().Exec()
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // Rewire quiz_questions to point at the new question id and fix the previous link.

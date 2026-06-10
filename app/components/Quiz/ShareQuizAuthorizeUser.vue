@@ -1,5 +1,6 @@
 <script setup>
-// define props and emits
+import { Pencil, Trash2 } from "lucide-vue-next";
+
 const props = defineProps({
   user: {
     type: Object,
@@ -9,9 +10,10 @@ const props = defineProps({
     },
   },
 });
+
 const emits = defineEmits(["showEditForm", "deleteUserPermission"]);
 
-// to show edit form for change user permission for perticular quiz
+// open the edit form to change this user's permission for the quiz
 const showEditForm = () => {
   emits(
     "showEditForm",
@@ -23,62 +25,65 @@ const showEditForm = () => {
 </script>
 
 <template>
-  <v-list-item-title>
-    <div class="d-flex align-center py-3 justify-content-between gap-3">
-      <div class="d-flex flex-grow-1 overflow-hidden">
-        <div class="mr-3">
-          <v-badge
-            bordered
-            bottom
-            color="success"
-            dot
-            offset-x="0"
-            offset-y="0"
-          >
-            <v-avatar size="40">
-              <img
-                src="https://api.dicebear.com/9.x/bottts/svg?seed=Jade"
-                alt="props.user.title"
-                width="40"
-              />
-            </v-avatar>
-          </v-badge>
-        </div>
+  <div
+    class="flex items-center justify-between gap-3 jv-border-rough border-[2px] border-jv-ink bg-jv-white px-3 py-3 shadow-brutal-sm"
+  >
+    <!-- User identity -->
+    <div class="flex min-w-0 flex-1 items-center gap-3">
+      <span class="relative shrink-0">
+        <img
+          src="https://api.dicebear.com/9.x/bottts/svg?seed=Jade"
+          alt="User avatar"
+          class="size-10 rounded-full border-[2px] border-jv-ink bg-jv-canvas"
+          width="40"
+          height="40"
+        />
+        <span
+          class="absolute bottom-0 right-0 size-3 rounded-full border-2 border-jv-white bg-jv-accent-green"
+          aria-hidden="true"
+        ></span>
+      </span>
 
-        <!-- User Details -->
-        <div class="mx-3 flex-grow-1 overflow-hidden">
-          <h4 v-if="props.user.first_name.Valid">
-            {{ props.user.first_name.String }}
-            {{ props.user.last_name.String }}
-          </h4>
-          <h4 v-else class="mt-n1 mb-1">Unknown</h4>
-          <div class="text-subtitle-2 textSecondary d-block text-truncate">
-            {{ props.user.shared_to }}
-          </div>
+      <div class="min-w-0 flex-1">
+        <h4
+          v-if="props.user.first_name?.Valid"
+          class="truncate text-[15px] font-black text-jv-ink"
+        >
+          {{ props.user.first_name.String }}
+          {{ props.user.last_name?.String }}
+        </h4>
+        <h4 v-else class="text-[15px] font-black text-jv-ink">Unknown</h4>
+        <div class="truncate text-[13px] font-semibold text-jv-muted">
+          {{ props.user.shared_to }}
         </div>
-      </div>
-
-      <!-- User Permission -->
-      <div class="d-flex align-items-center flex-shrink-0 text-nowrap">
-        {{ props.user.permission }}
-        <!-- Button for edit permission -->
-        <button
-          type="button"
-          title="Edit Permission"
-          class="ml-2 badge rounded-pill bg-light-info text-dark m-1 px-2 fs-5"
-          @click="showEditForm"
-        >
-          <font-awesome-icon :icon="['fas', 'pencil']" />
-        </button>
-        <button
-          type="button"
-          title="Edit Permission"
-          class="ml-2 badge rounded-pill bg-light-danger text-dark m-1 px-2 fs-5"
-          @click="emits('deleteUserPermission', props.user.id)"
-        >
-          <font-awesome-icon :icon="['fas', 'trash-can']" />
-        </button>
       </div>
     </div>
-  </v-list-item-title>
+
+    <!-- Permission + actions -->
+    <div class="flex shrink-0 items-center gap-2">
+      <span
+        class="rounded-full border-[2px] border-jv-ink bg-jv-yellow px-2.5 py-1 text-[12px] font-black uppercase tracking-[0.08em] text-jv-ink"
+      >
+        {{ props.user.permission }}
+      </span>
+      <button
+        type="button"
+        title="Edit Permission"
+        aria-label="Edit permission"
+        class="grid size-8 place-items-center rounded-[8px] border-[2px] border-jv-ink bg-jv-white text-jv-ink shadow-brutal-sm transition-transform hover:-rotate-[3deg] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
+        @click="showEditForm"
+      >
+        <Pencil class="size-4" :stroke-width="2.4" />
+      </button>
+      <button
+        type="button"
+        title="Delete Permission"
+        aria-label="Delete permission"
+        class="grid size-8 place-items-center rounded-[8px] border-[2px] border-jv-ink bg-jv-coral text-white shadow-brutal-sm transition-transform hover:rotate-[3deg] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
+        @click="emits('deleteUserPermission', props.user.id)"
+      >
+        <Trash2 class="size-4" :stroke-width="2.4" />
+      </button>
+    </div>
+  </div>
 </template>
