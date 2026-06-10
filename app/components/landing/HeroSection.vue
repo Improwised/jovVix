@@ -17,7 +17,7 @@
           >Built for
           <span
             class="inline-block jv-highlight mt-2 sm:mt-3 px-3 sm:px-5 md:px-6 py-1 sm:py-2 rounded-[4px]"
-            >Live Engagement</span
+            >Live Quiz Experiences</span
           >
         </span>
       </h1>
@@ -97,7 +97,7 @@ import {
 const actionCards = [
   {
     title: "Demo Instance",
-    description: "Up to 100 concurrent",
+    description: "Up to 100 concurrent users",
     tiltClass: "rotate-[-0.7deg]",
   },
   {
