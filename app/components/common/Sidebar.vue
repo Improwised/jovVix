@@ -6,9 +6,9 @@
     <div class="flex flex-col gap-4">
       <NuxtLink
         to="/"
-        class="flex items-center gap-2 text-[20px] sm:text-[22px] md:text-[24px] font-black tracking-[-0.5px] text-jv-ink no-underline w-[120px] lg:w-[150px] h-auto"
+        class="flex items-center gap-2 text-[20px] sm:text-[22px] md:text-[24px] font-black tracking-[-0.5px] text-jv-ink no-underline w-[100px] lg:w-[180px] h-auto"
       >
-        <img src="@/assets/images/jovvix-logo.svg" />
+        <img src="@/assets/images/jovvix-logo.png" />
       </NuxtLink>
 
       <template v-if="mounted">
@@ -117,7 +117,7 @@
         to="/"
         class="flex items-center gap-2 text-[20px] sm:text-[22px] md:text-[24px] font-black tracking-[-0.5px] text-jv-ink no-underline w-[120px] lg:w-[150px] h-auto"
       >
-        <img src="@/assets/images/jovvix-logo.svg" />
+        <img src="@/assets/images/jovvix-logo.png" />
       </NuxtLink>
 
       <button

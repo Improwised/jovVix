@@ -39,7 +39,7 @@ Open-Source Quizzing Built for Live Engagement
 ### Development and Quality
 - Linting: Utilizes ESLint to maintain code quality and consistency.
 - Authentication: Ory Kratos manages secure user authentication and session management.
-- Third-Party Integrations: Includes S3 for image handling, as well as other integrations as required.
+- Image Handling: Images for questions and options are stored inline as base64 in PostgreSQL, removing the need for any external object-storage service.
 - SMTP Services: Configured for email services, supporting verification and password recovery.
 - Testing: We have performed the unit testing in this application
 - Containerization: Packaged with Docker for streamlined deployment and environment consistency.
@@ -210,7 +210,7 @@ Open-Source Quizzing Built for Live Engagement
 - **Caching:** Redis is utilized for caching and manipulating users' data and requests, improving performance.
 - **Authentication:** The app leverages Ory Kratos for user authentication and uses SMTP services for password recovery and email verification flows.
 - **Real-Time Communication:** WebSockets are implemented for handling multiple sessions and managing cookies effectively.
-- **S3 bucket:** We have used s3 bucket for storing images into object storage, you can setup the minio for local development
+- **Base64:** We are storing images as base64 
 
 
  ### API Overview:
@@ -263,15 +263,6 @@ If you're a developer looking to contribute or modify jovVix, here is a brief gu
 - Please pin to version `2.2.0` of the CLI when adding components so that generated code stays consistent with the rest of the project. If you need to upgrade the CLI/module, bump both `shadcn-nuxt` in [`app/package.json`](app/package.json) and the version used in the command above in the same PR.
 - For the full list of available components and their usage, refer to the [shadcn-vue documentation](https://www.shadcn-vue.com/docs/components).
 
-## Setting Up MinIO for Local Development:
-
-- MinIO is used in jovVix for object storage, enabling features like storing and serving images. Below is a guide to setting up a bucket in MinIO for local development.
-- We already have added the minio service into our docker-compose file so you just have to start the service
-- Then open your browser and navigate to http://127.0.0.1:9001.
-- Log in using the credentials defined in our docker-compose.yml (you can change with your own afterwards)
-- Once logged in, click the Buckets tab on the left menu and you can create bucket there
-- For more detailed information, refer to the [MinIO Documentation](https://min.io/docs/minio/linux/index.html)
-
 ## Collaborators:
 - Thanks to all the people who already contributed!
 
@@ -297,7 +288,6 @@ This project uses the following key dependencies:
 
   - Redis: Used for caching and session management.
   - Ory Kratos: For user authentication.
-  - Minio setup locally for bucket storage instead of aws S3
   - mailpit setup locally for the SMTP like server
 
 # Design & Image Credits

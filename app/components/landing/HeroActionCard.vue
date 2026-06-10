@@ -13,7 +13,7 @@
       {{ title }}
     </h3>
     <p
-      class="mt-1 text-[11px] sm:text-[12px] leading-tight text-jv-muted break-words"
+      class="mt-1 text-[11px] sm:text-[14px] leading-tight text-jv-muted break-words"
     >
       {{ description }}
     </p>
