@@ -64,6 +64,9 @@
     "vue-chartjs": "^5.3.1",
     "vuedraggable": "^4.1.0"
   },
+  "overrides": {
+    "nitropack": "2.13.2"
+  },
   "lint-staged": {
     "**/*.{js,ts,vue,html,css}": [
       "npm run lint-fix",
