@@ -8,6 +8,7 @@ COPY ./docker/nginx.conf /etc/nginx/nginx.conf
 COPY ./s6-overlay /etc/s6-overlay
 COPY . ./
 RUN npm run build
+RUN ln -sfn ../../public /app/.output/server/chunks/public
 EXPOSE 5000
 ENTRYPOINT ["/bin/sh", "-c"]
 CMD ["/init"]
