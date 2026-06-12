@@ -66,7 +66,10 @@ Open-Source Quizzing Built for Live Engagement
   - After the quiz, showcasing winners and individual performance
 - **Customization Options:** Offers customizable quiz features for educators, workshop hosts, and event organizers to suit their needs.
 - **Share quiz feature** Users can share their quiz to other users through email and can grant their preferred permission while sharing to the other one
-- **CSV Uploads:**  Enables efficient quiz creation through CSV file uploads, allowing users to preview, edit, and allowing users to seamlessly create quizzes
+- **Add Questions via CSV or UI:** Add questions to a quiz in two ways:
+    - **CSV Uploads:** Enables efficient quiz creation through CSV file uploads, allowing users to preview, edit, and seamlessly create quizzes
+    - **Multiple CSV Uploads:** Upload multiple CSV files to combine questions from different files into a single quiz
+    - **Add Questions through UI:** You can now also add questions directly through the UI, creating and editing them one by one without preparing a CSV file
     - You can see the CSV formatting guidelines here : [csv-formatting-guide.md](docs/csv-formatting-guide.md)
 - **Mobile-Friendly Design:** Fully responsive and works seamlessly on mobile and desktop devices.
 - **Admin Tools:** Advanced admin panel for managing quizzes, participants, and results.
@@ -207,7 +210,7 @@ Open-Source Quizzing Built for Live Engagement
 - **Backend:** jovVix uses a Golang backend to handle the server-side logic.
 - **Frontend:** Vue.js and nuxt framework is employed for a single-page application (SPA) architecture and component-based development.
 - **Database:** PostgreSQL is used to handle concurrent requests and manage data efficiently.
-- **Caching:** Redis is utilized for caching and manipulating users' data and requests, improving performance.
+- **Caching:** Valkey is utilized for caching and manipulating users' data and requests, improving performance.
 - **Authentication:** The app leverages Ory Kratos for user authentication and uses SMTP services for password recovery and email verification flows.
 - **Real-Time Communication:** WebSockets are implemented for handling multiple sessions and managing cookies effectively.
 - **Base64:** We are storing images as base64 
@@ -286,9 +289,9 @@ This project uses the following key dependencies:
 
 - Other Tools:
 
-  - Redis: Used for caching and session management.
+  - Valkey: Used for caching and session management.
   - Ory Kratos: For user authentication.
-  - mailpit setup locally for the SMTP like server
+  - Mailpit setup locally for the SMTP like server
 
 # Design & Image Credits
 
