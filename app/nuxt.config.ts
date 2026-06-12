@@ -145,14 +145,6 @@ export default defineNuxtConfig({
     appManifest: false,
   },
 
-  routeRules: {
-    "/**": {
-      headers: {
-        "Cache-Control": "no-cache, no-store, must-revalidate",
-      },
-    },
-  },
-
   nitro: {
     compressPublicAssets: true,
     minify: true,
