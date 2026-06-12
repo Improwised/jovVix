@@ -142,6 +142,15 @@ export default defineNuxtConfig({
   ssr: true,
   experimental: {
     payloadExtraction: false,
+    appManifest: false,
+  },
+
+  routeRules: {
+    "/**": {
+      headers: {
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+      },
+    },
   },
 
   nitro: {
