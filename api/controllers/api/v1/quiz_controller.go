@@ -302,6 +302,15 @@ func (ctrl *QuizController) GenerateDemoSession(c *fiber.Ctx) error {
 	quizId := c.Params(constants.QuizId)
 	userId := quizUtilsHelper.GetString(c.Locals(constants.ContextUid))
 
+	activeQuiz, err := ctrl.activeQuizModel.GetActiveQuizByQuizIDAndAdminID(quizId, userId)
+	if err == nil {
+		return utils.JSONSuccess(c, http.StatusAccepted, activeQuiz.ID)
+	}
+	if err != sql.ErrNoRows {
+		ctrl.logger.Error("error checking active demo session", zap.Error(err))
+		return utils.JSONError(c, http.StatusInternalServerError, err.Error())
+	}
+
 	sessionId, err := ctrl.activeQuizModel.CreateActiveQuiz("demo session", quizId, userId, sql.NullTime{}, sql.NullTime{})
 
 	if err != nil {
