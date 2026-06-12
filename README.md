@@ -1,10 +1,10 @@
 <p align="center">
-  <img src="app/public/readme-logo.webp" alt="Jovvix Logo" width="200"/>
+  <img src="app/assets/images/jovvix-logo.png" alt="Jovvix Logo" width="200"/>
 </p>
 
 <h3 align="center">
 <b>
-Open-Source Quizzing Built for Live Engagement
+Open-Source Quizzing Built for Live Quiz Experiences
 </b>
 </h3 >
 
@@ -53,6 +53,10 @@ Open-Source Quizzing Built for Live Engagement
 ## Features
 
 - **Real-time Interaction:** Supports real-time quizzes with instant feedback and live leaderboards, ensuring a highly engaging user experience.
+- **Public Quizzes:** Curated quizzes can be published publicly and explored right from the homepage — no account required:
+  - Anyone, including guests who haven't logged in, can start a public quiz instantly
+  - The quiz session can be shared with others so they can join and participate together
+  - The host of a public quiz can also play along as a participant
 - **Multiple Question Types:** Allows admins to create quizzes with different question formats:
   - Multiple-choice questions
   - Survey-based questions
@@ -105,31 +109,25 @@ Open-Source Quizzing Built for Live Engagement
 
 
 - First clone the repository on your terminal using command given below
-```
   git clone https://github.com/improwised/jovVix.git
-```
+
 
 - Navigate to the project directory using:
-
-```
    cd jovVix
-```
+
 
 - Configure your env settings into .env.docker if you want to integrate any changes otherwise keep the default ones
 
 - Then build and run the docker compose file in your environment by following command
-```
   docker-compose up --build
-```
+
 
 - Your app is now running successfully and you can access it on the ip:port as :
-```
   127.0.0.1:5000
-```
+
 - For verification of email go to mailpit localhost and port
-```
   127.0.0.1:8025
-```
+
 
 ## Getting Started For local setup from source
 
@@ -153,31 +151,27 @@ Open-Source Quizzing Built for Live Engagement
 
 
 - First clone the repository using
-```
   git clone https://github.com/Improwised/jovVix.git
-```
+
 
 
 - Navigate to the project directory:
-```
    cd jovVix
-```
+
 
 
 - Then Copy environment files of both app and api folders  using:
-```
    cp api/.env.example api/.env
    cp app/.env.example app/.env
-```
+
 
 
 - Start backend services:
-```
   cd api
   docker-compose up
   go run app.go migrate
   go run app.go api
-```
+
 
 
 > **Warning**
@@ -185,17 +179,13 @@ Open-Source Quizzing Built for Live Engagement
 
 
 - Then Install frontend dependencies:
-
-```
   cd ../app
   npm install
-```
-- Afterwards run the frontend development server:
 
-```
+- Afterwards run the frontend development server:
   npm i
   npm run dev
-```
+
 - Then you have setup jovVix successfully in your local environment
 
 
@@ -218,9 +208,8 @@ Open-Source Quizzing Built for Live Engagement
 
  ### API Overview:
 - locally you could start your API server by running the following command :
-```
 http://127.0.0.1:3000/api/v1/docs
-```
+
 - This would open the swagger documentation
 
 - **Backend:** jovVix uses a Golang backend to handle the server-side logic.
@@ -250,17 +239,13 @@ If you're a developer looking to contribute or modify jovVix, here is a brief gu
 
 - This project is configured with [shadcn-vue](https://www.shadcn-vue.com/) via the `shadcn-nuxt` module (version `2.2.0`). The configuration lives in [`app/components.json`](app/components.json) and uses the `new-york` style with the `neutral` base color and the `lucide` icon library.
 - To add a new component to the project, run the shadcn-vue CLI from inside the `app/` directory:
-
-```
   cd app
   npx shadcn-vue@2.2.0 add <component-name>
-```
+
 
 - For example, to add the `button` component:
-
-```
   npx shadcn-vue@2.2.0 add button
-```
+
 
 - The CLI reads `components.json` and installs the component into `app/components/ui/<component-name>/` using the aliases defined in that file (`@/components/ui`, `@/lib/utils`, etc.).
 - Please pin to version `2.2.0` of the CLI when adding components so that generated code stays consistent with the rest of the project. If you need to upgrade the CLI/module, bump both `shadcn-nuxt` in [`app/package.json`](app/package.json) and the version used in the command above in the same PR.
