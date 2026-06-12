@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="app/assets/images/jovvix-logo.png" alt="Jovvix Logo" width="200"/>
+  <img src="app/assets/images/readme-logo1.png" alt="Jovvix Logo" width="200"/>
 </p>
 
 <h3 align="center">
