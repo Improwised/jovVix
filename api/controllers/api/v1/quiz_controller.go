@@ -311,7 +311,16 @@ func (ctrl *QuizController) GenerateDemoSession(c *fiber.Ctx) error {
 		return utils.JSONError(c, http.StatusInternalServerError, err.Error())
 	}
 
-	sessionId, err := ctrl.activeQuizModel.CreateActiveQuiz("demo session", quizId, userId, sql.NullTime{}, sql.NullTime{})
+	quiz, err := ctrl.quizModel.GetQuizById(quizId)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return utils.JSONFail(c, http.StatusBadRequest, constants.ErrQuizNotFound)
+		}
+		ctrl.logger.Error("error fetching quiz for demo session", zap.Error(err))
+		return utils.JSONError(c, http.StatusInternalServerError, err.Error())
+	}
+
+	sessionId, err := ctrl.activeQuizModel.CreateActiveQuiz(quiz.Title, quizId, userId, sql.NullTime{}, sql.NullTime{})
 
 	if err != nil {
 		ctrl.logger.Error("error in creating demo session", zap.Error(err))
@@ -348,7 +357,7 @@ func (ctrl *QuizController) GeneratePublicSession(c *fiber.Ctx) error {
 		return utils.JSONFail(c, http.StatusForbidden, constants.ErrQuizNotPublic)
 	}
 
-	sessionId, err := ctrl.activeQuizModel.CreateActiveQuiz("public session", quizId, userId, sql.NullTime{}, sql.NullTime{})
+	sessionId, err := ctrl.activeQuizModel.CreateActiveQuiz(quiz.Title, quizId, userId, sql.NullTime{}, sql.NullTime{})
 	if err != nil {
 		ctrl.logger.Error("error in creating public session", zap.Error(err))
 		return utils.JSONFail(c, http.StatusBadRequest, constants.ErrCreatingDemoQuiz)

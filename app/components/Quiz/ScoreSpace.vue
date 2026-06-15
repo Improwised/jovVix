@@ -50,6 +50,11 @@ const props = defineProps({
     required: false,
     default: "",
   },
+  quizTitle: {
+    type: String,
+    required: false,
+    default: "",
+  },
 });
 
 const emits = defineEmits(["askSkipTimer", "changeAnalysisTab"]);
@@ -131,6 +136,17 @@ onUnmounted(() => {
         <!-- Header: title + music toggle -->
         <header class="flex items-start justify-between gap-4">
           <div class="min-w-0 flex-1">
+            <p
+              v-if="quizTitle"
+              class="mb-2 inline-flex max-w-full items-center gap-2 rotate-[-0.6deg] rounded-full border-[2px] border-jv-ink bg-jv-yellow px-3 py-1 font-body text-[11px] font-black uppercase tracking-[0.12em] text-jv-ink shadow-brutal-sm sm:text-[12px]"
+              :title="quizTitle"
+            >
+              <span
+                class="size-1.5 rounded-full bg-jv-coral"
+                aria-hidden="true"
+              ></span>
+              <span class="truncate">{{ quizTitle }}</span>
+            </p>
             <h2
               class="font-headings text-[24px] leading-none text-jv-ink min-[420px]:text-[30px] sm:text-[36px] md:text-[40px]"
             >

@@ -2,10 +2,12 @@
 // core dependencies
 import { usePush } from "notivue";
 import { useRouter } from "nuxt/app";
+import { storeToRefs } from "pinia";
 
 // custom component
 import UserOperation from "~/composables/user_operation.js";
 import { useSystemEnv } from "~/composables/envs.js";
+import { useSessionStore } from "~~/store/session";
 
 // define nuxt configs
 const route = useRoute();
@@ -13,6 +15,10 @@ const router = useRouter();
 const toast = usePush();
 const app = useNuxtApp();
 useSystemEnv();
+
+const sessionStore = useSessionStore();
+const { setActiveQuizTitle } = sessionStore;
+const { activeQuizTitle } = storeToRefs(sessionStore);
 
 // define props and emits
 const myRef = ref(false);
@@ -34,6 +40,17 @@ const sessionId = computed(() => route.query.session_id);
 
 const selectedAnswer = ref(0);
 const quizState = ref(app.$Running);
+
+const incomingQuizTitle = (route.query.quiz_title || "").toString().trim();
+if (incomingQuizTitle) {
+  setActiveQuizTitle(incomingQuizTitle);
+}
+const quizTitle = computed(
+  () => activeQuizTitle.value || incomingQuizTitle || ""
+);
+const showQuizTitleBar = computed(
+  () => !!quizTitle.value && currentComponent.value !== "Waiting"
+);
 
 // event handlers
 const handleCustomChange = (isFullScreenEvent) => {
@@ -194,6 +211,35 @@ onBeforeUnmount(() => {
       :full-screen-enabled="myRef"
       @is-full-screen="handleCustomChange"
     >
+      <div
+        v-if="showQuizTitleBar"
+        class="flex justify-center px-3 pt-3 sm:px-6 sm:pt-4 md:px-10"
+      >
+        <div
+          class="inline-flex max-w-full items-center gap-3 rotate-[-0.4deg] jv-border-rough bg-jv-white px-3 py-2 shadow-brutal-sm sm:gap-4 sm:px-5 sm:py-2.5"
+          :title="quizTitle"
+        >
+          <span
+            class="grid size-9 shrink-0 rotate-[2deg] place-items-center rounded-full border-[2px] border-jv-ink bg-jv-yellow text-jv-ink sm:size-10"
+            aria-hidden="true"
+          >
+            <span class="text-[16px] font-black sm:text-[18px]">Q</span>
+          </span>
+          <div class="flex min-w-0 flex-col">
+            <p
+              class="font-body text-[10px] font-bold uppercase tracking-[0.12em] text-jv-muted sm:text-[12px]"
+            >
+              Playing
+            </p>
+            <p
+              class="min-w-0 truncate font-headings text-[18px] leading-tight text-jv-ink sm:text-[22px]"
+            >
+              {{ quizTitle }}
+            </p>
+          </div>
+        </div>
+      </div>
+
       <!-- <UserName :user-name="firstname"></UserName> -->
 
       <QuizWaitingSpacePlayerSkeleton
@@ -204,6 +250,7 @@ onBeforeUnmount(() => {
         :data="data"
         :is-admin="false"
         :user-name="firstname"
+        :quiz-title-override="quizTitle"
         @start-quiz="startQuiz"
       >
       </QuizWaitingSpace>
@@ -211,6 +258,7 @@ onBeforeUnmount(() => {
         v-else-if="currentComponent === 'Question'"
         :data="data"
         :is-admin="false"
+        :quiz-title="quizTitle"
         @send-answer="sendAnswer"
       ></QuizQuestionSpace>
       <QuizScoreSpace
@@ -220,6 +268,7 @@ onBeforeUnmount(() => {
         :is-admin="false"
         :selected-answer="selectedAnswer"
         :quiz-state="quizState"
+        :quiz-title="quizTitle"
       ></QuizScoreSpace>
     </Playground>
   </div>

@@ -248,6 +248,7 @@ import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { usePush } from "notivue";
 import { useUsersStore } from "~~/store/users";
+import { useSessionStore } from "~~/store/session";
 import { getRandomAvatarName, getAvatarUrlByName } from "~~/composables/avatar";
 import {
   Hash,
@@ -266,6 +267,8 @@ definePageMeta({
 
 const userData = useUsersStore();
 const { setUserData } = userData;
+const sessionStore = useSessionStore();
+const { setActiveQuizTitle } = sessionStore;
 const authChecking = ref(true);
 const route = useRoute();
 
@@ -283,6 +286,7 @@ const userError = ref(false);
 const quickUserPending = ref(false);
 const userPlayedQuiz = ref("");
 const sessionId = ref("");
+const quizTitle = ref("");
 const avatarName = ref("Sophia");
 const avatarUrl = computed(() => getAvatarUrlByName(avatarName.value));
 
@@ -370,6 +374,10 @@ const join_quiz = async () => {
         if (response.status == 200) {
           userPlayedQuiz.value = response._data?.data?.user_played_quiz;
           sessionId.value = response._data?.data?.session_id;
+          quizTitle.value = response._data?.data?.quiz_title || "";
+          if (quizTitle.value) {
+            setActiveQuizTitle(quizTitle.value);
+          }
           quickUserPending.value = false;
         }
       },
@@ -389,7 +397,9 @@ const join_quiz = async () => {
       username.value
     )}&firstname=${firstname.value}&user_played_quiz=${
       userPlayedQuiz.value
-    }&session_id=${sessionId.value}`
+    }&session_id=${sessionId.value}&quiz_title=${encodeURIComponent(
+      quizTitle.value
+    )}`
   );
 };
 

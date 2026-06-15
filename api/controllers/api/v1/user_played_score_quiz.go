@@ -184,6 +184,7 @@ func (ctrl *UserPlayedQuizeController) PlayedQuizValidation(c *fiber.Ctx) error 
 	response := map[string]string{
 		"user_played_quiz": userPlayedQuizId.String(),
 		"session_id":       session.ID.String(),
+		"quiz_title":       session.Title,
 	}
 
 	return utils.JSONSuccess(c, http.StatusOK, response)
