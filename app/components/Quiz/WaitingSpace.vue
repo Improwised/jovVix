@@ -10,6 +10,7 @@ import {
   Info,
   Keyboard,
   LogOut,
+  Maximize2,
   Smile,
   UserRound,
   Users,
@@ -48,6 +49,7 @@ const { getUserData } = usersStore;
 
 const startQuiz = ref(false);
 const waitingSound = ref(null);
+const qrOverlay = ref(null);
 const participantAccentClasses = [
   "bg-jv-yellow",
   "bg-jv-coral text-white",
@@ -155,6 +157,8 @@ onMounted(() => {
 const copyToClipBoard = (text) => {
   usecopyToClipboard(text);
 };
+
+const openQrFullscreen = () => qrOverlay.value?.open();
 
 function initializeSound() {
   if (process.client) {
@@ -316,12 +320,20 @@ watch(
               ></span>
             </div>
 
-            <div class="flex justify-center">
+            <div class="flex flex-col items-center gap-3">
               <div
-                class="qr-card grid size-[176px] place-items-center bg-jv-white p-3 shadow-brutal-sm jv-border-rough min-[420px]:size-[196px] sm:size-[220px] sm:p-4 md:size-[240px]"
+                class="qr-card relative grid size-[176px] place-items-center bg-jv-white p-3 shadow-brutal-sm jv-border-rough min-[420px]:size-[196px] sm:size-[220px] sm:p-4 md:size-[240px]"
               >
                 <QrCode :scan-u-r-l="joinUrl" :quiz-code="code" :size="200" />
               </div>
+              <button
+                type="button"
+                class="inline-flex h-11 rotate-[-0.6deg] items-center justify-center gap-2 rounded-[999px] border-[3px] border-jv-ink bg-jv-mint px-5 font-body text-[14px] font-black text-jv-ink shadow-brutal-sm transition-transform hover:rotate-[1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none sm:h-12 sm:text-[15px]"
+                @click="openQrFullscreen"
+              >
+                <Maximize2 class="size-4" :stroke-width="2.4" />
+                <span>Enlarge QR for easy scan</span>
+              </button>
             </div>
 
             <div class="mt-auto pt-5 sm:pt-6">
@@ -454,6 +466,7 @@ watch(
         </aside>
       </div>
     </section>
+    <QrFullscreenOverlay ref="qrOverlay" :join-url="joinUrl" :code="code" />
   </main>
   <main v-else class="flex min-h-screen flex-col bg-jv-canvas text-jv-ink">
     <header
