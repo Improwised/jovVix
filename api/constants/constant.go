@@ -119,6 +119,15 @@ const (
 	ErrQuestionId               = "question type id not exists"
 	ErrEmptyFile                = "The uploaded file is empty. Please choose a file with content."
 	ErrUnsupportedFileType      = "The uploaded file is not a valid CSV. Please check the format and try again."
+	ErrEmptyQuestionText        = "question text is required"
+	ErrInsufficientOptions      = "at least 2 options are required"
+	ErrEmptyCorrectAnswer       = "correct answer is required"
+	ErrInvalidCorrectAnswer     = "correct answer must be a number referencing an existing option"
+	ErrInvalidPoints            = "points must be a positive number"
+	ErrInvalidCSVRows           = "the uploaded CSV has invalid rows, please fix them and try again"
+	ErrInvalidQuestionTimeLimit = "question time limit is not configured properly"
+	ErrInvalidQuestionMedia     = "question media must be one of: text, image, code"
+	ErrInvalidOptionsMedia      = "options media must be one of: text, image, code"
 
 	// quiz-id
 	QuizId       = "quiz_id"
@@ -282,6 +291,13 @@ const (
 
 	SingleAnswer = 1
 	Survey       = 2
+)
+
+// Media Types
+const (
+	MediaText  = "text"
+	MediaImage = "image"
+	MediaCode  = "code"
 )
 
 // Pagination and Filters

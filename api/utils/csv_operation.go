@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/Improwised/jovvix/api/constants"
+	quizUtilsHelper "github.com/Improwised/jovvix/api/helpers/utils"
 	"github.com/Improwised/jovvix/api/models"
 	"github.com/google/uuid"
 	"github.com/jszwec/csvutil"
@@ -56,72 +57,146 @@ func ValidateCSVFileFormat(fileName string) ([]Question, error) {
 	return questions, nil
 }
 
+// normalizeMedia trims and lowercases a media value and reports whether it is
+// allowed. An empty value defaults to "text" to match manual question creation.
+func normalizeMedia(media string) (string, bool) {
+	normalized := strings.ToLower(strings.TrimSpace(media))
+	if normalized == "" {
+		return constants.MediaText, true
+	}
+	switch normalized {
+	case constants.MediaText, constants.MediaImage, constants.MediaCode:
+		return normalized, true
+	default:
+		return normalized, false
+	}
+}
+
 func ExtractQuestionsFromCSV(questions []Question, questionTimeLimit string) ([]models.Question, error) {
-	typeMapping := map[string]int{
-		"single answer": 1,
-		"survey":        2,
+	// Duration comes solely from configuration; reject if it is missing or invalid.
+	duration, err := strconv.Atoi(strings.TrimSpace(questionTimeLimit))
+	if err != nil || duration <= 0 {
+		return nil, fmt.Errorf(constants.ErrInvalidQuestionTimeLimit)
 	}
 
 	var validQuestions []models.Question
+	var rowErrors []string
+
 	for i, u := range questions {
+		// Row number as seen by the user in a spreadsheet (header is row 1).
+		rowNo := i + 2
+
+		var rowIssues []string
+
+		// Question text must be present.
+		if strings.TrimSpace(u.Question) == "" {
+			rowIssues = append(rowIssues, constants.ErrEmptyQuestionText)
+		}
+
+		// Question type must be a known type (single answer / survey).
+		questionType, typeErr := quizUtilsHelper.CheckQuestionType(strings.TrimSpace(u.Type))
+		if typeErr != nil {
+			rowIssues = append(rowIssues, fmt.Sprintf("%s (got %q, allowed: %s, %s)", constants.ErrQuestionType, u.Type, constants.SingleAnswerString, constants.SurveyString))
+		}
+
+		// Collect non-empty options, preserving their option number.
+		options := make(map[string]string)
+		for idx, opt := range []string{u.Option1, u.Option2, u.Option3, u.Option4, u.Option5} {
+			if strings.TrimSpace(opt) != "" {
+				options[strconv.Itoa(idx+1)] = opt
+			}
+		}
+		if len(options) < 2 {
+			rowIssues = append(rowIssues, constants.ErrInsufficientOptions)
+		}
+
+		// Correct answer(s): must be present, numeric, and reference an existing option.
+		answers := []int{}
+		correctRaw := strings.TrimSpace(u.CorrectAnswer)
+		if correctRaw == "" {
+			rowIssues = append(rowIssues, constants.ErrEmptyCorrectAnswer)
+		} else {
+			for _, a := range strings.Split(correctRaw, "|") {
+				a = strings.TrimSpace(a)
+				if a == "" {
+					continue
+				}
+				answerInt, convErr := strconv.Atoi(a)
+				if convErr != nil {
+					rowIssues = append(rowIssues, fmt.Sprintf("%s (got %q)", constants.ErrInvalidCorrectAnswer, a))
+					continue
+				}
+				if _, ok := options[strconv.Itoa(answerInt)]; !ok {
+					rowIssues = append(rowIssues, fmt.Sprintf("%s (option %d does not exist)", constants.ErrInvalidCorrectAnswer, answerInt))
+					continue
+				}
+				answers = append(answers, answerInt)
+			}
+		}
+
+		// Type-specific answer count rules (only meaningful when the type is valid).
+		if typeErr == nil {
+			switch questionType {
+			case constants.SingleAnswer:
+				if len(answers) != 1 {
+					rowIssues = append(rowIssues, constants.ErrSingleAnswerLength)
+				}
+			case constants.Survey:
+				if len(answers) < 1 {
+					rowIssues = append(rowIssues, constants.ErrSurveyAnswerLength)
+				}
+			}
+		}
+
+		// Media types: optional (default text), but must be text, image, or code.
+		questionMedia, questionMediaOK := normalizeMedia(u.QuestionMedia)
+		if !questionMediaOK {
+			rowIssues = append(rowIssues, fmt.Sprintf("%s (got %q)", constants.ErrInvalidQuestionMedia, u.QuestionMedia))
+		}
+		optionsMedia, optionsMediaOK := normalizeMedia(u.OptionsMedia)
+		if !optionsMediaOK {
+			rowIssues = append(rowIssues, fmt.Sprintf("%s (got %q)", constants.ErrInvalidOptionsMedia, u.OptionsMedia))
+		}
+
+		// Points: optional, but if present must be a positive integer.
+		points := 1
+		if strings.TrimSpace(u.Points) != "" {
+			parsedPoints, convErr := strconv.Atoi(strings.TrimSpace(u.Points))
+			if convErr != nil || parsedPoints <= 0 {
+				rowIssues = append(rowIssues, fmt.Sprintf("%s (got %q)", constants.ErrInvalidPoints, u.Points))
+			} else {
+				points = parsedPoints
+			}
+		}
+
+		if len(rowIssues) > 0 {
+			rowErrors = append(rowErrors, fmt.Sprintf("row %d: %s", rowNo, strings.Join(rowIssues, "; ")))
+			continue
+		}
 
 		id, err := uuid.NewUUID()
 		if err != nil {
 			return validQuestions, err
 		}
 
-		options := make(map[string]string)
-		if u.Option1 != "" {
-			options["1"] = u.Option1
-		}
-		if u.Option2 != "" {
-			options["2"] = u.Option2
-		}
-		if u.Option3 != "" {
-			options["3"] = u.Option3
-		}
-		if u.Option4 != "" {
-			options["4"] = u.Option4
-		}
-		if u.Option5 != "" {
-			options["5"] = u.Option5
-		}
-
-		answers := []int{}
-		for _, a := range strings.Split(u.CorrectAnswer, "|") {
-			if a != "" {
-				answerInt := 0
-				fmt.Sscanf(a, "%d", &answerInt)
-				answers = append(answers, answerInt)
-			}
-		}
-
-		// Determine points
-		points := 1
-		if u.Points != "" {
-			fmt.Sscanf(u.Points, "%d", &points)
-		}
-
-		duration := 30
-		if questionTimeLimit != "" {
-			if parsedDuration, err := strconv.Atoi(questionTimeLimit); err == nil {
-				duration = parsedDuration
-			}
-		}
-
 		validQuestions = append(validQuestions, models.Question{
 			ID:                id,
 			Question:          u.Question,
-			Type:              typeMapping[u.Type],
+			Type:              questionType,
 			Options:           options,
 			Answers:           answers,
 			Points:            int16(points),
 			DurationInSeconds: duration,
 			OrderNumber:       i + 1,
-			QuestionMedia:     u.QuestionMedia,
-			OptionsMedia:      u.OptionsMedia,
+			QuestionMedia:     questionMedia,
+			OptionsMedia:      optionsMedia,
 			Resource:          sql.NullString{String: u.Resource, Valid: true},
 		})
 	}
+
+	if len(rowErrors) > 0 {
+		return nil, fmt.Errorf("%s %s", constants.ErrInvalidCSVRows, strings.Join(rowErrors, " | "))
+	}
+
 	return validQuestions, nil
 }
