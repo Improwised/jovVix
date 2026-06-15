@@ -198,7 +198,7 @@ func (ctrl *QuestionController) ImportQuestionsByCsv(c *fiber.Ctx) error {
 	validQuestions, err := utils.ExtractQuestionsFromCSV(questions, ctrl.appConfig.Quiz.QuestionTimeLimit)
 	if err != nil {
 		ctrl.logger.Error("file validation failed", zap.Error(err))
-		return utils.JSONFail(c, http.StatusBadRequest, constants.ErrParsingFile)
+		return utils.JSONFail(c, http.StatusBadRequest, err.Error())
 	}
 
 	_, err = ctrl.quizModel.GetQuizById(quizId)

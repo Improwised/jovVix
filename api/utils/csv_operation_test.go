@@ -4,6 +4,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/Improwised/jovvix/api/constants"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -123,33 +124,20 @@ func TestExtractQuestionsFromCSV(t *testing.T) {
 		assert.Equal(t, "text", validQuestions[1].OptionsMedia)
 	})
 
-	t.Run("Empty Options", func(t *testing.T) {
-		questions := []Question{
-			{
-				Question:      "Choose the best option",
-				Type:          "single answer",
-				Points:        "10",
-				CorrectAnswer: "1",
-			},
-		}
-
-		validQuestions, err := ExtractQuestionsFromCSV(questions, "")
-		assert.NoError(t, err)
-		assert.Len(t, validQuestions, 1)
-
-		assert.Equal(t, map[string]string{}, validQuestions[0].Options)
-	})
-
 	t.Run("Different Question Types", func(t *testing.T) {
 		questions := []Question{
 			{
 				Question:      "Select the correct statement",
 				Type:          "single answer",
+				Option1:       "True",
+				Option2:       "False",
 				CorrectAnswer: "1",
 			},
 			{
 				Question:      "Provide your feedback",
 				Type:          "survey",
+				Option1:       "Yes",
+				Option2:       "No",
 				CorrectAnswer: "2",
 			},
 		}
@@ -169,7 +157,9 @@ func TestExtractQuestionsFromCSV(t *testing.T) {
 				Question:      "How many continents are there?",
 				Type:          "single answer",
 				Points:        "2",
-				CorrectAnswer: "7",
+				Option1:       "6",
+				Option2:       "7",
+				CorrectAnswer: "2",
 			},
 		}
 
@@ -179,7 +169,94 @@ func TestExtractQuestionsFromCSV(t *testing.T) {
 		assert.Equal(t, 120, validQuestions[0].DurationInSeconds)
 	})
 
-	t.Run("Empty Fields", func(t *testing.T) {
+	t.Run("Invalid question type is rejected", func(t *testing.T) {
+		questions := []Question{
+			{
+				Question:      "What does CPU stand for?",
+				Type:          "MCQ",
+				Option1:       "Central Processing Unit",
+				Option2:       "Computer Processing Unit",
+				CorrectAnswer: "1",
+			},
+		}
+
+		validQuestions, err := ExtractQuestionsFromCSV(questions, "30")
+		assert.Error(t, err)
+		assert.Empty(t, validQuestions)
+		assert.Contains(t, err.Error(), constants.ErrQuestionType)
+	})
+
+	t.Run("Insufficient options is rejected", func(t *testing.T) {
+		questions := []Question{
+			{
+				Question:      "Choose the best option",
+				Type:          "single answer",
+				Points:        "10",
+				Option1:       "Only one",
+				CorrectAnswer: "1",
+			},
+		}
+
+		validQuestions, err := ExtractQuestionsFromCSV(questions, "30")
+		assert.Error(t, err)
+		assert.Empty(t, validQuestions)
+		assert.Contains(t, err.Error(), constants.ErrInsufficientOptions)
+	})
+
+	t.Run("Missing or invalid time limit config is rejected", func(t *testing.T) {
+		questions := []Question{
+			{
+				Question:      "Pick one",
+				Type:          "single answer",
+				Option1:       "A",
+				Option2:       "B",
+				CorrectAnswer: "1",
+			},
+		}
+
+		for _, badLimit := range []string{"", "abc", "0", "-5"} {
+			validQuestions, err := ExtractQuestionsFromCSV(questions, badLimit)
+			assert.Error(t, err)
+			assert.Empty(t, validQuestions)
+			assert.Contains(t, err.Error(), constants.ErrInvalidQuestionTimeLimit)
+		}
+	})
+
+	t.Run("Correct answer referencing missing option is rejected", func(t *testing.T) {
+		questions := []Question{
+			{
+				Question:      "How many continents are there?",
+				Type:          "single answer",
+				Option1:       "6",
+				Option2:       "7",
+				CorrectAnswer: "7",
+			},
+		}
+
+		validQuestions, err := ExtractQuestionsFromCSV(questions, "120")
+		assert.Error(t, err)
+		assert.Empty(t, validQuestions)
+		assert.Contains(t, err.Error(), constants.ErrInvalidCorrectAnswer)
+	})
+
+	t.Run("Single answer with multiple correct answers is rejected", func(t *testing.T) {
+		questions := []Question{
+			{
+				Question:      "Pick one",
+				Type:          "single answer",
+				Option1:       "A",
+				Option2:       "B",
+				CorrectAnswer: "1|2",
+			},
+		}
+
+		validQuestions, err := ExtractQuestionsFromCSV(questions, "30")
+		assert.Error(t, err)
+		assert.Empty(t, validQuestions)
+		assert.Contains(t, err.Error(), constants.ErrSingleAnswerLength)
+	})
+
+	t.Run("Empty fields are rejected", func(t *testing.T) {
 		questions := []Question{
 			{
 				Question:      "",
@@ -189,10 +266,80 @@ func TestExtractQuestionsFromCSV(t *testing.T) {
 		}
 
 		validQuestions, err := ExtractQuestionsFromCSV(questions, "20")
+		assert.Error(t, err)
+		assert.Empty(t, validQuestions)
+		assert.Contains(t, err.Error(), constants.ErrEmptyQuestionText)
+	})
+
+	t.Run("Invalid media type is rejected", func(t *testing.T) {
+		questions := []Question{
+			{
+				Question:      "Pick one",
+				Type:          "single answer",
+				Option1:       "A",
+				Option2:       "B",
+				CorrectAnswer: "1",
+				QuestionMedia: "video",
+				OptionsMedia:  "text",
+			},
+		}
+
+		validQuestions, err := ExtractQuestionsFromCSV(questions, "30")
+		assert.Error(t, err)
+		assert.Empty(t, validQuestions)
+		assert.Contains(t, err.Error(), constants.ErrInvalidQuestionMedia)
+	})
+
+	t.Run("Media is normalized and empty defaults to text", func(t *testing.T) {
+		questions := []Question{
+			{
+				Question:      "Pick one",
+				Type:          "single answer",
+				Option1:       "A",
+				Option2:       "B",
+				CorrectAnswer: "1",
+				QuestionMedia: "  Image ",
+				OptionsMedia:  "",
+			},
+		}
+
+		validQuestions, err := ExtractQuestionsFromCSV(questions, "30")
 		assert.NoError(t, err)
 		assert.Len(t, validQuestions, 1)
+		assert.Equal(t, constants.MediaImage, validQuestions[0].QuestionMedia)
+		assert.Equal(t, constants.MediaText, validQuestions[0].OptionsMedia)
+	})
 
-		assert.Equal(t, "", validQuestions[0].Question)
-		assert.Equal(t, []int{}, validQuestions[0].Answers)
+	t.Run("Multiple bad rows are all reported", func(t *testing.T) {
+		questions := []Question{
+			{
+				Question:      "Good one",
+				Type:          "single answer",
+				Option1:       "A",
+				Option2:       "B",
+				CorrectAnswer: "1",
+			},
+			{
+				Question:      "Bad type",
+				Type:          "MCQ",
+				Option1:       "A",
+				Option2:       "B",
+				CorrectAnswer: "1",
+			},
+			{
+				Question:      "Bad answer",
+				Type:          "single answer",
+				Option1:       "A",
+				Option2:       "B",
+				CorrectAnswer: "9",
+			},
+		}
+
+		validQuestions, err := ExtractQuestionsFromCSV(questions, "30")
+		assert.Error(t, err)
+		assert.Empty(t, validQuestions)
+		// Row numbers are 1-based with the header as row 1.
+		assert.Contains(t, err.Error(), "row 3")
+		assert.Contains(t, err.Error(), "row 4")
 	})
 }
