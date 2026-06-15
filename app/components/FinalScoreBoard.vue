@@ -236,10 +236,16 @@ const podiumName = (winner) =>
 <template>
   <!-- WINNER PODIUM (admin only, when winner_ui=true) -->
   <ClientOnly v-if="winnerUI == 'true' && props.isAdmin">
-    <div class="relative flex min-h-screen flex-col bg-jv-canvas">
+    <div
+      class="relative flex min-h-screen flex-col overflow-hidden bg-jv-canvas"
+    >
+      <!-- Continuous victory-stage confetti, blasted inward from both edges.
+           Mounts only with this view, so unmounting handles cleanup. -->
+      <WinnerConfetti />
+
       <!-- TOP BAR: logo + tournament title + next button -->
       <header
-        class="flex items-center justify-between gap-3 px-4 py-4 sm:px-8 sm:py-5 md:px-12"
+        class="relative z-10 flex items-center justify-between gap-3 px-4 py-4 sm:px-8 sm:py-5 md:px-12"
         role="banner"
       >
         <div class="flex min-w-0 items-center gap-3 sm:gap-4">
@@ -266,15 +272,25 @@ const podiumName = (winner) =>
           </div>
         </div>
 
-        <button
-          type="button"
-          class="inline-flex h-10 items-center justify-center gap-1.5 rounded-[8px] border-[2px] border-jv-ink bg-jv-white px-4 font-body text-[13px] font-black text-jv-ink shadow-brutal-sm transition-transform hover:rotate-[-1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none sm:h-11 sm:px-5 sm:text-[14px]"
-          aria-label="Continue to scoreboard table view"
-          @click="changeUI(false)"
-        >
-          Next
-          <ArrowRight class="size-4" :stroke-width="2.4" />
-        </button>
+        <div class="flex items-center gap-2 sm:gap-3">
+          <NuxtLink
+            to="/"
+            class="inline-flex h-10 items-center justify-center gap-1.5 rounded-[8px] border-[2px] border-jv-ink bg-jv-white px-4 font-body text-[13px] font-black text-jv-ink shadow-brutal-sm transition-transform hover:rotate-[-1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none sm:h-11 sm:px-5 sm:text-[14px]"
+            aria-label="Return to home"
+          >
+            <Home class="size-4" :stroke-width="2.4" />
+            Home
+          </NuxtLink>
+          <button
+            type="button"
+            class="inline-flex h-10 items-center justify-center gap-1.5 rounded-[8px] border-[2px] border-jv-ink bg-jv-white px-4 font-body text-[13px] font-black text-jv-ink shadow-brutal-sm transition-transform hover:rotate-[-1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none sm:h-11 sm:px-5 sm:text-[14px]"
+            aria-label="Continue to scoreboard table view"
+            @click="changeUI(false)"
+          >
+            Next
+            <ArrowRight class="size-4" :stroke-width="2.4" />
+          </button>
+        </div>
       </header>
 
       <main
@@ -283,15 +299,7 @@ const podiumName = (winner) =>
         role="main"
         aria-label="Quiz winners podium"
       >
-        <article
-          class="relative jv-border-rough bg-jv-white p-6 shadow-brutal-lg sm:p-10 md:p-12"
-        >
-          <!-- "Tape" strip on top of the card -->
-          <span
-            class="absolute left-1/2 top-[-14px] z-10 h-5 w-24 -translate-x-1/2 rotate-[2deg] border-[2px] border-jv-ink bg-jv-yellow shadow-brutal-sm"
-            aria-hidden="true"
-          ></span>
-
+        <div class="relative flex w-full flex-1 flex-col justify-evenly">
           <!-- Title with confetti-like decorations -->
           <div class="relative flex items-center justify-center">
             <span
@@ -307,9 +315,9 @@ const podiumName = (winner) =>
               aria-hidden="true"
             ></span>
             <h2
-              class="text-center font-feature text-[32px] font-black leading-none text-jv-ink sm:text-[44px] md:text-[56px]"
+              class="text-center text-[40px] leading-none text-jv-ink sm:text-[44px] md:text-[56px]"
             >
-              Tournament Winners!
+              Quiz Winners!
             </h2>
           </div>
 
@@ -450,7 +458,7 @@ const podiumName = (winner) =>
               No winners yet
             </span>
           </div>
-        </article>
+        </div>
 
         <!-- Status pill + copyright -->
         <div
