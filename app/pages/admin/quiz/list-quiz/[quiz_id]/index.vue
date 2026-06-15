@@ -439,6 +439,15 @@
               Upload a CSV file containing additional questions. New rows will
               be appended to this quiz.
             </p>
+            <NavigationLink
+              url="/files/demo.csv"
+              url-name="Download Sample"
+              external
+              download="demo.csv"
+              class="w-fit rounded-[999px] bg-jv-white"
+            >
+              <Download class="size-4" :stroke-width="2.4" />
+            </NavigationLink>
           </div>
 
           <div
@@ -471,6 +480,7 @@
 import { computed, onMounted, ref, watch } from "vue";
 import {
   Check,
+  Download,
   Globe,
   GripVertical,
   Info,
