@@ -14,8 +14,17 @@ import { storeToRefs } from "pinia";
 import { useSessionStore } from "~~/store/session";
 import { useUsersStore } from "~~/store/users";
 const sessionStore = useSessionStore();
-const { setSession, setLastComponent, getLastComponent, setActiveQuizTitle } =
-  sessionStore;
+const {
+  setSession,
+  setLastComponent,
+  getLastComponent,
+  setActiveQuizTitle,
+  getActiveQuizTitle,
+} = sessionStore;
+const { activeQuizTitle } = storeToRefs(sessionStore);
+const quizTitle = computed(
+  () => activeQuizTitle.value || getActiveQuizTitle() || ""
+);
 const usersStore = useUsersStore();
 
 const invitationCodeStore = useInvitationCodeStore();
@@ -85,6 +94,9 @@ const tryEnableHostPlay = async (code) => {
     });
     hostUserPlayedQuiz.value = res?.data?.user_played_quiz || null;
     canPlay.value = !!hostUserPlayedQuiz.value;
+    if (res?.data?.quiz_title) {
+      setActiveQuizTitle(res.data.quiz_title);
+    }
   } catch (error) {
     // 403 => host is the quiz creator and may only host, not play. Expected; stay host-only.
     toast.warning(
@@ -376,8 +388,24 @@ definePageMeta({
   <Playground :full-screen-enabled="myRef" @is-full-screen="handleCustomChange">
     <div
       v-if="currentComponent !== 'Waiting' && currentComponent !== 'Loading'"
-      class="code-display flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-end sm:px-6 md:px-8"
+      class="code-display flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6 md:px-8"
     >
+      <div
+        v-if="quizTitle"
+        class="flex min-w-0 max-w-full flex-col gap-0.5 jv-border-rough bg-jv-white px-3 py-2 shadow-brutal-sm sm:px-4"
+        :title="quizTitle"
+      >
+        <span
+          class="font-body text-[10px] font-black uppercase tracking-[0.14em] text-jv-muted sm:text-[11px]"
+        >
+          Now hosting
+        </span>
+        <span
+          class="min-w-0 truncate font-headings text-[18px] leading-tight text-jv-ink sm:text-[22px]"
+        >
+          {{ quizTitle }}
+        </span>
+      </div>
       <div
         class="flex min-w-0 items-center justify-between gap-2 jv-border-rough bg-jv-white px-3 py-2 shadow-brutal-sm sm:justify-start"
       >
@@ -421,6 +449,7 @@ definePageMeta({
       v-else-if="currentComponent == 'Waiting'"
       :data="data"
       :is-admin="true"
+      :quiz-title-override="quizTitle"
       @start-quiz="startQuiz"
     >
     </QuizWaitingSpace>
@@ -429,6 +458,7 @@ definePageMeta({
       :data="data"
       :is-admin="true"
       :can-play="canPlay"
+      :quiz-title="quizTitle"
       @send-answer="sendAnswer"
       @ask-skip="askSkip"
     ></QuizQuestionSpace>
@@ -439,6 +469,7 @@ definePageMeta({
       :selected-answer="selectedAnswer"
       :analysis-tab="analysisTab"
       :quiz-state="quizState"
+      :quiz-title="quizTitle"
       @change-analysis-tab="handleAnalysisTabChange"
       @ask-skip-timer="askSkipTimer"
     ></QuizScoreSpace>

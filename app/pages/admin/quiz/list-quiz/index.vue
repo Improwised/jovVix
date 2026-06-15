@@ -169,6 +169,11 @@ const handleStartQuiz = async (quizId) => {
       return;
     }
 
+    const startedQuiz = quizzes.value.find((q) => q.id === quizId);
+    if (startedQuiz?.title) {
+      sessionStore.setActiveQuizTitle(startedQuiz.title);
+    }
+
     listUserStore.removeAllUsers();
     setSocketObject(null);
     router.push(`/admin/arrange/${activeQuizId}`);

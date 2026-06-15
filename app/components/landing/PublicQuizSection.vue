@@ -99,6 +99,10 @@ const formatDate = (iso) => {
 const handleStartQuiz = async (quizId) => {
   if (startingQuizId.value) return;
   startingQuizId.value = quizId;
+  const startedQuiz = publicQuizzes.value.find((q) => q.id === quizId);
+  if (startedQuiz?.title) {
+    sessionStore.setActiveQuizTitle(startedQuiz.title);
+  }
   try {
     let isLoggedIn = false;
     try {

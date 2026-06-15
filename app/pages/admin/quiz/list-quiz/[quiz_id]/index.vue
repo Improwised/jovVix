@@ -826,6 +826,10 @@ const handleStartQuiz = async () => {
       return;
     }
 
+    if (quizTitle.value) {
+      sessionStore.setActiveQuizTitle(quizTitle.value);
+    }
+
     listUserStore.removeAllUsers();
     setSocketObject(null);
     sessionStore.setSession(activeQuizId);

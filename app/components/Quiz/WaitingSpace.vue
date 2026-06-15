@@ -74,6 +74,11 @@ const props = defineProps({
     type: String,
     required: false,
   },
+  quizTitleOverride: {
+    default: "",
+    type: String,
+    required: false,
+  },
 });
 const emits = defineEmits(["startQuiz", "terminateQuiz"]);
 
@@ -88,6 +93,7 @@ const getParticipantName = (user) =>
 
 const quizTitle = computed(
   () =>
+    props.quizTitleOverride ||
     props.data?.quizTitle ||
     props.data?.title ||
     props.data?.data?.quizTitle ||
@@ -193,13 +199,22 @@ watch(
   >
     <section class="mx-auto flex w-full max-w-[1220px] flex-1 flex-col">
       <header class="mb-7 text-center sm:mb-9">
-        <h1
-          class="font-headings text-[38px] leading-none text-jv-ink min-[420px]:text-[44px] sm:text-[52px] md:text-[56px]"
+        <p
+          class="font-body text-[11px] font-black uppercase tracking-[0.18em] text-jv-muted sm:text-[13px]"
         >
           Quiz Lobby
+        </p>
+        <h1
+          class="relative mx-auto mt-2 inline-block max-w-[940px] break-words font-headings text-[32px] leading-[1.05] text-jv-ink min-[420px]:text-[38px] sm:text-[48px] md:text-[56px]"
+        >
+          <span class="relative z-10">{{ quizTitle }}</span>
+          <span
+            class="absolute bottom-[4px] left-0 z-0 h-[10px] w-full max-w-[260px] rotate-[-1deg] bg-jv-yellow/70"
+            aria-hidden="true"
+          ></span>
         </h1>
         <p
-          class="mx-auto mt-2 max-w-[680px] text-[15px] leading-[1.5] text-jv-muted sm:text-[18px] md:text-[20px]"
+          class="mx-auto mt-3 max-w-[680px] text-[15px] leading-[1.5] text-jv-muted sm:text-[18px] md:text-[20px]"
         >
           Share the code with players. The quiz will start when you're ready!
         </p>
