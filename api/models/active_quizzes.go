@@ -365,6 +365,28 @@ func (model *ActiveQuizModel) Deactivate(id uuid.UUID) error {
 
 }
 
+func (model *ActiveQuizModel) DeactivateExpired(ttl time.Duration) (int64, error) {
+	ttlSeconds := int64(ttl.Seconds())
+
+	result, err := model.db.Update(ActiveQuizzesTable).Set(goqu.Record{
+		"invitation_code":    nil,
+		"is_active":          false,
+		"activated_to":       goqu.L("now()"),
+		"current_question":   nil,
+		"is_question_active": nil,
+		"updated_at":         goqu.L("now()"),
+	}).Where(
+		goqu.I("is_active").Eq(true),
+		goqu.L("activated_from < now() - ? * interval '1 second'", ttlSeconds),
+	).Executor().Exec()
+
+	if err != nil {
+		return 0, err
+	}
+
+	return result.RowsAffected()
+}
+
 func (model *ActiveQuizModel) GetCurrentActiveQuestion(id uuid.UUID) (uuid.UUID, error) {
 	var currentQuestion uuid.UUID
 	found, err := model.db.Select("current_question").From(ActiveQuizzesTable).Where(goqu.I("id").Eq(id), goqu.I("is_question_active").Eq(true)).ScanVal(&currentQuestion)
