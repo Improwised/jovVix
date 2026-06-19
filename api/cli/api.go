@@ -5,11 +5,13 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"go.uber.org/zap"
 
 	"github.com/Improwised/jovvix/api/config"
 	"github.com/Improwised/jovvix/api/database"
+	"github.com/Improwised/jovvix/api/models"
 	pMetrics "github.com/Improwised/jovvix/api/pkg/prometheus"
 	"github.com/Improwised/jovvix/api/routes"
 	fiber "github.com/gofiber/fiber/v2"
@@ -50,6 +52,28 @@ func GetAPICommandDef(cfg config.AppConfig, logger *zap.Logger) cobra.Command {
 				logger.Error(err.Error())
 				return err
 			}
+
+			// Background sweeper: every ACTIVE_QUIZ_SWEEP_MINUTES, auto-terminate any quiz
+			activeQuizModel := models.InitActiveQuizModel(db, logger)
+
+			ttl := time.Duration(cfg.Quiz.ActiveQuizTTLHours) * time.Hour //
+			if ttl <= 0 {
+				ttl = 24 * time.Hour
+			}
+			sweepInterval := time.Duration(cfg.Quiz.ActiveQuizSweepMinutes) * time.Minute
+			if sweepInterval <= 0 {
+				sweepInterval = 60 * time.Minute
+			}
+			go func() {
+				for {
+					if count, err := activeQuizModel.DeactivateExpired(ttl); err != nil {
+						logger.Error("active quiz sweeper failed", zap.Error(err))
+					} else if count > 0 {
+						logger.Info("active quiz sweeper: deactivated expired sessions", zap.Int64("count", count))
+					}
+					time.Sleep(sweepInterval)
+				}
+			}()
 
 			interrupt := make(chan os.Signal, 1)
 			signal.Notify(interrupt, syscall.SIGINT, syscall.SIGTERM)
