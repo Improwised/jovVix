@@ -19,7 +19,7 @@ import RunningQuizBanner from "@/components/common/RunningQuizBanner.vue";
 // Keeps Open Graph / Twitter cards present site-wide so shared links always render
 // a preview, even on pages that only declare their own title/description.
 const { baseUrl } = useRuntimeConfig().public;
-const defaultShareImage = new URL("/jovvix-logo.png", baseUrl).href;
+const defaultShareImage = new URL("/og-image.png", baseUrl).href;
 
 useSeoMeta({
   ogSiteName: "jovVix",
