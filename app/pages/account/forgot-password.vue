@@ -6,6 +6,25 @@ definePageMeta({
   layout: "auth",
 });
 
+const seoCanonical = new URL(
+  useRoute().path,
+  useRuntimeConfig().public.baseUrl
+).href;
+
+useHead({
+  link: [{ rel: "canonical", href: seoCanonical }],
+});
+
+useSeoMeta({
+  title: "Reset Password - jovVix",
+  description:
+    "Reset your jovVix account password securely. Enter your email to receive a recovery link and regain access to your quiz dashboard.",
+  ogTitle: "Reset Password - jovVix",
+  ogDescription:
+    "Reset your jovVix account password securely. Enter your email to receive a recovery link and regain access to your quiz dashboard.",
+  ogUrl: seoCanonical,
+});
+
 const toast = usePush();
 const urls = useRuntimeConfig().public;
 const kratosUrl = urls.kratosUrl;
