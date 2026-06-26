@@ -39,12 +39,6 @@ definePageMeta({
   layout: "empty",
 });
 
-useSeoMeta({
-  title: "Edit Question - jovVix",
-  description: "Edit and configure an individual quiz question on jovVix.",
-  robots: "noindex, nofollow",
-});
-
 const url = useRuntimeConfig().public;
 const headers = useRequestHeaders(["cookie"]);
 const route = useRoute();

@@ -375,12 +375,6 @@ definePageMeta({
   // the real session id and the admin socket connects against it.
   key: (route) => route.fullPath,
 });
-
-useSeoMeta({
-  title: "Quiz Session - jovVix",
-  description: "Configure and launch your live quiz session on jovVix.",
-  robots: "noindex, nofollow",
-});
 // custom class to bind component with
 </script>
 

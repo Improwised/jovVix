@@ -289,13 +289,6 @@ definePageMeta({
   layout: "empty",
 });
 
-useSeoMeta({
-  title: "Quiz Reports - jovVix",
-  description:
-    "View performance reports and analytics for your jovVix quiz sessions.",
-  robots: "noindex, nofollow",
-});
-
 const { apiUrl } = useRuntimeConfig().public;
 const headers = useRequestHeaders(["cookie"]);
 const route = useRoute();

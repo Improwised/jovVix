@@ -98,13 +98,6 @@ definePageMeta({
   layout: "auth",
 });
 
-useSeoMeta({
-  title: "Verify Account - jovVix",
-  description:
-    "Verify your jovVix account email to activate quiz hosting and account features.",
-  robots: "noindex, nofollow",
-});
-
 const { kratosUrl } = useRuntimeConfig().public;
 const route = useRoute("");
 const toast = usePush();

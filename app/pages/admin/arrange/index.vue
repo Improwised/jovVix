@@ -53,12 +53,6 @@ useHead({
     },
   ],
 });
-
-useSeoMeta({
-  title: "Arrange Quiz - jovVix",
-  description: "Set up and arrange a quiz session before going live on jovVix.",
-  robots: "noindex, nofollow",
-});
 </script>
 
 <template>

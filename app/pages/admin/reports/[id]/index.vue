@@ -346,13 +346,6 @@ definePageMeta({
   layout: "empty",
 });
 
-useSeoMeta({
-  title: "Report Details - jovVix",
-  description:
-    "Explore detailed participant scores and question analytics for a jovVix quiz.",
-  robots: "noindex, nofollow",
-});
-
 const { apiUrl } = useRuntimeConfig().public;
 const headers = useRequestHeaders(["cookie"]);
 const route = useRoute();
