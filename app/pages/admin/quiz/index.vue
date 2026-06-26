@@ -74,10 +74,4 @@ import ActionCard from "~~/components/Quiz/ActionCard.vue";
 definePageMeta({
   layout: "empty",
 });
-
-useSeoMeta({
-  title: "My Quizzes - jovVix",
-  description: "Create, edit, and organize your interactive quizzes on jovVix.",
-  robots: "noindex, nofollow",
-});
 </script>
