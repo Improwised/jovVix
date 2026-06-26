@@ -24,15 +24,10 @@ export default defineNuxtConfig({
       htmlAttrs: {
         lang: "en",
       },
-      title: "jovVix - Real-time Quiz Platform",
+      title: "Jovvix",
       meta: [
         { charset: "utf-8" },
         { name: "viewport", content: "width=device-width, initial-scale=1" },
-        {
-          name: "description",
-          content:
-            "Create and host real-time interactive quizzes with jovVix. Engage your audience with live multiplayer games, instant scoring, and results.",
-        },
       ],
       link: [
         { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -98,33 +93,7 @@ export default defineNuxtConfig({
     ],
     "shadcn-nuxt",
     "notivue/nuxt",
-    "@nuxtjs/sitemap",
-    "@nuxtjs/robots",
   ],
-  site: {
-    url: process.env.NUXT_PUBLIC_BASE_URL || "http://127.0.0.1:3001",
-  },
-  robots: {
-    // Block private/authenticated areas from crawlers; the module appends a
-    // Sitemap reference automatically from `site.url`.
-    disallow: [
-      "/admin",
-      "/account/change-password",
-      "/recovery",
-      "/verification",
-    ],
-  },
-  sitemap: {
-    // Keep private/noindex routes out of the sitemap so only public,
-    // indexable marketing pages are submitted to search engines.
-    exclude: [
-      "/admin/**",
-      "/account/change-password",
-      "/recovery",
-      "/verification",
-      "/error",
-    ],
-  },
   notivue: {
     position: "top-center",
     limit: 4,
