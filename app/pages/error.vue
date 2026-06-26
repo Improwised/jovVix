@@ -3,6 +3,13 @@ definePageMeta({
   layout: "empty",
 });
 
+useSeoMeta({
+  title: "Page Not Found - jovVix",
+  description:
+    "The page you are looking for could not be found. Return to jovVix to host or join a quiz.",
+  robots: "noindex, nofollow",
+});
+
 const route = useRoute();
 
 const status = ref(

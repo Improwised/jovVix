@@ -113,6 +113,13 @@ definePageMeta({
   layout: "auth",
 });
 
+useSeoMeta({
+  title: "Account Recovery - jovVix",
+  description:
+    "Recover access to your jovVix account using your secure recovery link.",
+  robots: "noindex, nofollow",
+});
+
 const otp = ref("");
 const otpError = ref("");
 const flow = ref("");
