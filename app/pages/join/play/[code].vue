@@ -185,6 +185,13 @@ definePageMeta({
   hideSidebar: true,
 });
 
+useSeoMeta({
+  title: "Play Live Quiz - jovVix",
+  description:
+    "Answer questions in real time and climb the live scoreboard in this jovVix multiplayer quiz game.",
+  robots: "noindex, nofollow",
+});
+
 onBeforeUnmount(() => {
   if (!monitorTerminateQuiz.value) {
     userOperationHandler.value.endQuiz();

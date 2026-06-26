@@ -6,6 +6,12 @@ definePageMeta({
   layout: "empty",
 });
 
+useSeoMeta({
+  title: "Shared Quizzes - jovVix",
+  description: "Manage quizzes you have shared with others on jovVix.",
+  robots: "noindex, nofollow",
+});
+
 const url = useRuntimeConfig().public;
 const headers = useRequestHeaders(["cookie"]);
 

@@ -13,6 +13,12 @@ definePageMeta({
   layout: "empty",
 });
 
+useSeoMeta({
+  title: "Quiz Library - jovVix",
+  description: "Browse and manage all the quizzes you have created on jovVix.",
+  robots: "noindex, nofollow",
+});
+
 const url = useRuntimeConfig().public;
 const headers = useRequestHeaders(["cookie"]);
 const toast = usePush();

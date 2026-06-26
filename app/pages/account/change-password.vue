@@ -157,6 +157,13 @@ definePageMeta({
   layout: "auth",
 });
 
+useSeoMeta({
+  title: "Change Password - jovVix",
+  description:
+    "Update your jovVix account password to keep your quizzes and data secure.",
+  robots: "noindex, nofollow",
+});
+
 const toast = usePush();
 const url = useRuntimeConfig().public;
 

@@ -265,12 +265,35 @@ definePageMeta({
   layout: false,
 });
 
+const route = useRoute();
+const { baseUrl } = useRuntimeConfig().public;
+const canonicalUrl = new URL(route.path, baseUrl).href;
+const shareImageUrl = new URL("/jovvix-logo.png", baseUrl).href;
+
+useHead({
+  link: [
+    { rel: "canonical", href: canonicalUrl },
+    { rel: "sitemap", href: new URL("/sitemap.xml", baseUrl).href },
+  ],
+});
+
+useSeoMeta({
+  title: "Join a Live Quiz - jovVix",
+  description:
+    "Enter a game code to join a live quiz on jovVix. Play real-time multiplayer quizzes from any device and compete on the live scoreboard.",
+  ogTitle: "Join a Live Quiz - jovVix",
+  ogDescription:
+    "Enter a game code to join a live quiz on jovVix. Play real-time multiplayer quizzes from any device and compete on the live scoreboard.",
+  ogType: "website",
+  ogUrl: canonicalUrl,
+  ogImage: shareImageUrl,
+});
+
 const userData = useUsersStore();
 const { setUserData } = userData;
 const sessionStore = useSessionStore();
 const { setActiveQuizTitle } = sessionStore;
 const authChecking = ref(true);
-const route = useRoute();
 
 const codeparam = computed(() => route.query.code || "");
 const code = ref(

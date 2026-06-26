@@ -179,6 +179,23 @@ definePageMeta({
   layout: "auth",
 });
 
+const seoCanonical = new URL(useRoute().path, useRuntimeConfig().public.baseUrl)
+  .href;
+
+useHead({
+  link: [{ rel: "canonical", href: seoCanonical }],
+});
+
+useSeoMeta({
+  title: "Login - jovVix",
+  description:
+    "Log in to jovVix to create, host, and manage your real-time quizzes, view reports, and track participant scores from your dashboard.",
+  ogTitle: "Login - jovVix",
+  ogDescription:
+    "Log in to jovVix to create, host, and manage your real-time quizzes, view reports, and track participant scores from your dashboard.",
+  ogUrl: seoCanonical,
+});
+
 const userData = useUsersStore();
 const { getUserData } = userData;
 const route = useRoute();

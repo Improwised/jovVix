@@ -9,15 +9,10 @@ definePageMeta({
   hideSidebar: true,
 });
 
-useHead({
-  title: "Quiz Results - Jovvix",
-  meta: [
-    {
-      name: "description",
-      content:
-        "View your quiz results, ranking, and per-question analysis after the game.",
-    },
-  ],
+useSeoMeta({
+  title: "Quiz Results - jovVix",
+  description:
+    "View your quiz results, ranking, and per-question analysis after the game.",
 });
 </script>
 
