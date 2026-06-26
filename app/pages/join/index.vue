@@ -45,6 +45,59 @@
     <div
       class="relative w-full max-w-[440px] mx-auto z-10 flex flex-col items-center"
     >
+      <!-- Session-ended notice (shown when redirected here from /join/play with an error) -->
+      <div
+        v-if="sessionNotice"
+        class="mb-5 w-full -rotate-[0.6deg]"
+        role="alert"
+        aria-live="polite"
+      >
+        <div
+          class="relative jv-border-rough bg-jv-white p-4 shadow-brutal-sm sm:p-5"
+        >
+          <span
+            class="absolute -top-[10px] left-6 z-10 h-3 w-10 rotate-[2deg] bg-jv-coral"
+            aria-hidden="true"
+          ></span>
+          <button
+            type="button"
+            class="absolute right-2 top-2 grid size-7 place-items-center rounded-full text-jv-ink/60 transition-colors hover:bg-jv-canvas hover:text-jv-ink"
+            aria-label="Dismiss notice"
+            @click="dismissNotice"
+          >
+            <X class="size-4" :stroke-width="2.4" />
+          </button>
+          <div class="flex items-start gap-3 pr-6">
+            <span
+              class="grid size-9 shrink-0 rotate-[-3deg] place-items-center rounded-[8px] border-[2px] border-jv-ink bg-jv-yellow text-jv-ink shadow-brutal-sm"
+              aria-hidden="true"
+            >
+              <AlertCircle class="size-4" :stroke-width="2.4" />
+            </span>
+            <div class="min-w-0">
+              <p
+                class="font-headings text-[16px] leading-tight text-jv-ink sm:text-[18px]"
+              >
+                {{ sessionNotice.title }}
+              </p>
+              <p
+                class="mt-1 font-body text-[13px] font-bold leading-snug text-jv-muted sm:text-[14px]"
+              >
+                {{ sessionNotice.message }}
+              </p>
+              <NuxtLink
+                to="/"
+                class="mt-3 inline-flex h-9 items-center justify-center gap-1.5 rounded-full border-[2px] border-jv-ink bg-jv-coral px-4 font-body text-[12px] font-black text-white shadow-brutal-sm transition-transform hover:-rotate-[1deg] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none sm:text-[13px]"
+                aria-label="Return to home"
+              >
+                <Home class="size-3.5" :stroke-width="2.4" />
+                Back to Home
+              </NuxtLink>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Card -->
       <div class="relative rotate-1 w-full">
         <!-- "clip" tab -->
@@ -258,6 +311,9 @@ import {
   ArrowRight,
   Loader2,
   Sparkle,
+  AlertCircle,
+  Home,
+  X,
 } from "lucide-vue-next";
 import NavigationLink from "@/components/common/NavigationLink.vue";
 
@@ -273,6 +329,41 @@ const authChecking = ref(true);
 const route = useRoute();
 
 const codeparam = computed(() => route.query.code || "");
+
+// /join/play/[code] redirects players here with ?status=...&error=... when their
+// session can no longer be joined (back-navigated from scoreboard, expired code,
+// session terminated). Surface that in-page so the player sees what happened.
+const sessionNotice = ref(null);
+const noticePresets = {
+  "session was completed": {
+    title: "That quiz has ended",
+    message:
+      "The host has wrapped up this session, so there's no game to rejoin. Enter a new code below or head back home to browse public quizzes.",
+  },
+  "quiz-session-validation-failed": {
+    title: "Session no longer active",
+    message:
+      "This quiz session can't be joined anymore. It may have ended, been terminated, or expired.",
+  },
+  "invitation code not found": {
+    title: "Invitation code expired",
+    message:
+      "We couldn't find an active quiz for that code. Double-check the code with the host, or try a different one.",
+  },
+};
+const dismissNotice = () => {
+  sessionNotice.value = null;
+};
+onMounted(() => {
+  const err = String(route.query.error || "")
+    .trim()
+    .toLowerCase();
+  if (!err) return;
+  sessionNotice.value = noticePresets[err] || {
+    title: "Couldn't join that quiz",
+    message: route.query.error,
+  };
+});
 const code = ref(
   String(codeparam.value).replace(/\s+/g, "").replace(/\D/g, "").slice(0, 6)
 );

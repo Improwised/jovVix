@@ -94,12 +94,29 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 
 	session, err := qc.activeQuizModel.GetSessionByCode(invitationCode)
 	if err != nil {
+		// Surface a fail event before closing so the player UI can route to /join
+		// with a banner instead of getting stuck on the "Connecting to lobby…"
+		// skeleton. Players hit this when back-navigating from the scoreboard
+		// into a session that has already wrapped up — GetSessionByCode filters
+		// on is_active=true so a deactivated session reads as ErrNoRows.
+		response.Action = constants.ActionJoinQuiz
 		if err == sql.ErrNoRows {
-			qc.logger.Error(constants.ErrInvitationCodeNotFound, zap.Error(err))
-			c.Close()
-			return
+			response.Data = constants.ErrInvitationCodeNotFound
+			qc.logger.Info(constants.ErrInvitationCodeNotFound, zap.String("invitation_code", invitationCode))
+		} else {
+			response.Data = constants.UnknownError
+			qc.logger.Error("error in invitation code", zap.Error(err))
 		}
-		qc.logger.Error("error in invitation code", zap.Error(err))
+
+		wsErr := func() error {
+			JoinMu.Lock()
+			defer JoinMu.Unlock()
+			return utils.JSONFailWs(c, constants.EventJoinQuiz, response)
+		}()
+		if wsErr != nil {
+			qc.logger.Error(fmt.Sprintf("socket error on join: %s event, %s action", constants.EventJoinQuiz, response.Action), zap.Error(wsErr))
+		}
+
 		c.Close()
 		return
 	}
