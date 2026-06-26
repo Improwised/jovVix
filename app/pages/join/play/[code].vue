@@ -60,6 +60,18 @@ const handleCustomChange = (isFullScreenEvent) => {
   }
 };
 
+// Safety net: server closed the socket before we entered the lobby (typically
+// a back-nav into a session that has already wrapped up). Bounce to /join so
+// the banner there can explain what happened instead of leaving the player
+// stuck on the "Connecting to lobby…" skeleton.
+const handleSessionUnavailable = () => {
+  if (monitorTerminateQuiz.value) return;
+  if (currentComponent.value !== "Loading") return;
+  router.replace(
+    "/join?status=fail&error=" + encodeURIComponent(app.$SessionWasCompleted)
+  );
+};
+
 // main functions
 onMounted(() => {
   // core logic
@@ -70,7 +82,8 @@ onMounted(() => {
         username.value,
         handleQuizEvents,
         handleNetworkEvent,
-        handleNetworkEstablished
+        handleNetworkEstablished,
+        handleSessionUnavailable
       );
     } catch (err) {
       toast.info(app.$ReloadRequired);
@@ -94,8 +107,12 @@ const handleQuizEvents = async (message) => {
     return await router.push("/admin/arrange/" + message.data.sessionId);
   } else if (
     message.data == app.$InvitationCodeNotFound ||
-    message.data == app.$QuizSessionValidationFailed
+    message.data == app.$QuizSessionValidationFailed ||
+    message.data == app.$SessionWasCompleted
   ) {
+    // Players hit this when they back-navigate from the scoreboard into a quiz
+    // whose session already terminated — bounce them to /join so the banner can
+    // explain what happened instead of leaving them on a stalled play screen.
     return await router.push(
       "/join?status=" + message.status + "&error=" + message.data
     );

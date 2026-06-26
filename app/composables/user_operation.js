@@ -4,7 +4,14 @@ import QuizHandler from "./quiz_operation";
 import constants from "~~/config/constants";
 
 export default class UserOperation extends QuizHandler {
-  constructor(code, username, handler, errorHandler, successHandler) {
+  constructor(
+    code,
+    username,
+    handler,
+    errorHandler,
+    successHandler,
+    sessionUnavailableHandler
+  ) {
     const url = useRuntimeConfig().public;
     super(
       url.apiSocketUrl + "/join/" + code + "?username=" + username,
@@ -13,6 +20,10 @@ export default class UserOperation extends QuizHandler {
     );
     this.errorHandler = errorHandler;
     this.successHandler = successHandler;
+    // Fires when the socket opens but is closed by the server before we ever
+    // reach the Waiting room (i.e. the session no longer exists or has been
+    // terminated). The page uses this to bounce the player back to /join.
+    this.sessionUnavailableHandler = sessionUnavailableHandler;
     this.apiUrl = url.apiUrl;
     this.pingInterval = null;
     this.isWaiting = false;
@@ -62,6 +73,12 @@ export default class UserOperation extends QuizHandler {
     } else {
       console.log("stopping ping of user");
       this.stopPing();
+      // Server-side close before the lobby loaded: safety net for back-nav into
+      // a session that's already wrapped up. The backend should send a fail
+      // event in this case, but this catches stale builds / message races.
+      if (this.isOpen && typeof this.sessionUnavailableHandler === "function") {
+        this.sessionUnavailableHandler();
+      }
     }
   }
 
