@@ -219,6 +219,13 @@ definePageMeta({
   layout: "empty",
 });
 
+useSeoMeta({
+  title: "Admin Dashboard - jovVix",
+  description:
+    "Manage your quizzes, sessions, and reports from the jovVix admin dashboard.",
+  robots: "noindex, nofollow",
+});
+
 const config = useRuntimeConfig();
 const toast = usePush();
 const userStore = useUsersStore();

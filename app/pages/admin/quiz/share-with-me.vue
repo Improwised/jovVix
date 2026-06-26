@@ -6,6 +6,13 @@ definePageMeta({
   layout: "empty",
 });
 
+useSeoMeta({
+  title: "Shared With Me - jovVix",
+  description:
+    "Access quizzes that other creators have shared with you on jovVix.",
+  robots: "noindex, nofollow",
+});
+
 const url = useRuntimeConfig().public;
 const headers = useRequestHeaders(["cookie"]);
 

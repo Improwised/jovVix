@@ -5,6 +5,13 @@ definePageMeta({
   layout: "empty",
 });
 
+useSeoMeta({
+  title: "Quiz Results - jovVix",
+  description:
+    "Review detailed results and analytics for a completed quiz session on jovVix.",
+  robots: "noindex, nofollow",
+});
+
 const headers = useRequestHeaders(["cookie"]);
 const url = useRuntimeConfig().public;
 const route = useRoute();
