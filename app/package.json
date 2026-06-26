@@ -35,7 +35,7 @@
     "husky": "^8.0.3",
     "jsdom": "^25.0.1",
     "lint-staged": "^16.1.2",
-    "nuxt": "^3.14.1592",
+    "nuxt": "^3.21.7",
     "playwright-core": "^1.49.0",
     "prettier": "^2.8.2",
     "shadcn-nuxt": "^2.2.0",
