@@ -20,7 +20,7 @@ definePageMeta({
 const route = useRoute();
 const { baseUrl } = useRuntimeConfig().public;
 const canonicalUrl = new URL(route.path, baseUrl).href;
-const shareImageUrl = new URL("/jovvix-logo.png", baseUrl).href;
+const shareImageUrl = new URL("/og-image.png", baseUrl).href;
 
 useHead({
   link: [{ rel: "canonical", href: canonicalUrl }],
