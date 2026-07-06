@@ -197,7 +197,7 @@ async function setFlowIDAndCSRFToken() {
             <h1
               class="font-headings text-jv-ink text-[28px] sm:text-[34px] leading-none m-0 whitespace-nowrap"
             >
-              Create account
+              Create Account
             </h1>
             <!-- Hand-drawn underline doodle -->
             <svg
@@ -254,7 +254,7 @@ async function setFlowIDAndCSRFToken() {
                 type="text"
                 name="traits.name.first"
                 class="flex-1 min-w-0 bg-transparent border-0 outline-none font-body text-jv-ink placeholder:text-jv-ink/40 text-sm sm:text-base"
-                placeholder="Virat"
+                placeholder="John"
                 required
               />
             </div>
@@ -288,7 +288,7 @@ async function setFlowIDAndCSRFToken() {
                 type="text"
                 name="traits.name.last"
                 class="flex-1 min-w-0 bg-transparent border-0 outline-none font-body text-jv-ink placeholder:text-jv-ink/40 text-sm sm:text-base"
-                placeholder="Kohli"
+                placeholder="Doe"
                 required
               />
             </div>
@@ -322,7 +322,7 @@ async function setFlowIDAndCSRFToken() {
                 type="email"
                 name="traits.email"
                 class="flex-1 min-w-0 bg-transparent border-0 outline-none font-body text-jv-ink placeholder:text-jv-ink/40 text-sm sm:text-base"
-                placeholder="virat.kohli@gmail.com"
+                placeholder="you@example.com"
                 required
               />
             </div>
