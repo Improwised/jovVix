@@ -39,7 +39,7 @@
             Class Performance Overview
           </div>
           <h2
-            class="mt-3 font-headings text-[28px] leading-tight sm:text-[32px] md:text-[36px]"
+            class="mt-3 font-headings text-[28px] leading-tight text-white sm:text-[32px] md:text-[36px]"
           >
             {{ overallMessage }}
           </h2>
