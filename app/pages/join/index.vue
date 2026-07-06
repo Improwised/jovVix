@@ -276,7 +276,7 @@
         <p class="m-0">
           Don't have a code?
           <NuxtLink
-            to="/"
+            to="/#public-quiz"
             class="text-jv-coral underline underline-offset-4 decoration-2 font-semibold ml-1"
           >
             Browse Public Games

@@ -37,4 +37,10 @@ useSeoMeta({
   ogUrl: canonicalUrl,
   ogImage: shareImageUrl,
 });
+
+onMounted(() => {
+  if (route.hash) {
+    document.querySelector(route.hash)?.scrollIntoView({ behavior: "smooth" });
+  }
+});
 </script>
