@@ -2,9 +2,9 @@
   <section
     v-if="publicQuizzes.length > 0"
     id="public-quiz"
-    class="mt-2 sm:mt-4 scroll-mt-6"
+    class="mt-0 sm:mt-1 scroll-mt-6"
   >
-    <div class="mb-5 sm:mb-6 flex items-center justify-between gap-3 sm:gap-4">
+    <div class="mb-4 sm:mb-5 flex items-center justify-between gap-3 sm:gap-4">
       <h3
         class="flex items-center gap-2 font-headings text-[22px] min-[420px]:text-[26px] sm:text-[30px] md:text-[34px] leading-[1.2] text-jv-ink"
       >

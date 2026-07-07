@@ -1,6 +1,6 @@
 <template>
   <section
-    class="grid items-start gap-10 sm:gap-12 lg:gap-12 xl:gap-20 lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_400px]"
+    class="grid items-start gap-6 sm:gap-10 lg:gap-12 xl:gap-20 lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_400px]"
   >
     <div
       class="flex flex-col gap-3 items-start order-2 lg:order-1 w-full min-w-0"
@@ -25,7 +25,7 @@
       <!-- Mobile/sm carousel (under md) -->
       <Carousel
         :opts="{ align: 'start', loop: false }"
-        class="group mt-5 sm:mt-7 w-full md:hidden"
+        class="group mt-4 sm:mt-6 w-full md:hidden"
       >
         <CarouselContent class="-ml-4 py-2">
           <CarouselItem
@@ -46,7 +46,7 @@
 
       <!-- md+ static grid -->
       <div
-        class="hidden md:grid mt-5 sm:mt-7 gap-5 sm:gap-6 md:gap-8 lg:gap-10 grid-cols-3 w-full"
+        class="hidden md:grid mt-4 sm:mt-6 gap-5 sm:gap-6 md:gap-8 lg:gap-10 grid-cols-3 w-full"
       >
         <HeroActionCard
           v-for="card in actionCards"

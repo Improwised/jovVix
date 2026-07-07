@@ -1,5 +1,5 @@
 <template>
-  <main class="flex flex-col gap-8 sm:gap-10 px-4 sm:px-6 md:px-8 py-5 md:py-6">
+  <main class="flex flex-col gap-6 sm:gap-8 px-4 sm:px-6 md:px-8 py-4 md:py-5">
     <LandingTopActions />
     <HeroSection />
     <JoinLiveQuiz />
