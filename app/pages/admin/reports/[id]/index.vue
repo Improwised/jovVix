@@ -72,33 +72,33 @@
           </div>
 
           <div class="mt-4 grid grid-cols-3 gap-3">
-            <div class="min-w-0">
+            <div class="flex min-w-0 flex-col">
               <div
                 class="text-[10px] font-black uppercase tracking-[0.12em] text-jv-muted"
               >
                 Questions reviewed
               </div>
-              <div class="mt-1 text-[20px] font-black text-jv-ink">
+              <div class="mt-auto pt-1 text-[20px] font-black text-jv-ink">
                 {{ totalQuestions }}
               </div>
             </div>
-            <div class="min-w-0">
+            <div class="flex min-w-0 flex-col">
               <div
                 class="text-[10px] font-black uppercase tracking-[0.12em] text-jv-muted"
               >
-                Participants
+                Total participants
               </div>
-              <div class="mt-1 text-[20px] font-black text-jv-ink">
+              <div class="mt-auto pt-1 text-[20px] font-black text-jv-ink">
                 {{ totalParticipants }}
               </div>
             </div>
-            <div class="min-w-0">
+            <div class="flex min-w-0 flex-col">
               <div
                 class="text-[10px] font-black uppercase tracking-[0.12em] text-jv-muted"
               >
                 Avg. completion
               </div>
-              <div class="mt-1 text-[20px] font-black text-jv-ink">
+              <div class="mt-auto pt-1 text-[20px] font-black text-jv-ink">
                 {{ avgCompletion.toFixed(2) }} sec
               </div>
             </div>
