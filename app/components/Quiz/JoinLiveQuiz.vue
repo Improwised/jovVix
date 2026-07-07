@@ -1,21 +1,21 @@
 <template>
   <div
-    class="relative bg-jv-yellow/85 mx-auto w-full max-w-[1386px] jv-border-rough shadow-brutal-lg p-6 sm:p-8 md:p-10 text-center -rotate-1 mt-4"
+    class="relative bg-jv-yellow/85 mx-auto w-full max-w-[1386px] jv-border-rough shadow-brutal-lg p-5 sm:p-6 md:p-8 text-center -rotate-1 mt-2 sm:mt-3"
   >
     <div
-      class="mx-auto inline-flex size-12 sm:size-14 items-center justify-center bg-jv-coral text-white jv-border-rough shadow-brutal-sm rotate-3"
+      class="mx-auto inline-flex size-11 sm:size-12 items-center justify-center bg-jv-coral text-white jv-border-rough shadow-brutal-sm rotate-3"
       aria-hidden="true"
     >
-      <Gamepad2 class="size-6 sm:size-7" />
+      <Gamepad2 class="size-5 sm:size-6" />
     </div>
 
     <h2
-      class="mt-4 sm:mt-5 font-headings text-jv-ink text-[24px] min-[420px]:text-[28px] sm:text-[34px] md:text-[40px] leading-[1.15]"
+      class="mt-3 sm:mt-4 font-headings text-jv-ink text-[24px] min-[420px]:text-[28px] sm:text-[34px] md:text-[40px] leading-[1.15]"
     >
       Join a Live Quiz
     </h2>
     <p
-      class="mt-2 sm:mt-3 font-body text-jv-ink/80 text-[14px] sm:text-[16px] md:text-[18px] leading-[1.55] max-w-md mx-auto px-2"
+      class="mt-2 font-body text-jv-ink/80 text-[14px] sm:text-[16px] md:text-[18px] leading-[1.55] max-w-md mx-auto px-2"
     >
       Enter your event invitation code below to jump straight into the action
       and compete with friends!
@@ -24,7 +24,7 @@
     <form
       action="https://app.jovvix.com/join"
       method="get"
-      class="mt-6 flex flex-col sm:flex-row items-stretch gap-3 sm:gap-0 bg-white jv-border-rough shadow-brutal p-2 max-w-lg mx-auto"
+      class="mt-4 sm:mt-5 flex flex-col sm:flex-row items-stretch gap-3 sm:gap-0 bg-white jv-border-rough shadow-brutal p-2 max-w-lg mx-auto"
     >
       <div class="flex items-center flex-1 gap-2 px-3 font-body text-jv-ink">
         <Hash size="18" class="text-jv-muted shrink-0" />
