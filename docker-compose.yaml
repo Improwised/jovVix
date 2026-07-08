@@ -11,7 +11,13 @@ services:
     ports:
       - 5432:5432
     volumes:
+      - ./pkg/kratos/kratos-pg-init-script:/docker-entrypoint-initdb.d
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   migration:
     build:
@@ -19,7 +25,8 @@ services:
       dockerfile: Dockerfile
     restart: on-failure
     depends_on:
-      - db
+      db: 
+        condition: service_healthy
     env_file:
       - ./api/.env.docker
     command: ["./jovvix", "migrate", "up"]
@@ -45,10 +52,10 @@ services:
     env_file:
       - ./api/.env.docker
     depends_on:
+      - kratos
       - db
       - migration
       - redis
-      - kratos
     command: ["./jovvix", "api"]
 
   web:
@@ -68,25 +75,26 @@ services:
     environment:
       - DSN=postgres://jovvix:jovvix@db:5432/jovvix?sslmode=disable&search_path=kratos
       - LOG_LEVEL=trace
-
     command: migrate sql -e --yes
     restart: on-failure
     depends_on:
       - db
+      - migration
 
   kratos:
     image: oryd/kratos:v1.0.0
     ports:
       - "4433:${SERVE_PUBLIC_PORT:-4433}" # public
       - "4434:${SERVE_ADMIN_PORT:-4434}" # admin
-
     env_file:
       - ./api/.env.kratos
     command: serve -c /etc/config/kratos/kratos.yml --watch-courier
     restart: always
     depends_on:
-      - db
-      - kratos_migrate
+      db:
+        condition: service_healthy
+      kratos_migrate:
+        condition: service_completed_successfully
     volumes:
       - "./api/pkg/kratos:/etc/config/kratos"
 
