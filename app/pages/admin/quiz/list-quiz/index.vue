@@ -1,6 +1,12 @@
 <script setup>
-import { computed, ref, watchEffect } from "vue";
-import { ChevronDown, Filter, Search, X } from "lucide-vue-next";
+import { computed, ref, watch, watchEffect } from "vue";
+import {
+  ChevronDown,
+  Filter,
+  Image as ImageIcon,
+  Search,
+  X,
+} from "lucide-vue-next";
 import { usePush } from "notivue";
 import AdminQuizListCard from "@/components/quiz-list/AdminQuizListCard.vue";
 import ShareQuizModal from "@/components/Quiz/ShareQuizModal.vue";
@@ -20,6 +26,7 @@ useSeoMeta({
 });
 
 const url = useRuntimeConfig().public;
+const app = useNuxtApp();
 const headers = useRequestHeaders(["cookie"]);
 const toast = usePush();
 const router = useRouter();
@@ -38,10 +45,13 @@ const shareModalOpen = ref(false);
 const shareQuizId = ref("");
 const createQuizOpen = ref(false);
 const createQuizPending = ref(false);
+const coverImageName = ref("");
 const createQuizForm = ref({
   title: "",
   description: "",
   is_public: false,
+  category_id: "",
+  cover_image: "",
 });
 const selectedFilter = ref("All Quiz");
 const filterOpen = ref(false);
@@ -104,6 +114,26 @@ const {
   credentials: "include",
 });
 
+const { data: categoriesData } = useFetch(`${url.apiUrl}/categories`, {
+  method: "GET",
+  headers: headers,
+  credentials: "include",
+});
+const categories = computed(() => categoriesData.value?.data || []);
+
+// Category and cover image only apply to public quizzes; drop them if the
+// admin unticks the checkbox after filling them in.
+watch(
+  () => createQuizForm.value.is_public,
+  (isPublic) => {
+    if (!isPublic) {
+      createQuizForm.value.category_id = "";
+      createQuizForm.value.cover_image = "";
+      coverImageName.value = "";
+    }
+  }
+);
+
 watchEffect(() => {
   if (quizError.value?.data?.code === 401) {
     navigateTo("/account/login");
@@ -129,6 +159,13 @@ const formatCreatedAt = (value) => {
   }).format(date)}`;
 };
 
+// The API serializes sql.NullString as { String, Valid } when populated; null otherwise.
+const nullableString = (value) => {
+  if (!value) return "";
+  if (typeof value === "string") return value;
+  return value.String || "";
+};
+
 const quizzes = computed(() =>
   (quizList.value?.data || []).map((quiz, index) => ({
     id: quiz.id,
@@ -136,7 +173,8 @@ const quizzes = computed(() =>
     description: quiz.description.String,
     createdAt: formatCreatedAt(quiz.created_at),
     questionCount: quiz.total_questions || 0,
-    image: quizImages[index % quizImages.length],
+    image:
+      nullableString(quiz.cover_image) || quizImages[index % quizImages.length],
     tiltClass: tiltClasses[index % tiltClasses.length],
     viewUrl: `/admin/quiz/list-quiz/${quiz.id}`,
     isPublic: !!quiz.is_public,
@@ -227,10 +265,46 @@ const closeCreateQuizModal = () => {
     title: "",
     description: "",
     is_public: false,
+    category_id: "",
+    cover_image: "",
   };
+  coverImageName.value = "";
   if (route.query.create === "1") {
     router.replace({ path: route.path, query: {} });
   }
+};
+
+const readAsBase64 = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => resolve(e.target.result);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+
+const handleCoverImage = async (event) => {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  if (!app.$validImageTypes.includes(file.type)) {
+    toast.error(
+      "Please upload a valid image file (JPEG, PNG, GIF, WEBP, HEIC, HEIF)."
+    );
+    event.target.value = "";
+    return;
+  }
+  if (file.size > url.maxImageFileSize) {
+    const limitKb = Math.round(url.maxImageFileSize / 1024);
+    toast.error(`Please upload an image less than ${limitKb} KB.`);
+    event.target.value = "";
+    return;
+  }
+  createQuizForm.value.cover_image = await readAsBase64(file);
+  coverImageName.value = file.name;
+};
+
+const removeCoverImage = () => {
+  createQuizForm.value.cover_image = "";
+  coverImageName.value = "";
 };
 
 const handleCreateQuiz = async () => {
@@ -483,6 +557,76 @@ const handleCreateQuiz = async () => {
                 </span>
               </span>
             </label>
+
+            <div
+              v-if="canCreatePublicQuiz && createQuizForm.is_public"
+              class="grid gap-5 sm:grid-cols-2 sm:gap-x-8"
+            >
+              <label class="grid content-start gap-2">
+                <span
+                  class="text-[13px] font-black uppercase tracking-[0.16em] text-jv-ink"
+                >
+                  Category
+                </span>
+                <select
+                  v-model="createQuizForm.category_id"
+                  class="h-14 border-[3px] border-jv-ink bg-jv-canvas px-4 text-[16px] font-semibold text-jv-ink outline-none transition-shadow focus:shadow-brutal-sm"
+                >
+                  <option value="">No category (shows under "Other")</option>
+                  <option
+                    v-for="category in categories"
+                    :key="category.id"
+                    :value="category.id"
+                  >
+                    {{ category.name }}
+                  </option>
+                </select>
+              </label>
+
+              <div class="grid content-start gap-2">
+                <span
+                  class="text-[13px] font-black uppercase tracking-[0.16em] text-jv-ink"
+                >
+                  Cover Image
+                </span>
+                <label
+                  v-if="!createQuizForm.cover_image"
+                  class="flex h-14 cursor-pointer items-center justify-center gap-2 border-[3px] border-dashed border-jv-ink/40 bg-jv-canvas px-4 text-[15px] font-semibold text-jv-muted transition-colors hover:bg-jv-yellow/20"
+                >
+                  <ImageIcon class="size-4 shrink-0" :stroke-width="2.3" />
+                  <span class="truncate">Upload cover image</span>
+                  <input
+                    type="file"
+                    class="hidden"
+                    accept="image/*"
+                    @change="handleCoverImage"
+                  />
+                </label>
+                <div
+                  v-else
+                  class="flex h-14 items-center gap-3 border-[3px] border-jv-ink bg-jv-canvas px-3"
+                >
+                  <img
+                    :src="createQuizForm.cover_image"
+                    alt="Cover image preview"
+                    class="h-10 w-14 shrink-0 border-2 border-jv-ink object-cover"
+                  />
+                  <span
+                    class="min-w-0 flex-1 truncate text-[14px] font-semibold text-jv-ink"
+                  >
+                    {{ coverImageName }}
+                  </span>
+                  <button
+                    type="button"
+                    class="grid size-8 shrink-0 place-items-center text-jv-ink transition-colors hover:text-jv-coral"
+                    aria-label="Remove cover image"
+                    @click="removeCoverImage"
+                  >
+                    <X class="size-4" :stroke-width="2.4" />
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div

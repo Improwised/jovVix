@@ -75,6 +75,14 @@ const (
 	ErrUpdateUserPermissionForQuiz = "error while updating user permission for particular quiz"
 	ErrDeleteUserPermissionForQuiz = "error while deleting user permission for particular quiz"
 	ErrGetStreakCount              = "error while getting streaks count"
+	ErrListCategories              = "error while listing quiz categories"
+	ErrCreateCategory              = "error while creating quiz category"
+	ErrUpdateCategory              = "error while updating quiz category"
+	ErrDeleteCategory              = "error while deleting quiz category"
+	ErrCategoryNotFound            = "quiz category not found"
+	ErrCategoryAlreadyExists       = "a category with this name already exists"
+	ErrInvalidCoverImage           = "cover image must be an image"
+	ErrCoverImageTooLarge          = "cover image is too large"
 )
 
 // Bad Request Message
@@ -133,6 +141,11 @@ const (
 	QuizId       = "quiz_id"
 	QuestionId   = "question_id"
 	SharedQuizId = "shared_quiz_id"
+	CategoryId   = "category_id"
+
+	// Base64 data-URI cover images inflate ~4/3 over the raw file; 1 MiB of
+	// text comfortably covers the 500 KB client-side file limit.
+	MaxCoverImageBytes = 1 << 20
 )
 
 // components

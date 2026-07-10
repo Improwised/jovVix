@@ -231,6 +231,7 @@ import {
   Menu,
   MoreVertical,
   Plus,
+  Tag,
   UserRound,
   X,
 } from "lucide-vue-next";
@@ -268,6 +269,12 @@ const showAdminNav = computed(
 
 const currentUser = computed(() => userDataStore.getUserData());
 
+// Categories manage public-catalog grouping, so the nav item only shows for
+// the configured public-quiz admins (same gate as the API enforces).
+const canManageCategories = computed(
+  () => !!currentUser.value?.canCreatePublicQuiz
+);
+
 const userName = computed(
   () => currentUser.value?.firstname || currentUser.value?.username || "Profile"
 );
@@ -283,6 +290,8 @@ const isActiveRoute = (url) => {
   if (url === "/admin/quiz/list-quiz")
     return route.path.startsWith("/admin/quiz");
   if (url === "/admin/reports") return route.path.startsWith("/admin/reports");
+  if (url === "/admin/categories")
+    return route.path.startsWith("/admin/categories");
   if (url === "/admin") return route.path === "/admin";
 
   return route.path === url;
@@ -304,6 +313,16 @@ const navItems = computed(() => {
         icon: BarChart3,
         active: isActiveRoute("/admin/reports"),
       },
+      ...(canManageCategories.value
+        ? [
+            {
+              label: "Categories",
+              url: "/admin/categories",
+              icon: Tag,
+              active: isActiveRoute("/admin/categories"),
+            },
+          ]
+        : []),
       {
         label: "Profile",
         url: "/admin",
@@ -332,6 +351,16 @@ const mobileNavItems = computed(() => {
         icon: BarChart3,
         active: isActiveRoute("/admin/reports"),
       },
+      ...(canManageCategories.value
+        ? [
+            {
+              label: "Categories",
+              url: "/admin/categories",
+              icon: Tag,
+              active: isActiveRoute("/admin/categories"),
+            },
+          ]
+        : []),
       {
         label: "Profile",
         url: "/admin",

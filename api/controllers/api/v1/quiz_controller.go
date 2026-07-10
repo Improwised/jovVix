@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/Improwised/jovvix/api/config"
 	"github.com/Improwised/jovvix/api/constants"
@@ -21,12 +22,13 @@ import (
 )
 
 type QuizController struct {
-	quizModel       *models.QuizModel
-	questionModel   *models.QuestionModel
-	activeQuizModel *models.ActiveQuizModel
-	quizSvc         *services.QuizService
-	appConfig       *config.AppConfig
-	logger          *zap.Logger
+	quizModel         *models.QuizModel
+	questionModel     *models.QuestionModel
+	activeQuizModel   *models.ActiveQuizModel
+	quizCategoryModel *models.QuizCategoryModel
+	quizSvc           *services.QuizService
+	appConfig         *config.AppConfig
+	logger            *zap.Logger
 }
 
 func InitQuizController(db *goqu.Database, logger *zap.Logger, appConfig *config.AppConfig) (*QuizController, error) {
@@ -34,16 +36,18 @@ func InitQuizController(db *goqu.Database, logger *zap.Logger, appConfig *config
 	quizModel := models.InitQuizModel(db)
 	questionModel := models.InitQuestionModel(db, logger)
 	activeQuizModel := models.InitActiveQuizModel(db, logger)
+	quizCategoryModel := models.InitQuizCategoryModel(db)
 
 	quizSvc := services.NewQuizService(db, logger)
 
 	return &QuizController{
-		quizModel:       quizModel,
-		questionModel:   questionModel,
-		activeQuizModel: activeQuizModel,
-		quizSvc:         quizSvc,
-		appConfig:       appConfig,
-		logger:          logger,
+		quizModel:         quizModel,
+		questionModel:     questionModel,
+		activeQuizModel:   activeQuizModel,
+		quizCategoryModel: quizCategoryModel,
+		quizSvc:           quizSvc,
+		appConfig:         appConfig,
+		logger:            logger,
 	}, nil
 }
 
@@ -101,7 +105,36 @@ func (ctrl *QuizController) CreateQuiz(c *fiber.Ctx) error {
 		}
 	}
 
-	quizId, err := ctrl.quizModel.CreateQuiz(quizReq.Title, quizReq.Description, userID, isPublic)
+	// Category and cover image only exist for the public catalog; drop them
+	// whenever the quiz ends up private (same coercion as is_public above).
+	categoryId := quizReq.CategoryId
+	coverImage := quizReq.CoverImage
+	if !isPublic {
+		categoryId = ""
+		coverImage = ""
+	}
+
+	if coverImage != "" {
+		if !strings.HasPrefix(coverImage, "data:image/") {
+			return utils.JSONFail(c, http.StatusBadRequest, constants.ErrInvalidCoverImage)
+		}
+		if len(coverImage) > constants.MaxCoverImageBytes {
+			return utils.JSONFail(c, http.StatusBadRequest, constants.ErrCoverImageTooLarge)
+		}
+	}
+
+	if categoryId != "" {
+		_, err := ctrl.quizCategoryModel.GetCategoryById(categoryId)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				return utils.JSONFail(c, http.StatusBadRequest, constants.ErrCategoryNotFound)
+			}
+			ctrl.logger.Error("error fetching category for quiz creation", zap.Error(err))
+			return utils.JSONError(c, http.StatusInternalServerError, err.Error())
+		}
+	}
+
+	quizId, err := ctrl.quizModel.CreateQuiz(quizReq.Title, quizReq.Description, userID, isPublic, categoryId, coverImage)
 	if err != nil {
 		ctrl.logger.Error("error in creating empty quiz", zap.Error(err))
 		return utils.JSONFail(c, http.StatusBadRequest, constants.ErrRegisterQuiz)

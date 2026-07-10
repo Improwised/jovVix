@@ -55,6 +55,8 @@ type QuizWithQuestions struct {
 	Description    sql.NullString `json:"description,omitempty" db:"description"`
 	CreatorID      string         `json:"creator_id,omitempty" db:"creator_id"`
 	IsPublic       bool           `json:"is_public" db:"is_public"`
+	CategoryName   sql.NullString `json:"category_name,omitempty" db:"category_name"`
+	CoverImage     sql.NullString `json:"cover_image,omitempty" db:"cover_image"`
 	CreatedAt      time.Time      `json:"created_at,omitempty" db:"created_at,omitempty"`
 	UpdatedAt      time.Time      `json:"updated_at,omitempty" db:"updated_at,omitempty"`
 	TotalQuestions int            `json:"total_questions" db:"total_questions"`
@@ -73,6 +75,7 @@ func (model *QuizModel) GetQuizzesByAdmin(creator_id string) ([]QuizWithQuestion
 			goqu.I("quizzes.description"),
 			goqu.I("quizzes.creator_id"),
 			goqu.I("quizzes.is_public"),
+			goqu.I("quizzes.cover_image"),
 			goqu.I("quizzes.created_at"),
 			goqu.I("quizzes.updated_at"),
 			questionsCountSubquery.As("total_questions"),
@@ -92,7 +95,7 @@ func (model *QuizModel) GetQuizzesByAdmin(creator_id string) ([]QuizWithQuestion
 	for rows.Next() {
 		var quizWithQuestions QuizWithQuestions
 
-		err := rows.Scan(&quizWithQuestions.ID, &quizWithQuestions.Title, &quizWithQuestions.Description, &quizWithQuestions.CreatorID, &quizWithQuestions.IsPublic, &quizWithQuestions.CreatedAt, &quizWithQuestions.UpdatedAt, &quizWithQuestions.TotalQuestions)
+		err := rows.Scan(&quizWithQuestions.ID, &quizWithQuestions.Title, &quizWithQuestions.Description, &quizWithQuestions.CreatorID, &quizWithQuestions.IsPublic, &quizWithQuestions.CoverImage, &quizWithQuestions.CreatedAt, &quizWithQuestions.UpdatedAt, &quizWithQuestions.TotalQuestions)
 
 		if err != nil {
 			return quizzes, err
@@ -110,21 +113,27 @@ func (model *QuizModel) GetQuizzesByAdmin(creator_id string) ([]QuizWithQuestion
 	return quizzes, nil
 }
 
-func (model *QuizModel) CreateQuiz(title, description, userId string, isPublic bool) (uuid.UUID, error) {
+func (model *QuizModel) CreateQuiz(title, description, userId string, isPublic bool, categoryId, coverImage string) (uuid.UUID, error) {
 	quizId, err := uuid.NewUUID()
 	if err != nil {
 		return quizId, err
 	}
 
-	ok, err := model.db.Insert(QuizzesTable).Rows(
-		goqu.Record{
-			"id":          quizId,
-			"title":       title,
-			"description": sql.NullString{Valid: description != "", String: description},
-			"creator_id":  userId,
-			"is_public":   isPublic,
-		},
-	).Returning("id").Executor().ScanVal(&quizId)
+	record := goqu.Record{
+		"id":          quizId,
+		"title":       title,
+		"description": sql.NullString{Valid: description != "", String: description},
+		"creator_id":  userId,
+		"is_public":   isPublic,
+	}
+	if categoryId != "" {
+		record["category_id"] = categoryId
+	}
+	if coverImage != "" {
+		record["cover_image"] = coverImage
+	}
+
+	ok, err := model.db.Insert(QuizzesTable).Rows(record).Returning("id").Executor().ScanVal(&quizId)
 	if err != nil {
 		return quizId, err
 	}
@@ -136,7 +145,7 @@ func (model *QuizModel) CreateQuiz(title, description, userId string, isPublic b
 }
 
 // GetPublicQuizzes returns quizzes whose creator has marked them public,
-// most recent first, with their question counts attached.
+// most recent first, with their question counts and category names attached.
 func (model *QuizModel) GetPublicQuizzes() ([]QuizWithQuestions, error) {
 	questionsCountSubquery := model.db.From("quiz_questions").
 		Select(goqu.COUNT("question_id")).
@@ -149,12 +158,15 @@ func (model *QuizModel) GetPublicQuizzes() ([]QuizWithQuestions, error) {
 			goqu.I("quizzes.description"),
 			goqu.I("quizzes.creator_id"),
 			goqu.I("quizzes.is_public"),
+			goqu.I("quiz_categories.name").As("category_name"),
+			goqu.I("quizzes.cover_image"),
 			goqu.I("quizzes.created_at"),
 			goqu.I("quizzes.updated_at"),
 			questionsCountSubquery.As("total_questions"),
 		).
-		Where(goqu.I("is_public").Eq(true)).
-		Order(goqu.I("created_at").Desc()).
+		LeftJoin(goqu.T(QuizCategoriesTable), goqu.On(goqu.Ex{"quiz_categories.id": goqu.I("quizzes.category_id")})).
+		Where(goqu.I("quizzes.is_public").Eq(true)).
+		Order(goqu.I("quizzes.created_at").Desc()).
 		Executor().Query()
 
 	if err != nil {
@@ -165,7 +177,7 @@ func (model *QuizModel) GetPublicQuizzes() ([]QuizWithQuestions, error) {
 	quizzes := []QuizWithQuestions{}
 	for rows.Next() {
 		var q QuizWithQuestions
-		if err := rows.Scan(&q.ID, &q.Title, &q.Description, &q.CreatorID, &q.IsPublic, &q.CreatedAt, &q.UpdatedAt, &q.TotalQuestions); err != nil {
+		if err := rows.Scan(&q.ID, &q.Title, &q.Description, &q.CreatorID, &q.IsPublic, &q.CategoryName, &q.CoverImage, &q.CreatedAt, &q.UpdatedAt, &q.TotalQuestions); err != nil {
 			return quizzes, err
 		}
 		decodedTitle, err := url.QueryUnescape(q.Title)
