@@ -6,6 +6,7 @@ import { useMusicStore } from "~~/store/music";
 import {
   Check,
   Copy,
+  Home,
   Hourglass,
   Info,
   Keyboard,
@@ -201,7 +202,17 @@ watch(
     v-if="isAdmin"
     class="flex min-h-screen flex-col gap-8 bg-jv-canvas px-4 py-5 text-jv-ink sm:gap-10 sm:px-6 md:px-8 md:py-6"
   >
-    <section class="mx-auto flex w-full max-w-[1220px] flex-1 flex-col">
+    <section
+      class="relative mx-auto flex w-full max-w-[1220px] flex-1 flex-col"
+    >
+      <NuxtLink
+        to="/"
+        class="absolute right-0 top-0 z-10 inline-flex h-11 rotate-[0.5deg] items-center justify-center gap-2 rounded-[8px] border-[2px] border-jv-ink bg-jv-white px-4 font-body text-[15px] font-bold text-jv-ink shadow-brutal-sm transition-transform hover:rotate-[-1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none sm:h-12 sm:px-5 sm:text-[18px]"
+        aria-label="Return to home"
+      >
+        <Home class="size-4 sm:size-5" :stroke-width="2.4" />
+        <span>Home</span>
+      </NuxtLink>
       <header class="mb-7 text-center sm:mb-9">
         <p
           class="font-body text-[11px] font-black uppercase tracking-[0.18em] text-jv-muted sm:text-[13px]"
