@@ -53,7 +53,7 @@ type QuizWithQuestions struct {
 	ID             uuid.UUID      `json:"id" db:"id"`
 	Title          string         `json:"title" db:"title" validate:"required"`
 	Description    sql.NullString `json:"description,omitempty" db:"description"`
-	CreatorID      string         `json:"creator_id,omitempty" db:"creator_id"`
+	CreatorID      *string        `json:"creator_id,omitempty" db:"creator_id"`
 	IsPublic       bool           `json:"is_public" db:"is_public"`
 	CategoryName   sql.NullString `json:"category_name,omitempty" db:"category_name"`
 	CoverImage     sql.NullString `json:"cover_image,omitempty" db:"cover_image"`
@@ -62,11 +62,19 @@ type QuizWithQuestions struct {
 	TotalQuestions int            `json:"total_questions" db:"total_questions"`
 }
 
-func (model *QuizModel) GetQuizzesByAdmin(creator_id string) ([]QuizWithQuestions, error) {
+// GetQuizzesByAdmin returns the quizzes an admin can manage. When includePublic
+// is true (public-quiz admins), it also includes every public quiz regardless of
+// creator, so they can manage quizzes made by other admins or orphaned ones.
+func (model *QuizModel) GetQuizzesByAdmin(creator_id string, includePublic bool) ([]QuizWithQuestions, error) {
 
 	questionsCountSubquery := model.db.From("quiz_questions").
 		Select(goqu.COUNT("question_id")).
 		Where(goqu.C("quiz_id").Eq(goqu.I("quizzes.id")))
+
+	var whereClause goqu.Expression = goqu.I("creator_id").Eq(creator_id)
+	if includePublic {
+		whereClause = goqu.Or(goqu.I("creator_id").Eq(creator_id), goqu.I("is_public").Eq(true))
+	}
 
 	rows, err := model.db.From("quizzes").
 		Select(
@@ -81,7 +89,7 @@ func (model *QuizModel) GetQuizzesByAdmin(creator_id string) ([]QuizWithQuestion
 			questionsCountSubquery.As("total_questions"),
 		).
 		Order(goqu.I("created_at").Desc()).
-		Where(goqu.I("creator_id").Eq(creator_id)).
+		Where(whereClause).
 		Executor().Query()
 
 	if err != nil {
@@ -585,14 +593,17 @@ func deleteQuizById(transaction *goqu.TxDatabase, quizId string) error {
 	return nil
 }
 
-// Deletes all quizzes created by a user and their related questions.
-// It deletes from the QuizQuestionsTable, removes related questions, and finally deletes the quizzes themselves.
+// Deletes the private quizzes created by a user and their related questions, and
+// preserves any public quizzes by orphaning them (creator_id -> NULL) so another
+// admin can keep managing them after the creator's account is gone.
+// It deletes from the QuizQuestionsTable, removes related questions, and finally deletes the private quizzes themselves.
 func (model *QuizModel) DeleteCreatedQuizzesByUserId(transaction *goqu.TxDatabase, userId string) error {
 
-	quizSubquery := transaction.From(QuizzesTable).Select("id").Where(goqu.Ex{"creator_id": userId})
+	// Only hard-delete private quizzes; public ones are preserved below.
+	privateQuizSubquery := transaction.From(QuizzesTable).Select("id").Where(goqu.Ex{"creator_id": userId, "is_public": false})
 
 	questionIds := []string{}
-	err := transaction.Delete(constants.QuizQuestionsTable).Where(goqu.Ex{"quiz_id": goqu.Op{"in": quizSubquery}}).Returning("question_id").Executor().ScanVals(&questionIds)
+	err := transaction.Delete(constants.QuizQuestionsTable).Where(goqu.Ex{"quiz_id": goqu.Op{"in": privateQuizSubquery}}).Returning("question_id").Executor().ScanVals(&questionIds)
 	if err != nil {
 		return err
 	}
@@ -602,7 +613,14 @@ func (model *QuizModel) DeleteCreatedQuizzesByUserId(transaction *goqu.TxDatabas
 		return err
 	}
 
-	_, err = transaction.Delete(QuizzesTable).Where(goqu.Ex{"id": goqu.Op{"in": quizSubquery}}).Executor().Exec()
+	_, err = transaction.Delete(QuizzesTable).Where(goqu.Ex{"id": goqu.Op{"in": privateQuizSubquery}}).Executor().Exec()
+	if err != nil {
+		return err
+	}
+
+	// Preserve public quizzes: detach the departing creator so the FK to users does
+	// not block the user delete, and any allowlisted admin can manage them later.
+	_, err = transaction.Update(QuizzesTable).Set(goqu.Record{"creator_id": nil}).Where(goqu.Ex{"creator_id": userId, "is_public": true}).Executor().Exec()
 
 	return err
 }

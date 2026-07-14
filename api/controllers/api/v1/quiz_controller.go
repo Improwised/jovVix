@@ -69,7 +69,13 @@ func InitQuizController(db *goqu.Database, logger *zap.Logger, appConfig *config
 func (ctrl *QuizController) GetAdminUploadedQuizzes(c *fiber.Ctx) error {
 	userID := quizUtilsHelper.GetString(c.Locals(constants.ContextUid))
 
-	quizzes, err := ctrl.quizModel.GetQuizzesByAdmin(userID)
+	// Public-quiz admins also see (and manage) every public quiz, not just their own.
+	includePublic := false
+	if user, ok := quizUtilsHelper.ConvertType[models.User](c.Locals(constants.ContextUser)); ok {
+		includePublic = ctrl.appConfig.Quiz.IsPublicQuizAdmin(user.Email)
+	}
+
+	quizzes, err := ctrl.quizModel.GetQuizzesByAdmin(userID, includePublic)
 
 	if err != nil {
 		ctrl.logger.Error("error occured while getting quizzes by admin", zap.Error(err))

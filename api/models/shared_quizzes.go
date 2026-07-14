@@ -180,6 +180,22 @@ func (model *SharedQuizzesModel) CheckQuizCreatorExists(quizId, creatorId string
 	return found, nil
 }
 
+// Check whether the given quiz is public or not
+func (model *SharedQuizzesModel) IsQuizPublic(quizId string) (bool, error) {
+	found, err := model.db.From("quizzes").
+		Where(
+			goqu.Ex{"id": quizId},
+			goqu.Ex{"is_public": true},
+		).
+		Select(goqu.L("1")).Executor().ScanVal(new(int))
+
+	if err != nil {
+		return false, err
+	}
+
+	return found, nil
+}
+
 // Get permission of quiz for perticular user
 func (model *SharedQuizzesModel) GetPermissionByQuizAndUser(quizID, sharedTo string) (string, error) {
 	var permission string
