@@ -107,6 +107,11 @@ func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config confi
 		return err
 	}
 
+	err = setupQuizCategoryController(v1, goqu, logger, middleware, config)
+	if err != nil {
+		return err
+	}
+
 	err = setupQuestionController(v1, goqu, logger, middleware, config)
 	if err != nil {
 		return err
@@ -261,6 +266,28 @@ func setupQuizController(v1 fiber.Router, db *goqu.Database, logger *zap.Logger,
 	report := admin.Group("/reports")
 	report.Get("/list", quizController.ListQuizzesAnalysis)
 	report.Get(fmt.Sprintf("/:%s/analysis", constants.ActiveQuizId), middleware.KratosAuthenticated, quizController.GetQuizAnalysis)
+	return nil
+}
+
+func setupQuizCategoryController(v1 fiber.Router, db *goqu.Database, logger *zap.Logger, middleware middlewares.Middleware, config config.AppConfig) error {
+	quizCategoryController, err := controller.InitQuizCategoryController(db, logger, &config)
+	if err != nil {
+		return err
+	}
+
+	// Category listing is public — the homepage groups public quizzes by category.
+	// Registered BEFORE the auth-guarded /categories group so it stays open.
+	v1.Get("/categories", quizCategoryController.ListCategories)
+
+	// Managing categories requires Kratos auth; on top of that, each handler
+	// enforces the public-quiz admin email allowlist (same gate as publishing).
+	categories := v1.Group("/categories")
+	categories.Use(middleware.KratosAuthenticated)
+
+	categories.Post("/", quizCategoryController.CreateCategory)
+	categories.Put(fmt.Sprintf("/:%s", constants.CategoryId), quizCategoryController.UpdateCategory)
+	categories.Delete(fmt.Sprintf("/:%s", constants.CategoryId), quizCategoryController.DeleteCategory)
+
 	return nil
 }
 

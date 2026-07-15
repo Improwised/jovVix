@@ -153,7 +153,7 @@ func (ctrl *UserPlayedQuizeController) PlayedQuizValidation(c *fiber.Ctx) error 
 			return utils.JSONFail(c, http.StatusInternalServerError, constants.ErrUserQuizSessionValidation)
 		}
 
-		hostMayPlay := quiz.IsPublic && quiz.CreatorID != userId
+		hostMayPlay := quiz.IsPublic && (quiz.CreatorID == nil || *quiz.CreatorID != userId)
 		if !hostMayPlay {
 			ctrl.logger.Error(constants.ErrAdminCannotBeUser)
 			return utils.JSONFail(c, http.StatusForbidden, constants.ErrAdminCannotBeUser)

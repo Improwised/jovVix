@@ -13,7 +13,11 @@ const { carouselRef, orientation } = useCarousel();
 </script>
 
 <template>
-  <div ref="carouselRef" data-slot="carousel-content" class="overflow-hidden">
+  <div
+    ref="carouselRef"
+    data-slot="carousel-content"
+    class="-mx-2 overflow-hidden px-2"
+  >
     <div
       :class="
         cn(

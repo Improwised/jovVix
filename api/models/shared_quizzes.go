@@ -102,6 +102,7 @@ func (model *SharedQuizzesModel) ListSharedQuizzes(sharedBy, sharedTo string) ([
 			goqu.I("quizzes.description"),
 			goqu.I("quizzes.creator_id"),
 			goqu.I("quizzes.is_public"),
+			goqu.I("quizzes.cover_image"),
 			goqu.I("quizzes.created_at"),
 			goqu.I("quizzes.updated_at"),
 			questionsCountSubquery.As("total_questions"),
@@ -130,6 +131,7 @@ func (model *SharedQuizzesModel) ListSharedQuizzes(sharedBy, sharedTo string) ([
 		goqu.I("quizzes.description"),
 		goqu.I("quizzes.creator_id"),
 		goqu.I("quizzes.is_public"),
+		goqu.I("quizzes.cover_image"),
 		goqu.I("quizzes.created_at"),
 		goqu.I("quizzes.updated_at"),
 	).Order(goqu.I("quizzes.created_at").Desc())
@@ -146,7 +148,7 @@ func (model *SharedQuizzesModel) ListSharedQuizzes(sharedBy, sharedTo string) ([
 	for rows.Next() {
 		var quizWithQuestions QuizWithQuestions
 
-		err := rows.Scan(&quizWithQuestions.ID, &quizWithQuestions.Title, &quizWithQuestions.Description, &quizWithQuestions.CreatorID, &quizWithQuestions.IsPublic, &quizWithQuestions.CreatedAt, &quizWithQuestions.UpdatedAt, &quizWithQuestions.TotalQuestions)
+		err := rows.Scan(&quizWithQuestions.ID, &quizWithQuestions.Title, &quizWithQuestions.Description, &quizWithQuestions.CreatorID, &quizWithQuestions.IsPublic, &quizWithQuestions.CoverImage, &quizWithQuestions.CreatedAt, &quizWithQuestions.UpdatedAt, &quizWithQuestions.TotalQuestions)
 		if err != nil {
 			return quizzes, err
 		}
@@ -168,6 +170,22 @@ func (model *SharedQuizzesModel) CheckQuizCreatorExists(quizId, creatorId string
 		Where(
 			goqu.Ex{"id": quizId},
 			goqu.Ex{"creator_id": creatorId},
+		).
+		Select(goqu.L("1")).Executor().ScanVal(new(int))
+
+	if err != nil {
+		return false, err
+	}
+
+	return found, nil
+}
+
+// Check whether the given quiz is public or not
+func (model *SharedQuizzesModel) IsQuizPublic(quizId string) (bool, error) {
+	found, err := model.db.From("quizzes").
+		Where(
+			goqu.Ex{"id": quizId},
+			goqu.Ex{"is_public": true},
 		).
 		Select(goqu.L("1")).Executor().ScanVal(new(int))
 

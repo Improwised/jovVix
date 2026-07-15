@@ -36,6 +36,20 @@ func (m *Middleware) QuizPermission(c *fiber.Ctx) error {
 		return c.Next()
 	}
 
+	// Allowlisted public-quiz admins can fully manage any public quiz,
+	// regardless of who created it (or even if the creator is gone).
+	if m.Config.Quiz.IsPublicQuizAdmin(user.Email) {
+		isPublic, err := m.sharedQuizzesModel.IsQuizPublic(quizId)
+		if err != nil {
+			m.Logger.Error(constants.ErrGetQuizPermission, zap.Error(err))
+			return utils.JSONError(c, http.StatusInternalServerError, constants.ErrGetQuizPermission)
+		}
+		if isPublic {
+			c.Locals(constants.ContextQuizPermission, constants.SharePermission)
+			return c.Next()
+		}
+	}
+
 	permission, err := m.sharedQuizzesModel.GetPermissionByQuizAndUser(quizId, user.Email)
 	if err != nil {
 		if err == sql.ErrNoRows {

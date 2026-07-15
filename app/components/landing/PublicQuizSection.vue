@@ -18,23 +18,54 @@
     </div>
 
     <div
-      class="grid gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 2xl:grid-cols-4"
+      v-if="groupedQuizzes.length > 1"
+      class="mb-5 flex flex-wrap gap-2 sm:mb-6 sm:gap-3"
     >
-      <AdminQuizListCard
-        v-for="(quiz, index) in publicQuizzes"
-        :key="quiz.id"
-        :title="quiz.title"
-        :description="descriptionOf(quiz)"
-        :created-at="formatDate(quiz.created_at)"
-        :question-count="quiz.total_questions"
-        :image="imageFor(index)"
-        :tilt-class="tiltFor(index)"
-        :view-url="`/admin/quiz/list-quiz/${quiz.id}`"
-        :is-public="true"
-        :show-actions="false"
-        :starting="startingQuizId === quiz.id"
-        @start-quiz="handleStartQuiz(quiz.id)"
+      <NavigationLink
+        v-for="group in groupedQuizzes"
+        :key="`nav-${group.name}`"
+        type="button"
+        :url-name="group.name"
+        class="bg-jv-white rounded-full px-3 py-1.5 text-[14px] sm:px-4 sm:text-[15px] md:py-1.5 md:text-[15px]"
+        @click="scrollToCategory(group.name)"
       />
+    </div>
+
+    <div class="flex flex-col gap-7 sm:gap-9">
+      <div
+        v-for="group in groupedQuizzes"
+        :id="categoryAnchorId(group.name)"
+        :key="group.name"
+        class="scroll-mt-6"
+      >
+        <h4
+          class="mb-1 font-headings font-bold text-[19px] leading-[1.2] text-jv-ink sm:text-[22px] md:text-[24px]"
+        >
+          {{ group.name }}
+        </h4>
+        <Carousel
+          :opts="{ align: 'start', loop: false, slidesToScroll: 'auto' }"
+          class="group"
+        >
+          <CarouselContent class="-ml-6 pb-3 pt-4 sm:-ml-8">
+            <CarouselItem
+              v-for="(quiz, index) in group.quizzes"
+              :key="quiz.id"
+              class="basis-1/2 pl-6 sm:basis-1/3 sm:pl-8 md:basis-1/4 lg:basis-1/5 xl:basis-1/6"
+            >
+              <PublicQuizCard
+                :title="quiz.title"
+                :image="coverOf(quiz, index)"
+                :tilt-class="tiltFor(index)"
+                :starting="startingQuizId === quiz.id"
+                @start-quiz="handleStartQuiz(quiz.id)"
+              />
+            </CarouselItem>
+          </CarouselContent>
+          <CarouselPrevious class="jv-carousel-nav !left-2" />
+          <CarouselNext class="jv-carousel-nav !right-2" />
+        </Carousel>
+      </div>
     </div>
   </section>
 </template>
@@ -43,7 +74,15 @@
 import { usePush } from "notivue";
 import { computed, ref } from "vue";
 import { Compass } from "lucide-vue-next";
-import AdminQuizListCard from "@/components/quiz-list/AdminQuizListCard.vue";
+import PublicQuizCard from "@/components/landing/PublicQuizCard.vue";
+import NavigationLink from "@/components/common/NavigationLink.vue";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 import { useListUserstore } from "~/store/userlist";
 import { useSessionStore } from "~~/store/session";
 import { useUsersStore } from "~~/store/users";
@@ -75,26 +114,43 @@ const tiltClasses = [
   "rotate-[0.6deg]",
 ];
 
-const imageFor = (i) => fallbackImages[i % fallbackImages.length];
 const tiltFor = (i) => tiltClasses[i % tiltClasses.length];
 
-const descriptionOf = (quiz) => {
-  // The API serializes sql.NullString as { String, Valid } when populated; null otherwise.
-  const d = quiz.description;
-  if (!d) return "";
-  if (typeof d === "string") return d;
-  return d.String || "";
+// The API serializes sql.NullString as { String, Valid } when populated; null otherwise.
+const nullableString = (value) => {
+  if (!value) return "";
+  if (typeof value === "string") return value;
+  return value.String || "";
 };
 
-const formatDate = (iso) => {
-  if (!iso) return "";
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return "";
-  return date.toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
+const coverOf = (quiz, index) =>
+  nullableString(quiz.cover_image) ||
+  fallbackImages[index % fallbackImages.length];
+
+const groupedQuizzes = computed(() => {
+  const groups = new Map();
+  for (const quiz of publicQuizzes.value) {
+    const name = nullableString(quiz.category_name) || "Other";
+    if (!groups.has(name)) groups.set(name, []);
+    groups.get(name).push(quiz);
+  }
+  // Alphabetical, with the uncategorized "Other" group always last.
+  return [...groups.entries()]
+    .sort(([a], [b]) => {
+      if (a === "Other") return 1;
+      if (b === "Other") return -1;
+      return a.localeCompare(b);
+    })
+    .map(([name, quizzes]) => ({ name, quizzes }));
+});
+
+const categoryAnchorId = (name) =>
+  `public-quiz-category-${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+
+const scrollToCategory = (name) => {
+  document
+    .getElementById(categoryAnchorId(name))
+    ?.scrollIntoView({ behavior: "smooth", block: "start" });
 };
 
 // Logged-in visitors host immediately. Guests are routed to the host lobby with
