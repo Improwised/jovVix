@@ -1147,6 +1147,27 @@ func terminateQuiz(c *websocket.Conn, qc *quizSocketController, response *QuizSe
 	}
 }
 
+// publishTerminateToPlayers broadcasts the terminate_quiz event to every connected
+// player over the session's Redis channel. It mirrors the player-facing branch of
+// shareEvenWithUser, and exists for callers (like the HTTP Terminate handler) that
+// have no websocket conn and therefore cannot invoke shareEvenWithUser directly.
+func publishTerminateToPlayers(qc *quizSocketController, sessionId string) {
+	payload := map[string]any{
+		"event":    constants.EventTerminateQuiz,
+		"response": &QuizSendResponse{Component: constants.Score, Data: constants.ActionTerminateQuiz},
+	}
+	data, err := json.Marshal(payload)
+	if err != nil {
+		qc.logger.Error("error marshaling terminate payload for players", zap.Error(err))
+		return
+	}
+
+	err = qc.redis.PubSubModel.Client.Publish(qc.redis.PubSubModel.Ctx, sessionId, data).Err()
+	if err != nil {
+		qc.logger.Error("error publishing terminate event to players", zap.Error(err))
+	}
+}
+
 func handleSkipTimer(c *websocket.Conn, qc *quizSocketController, wg *sync.WaitGroup, response *QuizSendResponse, session models.ActiveQuiz, chanSkipTimer chan bool, chanPauseQuiz chan bool, scoreboardMaxDuration int, arrangeMu *sync.Mutex) {
 	defer wg.Done()
 
@@ -1381,6 +1402,10 @@ func (ctrl *quizSocketController) Terminate(c *fiber.Ctx) error {
 		return utils.JSONError(c, http.StatusUnauthorized, constants.ErrUnauthorized)
 	}
 
+	// Notify every connected player in real time before tearing the session down, so
+	// their play screen receives terminate_quiz and routes to the scoreboard/home.
+	publishTerminateToPlayers(ctrl, session.ID.String())
+
 	err = ctrl.activeQuizModel.Deactivate(session.ID)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -1389,6 +1414,12 @@ func (ctrl *quizSocketController) Terminate(c *fiber.Ctx) error {
 		}
 		ctrl.logger.Error("error deactivating session", zap.Error(err))
 		return utils.JSONError(c, http.StatusInternalServerError, constants.UnknownError)
+	}
+
+	// Stop any host/join-watcher goroutines still listening for late joiners.
+	err = ctrl.redis.PubSubModel.Client.Publish(ctrl.redis.PubSubModel.Ctx, constants.EventTerminateQuiz, constants.EventTerminateQuiz).Err()
+	if err != nil {
+		ctrl.logger.Error("error publishing global terminate event", zap.Error(err))
 	}
 
 	return utils.JSONSuccess(c, http.StatusOK, nil)

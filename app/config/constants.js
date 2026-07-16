@@ -47,6 +47,7 @@ export default {
   PauseQuizMessage: "quiz is paused by admin, please wait",
   ResumeQuiz: "resume_quiz",
   ResumeQuizMessage: "quiz is resumed, you could play now",
+  HostEndedQuizMessage: "The host has ended the quiz.",
 
   // Actions
   ActionAnserSubmittedByUser: "answer submitted by user",
