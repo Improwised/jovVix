@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	"strings"
 
 	"github.com/Improwised/jovvix/api/config"
 	"github.com/Improwised/jovvix/api/constants"
@@ -17,6 +16,7 @@ import (
 	"github.com/Improwised/jovvix/api/utils"
 	"github.com/doug-martin/goqu/v9"
 	fiber "github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 	validator "gopkg.in/go-playground/validator.v9"
 )
@@ -85,6 +85,29 @@ func (ctrl *QuizController) GetAdminUploadedQuizzes(c *fiber.Ctx) error {
 	return utils.JSONSuccess(c, http.StatusOK, quizzes)
 }
 
+// validateQuizPublicMeta validates the category and cover image that public
+// quizzes carry. It returns a client-facing failure message for bad input, or
+// a non-nil error when the category lookup itself fails. Empty values are valid.
+func (ctrl *QuizController) validateQuizPublicMeta(categoryId, coverImage string) (string, error) {
+	if failMsg := utils.ValidateCoverImage(coverImage); failMsg != "" {
+		return failMsg, nil
+	}
+
+	if categoryId != "" {
+		if _, err := uuid.Parse(categoryId); err != nil {
+			return constants.ErrCategoryNotFound, nil
+		}
+		if _, err := ctrl.quizCategoryModel.GetCategoryById(categoryId); err != nil {
+			if err == sql.ErrNoRows {
+				return constants.ErrCategoryNotFound, nil
+			}
+			return "", err
+		}
+	}
+
+	return "", nil
+}
+
 func (ctrl *QuizController) CreateQuiz(c *fiber.Ctx) error {
 	var quizReq structs.ReqCreateQuiz
 	err := json.Unmarshal(c.Body(), &quizReq)
@@ -120,24 +143,13 @@ func (ctrl *QuizController) CreateQuiz(c *fiber.Ctx) error {
 		coverImage = ""
 	}
 
-	if coverImage != "" {
-		if !strings.HasPrefix(coverImage, "data:image/") {
-			return utils.JSONFail(c, http.StatusBadRequest, constants.ErrInvalidCoverImage)
-		}
-		if len(coverImage) > constants.MaxCoverImageBytes {
-			return utils.JSONFail(c, http.StatusBadRequest, constants.ErrCoverImageTooLarge)
-		}
+	failMsg, err := ctrl.validateQuizPublicMeta(categoryId, coverImage)
+	if err != nil {
+		ctrl.logger.Error("error validating category for quiz creation", zap.Error(err))
+		return utils.JSONError(c, http.StatusInternalServerError, err.Error())
 	}
-
-	if categoryId != "" {
-		_, err := ctrl.quizCategoryModel.GetCategoryById(categoryId)
-		if err != nil {
-			if err == sql.ErrNoRows {
-				return utils.JSONFail(c, http.StatusBadRequest, constants.ErrCategoryNotFound)
-			}
-			ctrl.logger.Error("error fetching category for quiz creation", zap.Error(err))
-			return utils.JSONError(c, http.StatusInternalServerError, err.Error())
-		}
+	if failMsg != "" {
+		return utils.JSONFail(c, http.StatusBadRequest, failMsg)
 	}
 
 	quizId, err := ctrl.quizModel.CreateQuiz(quizReq.Title, quizReq.Description, userID, isPublic, categoryId, coverImage)
@@ -177,7 +189,41 @@ func (ctrl *QuizController) UpdateQuizSettings(c *fiber.Ctx) error {
 		return utils.JSONFail(c, http.StatusBadRequest, utils.ValidatorErrorString(err))
 	}
 
-	err = ctrl.quizSvc.UpdateQuizSettings(quizId, quizReq.Points, quizReq.DurationInSeconds, quizReq.QuestionIds)
+	// Category and cover image belong to the public catalog, so they are guarded
+	// by the same admin allowlist as quiz creation. Unlike CreateQuiz we reject
+	// rather than silently coerce: there is no fallback here, and reporting
+	// success while dropping the cover image the user just uploaded would lie.
+	// Scoped to requests that actually carry the fields, so existing clients
+	// sending only points/duration/ordering are unaffected.
+	if quizReq.CategoryId != nil || quizReq.CoverImage != nil {
+		user, ok := quizUtilsHelper.ConvertType[models.User](c.Locals(constants.ContextUser))
+		if !ok || !ctrl.appConfig.Quiz.IsPublicQuizAdmin(user.Email) {
+			return utils.JSONFail(c, http.StatusForbidden, constants.ErrUnauthorized)
+		}
+
+		quiz, err := ctrl.quizModel.GetQuizById(quizId)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				return utils.JSONFail(c, http.StatusBadRequest, constants.ErrQuizNotFound)
+			}
+			ctrl.logger.Error("error fetching quiz for settings update", zap.Error(err))
+			return utils.JSONError(c, http.StatusInternalServerError, err.Error())
+		}
+		if !quiz.IsPublic {
+			return utils.JSONFail(c, http.StatusBadRequest, constants.ErrQuizNotPublic)
+		}
+
+		failMsg, err := ctrl.validateQuizPublicMeta(quizUtilsHelper.DerefOrEmpty(quizReq.CategoryId), quizUtilsHelper.DerefOrEmpty(quizReq.CoverImage))
+		if err != nil {
+			ctrl.logger.Error("error validating category for settings update", zap.Error(err))
+			return utils.JSONError(c, http.StatusInternalServerError, err.Error())
+		}
+		if failMsg != "" {
+			return utils.JSONFail(c, http.StatusBadRequest, failMsg)
+		}
+	}
+
+	err = ctrl.quizSvc.UpdateQuizSettings(quizId, quizReq.Points, quizReq.DurationInSeconds, quizReq.QuestionIds, quizReq.CategoryId, quizReq.CoverImage)
 	if err != nil {
 		ctrl.logger.Error("error in updating quiz settings", zap.Error(err))
 		return utils.JSONFail(c, http.StatusBadRequest, "error while updating quiz settings")
