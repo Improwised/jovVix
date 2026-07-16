@@ -96,6 +96,79 @@
         </div>
       </div>
 
+      <div
+        v-if="canEditPublicMeta && canEditQuiz"
+        class="grid gap-5 sm:grid-cols-2 sm:gap-x-8"
+      >
+        <label class="grid content-start gap-2">
+          <span
+            class="text-[13px] font-black uppercase tracking-[0.16em] text-jv-ink"
+          >
+            Category
+          </span>
+          <select
+            v-model="settings.category_id"
+            :disabled="settingsPending"
+            class="h-14 border-[3px] border-jv-ink bg-jv-canvas px-4 text-[16px] font-semibold text-jv-ink outline-none transition-shadow focus:shadow-brutal-sm disabled:opacity-60"
+          >
+            <option value="">No category (shows under "Other")</option>
+            <option
+              v-for="category in categories"
+              :key="category.id"
+              :value="category.id"
+            >
+              {{ category.name }}
+            </option>
+          </select>
+        </label>
+
+        <div class="grid content-start gap-2">
+          <span
+            class="text-[13px] font-black uppercase tracking-[0.16em] text-jv-ink"
+          >
+            Cover Image
+          </span>
+          <label
+            v-if="!settings.cover_image"
+            class="flex h-14 cursor-pointer items-center justify-center gap-2 border-[3px] border-dashed border-jv-ink/40 bg-jv-canvas px-4 text-[15px] font-semibold text-jv-muted transition-colors hover:bg-jv-yellow/20"
+          >
+            <ImageIcon class="size-4 shrink-0" :stroke-width="2.3" />
+            <span class="truncate">Upload cover image</span>
+            <input
+              type="file"
+              class="hidden"
+              accept="image/*"
+              :disabled="settingsPending"
+              @change="handleCoverImage"
+            />
+          </label>
+          <div
+            v-else
+            class="flex h-14 items-center gap-3 border-[3px] border-jv-ink bg-jv-canvas px-3"
+          >
+            <img
+              :src="settings.cover_image"
+              alt="Cover image preview"
+              class="h-10 w-14 shrink-0 border-2 border-jv-ink object-cover"
+            />
+            <span
+              class="min-w-0 flex-1 truncate text-[14px] font-semibold text-jv-ink"
+            >
+              {{ coverImageName || "Current cover image" }}
+            </span>
+            <button
+              type="button"
+              class="grid size-8 shrink-0 place-items-center text-jv-ink transition-colors hover:text-jv-coral"
+              aria-label="Remove cover image"
+              :disabled="settingsPending"
+              @click="removeCoverImage"
+            >
+              <X class="size-4" :stroke-width="2.4" />
+            </button>
+          </div>
+        </div>
+      </div>
+
       <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
         <div
           v-if="questions.length > 0"
@@ -483,6 +556,7 @@ import {
   Download,
   Globe,
   GripVertical,
+  Image as ImageIcon,
   Info,
   Pencil,
   Play,
@@ -553,7 +627,19 @@ const {
 const settings = ref({
   points: Number(quizData.value?.data?.points ?? 10),
   duration_in_seconds: Number(quizData.value?.data?.duration_in_seconds ?? 10),
+  category_id: nullableString(quizData.value?.data?.category_id),
+  cover_image: nullableString(quizData.value?.data?.cover_image),
 });
+const coverImageName = ref("");
+const { pickCoverImage } = useCoverImage();
+
+const { data: categoriesData } = await useFetch(`${url.apiUrl}/categories`, {
+  method: "GET",
+  headers: headers,
+  credentials: "include",
+});
+const categories = computed(() => categoriesData.value?.data || []);
+
 const orderedQuestions = ref([...(quizData.value?.data?.data || [])]);
 const originalOrderIds = ref(
   (quizData.value?.data?.data || []).map((q) => q.question_id)
@@ -572,6 +658,10 @@ const quizDescription = computed(
   () => quizData.value?.data?.quiz_description?.String || ""
 );
 const isPublicQuiz = computed(() => !!quizData.value?.data?.is_public);
+// The server decides this: public quiz + the configured admin allowlist.
+const canEditPublicMeta = computed(
+  () => !!quizData.value?.data?.can_edit_public_meta
+);
 const totalSurveyQuestion = computed(() =>
   questions.value.reduce(
     (count, item) => (item.question_type_id === 2 ? count + 1 : count),
@@ -595,6 +685,8 @@ const hasUnsavedSettings = computed(() => {
     Number(settings.value.points) !== Number(data.points ?? 10) ||
     Number(settings.value.duration_in_seconds) !==
       Number(data.duration_in_seconds ?? 10) ||
+    settings.value.category_id !== nullableString(data.category_id) ||
+    settings.value.cover_image !== nullableString(data.cover_image) ||
     orderChanged
   );
 });
@@ -606,7 +698,12 @@ watch(
     settings.value = {
       points: Number(data.points ?? 10),
       duration_in_seconds: Number(data.duration_in_seconds ?? 10),
+      category_id: nullableString(data.category_id),
+      cover_image: nullableString(data.cover_image),
     };
+    // The server value is authoritative after a refresh, and we no longer
+    // have the filename that produced it.
+    coverImageName.value = "";
     const serverQuestions = data.data || [];
     orderedQuestions.value = [...serverQuestions];
     originalOrderIds.value = serverQuestions.map((q) => q.question_id);
@@ -641,8 +738,39 @@ const startEditQuestion = (question) => {
   editingQuestionId.value = question.question_id;
 };
 
+const handleCoverImage = async (event) => {
+  const picked = await pickCoverImage(event);
+  if (!picked) return;
+  settings.value.cover_image = picked.dataUrl;
+  coverImageName.value = picked.name;
+};
+
+const removeCoverImage = () => {
+  settings.value.cover_image = "";
+  coverImageName.value = "";
+};
+
 const saveSettings = async () => {
   if (!canEditQuiz.value) return;
+
+  const body = {
+    points: Number(settings.value.points),
+    duration_in_seconds: Number(settings.value.duration_in_seconds),
+    question_ids: orderedQuestions.value.map((q) => q.question_id),
+  };
+
+  // Only send category/cover when they actually changed — omitting them leaves
+  // the columns untouched, which keeps a points tweak from re-uploading the
+  // whole base64 cover image (and from tripping the admin-only check).
+  if (canEditPublicMeta.value) {
+    const server = quizData.value?.data || {};
+    if (settings.value.category_id !== nullableString(server.category_id)) {
+      body.category_id = settings.value.category_id;
+    }
+    if (settings.value.cover_image !== nullableString(server.cover_image)) {
+      body.cover_image = settings.value.cover_image;
+    }
+  }
 
   try {
     settingsPending.value = true;
@@ -650,10 +778,7 @@ const saveSettings = async () => {
       method: "PUT",
       headers,
       credentials: "include",
-      body: {
-        ...settings.value,
-        question_ids: orderedQuestions.value.map((q) => q.question_id),
-      },
+      body,
     });
     toast.success("Quiz settings updated.");
     refresh();

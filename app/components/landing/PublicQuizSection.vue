@@ -116,13 +116,6 @@ const tiltClasses = [
 
 const tiltFor = (i) => tiltClasses[i % tiltClasses.length];
 
-// The API serializes sql.NullString as { String, Valid } when populated; null otherwise.
-const nullableString = (value) => {
-  if (!value) return "";
-  if (typeof value === "string") return value;
-  return value.String || "";
-};
-
 const coverOf = (quiz, index) =>
   nullableString(quiz.cover_image) ||
   fallbackImages[index % fallbackImages.length];

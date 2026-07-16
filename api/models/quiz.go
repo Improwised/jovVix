@@ -55,6 +55,7 @@ type QuizWithQuestions struct {
 	Description    sql.NullString `json:"description,omitempty" db:"description"`
 	CreatorID      *string        `json:"creator_id,omitempty" db:"creator_id"`
 	IsPublic       bool           `json:"is_public" db:"is_public"`
+	CategoryId     sql.NullString `json:"category_id,omitempty" db:"category_id"`
 	CategoryName   sql.NullString `json:"category_name,omitempty" db:"category_name"`
 	CoverImage     sql.NullString `json:"cover_image,omitempty" db:"cover_image"`
 	CreatedAt      time.Time      `json:"created_at,omitempty" db:"created_at,omitempty"`
@@ -152,6 +153,30 @@ func (model *QuizModel) CreateQuiz(title, description, userId string, isPublic b
 	return quizId, nil
 }
 
+// UpdateQuizPublicMeta updates the category and cover image of a quiz. A nil
+// pointer leaves the column untouched; a pointer to an empty string clears it.
+// It is a no-op when both are nil.
+func (model *QuizModel) UpdateQuizPublicMeta(transaction *goqu.TxDatabase, quizId string, categoryId, coverImage *string) error {
+	record := goqu.Record{}
+
+	if categoryId != nil {
+		record["category_id"] = sql.NullString{Valid: *categoryId != "", String: *categoryId}
+	}
+	if coverImage != nil {
+		record["cover_image"] = sql.NullString{Valid: *coverImage != "", String: *coverImage}
+	}
+
+	if len(record) == 0 {
+		return nil
+	}
+
+	// quizzes has no updated_at trigger — the DDL default only fires on insert.
+	record["updated_at"] = time.Now()
+
+	_, err := transaction.Update(QuizzesTable).Set(record).Where(goqu.Ex{"id": quizId}).Executor().Exec()
+	return err
+}
+
 // GetPublicQuizzes returns quizzes whose creator has marked them public,
 // most recent first, with their question counts and category names attached.
 func (model *QuizModel) GetPublicQuizzes() ([]QuizWithQuestions, error) {
@@ -207,6 +232,8 @@ func (model *QuizModel) GetQuizById(quizId string) (QuizWithQuestions, error) {
 			"description",
 			"creator_id",
 			"is_public",
+			"category_id",
+			"cover_image",
 			"created_at",
 			"updated_at",
 		).

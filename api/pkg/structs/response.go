@@ -65,6 +65,9 @@ type ResQuestionAnalytics struct {
 	QuizTitle         string              `json:"quiz_title"`
 	QuizDescription   sql.NullString      `json:"quiz_description"`
 	IsPublic          bool                `json:"is_public"`
+	CategoryId        sql.NullString      `json:"category_id"`
+	CoverImage        sql.NullString      `json:"cover_image"`
+	CanEditPublicMeta bool                `json:"can_edit_public_meta"`
 	Points            int16               `json:"points"`
 	DurationInSeconds int                 `json:"duration_in_seconds"`
 }

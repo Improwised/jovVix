@@ -17,6 +17,14 @@ func GetBool(flag any) bool {
 	return false
 }
 
+// DerefOrEmpty returns the pointed-to string, or "" when the pointer is nil.
+func DerefOrEmpty(text *string) string {
+	if text == nil {
+		return ""
+	}
+	return *text
+}
+
 func ConvertType[T any](x any) (T, bool) {
 
 	v, ok := x.(T) // convert, then assert

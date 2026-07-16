@@ -133,7 +133,10 @@ func (quizSvc *QuizService) AppendQuestionsToQuiz(quizId string, questions []mod
 	return questionIds, nil
 }
 
-func (quizSvc *QuizService) UpdateQuizSettings(quizId string, points int16, durationInSeconds int, questionIds []string) error {
+// UpdateQuizSettings applies the per-question settings and ordering, plus the
+// category/cover image for public quizzes. categoryId and coverImage follow
+// pointer semantics: nil leaves the column alone, "" clears it.
+func (quizSvc *QuizService) UpdateQuizSettings(quizId string, points int16, durationInSeconds int, questionIds []string, categoryId, coverImage *string) error {
 	isOk := false
 	transaction, err := quizSvc.db.Begin()
 	if err != nil {
@@ -159,17 +162,26 @@ func (quizSvc *QuizService) UpdateQuizSettings(quizId string, points int16, dura
 		return err
 	}
 
-	err = quizSvc.questionModel.ValidateQuestionSet(transaction, quizId, questionIds)
-	if err != nil {
-		return err
+	// A public quiz with no questions yet can still have its cover image and
+	// category set, so skip the question work rather than rejecting the save.
+	if len(questionIds) > 0 {
+		err = quizSvc.questionModel.ValidateQuestionSet(transaction, quizId, questionIds)
+		if err != nil {
+			return err
+		}
+
+		err = quizSvc.questionModel.SyncQuizQuestionSettings(transaction, quizId, points, durationInSeconds)
+		if err != nil {
+			return err
+		}
+
+		err = quizSvc.questionModel.ReorderQuestions(transaction, quizId, questionIds)
+		if err != nil {
+			return err
+		}
 	}
 
-	err = quizSvc.questionModel.SyncQuizQuestionSettings(transaction, quizId, points, durationInSeconds)
-	if err != nil {
-		return err
-	}
-
-	err = quizSvc.questionModel.ReorderQuestions(transaction, quizId, questionIds)
+	err = quizSvc.quizModel.UpdateQuizPublicMeta(transaction, quizId, categoryId, coverImage)
 	if err != nil {
 		return err
 	}

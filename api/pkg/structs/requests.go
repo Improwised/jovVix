@@ -60,7 +60,9 @@ type ReqQuizCategory struct {
 type ReqUpdateQuizSettings struct {
 	Points            int16    `json:"points" validate:"min=0,max=20"`
 	DurationInSeconds int      `json:"duration_in_seconds" validate:"required,min=1"`
-	QuestionIds       []string `json:"question_ids" validate:"required,min=1,dive,uuid"`
+	QuestionIds       []string `json:"question_ids" validate:"omitempty,dive,uuid"`
+	CategoryId *string `json:"category_id"`
+	CoverImage *string `json:"cover_image"`
 }
 
 type ReqCreateQuestion struct {

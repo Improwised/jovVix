@@ -9,6 +9,7 @@ import (
 
 	"github.com/Improwised/jovvix/api/config"
 	"github.com/Improwised/jovvix/api/constants"
+	quizUtilsHelper "github.com/Improwised/jovvix/api/helpers/utils"
 	"github.com/Improwised/jovvix/api/models"
 	"github.com/Improwised/jovvix/api/pkg/structs"
 	"github.com/Improwised/jovvix/api/services"
@@ -102,6 +103,15 @@ func (ctrl *QuestionController) ListQuestionsWithAnswerByQuizId(c *fiber.Ctx) er
 		}
 	}
 
+	// Category and cover image only exist on public quizzes, and only the
+	// configured admin emails may change them (same allowlist as quiz creation).
+	canEditPublicMeta := false
+	if quiz.IsPublic {
+		if user, ok := quizUtilsHelper.ConvertType[models.User](c.Locals(constants.ContextUser)); ok {
+			canEditPublicMeta = ctrl.appConfig.Quiz.IsPublicQuizAdmin(user.Email)
+		}
+	}
+
 	response := structs.ResQuestionAnalytics{
 		Data:              questions,
 		QuizPlayedCount:   quizPlayedcount,
@@ -110,6 +120,9 @@ func (ctrl *QuestionController) ListQuestionsWithAnswerByQuizId(c *fiber.Ctx) er
 		QuizTitle:         quiz.Title,
 		QuizDescription:   quiz.Description,
 		IsPublic:          quiz.IsPublic,
+		CategoryId:        quiz.CategoryId,
+		CoverImage:        quiz.CoverImage,
+		CanEditPublicMeta: canEditPublicMeta,
 		Points:            settingsPoints,
 		DurationInSeconds: settingsDuration,
 	}
