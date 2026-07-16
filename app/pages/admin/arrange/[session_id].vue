@@ -1,6 +1,7 @@
 <script setup>
 // core dependencies
 import { usePush } from "notivue";
+import { Ban } from "lucide-vue-next";
 
 // custom component
 import { useSystemEnv } from "~/composables/envs.js";
@@ -54,7 +55,9 @@ const confirmNeeded = reactive({
   message: "message",
   positive: "save",
   negative: "cancel",
+  action: "skip",
 });
+const terminating = ref(false);
 const currentComponent = ref("Loading");
 const adminOperationHandler = ref();
 const analysisTab = ref("ranking");
@@ -215,23 +218,7 @@ const handleQuizEvents = async (message) => {
       "/error?status=" + message.status + "&error=" + message.data
     );
   } else if (message.event == app.$TerminateQuiz) {
-    invitationCode.value = undefined;
-    removeAllUsers();
-    setSession(null);
-    // A host who also played sees their own player scoreboard (the admin scoreboard
-    // endpoint is Kratos-only and would 401 for guests). Host-only/creators keep the
-    // admin scoreboard + analytics they can revisit.
-    if (canPlay.value && hostUserPlayedQuiz.value) {
-      const playerName = usersStore.getUserData()?.username || "player";
-      return await router.push(
-        `/join/${encodeURIComponent(playerName)}/scoreboard?user_played_quiz=${
-          hostUserPlayedQuiz.value
-        }`
-      );
-    }
-    return await router.push(
-      "/admin/scoreboard?winner_ui=true&aqi=" + session_id
-    );
+    return await goToScoreboardAfterTerminate();
   } else if (message.event == app.$RedirectToAdmin) {
     return await router.push("/admin/arrange/" + message.data.sessionId);
   } else if (
@@ -355,14 +342,69 @@ const confirmSkip = (message) => {
   confirmNeeded.title = "Skip Forcefully !!!";
   confirmNeeded.message = message.data;
   confirmNeeded.positive = "Skip";
+  confirmNeeded.action = "skip";
   confirmNeeded.show = true;
 };
 
+// Clean up local session state and route the host to the results view. Shared by
+// both the inbound terminate_quiz handler and the host-initiated "End Quiz" button.
+const goToScoreboardAfterTerminate = async () => {
+  invitationCode.value = undefined;
+  removeAllUsers();
+  setSession(null);
+  // A host who also played sees their own player scoreboard (the admin scoreboard
+  // endpoint is Kratos-only and would 401 for guests). Host-only/creators keep the
+  // admin scoreboard + analytics they can revisit.
+  if (canPlay.value && hostUserPlayedQuiz.value) {
+    const playerName = usersStore.getUserData()?.username || "player";
+    return await router.push(
+      `/join/${encodeURIComponent(playerName)}/scoreboard?user_played_quiz=${
+        hostUserPlayedQuiz.value
+      }`
+    );
+  }
+  return await router.push(
+    "/admin/scoreboard?winner_ui=true&aqi=" + session_id
+  );
+};
+
+const askEndQuiz = () => {
+  confirmNeeded.title = "End this quiz?";
+  confirmNeeded.message =
+    "This will end the quiz for all connected players and send them to the results. This cannot be undone.";
+  confirmNeeded.positive = "End Quiz";
+  confirmNeeded.action = "endQuiz";
+  confirmNeeded.show = true;
+};
+
+const endQuiz = async () => {
+  if (terminating.value) return;
+  terminating.value = true;
+  try {
+    await $fetch(`${apiUrl}/quiz/terminate?session_id=${session_id}`, {
+      method: "GET",
+      credentials: "include",
+    });
+    await goToScoreboardAfterTerminate();
+  } catch (error) {
+    console.error("failed to end quiz", error);
+    toast.error("Failed to end the quiz. Please try again.");
+  } finally {
+    terminating.value = false;
+  }
+};
+
 const handleModal = (confirm) => {
-  if (confirm) {
+  const action = confirmNeeded.action;
+  confirmNeeded.show = false;
+  if (!confirm) {
+    return;
+  }
+  if (action === "endQuiz") {
+    endQuiz();
+  } else {
     adminOperationHandler.value.requestSkip(true);
   }
-  confirmNeeded.show = false;
 };
 
 const handleAnalysisTabChange = (tab) => (analysisTab.value = tab);
@@ -423,6 +465,21 @@ useSeoMeta({
         >
           {{ invitationCode }}
         </span>
+      </div>
+      <div
+        v-if="currentComponent == 'Question' || currentComponent == 'Score'"
+        class="sm:ml-2"
+      >
+        <button
+          type="button"
+          :disabled="terminating"
+          class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-[8px] border-[3px] border-jv-ink bg-jv-coral px-5 text-[15px] font-black text-white shadow-brutal-sm transition-transform hover:rotate-[-1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none disabled:cursor-not-allowed disabled:opacity-60 sm:w-fit sm:text-[16px]"
+          aria-label="End quiz for all players"
+          @click="askEndQuiz"
+        >
+          <Ban class="size-4" :stroke-width="2.4" />
+          <span>{{ terminating ? "Ending..." : "End Quiz" }}</span>
+        </button>
       </div>
       <div v-if="currentComponent == 'Score'" class="sm:ml-2">
         <button

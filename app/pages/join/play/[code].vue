@@ -100,6 +100,7 @@ const handleQuizEvents = async (message) => {
     );
   } else if (message.event == app.$TerminateQuiz) {
     monitorTerminateQuiz.value = true;
+    toast.info(app.$HostEndedQuizMessage);
     return await router.push(
       `/join/${username.value}/scoreboard?user_played_quiz=${userPlayedQuiz.value}`
     );
