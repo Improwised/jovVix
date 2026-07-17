@@ -671,7 +671,8 @@ const totalSurveyQuestion = computed(() =>
 const canEditQuiz = computed(() => {
   const permission = quizData.value?.data?.permission;
   const isEditable = quizData.value?.data?.is_quiz_editable;
-  return (permission === "write" || permission === "share") && isEditable;
+  const hasPermission = permission === "write" || permission === "share";
+  return hasPermission && (isPublicQuiz.value || isEditable);
 });
 
 const hasUnsavedSettings = computed(() => {
