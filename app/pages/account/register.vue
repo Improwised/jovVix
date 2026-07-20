@@ -56,6 +56,12 @@ const errors = ref({
 });
 const registerURLWithFlowQuery = ref("");
 const { passwordErrors } = useUserPasswordRules(password, firstname, lastname);
+const returnTo = ref(route.query.returnTo || "");
+const signInLink = computed(() =>
+  returnTo.value
+    ? `/account/login?returnTo=${encodeURIComponent(returnTo.value)}`
+    : "/account/login"
+);
 
 console.log(); // required so async IIFE below doesn't trigger Nuxt 5xx
 function onSubmit(event) {
@@ -96,6 +102,9 @@ function onSubmit(event) {
             }
           },
           onResponse({ response }) {
+            if (!returnTo.value) {
+              returnTo.value = returnToPathFromUrl(response?._data?.return_to);
+            }
             response?._data?.ui?.messages?.forEach((message) => {
               if (message.type === "error") {
                 if (message.text?.toLowerCase().includes("expired")) {
@@ -160,6 +169,9 @@ async function setFlowIDAndCSRFToken() {
           Accept: "application/json",
         },
         credentials: "include",
+        query: returnTo.value
+          ? { return_to: `${window.location.origin}${returnTo.value}` }
+          : {},
         onResponseError({ response }) {
           console.error(
             "error while getting the flow id from the server",
@@ -169,7 +181,13 @@ async function setFlowIDAndCSRFToken() {
       }
     );
 
-    router.push("?flow=" + kratosResponse?.id);
+    router.push(
+      returnTo.value
+        ? `?flow=${kratosResponse?.id}&returnTo=${encodeURIComponent(
+            returnTo.value
+          )}`
+        : `?flow=${kratosResponse?.id}`
+    );
     csrfToken.value = kratosResponse?.ui?.nodes[0]?.attributes?.value;
     registerURLWithFlowQuery.value = kratosResponse?.ui?.action;
   } catch (error) {
@@ -418,7 +436,7 @@ async function setFlowIDAndCSRFToken() {
         <p class="text-center mt-5 font-body text-jv-ink/70 text-sm m-0">
           Already have an account?
           <NuxtLink
-            to="/account/login"
+            :to="signInLink"
             class="text-jv-coral underline underline-offset-4 decoration-2 hover:decoration-jv-coral font-semibold ml-1"
           >
             Sign In
