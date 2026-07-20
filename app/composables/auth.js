@@ -1,5 +1,21 @@
 import { useUsersStore } from "~~/store/users";
 
+export const returnToPathFromUrl = (absoluteUrl) => {
+  if (!absoluteUrl) {
+    return "";
+  }
+  try {
+    const url = new URL(absoluteUrl);
+    if (url.origin !== window.location.origin || url.pathname === "/") {
+      return "";
+    }
+    return url.pathname + url.search;
+  } catch (error) {
+    console.log("unusable return_to on the kratos flow", error.message);
+    return "";
+  }
+};
+
 export const handleLogout = async () => {
   const { setUserData } = useUsersStore();
   const { kratosUrl } = useRuntimeConfig().public;
@@ -47,34 +63,44 @@ export const setUserDataStore = async () => {
   const { setUserData } = useUsersStore();
   const { apiUrl } = useRuntimeConfig().public;
   const headers = useRequestHeaders(["cookie"]);
-  try {
-    const response = await fetch(apiUrl + "/user/who", {
+  const fetchWho = () =>
+    fetch(apiUrl + "/user/who", {
       method: "GET",
       credentials: "include",
       headers: headers,
       mode: "cors",
     });
+  try {
+    let response = await fetchWho();
+
+    if (response.status == 404) {
+      await fetch(apiUrl + "/kratos/auth", {
+        method: "GET",
+        credentials: "include",
+        headers: headers,
+        mode: "cors",
+        redirect: "manual",
+      }).catch((error) => {
+        console.log("unable to sync the kratos identity", error.message);
+      });
+      response = await fetchWho();
+    }
+
     if (response.status != 200) {
       throw new Error(response.status);
-    } else if (response.status == 200) {
-      const data = await response.json();
-      console.log("data ", data);
+    }
 
-      setUserData({
-        role: data?.data?.role,
-        avatar: data?.data?.avatar,
-        firstname: data?.data?.firstname,
-        username: data?.data?.username,
-        email: data?.data?.email,
-        canCreatePublicQuiz: !!data?.data?.can_create_public_quiz,
-      });
-    }
+    const data = await response.json();
+    setUserData({
+      role: data?.data?.role,
+      avatar: data?.data?.avatar,
+      firstname: data?.data?.firstname,
+      username: data?.data?.username,
+      email: data?.data?.email,
+      canCreatePublicQuiz: !!data?.data?.can_create_public_quiz,
+    });
   } catch (error) {
-    if (error.message == 401) {
-      console.log(error.message);
-      setUserData(null);
-      return;
-    }
     console.log(error.message);
+    setUserData(null);
   }
 };

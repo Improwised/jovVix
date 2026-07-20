@@ -12,6 +12,7 @@ import {
 } from "lucide-vue-next";
 import ScoreBoardTable from "./ScoreBoardTable.vue";
 import { useSessionStore } from "~~/store/session";
+import { useUsersStore } from "~~/store/users";
 import { getAvatarUrlByName } from "~~/composables/avatar";
 
 const url = useRuntimeConfig().public;
@@ -29,6 +30,12 @@ const requestPending = ref(false);
 const analysisPending = ref(false);
 const userStatistics = ref({});
 const winnerUI = computed(() => route.query.winner_ui || false);
+
+const usersStore = useUsersStore();
+const authPending = ref(true);
+const isLoggedIn = computed(
+  () => usersStore.getUserData()?.role === "admin-user"
+);
 const winningSound = ref(null);
 
 const props = defineProps({
@@ -109,6 +116,9 @@ const loadData = () => {
       `${props.userURL}?user_played_quiz=${props.userPlayedQuiz}`
     );
     getAnalysisDetails();
+    setUserDataStore().finally(() => {
+      authPending.value = false;
+    });
   }
 };
 
@@ -638,7 +648,7 @@ const podiumName = (winner) =>
         <!-- USER ANALYSIS -->
         <template v-if="!props.isAdmin">
           <div
-            v-if="analysisPending"
+            v-if="analysisPending || authPending"
             class="mx-auto flex w-fit items-center gap-2 rounded-full border-[2px] border-dashed border-jv-ink/30 bg-jv-white px-5 py-2.5 font-body text-[13px] font-bold text-jv-muted shadow-brutal-sm sm:text-[14px]"
             role="status"
             aria-live="polite"
@@ -646,7 +656,8 @@ const podiumName = (winner) =>
             <Sparkles class="size-4" :stroke-width="2.4" />
             Loading question review…
           </div>
-          <QuizAnalysis v-else :data="analysisData" />
+          <QuizAnalysis v-else-if="isLoggedIn" :data="analysisData" />
+          <QuizAnalysisLoginGate v-else />
 
           <div
             class="mb-2 flex flex-col items-stretch gap-3 sm:flex-row sm:justify-center"

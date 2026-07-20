@@ -70,9 +70,9 @@
                 type="email"
                 name="identifier"
                 class="flex-1 min-w-0 bg-transparent border-0 outline-none font-body text-jv-ink placeholder:text-jv-ink/40 text-sm sm:text-base"
-                :readonly="!!route.query.returnTo"
+                :readonly="isIdentityLocked"
                 :class="{
-                  'cursor-not-allowed bg-jv-slate/40': !!route.query.returnTo,
+                  'cursor-not-allowed bg-jv-slate/40': isIdentityLocked,
                 }"
                 placeholder="you@example.com"
                 required
@@ -157,7 +157,7 @@
         <p class="text-center mt-6 font-body text-jv-ink/70 text-sm m-0">
           Don't have an account?
           <NuxtLink
-            to="/account/register"
+            :to="createAccountLink"
             class="text-jv-coral underline underline-offset-4 decoration-2 hover:decoration-jv-coral font-semibold ml-1"
           >
             Create an account
@@ -205,7 +205,14 @@ const csrfToken = ref();
 const loginURLWithFlowQuery = ref("");
 const urls = useRuntimeConfig().public;
 const email = ref();
+const isIdentityLocked = ref(false);
 const showPassword = ref(false);
+const returnTo = ref(route.query.returnTo || "");
+const createAccountLink = computed(() =>
+  returnTo.value
+    ? `/account/register?returnTo=${encodeURIComponent(returnTo.value)}`
+    : "/account/register"
+);
 const errors = ref({
   email: "",
   password: "",
@@ -245,6 +252,9 @@ const kratosUrl = urls.kratosUrl;
             }
           },
           onResponse({ response }) {
+            if (!returnTo.value) {
+              returnTo.value = returnToPathFromUrl(response?._data?.return_to);
+            }
             const messages = response?._data?.ui?.messages;
             if (messages && messages[0]?.type === "error") {
               // error indicating unverified email
@@ -273,8 +283,8 @@ const kratosUrl = urls.kratosUrl;
 async function setFlowIDAndCSRFToken() {
   try {
     // Build return_to URL
-    const returnToUrl = route.query.returnTo
-      ? `${window.location.origin}${route.query.returnTo}`
+    const returnToUrl = returnTo.value
+      ? `${window.location.origin}${returnTo.value}`
       : `${window.location.origin}/`;
 
     const kratosResponse = await $fetch(
@@ -297,8 +307,10 @@ async function setFlowIDAndCSRFToken() {
         },
       }
     );
-    const queryParams = route.query.returnTo
-      ? `?flow=${kratosResponse?.id}&returnTo=${route.query.returnTo}`
+    const queryParams = returnTo.value
+      ? `?flow=${kratosResponse?.id}&returnTo=${encodeURIComponent(
+          returnTo.value
+        )}`
       : `?flow=${kratosResponse?.id}`;
 
     router.push(queryParams);
@@ -310,7 +322,8 @@ async function setFlowIDAndCSRFToken() {
     const identifierNode = kratosResponse?.ui?.nodes.find(
       (node) => node.attributes.name === "identifier"
     );
-    if (identifierNode?.attributes?.value) {
+    isIdentityLocked.value = !!identifierNode?.attributes?.value;
+    if (isIdentityLocked.value) {
       email.value = identifierNode.attributes.value;
     }
   } catch (error) {
