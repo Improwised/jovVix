@@ -43,6 +43,8 @@ const searchQuery = ref("");
 const startingQuizId = ref("");
 const shareModalOpen = ref(false);
 const shareQuizId = ref("");
+const deleteModalOpen = ref(false);
+const quizPendingDelete = ref(null);
 const createQuizOpen = ref(false);
 const createQuizPending = ref(false);
 const coverImageName = ref("");
@@ -230,7 +232,22 @@ const handleShareQuiz = (quiz) => {
   shareModalOpen.value = true;
 };
 
-const handleDeleteQuiz = async (quizId) => {
+const deleteQuizMessage = computed(() => {
+  const title = quizPendingDelete.value?.title;
+  return `Deleting ${
+    title ? `"${title}"` : "this quiz"
+  } also removes its questions, every session hosted from it, and all player scores and responses. This cannot be undone.`;
+});
+
+const handleDeleteQuiz = (quiz) => {
+  quizPendingDelete.value = quiz;
+  deleteModalOpen.value = true;
+};
+
+const confirmDeleteQuiz = async () => {
+  const quizId = quizPendingDelete.value?.id;
+  if (!quizId) return;
+
   try {
     await $fetch(`${url.apiUrl}/quizzes/${quizId}`, {
       method: "DELETE",
@@ -244,6 +261,8 @@ const handleDeleteQuiz = async (quizId) => {
     toast.error(
       error?.data?.message || error?.message || "Failed to delete quiz."
     );
+  } finally {
+    quizPendingDelete.value = null;
   }
 };
 
@@ -446,7 +465,7 @@ const handleCreateQuiz = async () => {
         :starting="startingQuizId === quiz.id"
         @start-quiz="handleStartQuiz(quiz.id)"
         @share="handleShareQuiz(quiz)"
-        @delete="handleDeleteQuiz(quiz.id)"
+        @delete="handleDeleteQuiz(quiz)"
       />
     </section>
 
@@ -619,5 +638,12 @@ const handleCreateQuiz = async () => {
     </Teleport>
 
     <ShareQuizModal v-model="shareModalOpen" :quiz-id="shareQuizId" />
+    <DeleteDialog
+      v-model="deleteModalOpen"
+      title="Delete quiz"
+      :message="deleteQuizMessage"
+      confirm-label="Delete quiz"
+      @confirm-delete="confirmDeleteQuiz"
+    />
   </main>
 </template>
