@@ -91,10 +91,6 @@ function onSubmit(event) {
             id: route.query.flow,
           },
           onResponseError({ response }) {
-            if (response._data?.error?.code === 410) {
-              navigateTo("/account/register");
-            }
-
             if (response.status === 400) {
               toast.warning(
                 "Please fill out the form correctly, password or email was incorrect"
@@ -181,7 +177,7 @@ async function setFlowIDAndCSRFToken() {
       }
     );
 
-    router.push(
+    router.replace(
       returnTo.value
         ? `?flow=${kratosResponse?.id}&returnTo=${encodeURIComponent(
             returnTo.value

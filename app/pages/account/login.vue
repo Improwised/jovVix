@@ -241,10 +241,6 @@ const kratosUrl = urls.kratosUrl;
             id: route.query.flow,
           },
           onResponseError({ response }) {
-            if (response._data?.error?.code === 410) {
-              navigateTo("/account/login");
-            }
-
             if (response.status === 400) {
               toast.warning(
                 "Please fill out the form correctly, password or email was incorrect"
@@ -313,7 +309,7 @@ async function setFlowIDAndCSRFToken() {
         )}`
       : `?flow=${kratosResponse?.id}`;
 
-    router.push(queryParams);
+    router.replace(queryParams);
     csrfToken.value = kratosResponse?.ui?.nodes.find(
       (node) => node.attributes.name === "csrf_token"
     )?.attributes?.value;
