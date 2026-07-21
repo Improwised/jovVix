@@ -82,7 +82,7 @@
           <NavigationLink
             url-name="Delete Quiz"
             class="bg-jv-white text-jv-coral border-none shadow-none"
-            @click="deleteQuiz"
+            @click="deleteModalOpen = true"
           >
             <Trash2 class="size-4" :stroke-width="2.4" />
           </NavigationLink>
@@ -546,6 +546,13 @@
     </Teleport>
 
     <ShareQuizModal v-model="shareModalOpen" :quiz-id="quizId" />
+    <DeleteDialog
+      v-model="deleteModalOpen"
+      title="Delete quiz"
+      :message="deleteQuizMessage"
+      confirm-label="Delete quiz"
+      @confirm-delete="deleteQuiz"
+    />
   </main>
 </template>
 
@@ -602,6 +609,7 @@ const listUserStore = useListUserstore();
 const quizId = computed(() => route.params.quiz_id || "");
 const importModalOpen = ref(false);
 const shareModalOpen = ref(false);
+const deleteModalOpen = ref(false);
 const importPending = ref(false);
 const csvFile = ref(null);
 const csvFileName = ref("");
@@ -654,6 +662,11 @@ onMounted(() => {
 
 const questions = computed(() => quizData.value?.data?.data || []);
 const quizTitle = computed(() => quizData.value?.data?.quiz_title || "Quiz");
+
+const deleteQuizMessage = computed(
+  () =>
+    `Deleting "${quizTitle.value}" also removes its questions, every session hosted from it, and all player scores and responses. This cannot be undone.`
+);
 const quizDescription = computed(
   () => quizData.value?.data?.quiz_description?.String || ""
 );
@@ -875,8 +888,6 @@ const deleteQuestion = async (questionId) => {
 };
 
 const deleteQuiz = async () => {
-  if (!window.confirm("Delete this quiz?")) return;
-
   try {
     await $fetch(`${url.apiUrl}/quizzes/${quizId.value}`, {
       method: "DELETE",
