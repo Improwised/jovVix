@@ -84,9 +84,8 @@ const canPlay = ref(false);
 const hostUserPlayedQuiz = ref(null);
 const hostPlayedQuizRequested = ref(false);
 
-// When hosting a public quiz, try to register the host as a player too. The API
-// allows this only for public quizzes started by someone other than the creator;
-// a creator hosting their own quiz gets a 403 and simply stays host-only.
+// When hosting a public quiz, register the host as a player too. The API allows
+// this for any host of a public quiz; a failure just leaves them host-only.
 const tryEnableHostPlay = async (code) => {
   if (!isPublicPlay.value || hostPlayedQuizRequested.value || !code) return;
   hostPlayedQuizRequested.value = true;
@@ -101,10 +100,6 @@ const tryEnableHostPlay = async (code) => {
       setActiveQuizTitle(res.data.quiz_title);
     }
   } catch (error) {
-    // 403 => host is the quiz creator and may only host, not play. Expected; stay host-only.
-    toast.warning(
-      "Host is the quiz creator and may only host the public quiz, not play."
-    );
     canPlay.value = false;
   }
 };
@@ -352,15 +347,16 @@ const goToScoreboardAfterTerminate = async () => {
   invitationCode.value = undefined;
   removeAllUsers();
   setSession(null);
-  // A host who also played sees their own player scoreboard (the admin scoreboard
-  // endpoint is Kratos-only and would 401 for guests). Host-only/creators keep the
-  // admin scoreboard + analytics they can revisit.
-  if (canPlay.value && hostUserPlayedQuiz.value) {
+  // A guest host who also played gets the podium, then their own player scoreboard —
+  // the admin scoreboard endpoint is Kratos-only and would 401 for them. Registered
+  // hosts keep the admin scoreboard + analytics.
+  const isGuestHost = usersStore.getUserData()?.role === "guest-user";
+  if (isGuestHost && canPlay.value && hostUserPlayedQuiz.value) {
     const playerName = usersStore.getUserData()?.username || "player";
     return await router.push(
       `/join/${encodeURIComponent(playerName)}/scoreboard?user_played_quiz=${
         hostUserPlayedQuiz.value
-      }`
+      }&host=1&winner_ui=true`
     );
   }
   return await router.push(
