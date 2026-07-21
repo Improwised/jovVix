@@ -144,8 +144,8 @@ func (ctrl *UserPlayedQuizeController) PlayedQuizValidation(c *fiber.Ctx) error 
 	ctrl.logger.Debug("activeQuizModel.activeQuizModel success", zap.Any("session", session))
 
 	// The host normally cannot play their own session. Exception: for a PUBLIC quiz,
-	// whoever started it (the host) may also play — unless they are the quiz creator,
-	// who stays host-only. This is the gate that distinguishes the two cases.
+	// whoever started it may also play — guest, registered user, or the quiz creator
+	// alike. Hosts of non-public (demo/private) sessions stay host-only.
 	if userId == session.AdminID {
 		quiz, err := ctrl.quizModel.GetQuizById(session.QuizID.String())
 		if err != nil {
@@ -153,8 +153,7 @@ func (ctrl *UserPlayedQuizeController) PlayedQuizValidation(c *fiber.Ctx) error 
 			return utils.JSONFail(c, http.StatusInternalServerError, constants.ErrUserQuizSessionValidation)
 		}
 
-		hostMayPlay := quiz.IsPublic && (quiz.CreatorID == nil || *quiz.CreatorID != userId)
-		if !hostMayPlay {
+		if !quiz.IsPublic {
 			ctrl.logger.Error(constants.ErrAdminCannotBeUser)
 			return utils.JSONFail(c, http.StatusForbidden, constants.ErrAdminCannotBeUser)
 		}

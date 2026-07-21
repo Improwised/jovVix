@@ -49,6 +49,11 @@ const props = defineProps({
     type: Boolean,
     required: false,
   },
+  isHost: {
+    default: false,
+    type: Boolean,
+    required: false,
+  },
   userName: {
     type: String,
     required: false,
@@ -244,8 +249,8 @@ const podiumName = (winner) =>
 </script>
 
 <template>
-  <!-- WINNER PODIUM (admin only, when winner_ui=true) -->
-  <ClientOnly v-if="winnerUI == 'true' && props.isAdmin">
+  <!-- WINNER PODIUM (hosts only, when winner_ui=true) -->
+  <ClientOnly v-if="winnerUI == 'true' && (props.isAdmin || props.isHost)">
     <div
       class="relative flex min-h-screen flex-col overflow-hidden bg-jv-canvas"
     >
