@@ -1,5 +1,6 @@
 <script setup>
 import { computed, ref, watch, watchEffect } from "vue";
+import { onClickOutside } from "@vueuse/core";
 import {
   ChevronDown,
   Filter,
@@ -57,12 +58,15 @@ const createQuizForm = ref({
 });
 const selectedFilter = ref("All Quiz");
 const filterOpen = ref(false);
-const filterOptions = ["All Quiz", "Shared By Me", "Shared With Me"];
-const filterApiPaths = {
-  "All Quiz": "/quizzes",
-  "Shared By Me": "/shared_quizzes?type=shared_by_me",
-  "Shared With Me": "/shared_quizzes?type=shared_with_me",
-};
+const filterMenuRef = ref(null);
+const filterOptions = [
+  "All Quiz",
+  "My Quizzes",
+  "Shared By Me",
+  "Shared With Me",
+];
+const visibilityFilter = ref("All");
+const visibilityOptions = ["All", "Public", "Private"];
 
 const quizImages = [
   "/images/landing/homepage-public-quiz-1.png",
@@ -77,10 +81,15 @@ const tiltClasses = [
   "rotate-[-0.4deg]",
   "rotate-[0.5deg]",
 ];
-const quizListUrl = computed(
-  () => `${url.apiUrl}${filterApiPaths[selectedFilter.value]}`
-);
 const emptyState = computed(() => {
+  if (selectedFilter.value === "My Quizzes") {
+    return {
+      title: "No Quiz Created By You!",
+      message: "Create your first quiz.",
+      showCreateAction: true,
+    };
+  }
+
   if (selectedFilter.value === "Shared By Me") {
     return {
       title: "No Quiz Shared By You!",
@@ -98,23 +107,53 @@ const emptyState = computed(() => {
   }
 
   return {
-    title: "No Quiz Created By You!",
-    message: "Create your first quiz.",
+    title: "No Quizzes Yet!",
+    message: "Create your first quiz, or ask someone to share one with you.",
     showCreateAction: true,
   };
 });
 
-const {
-  data: quizList,
-  pending: quizPending,
-  error: quizError,
-  refresh,
-} = useFetch(quizListUrl, {
+const quizListOptions = {
   method: "GET",
   headers: headers,
   mode: "cors",
   credentials: "include",
-});
+};
+
+const {
+  data: ownQuizList,
+  pending: ownPending,
+  error: ownError,
+  refresh: refreshOwn,
+} = useFetch(`${url.apiUrl}/quizzes`, quizListOptions);
+
+const {
+  data: sharedByMeList,
+  pending: sharedByMePending,
+  error: sharedByMeError,
+  refresh: refreshSharedByMe,
+} = useFetch(`${url.apiUrl}/shared_quizzes?type=shared_by_me`, quizListOptions);
+
+const {
+  data: sharedWithMeList,
+  pending: sharedWithMePending,
+  error: sharedWithMeError,
+  refresh: refreshSharedWithMe,
+} = useFetch(
+  `${url.apiUrl}/shared_quizzes?type=shared_with_me`,
+  quizListOptions
+);
+
+const quizPending = computed(
+  () => ownPending.value || sharedByMePending.value || sharedWithMePending.value
+);
+
+const quizError = computed(
+  () => ownError.value || sharedByMeError.value || sharedWithMeError.value
+);
+
+const refresh = () =>
+  Promise.all([refreshOwn(), refreshSharedByMe(), refreshSharedWithMe()]);
 
 const { data: categoriesData } = useFetch(`${url.apiUrl}/categories`, {
   method: "GET",
@@ -161,8 +200,28 @@ const formatCreatedAt = (value) => {
   }).format(date)}`;
 };
 
+const rawQuizzes = computed(() => {
+  const own = ownQuizList.value?.data || [];
+  const byMe = sharedByMeList.value?.data || [];
+  const withMe = sharedWithMeList.value?.data || [];
+
+  if (selectedFilter.value === "My Quizzes") return own;
+  if (selectedFilter.value === "Shared By Me") return byMe;
+  if (selectedFilter.value === "Shared With Me") return withMe;
+
+  const seen = new Set();
+
+  return [...own, ...byMe, ...withMe]
+    .filter((quiz) => !seen.has(quiz.id) && seen.add(quiz.id))
+    .sort(
+      (a, b) =>
+        new Date(b.created_at) - new Date(a.created_at) ||
+        a.id.localeCompare(b.id)
+    );
+});
+
 const quizzes = computed(() =>
-  (quizList.value?.data || []).map((quiz, index) => ({
+  rawQuizzes.value.map((quiz, index) => ({
     id: quiz.id,
     title: quiz.title,
     description: quiz.description.String,
@@ -176,16 +235,40 @@ const quizzes = computed(() =>
   }))
 );
 
+const visibilityCounts = computed(() => {
+  const list = quizzes.value;
+  const publicCount = list.filter((quiz) => quiz.isPublic).length;
+
+  return {
+    All: list.length,
+    Public: publicCount,
+    Private: list.length - publicCount,
+  };
+});
+
 const filteredQuizzes = computed(() => {
   const query = searchQuery.value.trim().toLowerCase();
-  if (!query) return quizzes.value;
+  const visibility = visibilityFilter.value;
 
   return quizzes.value.filter((quiz) => {
+    if (visibility === "Public" && !quiz.isPublic) return false;
+    if (visibility === "Private" && quiz.isPublic) return false;
+    if (!query) return true;
+
     return (
       quiz.title.toLowerCase().includes(query) ||
       quiz.description.toLowerCase().includes(query)
     );
   });
+});
+
+const noResultsMessage = computed(() => {
+  if (searchQuery.value.trim()) return "No quizzes matched your search.";
+  if (visibilityFilter.value === "Public") return "No public quizzes here yet.";
+  if (visibilityFilter.value === "Private")
+    return "No private quizzes here yet.";
+
+  return "No quizzes matched your filters.";
 });
 
 const handleStartQuiz = async (quizId) => {
@@ -271,6 +354,12 @@ const handleSelectFilter = (option) => {
   filterOpen.value = false;
 };
 
+const closeFilter = () => {
+  filterOpen.value = false;
+};
+
+onClickOutside(filterMenuRef, closeFilter);
+
 const closeCreateQuizModal = () => {
   createQuizOpen.value = false;
   createQuizForm.value = {
@@ -355,43 +444,67 @@ const handleCreateQuiz = async () => {
     </div>
 
     <div
-      class="grid gap-3 sm:gap-4 md:grid-cols-[minmax(0,220px)_minmax(280px,448px)] md:items-center md:justify-between"
+      class="grid gap-3 sm:gap-4 md:grid-cols-[minmax(0,1fr)_minmax(280px,448px)] md:items-center md:justify-between"
     >
-      <div class="relative w-full sm:w-fit">
-        <button
-          type="button"
-          class="inline-flex h-11 w-full rotate-[-1deg] items-center justify-between gap-2 jv-border-rough bg-jv-white px-3 text-[16px] font-semibold text-jv-ink shadow-brutal-sm sm:h-12 sm:w-fit sm:justify-start sm:px-4 sm:text-[18px]"
-          :aria-expanded="filterOpen"
-          aria-haspopup="listbox"
-          @click="filterOpen = !filterOpen"
-        >
-          <span class="flex min-w-0 items-center gap-2">
-            <Filter class="size-5 shrink-0 text-jv-coral" :stroke-width="2.2" />
-            <span class="truncate">{{ selectedFilter }}</span>
-          </span>
-          <ChevronDown
-            class="size-4 shrink-0 text-jv-ink/60 transition-transform"
-            :class="filterOpen ? 'rotate-180' : ''"
-            :stroke-width="2.4"
-          />
-        </button>
+      <div class="flex flex-wrap items-center gap-3">
+        <div ref="filterMenuRef" class="relative w-full sm:w-fit">
+          <button
+            type="button"
+            class="inline-flex h-11 w-full rotate-[-1deg] items-center justify-between gap-2 jv-border-rough bg-jv-white px-3 text-[16px] font-semibold text-jv-ink shadow-brutal-sm sm:h-12 sm:w-fit sm:justify-start sm:px-4 sm:text-[18px]"
+            :aria-expanded="filterOpen"
+            aria-haspopup="listbox"
+            @click="filterOpen = !filterOpen"
+          >
+            <span class="flex min-w-0 items-center gap-2">
+              <Filter
+                class="size-5 shrink-0 text-jv-coral"
+                :stroke-width="2.2"
+              />
+              <span class="truncate">{{ selectedFilter }}</span>
+            </span>
+            <ChevronDown
+              class="size-4 shrink-0 text-jv-ink/60 transition-transform"
+              :class="filterOpen ? 'rotate-180' : ''"
+              :stroke-width="2.4"
+            />
+          </button>
+
+          <div
+            v-if="filterOpen"
+            class="absolute left-0 top-[52px] z-30 w-full min-w-[190px] rotate-[1deg] jv-border-rough bg-jv-white p-2 shadow-brutal-sm sm:top-14 sm:w-52"
+            role="listbox"
+          >
+            <button
+              v-for="option in filterOptions"
+              :key="option"
+              type="button"
+              class="block w-full rounded-[6px] px-3 py-2 text-left text-[15px] font-semibold text-jv-ink transition-colors hover:bg-jv-yellow/40"
+              :class="option === selectedFilter ? 'bg-jv-yellow/60' : ''"
+              role="option"
+              :aria-selected="option === selectedFilter"
+              @click="handleSelectFilter(option)"
+            >
+              {{ option }}
+            </button>
+          </div>
+        </div>
 
         <div
-          v-if="filterOpen"
-          class="absolute left-0 top-[52px] z-30 w-full min-w-[190px] rotate-[1deg] jv-border-rough bg-jv-white p-2 shadow-brutal-sm sm:top-14 sm:w-52"
-          role="listbox"
+          class="flex h-11 w-full items-center gap-1 rotate-[0.6deg] jv-border-rough bg-jv-white p-1 shadow-brutal-sm sm:h-12 sm:w-fit"
+          role="group"
+          aria-label="Filter by visibility"
         >
           <button
-            v-for="option in filterOptions"
+            v-for="option in visibilityOptions"
             :key="option"
             type="button"
-            class="block w-full rounded-[6px] px-3 py-2 text-left text-[15px] font-semibold text-jv-ink transition-colors hover:bg-jv-yellow/40"
-            :class="option === selectedFilter ? 'bg-jv-yellow/60' : ''"
-            role="option"
-            :aria-selected="option === selectedFilter"
-            @click="handleSelectFilter(option)"
+            class="flex-1 rounded-[6px] px-3 py-1.5 text-[14px] font-semibold text-jv-ink transition-colors hover:bg-jv-yellow/40 sm:flex-none sm:text-[15px]"
+            :class="option === visibilityFilter ? 'bg-jv-yellow/60' : ''"
+            :aria-pressed="option === visibilityFilter"
+            @click="visibilityFilter = option"
           >
             {{ option }}
+            <span class="text-jv-ink/50">{{ visibilityCounts[option] }}</span>
           </button>
         </div>
       </div>
@@ -444,7 +557,7 @@ const handleCreateQuiz = async () => {
       v-else-if="filteredQuizzes.length < 1"
       class="jv-border-rough bg-jv-white p-5 text-[18px] font-semibold text-jv-muted shadow-brutal-sm"
     >
-      No quizzes matched your search.
+      {{ noResultsMessage }}
     </section>
 
     <section
