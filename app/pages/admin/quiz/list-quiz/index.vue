@@ -177,7 +177,7 @@ watch(
 
 watchEffect(() => {
   if (quizError.value?.data?.code === 401) {
-    navigateTo("/account/login");
+    navigateTo("/account/login", { replace: true });
   }
 });
 
