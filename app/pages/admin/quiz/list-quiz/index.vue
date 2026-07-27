@@ -1,5 +1,6 @@
 <script setup>
 import { computed, ref, watch, watchEffect } from "vue";
+import { onClickOutside } from "@vueuse/core";
 import {
   ChevronDown,
   Filter,
@@ -57,6 +58,7 @@ const createQuizForm = ref({
 });
 const selectedFilter = ref("All Quiz");
 const filterOpen = ref(false);
+const filterMenuRef = ref(null);
 const filterOptions = ["All Quiz", "Shared By Me", "Shared With Me"];
 const filterApiPaths = {
   "All Quiz": "/quizzes",
@@ -271,6 +273,12 @@ const handleSelectFilter = (option) => {
   filterOpen.value = false;
 };
 
+const closeFilter = () => {
+  filterOpen.value = false;
+};
+
+onClickOutside(filterMenuRef, closeFilter);
+
 const closeCreateQuizModal = () => {
   createQuizOpen.value = false;
   createQuizForm.value = {
@@ -357,7 +365,7 @@ const handleCreateQuiz = async () => {
     <div
       class="grid gap-3 sm:gap-4 md:grid-cols-[minmax(0,220px)_minmax(280px,448px)] md:items-center md:justify-between"
     >
-      <div class="relative w-full sm:w-fit">
+      <div ref="filterMenuRef" class="relative w-full sm:w-fit">
         <button
           type="button"
           class="inline-flex h-11 w-full rotate-[-1deg] items-center justify-between gap-2 jv-border-rough bg-jv-white px-3 text-[16px] font-semibold text-jv-ink shadow-brutal-sm sm:h-12 sm:w-fit sm:justify-start sm:px-4 sm:text-[18px]"
