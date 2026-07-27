@@ -177,7 +177,10 @@ watch(
 
 watchEffect(() => {
   if (quizError.value?.data?.code === 401) {
-    navigateTo("/account/login", { replace: true });
+    navigateTo(
+      `/account/login?returnTo=${encodeURIComponent(route.fullPath)}`,
+      { replace: true }
+    );
   }
 });
 
