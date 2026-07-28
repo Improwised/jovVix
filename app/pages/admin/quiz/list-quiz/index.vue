@@ -18,6 +18,29 @@ import NavigationLink from "@/components/common/NavigationLink.vue";
 
 definePageMeta({
   layout: "empty",
+  middleware: async (to) => {
+    const { apiUrl } = useRuntimeConfig().public;
+    const requestHeaders = useRequestHeaders(["cookie"]);
+
+    try {
+      const who = await $fetch(`${apiUrl}/user/who`, {
+        method: "GET",
+        credentials: "include",
+        headers: requestHeaders,
+      });
+
+      const role = who?.data?.role;
+      if (role && role !== "guest-user") {
+        return;
+      }
+    } catch (error) {
+      console.log("unauthenticated visitor on the quiz list", error.message);
+    }
+
+    return navigateTo(
+      `/account/login?returnTo=${encodeURIComponent(to.fullPath)}`
+    );
+  },
 });
 
 useSeoMeta({
@@ -177,7 +200,10 @@ watch(
 
 watchEffect(() => {
   if (quizError.value?.data?.code === 401) {
-    navigateTo("/account/login");
+    navigateTo(
+      `/account/login?returnTo=${encodeURIComponent(route.fullPath)}`,
+      { replace: true }
+    );
   }
 });
 
