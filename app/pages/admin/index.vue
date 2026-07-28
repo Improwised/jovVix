@@ -3,6 +3,34 @@
     class="flex flex-col gap-8 bg-jv-canvas sm:gap-10 px-4 sm:px-6 md:px-8 py-5 md:py-6"
   >
     <div class="mx-auto flex w-full flex-col gap-8 sm:gap-10">
+      <div
+        v-if="!userPending && !userError && !userData.email_verify"
+        class="flex rotate-[-0.3deg] flex-col gap-3.5 jv-border-rough bg-jv-white p-3.5 shadow-brutal-sm sm:flex-row sm:items-center sm:p-4"
+        role="alert"
+      >
+        <span
+          class="flex size-9 shrink-0 items-center justify-center rounded-full border-[3px] border-jv-ink bg-jv-coral text-white"
+        >
+          <MailWarning class="size-5" :stroke-width="2.4" />
+        </span>
+
+        <div class="min-w-0 flex-1">
+          <h2 class="font-headings text-[18px] leading-tight text-jv-ink">
+            Your email isn't verified yet
+          </h2>
+          <p class="mt-1 text-[14px] font-semibold text-jv-ink/75">
+            Verify your email, or your account will be deleted after 30 days.
+          </p>
+        </div>
+
+        <NavigationLink
+          url-name="Verify Yourself"
+          class="shrink-0 rounded-[999px] bg-jv-mint"
+          title="Click to verify your email"
+          @click="handleEmailVerification"
+        />
+      </div>
+
       <div class="min-w-0">
         <h1
           class="font-headings text-[38px] leading-none text-jv-ink min-[420px]:text-[44px] sm:text-[52px] md:text-[56px]"
@@ -212,8 +240,9 @@
 import { useUsersStore } from "~~/store/users";
 import { getAvatarUrlByName } from "~~/composables/avatar";
 import { usePush } from "notivue";
-import { Save } from "lucide-vue-next";
+import { MailWarning, Save } from "lucide-vue-next";
 import NavigationLink from "@/components/common/NavigationLink.vue";
+import { useEmailVerified } from "@/composables/email_verification";
 
 definePageMeta({
   layout: "empty",
@@ -264,6 +293,8 @@ const userData = reactive({
   email_verify: false,
 });
 
+const emailVerified = useEmailVerified();
+
 watch(
   [user, userError],
   () => {
@@ -277,6 +308,7 @@ watch(
       userData.email = user.value.data.identity.traits.email;
       userData.email_verify =
         user.value.data.identity.verifiable_addresses[0].verified;
+      emailVerified.value = userData.email_verify;
     }
     if (userError.value) {
       console.log("error");

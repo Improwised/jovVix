@@ -30,14 +30,19 @@
             :url="item.url"
             :url-name="item.label"
             :class="navItemClass(item)"
-            class="flex gap-3 justify-start px-4 py-2.5 text-jv-ink/65 no-underline transition-transform group hover:text-jv-ink"
+            class="relative flex gap-3 justify-start px-4 py-2.5 text-jv-ink/65 no-underline transition-transform group hover:text-jv-ink"
           >
             <component
               :is="item.icon"
-              class="size-5 group-hover:text-jv-ink"
+              class="size-5 shrink-0 group-hover:text-jv-ink"
               :class="item.active ? 'text-jv-coral' : 'text-jv-ink/45'"
               :stroke-width="2.3"
             />
+            <span
+              v-if="item.needsAttention"
+              class="absolute right-3 top-1/2 size-2 -translate-y-1/2 rounded-full bg-jv-coral"
+              aria-label="Email not verified"
+            ></span>
           </NavigationLink>
         </template>
         <template v-else>
@@ -157,6 +162,11 @@
             :stroke-width="2.4"
           />
           <span>{{ item.label }}</span>
+          <span
+            v-if="item.needsAttention"
+            class="size-2 shrink-0 rounded-full bg-jv-coral"
+            aria-label="Email not verified"
+          ></span>
         </NuxtLink>
         <div
           v-if="showAdminNav"
@@ -243,6 +253,10 @@ import {
 } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
 import { handleLogout, setUserDataStore } from "@/composables/auth";
+import {
+  refreshEmailVerified,
+  useEmailVerified,
+} from "@/composables/email_verification";
 import { getAvatarUrlByName } from "@/composables/avatar";
 import { useUsersStore } from "~~/store/users";
 
@@ -252,6 +266,7 @@ const desktopMenuOpen = ref(false);
 const mobileMenuOpen = ref(false);
 const mounted = ref(false);
 const userDataStore = useUsersStore();
+const emailVerified = useEmailVerified();
 
 const isQuizListPage = computed(() =>
   route.path.startsWith("/admin/quiz/list-quiz")
@@ -328,6 +343,7 @@ const navItems = computed(() => {
         url: "/admin",
         icon: UserRound,
         active: isActiveRoute("/admin"),
+        needsAttention: emailVerified.value === false,
       },
     ];
   }
@@ -366,6 +382,7 @@ const mobileNavItems = computed(() => {
         url: "/admin",
         icon: UserRound,
         active: isActiveRoute("/admin"),
+        needsAttention: emailVerified.value === false,
       },
       {
         label: "Create Quiz",
@@ -410,6 +427,7 @@ const closeAllMenus = () => {
 onMounted(async () => {
   await setUserDataStore();
   mounted.value = true;
+  refreshEmailVerified();
   if (typeof window !== "undefined") {
     breakpointMql = window.matchMedia("(min-width: 1024px)");
     breakpointMql.addEventListener("change", closeAllMenus);
