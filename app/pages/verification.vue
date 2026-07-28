@@ -141,6 +141,8 @@ const fetchFlowIdAndCsrfToken = async () => {
     data?.ui?.messages?.forEach((element) => {
       if (element.type === "error") {
         toast.error(element.text);
+      } else if (element.id === 1080001 || element.id === 1080003) {
+        toast.success("Verification code sent to your email.");
       } else {
         toast.success(element.text);
       }
