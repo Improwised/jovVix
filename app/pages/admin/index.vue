@@ -224,11 +224,65 @@
                 Review every quiz you've played so far.
               </p>
             </div>
-            <NavigationLink
-              url="/admin/quiz/list-quiz"
-              url-name="View Played Quizzes"
-              class="w-full bg-jv-yellow py-2 text-jv-ink sm:w-fit"
+            <input
+              v-model="titleInput"
+              type="text"
+              placeholder="Search quiz"
+              class="h-12 w-full border-2 border-jv-ink bg-jv-canvas px-4 text-[16px] font-semibold text-jv-ink outline-none placeholder:text-jv-ink/35 focus:bg-jv-white sm:w-64"
             />
+          </div>
+
+          <div class="min-h-[250px] p-5 sm:p-7">
+            <UtilsQuizListWaiting v-if="quizPending" />
+
+            <div
+              v-else-if="quizError"
+              class="jv-border-rough bg-jv-white p-5 text-[18px] font-semibold text-jv-coral shadow-brutal-sm"
+              role="alert"
+            >
+              {{ quizError.data }}
+            </div>
+
+            <template v-else>
+              <div
+                v-if="playedQuizzes.length < 1"
+                class="grid min-h-[210px] place-items-center text-center"
+              >
+                <div>
+                  <Archive
+                    class="mx-auto size-11 text-jv-muted"
+                    :stroke-width="2.3"
+                  />
+                  <h3
+                    class="mt-4 font-headings text-[28px] leading-tight text-jv-muted sm:text-[32px]"
+                  >
+                    {{ emptyState.title }}
+                  </h3>
+                  <p class="mt-2 text-[16px] font-semibold text-jv-muted">
+                    {{ emptyState.message }}
+                  </p>
+                </div>
+              </div>
+
+              <template v-else>
+                <div
+                  class="grid gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 2xl:grid-cols-4"
+                >
+                  <QuizListCard
+                    v-for="quiz in playedQuizzes"
+                    :key="quiz.id"
+                    :details="quiz"
+                    :is-played-quiz="true"
+                  />
+                </div>
+
+                <Pagination
+                  v-if="totalPages > 1"
+                  :page="page"
+                  :num-of-records="totalPages"
+                />
+              </template>
+            </template>
           </div>
         </section>
       </template>
@@ -240,8 +294,11 @@
 import { useUsersStore } from "~~/store/users";
 import { getAvatarUrlByName } from "~~/composables/avatar";
 import { usePush } from "notivue";
-import { MailWarning, Save } from "lucide-vue-next";
+import { useDebounceFn } from "@vueuse/core";
+import { Archive, MailWarning, Save } from "lucide-vue-next";
 import NavigationLink from "@/components/common/NavigationLink.vue";
+import QuizListCard from "@/components/QuizListCard.vue";
+import Pagination from "~/components/Pagination.vue";
 import { useEmailVerified } from "@/composables/email_verification";
 
 definePageMeta({
@@ -256,6 +313,7 @@ useSeoMeta({
 });
 
 const config = useRuntimeConfig();
+const route = useRoute();
 const toast = usePush();
 const userStore = useUsersStore();
 const { getUserData, setUserData } = userStore;
@@ -294,6 +352,46 @@ const userData = reactive({
 });
 
 const emailVerified = useEmailVerified();
+
+const page = computed(() => Number(route.query.page) || 1);
+const title = computed(() => route.query.title || "");
+const titleInput = ref(route.query.title || "");
+
+const {
+  data: quizList,
+  pending: quizPending,
+  error: quizError,
+} = useFetch(url.apiUrl + "/user_played_quizes", {
+  method: "GET",
+  headers: headers,
+  mode: "cors",
+  credentials: "include",
+  query: { page, title },
+});
+
+const playedQuizzes = computed(() => quizList.value?.data?.data ?? []);
+const playedQuizCount = computed(() => quizList.value?.data?.count ?? 0);
+const totalPages = computed(() => Math.ceil(playedQuizCount.value / 10));
+
+const emptyState = computed(() =>
+  title.value
+    ? {
+        title: "No Match Found !",
+        message: `No played quiz matches "${title.value}".`,
+      }
+    : {
+        title: "No Quiz Played By You !",
+        message: "Join a quiz and it will show up here.",
+      }
+);
+
+const debouncedNavigateTo = useDebounceFn((query) => {
+  navigateTo({ path: route.path, query });
+}, 500);
+
+watch(titleInput, (newTitle) => {
+  debouncedNavigateTo({ ...route.query, page: 1, title: newTitle });
+});
 
 watch(
   [user, userError],
