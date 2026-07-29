@@ -50,18 +50,21 @@ type QuizzesAnalysis struct {
 }
 
 type QuizWithQuestions struct {
-	ID             uuid.UUID      `json:"id" db:"id"`
-	Title          string         `json:"title" db:"title" validate:"required"`
-	Description    sql.NullString `json:"description,omitempty" db:"description"`
-	CreatorID      *string        `json:"creator_id,omitempty" db:"creator_id"`
-	IsPublic       bool           `json:"is_public" db:"is_public"`
-	CategoryId     sql.NullString `json:"category_id,omitempty" db:"category_id"`
-	CategoryName   sql.NullString `json:"category_name,omitempty" db:"category_name"`
-	CoverImage     sql.NullString `json:"cover_image,omitempty" db:"cover_image"`
+	ID           uuid.UUID      `json:"id" db:"id"`
+	Title        string         `json:"title" db:"title" validate:"required"`
+	Description  sql.NullString `json:"description,omitempty" db:"description"`
+	CreatorID    *string        `json:"creator_id,omitempty" db:"creator_id"`
+	IsPublic     bool           `json:"is_public" db:"is_public"`
+	CategoryId   sql.NullString `json:"category_id,omitempty" db:"category_id"`
+	CategoryName sql.NullString `json:"category_name,omitempty" db:"category_name"`
+	CoverImage     sql.NullString `json:"-" db:"cover_image"`
+	HasCoverImage  bool           `json:"has_cover_image" db:"has_cover_image"`
 	CreatedAt      time.Time      `json:"created_at,omitempty" db:"created_at,omitempty"`
 	UpdatedAt      time.Time      `json:"updated_at,omitempty" db:"updated_at,omitempty"`
 	TotalQuestions int            `json:"total_questions" db:"total_questions"`
 }
+
+var hasCoverImageExpr = goqu.L("(quizzes.cover_image IS NOT NULL)")
 
 // GetQuizzesByAdmin returns the quizzes an admin can manage. When includePublic
 // is true (public-quiz admins), it also includes every public quiz regardless of
@@ -84,7 +87,7 @@ func (model *QuizModel) GetQuizzesByAdmin(creator_id string, includePublic bool)
 			goqu.I("quizzes.description"),
 			goqu.I("quizzes.creator_id"),
 			goqu.I("quizzes.is_public"),
-			goqu.I("quizzes.cover_image"),
+			hasCoverImageExpr.As("has_cover_image"),
 			goqu.I("quizzes.created_at"),
 			goqu.I("quizzes.updated_at"),
 			questionsCountSubquery.As("total_questions"),
@@ -104,7 +107,7 @@ func (model *QuizModel) GetQuizzesByAdmin(creator_id string, includePublic bool)
 	for rows.Next() {
 		var quizWithQuestions QuizWithQuestions
 
-		err := rows.Scan(&quizWithQuestions.ID, &quizWithQuestions.Title, &quizWithQuestions.Description, &quizWithQuestions.CreatorID, &quizWithQuestions.IsPublic, &quizWithQuestions.CoverImage, &quizWithQuestions.CreatedAt, &quizWithQuestions.UpdatedAt, &quizWithQuestions.TotalQuestions)
+		err := rows.Scan(&quizWithQuestions.ID, &quizWithQuestions.Title, &quizWithQuestions.Description, &quizWithQuestions.CreatorID, &quizWithQuestions.IsPublic, &quizWithQuestions.HasCoverImage, &quizWithQuestions.CreatedAt, &quizWithQuestions.UpdatedAt, &quizWithQuestions.TotalQuestions)
 
 		if err != nil {
 			return quizzes, err
@@ -192,7 +195,7 @@ func (model *QuizModel) GetPublicQuizzes() ([]QuizWithQuestions, error) {
 			goqu.I("quizzes.creator_id"),
 			goqu.I("quizzes.is_public"),
 			goqu.I("quiz_categories.name").As("category_name"),
-			goqu.I("quizzes.cover_image"),
+			hasCoverImageExpr.As("has_cover_image"),
 			goqu.I("quizzes.created_at"),
 			goqu.I("quizzes.updated_at"),
 			questionsCountSubquery.As("total_questions"),
@@ -210,7 +213,7 @@ func (model *QuizModel) GetPublicQuizzes() ([]QuizWithQuestions, error) {
 	quizzes := []QuizWithQuestions{}
 	for rows.Next() {
 		var q QuizWithQuestions
-		if err := rows.Scan(&q.ID, &q.Title, &q.Description, &q.CreatorID, &q.IsPublic, &q.CategoryName, &q.CoverImage, &q.CreatedAt, &q.UpdatedAt, &q.TotalQuestions); err != nil {
+		if err := rows.Scan(&q.ID, &q.Title, &q.Description, &q.CreatorID, &q.IsPublic, &q.CategoryName, &q.HasCoverImage, &q.CreatedAt, &q.UpdatedAt, &q.TotalQuestions); err != nil {
 			return quizzes, err
 		}
 		decodedTitle, err := url.QueryUnescape(q.Title)
@@ -221,6 +224,52 @@ func (model *QuizModel) GetPublicQuizzes() ([]QuizWithQuestions, error) {
 		quizzes = append(quizzes, q)
 	}
 	return quizzes, nil
+}
+
+type QuizCoverMeta struct {
+	IsPublic  bool      `db:"is_public"`
+	HasCover  bool      `db:"has_cover"`
+	UpdatedAt time.Time `db:"updated_at"`
+}
+
+func (model *QuizModel) GetQuizCoverMeta(quizId string) (QuizCoverMeta, error) {
+	var meta QuizCoverMeta
+
+	found, err := model.db.From(QuizzesTable).
+		Select(
+			goqu.I("is_public"),
+			goqu.L("(cover_image IS NOT NULL)").As("has_cover"),
+			goqu.I("updated_at"),
+		).
+		Where(goqu.Ex{"id": quizId}).
+		Limit(1).
+		ScanStruct(&meta)
+	if err != nil {
+		return meta, err
+	}
+	if !found {
+		return meta, sql.ErrNoRows
+	}
+
+	return meta, nil
+}
+
+func (model *QuizModel) GetQuizCoverImage(quizId string) (string, error) {
+	var coverImage sql.NullString
+
+	found, err := model.db.From(QuizzesTable).
+		Select("cover_image").
+		Where(goqu.Ex{"id": quizId}).
+		Limit(1).
+		ScanVal(&coverImage)
+	if err != nil {
+		return "", err
+	}
+	if !found || !coverImage.Valid {
+		return "", sql.ErrNoRows
+	}
+
+	return coverImage.String, nil
 }
 
 func (model *QuizModel) GetQuizById(quizId string) (QuizWithQuestions, error) {

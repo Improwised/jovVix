@@ -102,7 +102,7 @@ func (model *SharedQuizzesModel) ListSharedQuizzes(sharedBy, sharedTo string) ([
 			goqu.I("quizzes.description"),
 			goqu.I("quizzes.creator_id"),
 			goqu.I("quizzes.is_public"),
-			goqu.I("quizzes.cover_image"),
+			hasCoverImageExpr.As("has_cover_image"),
 			goqu.I("quizzes.created_at"),
 			goqu.I("quizzes.updated_at"),
 			questionsCountSubquery.As("total_questions"),
@@ -127,13 +127,6 @@ func (model *SharedQuizzesModel) ListSharedQuizzes(sharedBy, sharedTo string) ([
 	// Add grouping and ordering
 	query = query.GroupBy(
 		goqu.I("quizzes.id"),
-		goqu.I("quizzes.title"),
-		goqu.I("quizzes.description"),
-		goqu.I("quizzes.creator_id"),
-		goqu.I("quizzes.is_public"),
-		goqu.I("quizzes.cover_image"),
-		goqu.I("quizzes.created_at"),
-		goqu.I("quizzes.updated_at"),
 	).Order(goqu.I("quizzes.created_at").Desc())
 
 	rows, err := query.Executor().Query()
@@ -148,7 +141,7 @@ func (model *SharedQuizzesModel) ListSharedQuizzes(sharedBy, sharedTo string) ([
 	for rows.Next() {
 		var quizWithQuestions QuizWithQuestions
 
-		err := rows.Scan(&quizWithQuestions.ID, &quizWithQuestions.Title, &quizWithQuestions.Description, &quizWithQuestions.CreatorID, &quizWithQuestions.IsPublic, &quizWithQuestions.CoverImage, &quizWithQuestions.CreatedAt, &quizWithQuestions.UpdatedAt, &quizWithQuestions.TotalQuestions)
+		err := rows.Scan(&quizWithQuestions.ID, &quizWithQuestions.Title, &quizWithQuestions.Description, &quizWithQuestions.CreatorID, &quizWithQuestions.IsPublic, &quizWithQuestions.HasCoverImage, &quizWithQuestions.CreatedAt, &quizWithQuestions.UpdatedAt, &quizWithQuestions.TotalQuestions)
 		if err != nil {
 			return quizzes, err
 		}

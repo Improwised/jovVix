@@ -248,6 +248,8 @@ func setupQuizController(v1 fiber.Router, db *goqu.Database, logger *zap.Logger,
 	// so it is not protected by KratosAuthenticated.
 	v1.Get("/quizzes/public", quizController.GetPublicQuizzes)
 
+	v1.Get(fmt.Sprintf("/quizzes/:%s/cover", constants.QuizId), quizController.GetQuizCover)
+
 	// Hosting a public quiz is open to guests as well as registered users, so it uses
 	// Authenticated (guest JWT or kratos) instead of the kratos-only /quizzes group.
 	// The handler itself enforces that the quiz is actually public.

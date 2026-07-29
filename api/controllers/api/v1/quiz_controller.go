@@ -3,6 +3,7 @@ package v1
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"os"
 	"strconv"
@@ -170,6 +171,57 @@ func (ctrl *QuizController) GetPublicQuizzes(c *fiber.Ctx) error {
 		return utils.JSONError(c, http.StatusInternalServerError, err.Error())
 	}
 	return utils.JSONSuccess(c, http.StatusOK, quizzes)
+}
+
+func (ctrl *QuizController) GetQuizCover(c *fiber.Ctx) error {
+	quizId := c.Params(constants.QuizId)
+	if _, err := uuid.Parse(quizId); err != nil {
+		return c.SendStatus(http.StatusNotFound)
+	}
+
+	meta, err := ctrl.quizModel.GetQuizCoverMeta(quizId)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return c.SendStatus(http.StatusNotFound)
+		}
+		ctrl.logger.Error("error reading quiz cover metadata", zap.Error(err))
+		return c.SendStatus(http.StatusInternalServerError)
+	}
+
+	if !meta.IsPublic || !meta.HasCover {
+		return c.SendStatus(http.StatusNotFound)
+	}
+
+	etag := fmt.Sprintf(`"%s-%d"`, quizId, meta.UpdatedAt.UTC().Unix())
+	c.Set(fiber.HeaderETag, etag)
+
+	if c.Query("v") != "" {
+		c.Set(fiber.HeaderCacheControl, "public, max-age=31536000, immutable")
+	} else {
+		c.Set(fiber.HeaderCacheControl, "public, max-age=300")
+	}
+
+	if c.Fresh() {
+		return c.SendStatus(http.StatusNotModified)
+	}
+
+	dataURI, err := ctrl.quizModel.GetQuizCoverImage(quizId)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return c.SendStatus(http.StatusNotFound)
+		}
+		ctrl.logger.Error("error reading quiz cover image", zap.Error(err))
+		return c.SendStatus(http.StatusInternalServerError)
+	}
+
+	contentType, raw, err := utils.DecodeCoverImage(dataURI)
+	if err != nil {
+		ctrl.logger.Error("corrupt quiz cover image", zap.String("quiz_id", quizId), zap.Error(err))
+		return c.SendStatus(http.StatusNotFound)
+	}
+
+	c.Set(fiber.HeaderContentType, contentType)
+	return c.Status(http.StatusOK).Send(raw)
 }
 
 func (ctrl *QuizController) UpdateQuizSettings(c *fiber.Ctx) error {

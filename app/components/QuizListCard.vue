@@ -10,7 +10,15 @@
 
     <div class="relative border-[2px] border-jv-ink bg-jv-slate p-2">
       <div class="relative h-[104px] overflow-hidden sm:h-[112px] md:h-[124px]">
-        <img :src="image" :alt="title" class="size-full object-cover" />
+        <img
+          :src="image"
+          :alt="title"
+          width="320"
+          height="124"
+          loading="lazy"
+          decoding="async"
+          class="size-full object-cover"
+        />
       </div>
     </div>
 

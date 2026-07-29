@@ -14,9 +14,13 @@
 
     <span class="relative block border-[2px] border-jv-ink bg-jv-slate p-2">
       <span class="block h-[118px] overflow-hidden sm:h-[128px]">
-        <img
+        <QuizCoverImage
           :src="image"
+          :fallback="fallback"
           :alt="title"
+          :width="240"
+          :height="128"
+          :eager="eager"
           class="size-full object-cover transition-transform duration-200 group-hover:scale-[1.05]"
         />
       </span>
@@ -37,6 +41,8 @@
 </template>
 
 <script setup>
+import QuizCoverImage from "@/components/QuizCoverImage.vue";
+
 defineProps({
   title: {
     type: String,
@@ -46,11 +52,19 @@ defineProps({
     type: String,
     default: "",
   },
+  fallback: {
+    type: String,
+    default: "",
+  },
   tiltClass: {
     type: String,
     default: "",
   },
   starting: {
+    type: Boolean,
+    default: false,
+  },
+  eager: {
     type: Boolean,
     default: false,
   },

@@ -91,19 +91,8 @@ const filterOptions = [
 const visibilityFilter = ref("All");
 const visibilityOptions = ["All", "Public", "Private"];
 
-const quizImages = [
-  "/images/landing/homepage-public-quiz-1.png",
-  "/images/landing/homepage-public-quiz-2.png",
-  "/images/landing/homepage-public-quiz-3.png",
-  "/images/landing/homepage-public-quiz-4.png",
-];
+const { coverUrl, fallbackUrl, tiltClass } = useQuizCover();
 
-const tiltClasses = [
-  "rotate-[-0.8deg]",
-  "rotate-[0.7deg]",
-  "rotate-[-0.4deg]",
-  "rotate-[0.5deg]",
-];
 const emptyState = computed(() => {
   if (selectedFilter.value === "My Quizzes") {
     return {
@@ -247,15 +236,15 @@ const rawQuizzes = computed(() => {
 });
 
 const quizzes = computed(() =>
-  rawQuizzes.value.map((quiz, index) => ({
+  rawQuizzes.value.map((quiz) => ({
     id: quiz.id,
     title: quiz.title,
     description: quiz.description.String,
     createdAt: formatCreatedAt(quiz.created_at),
     questionCount: quiz.total_questions || 0,
-    image:
-      nullableString(quiz.cover_image) || quizImages[index % quizImages.length],
-    tiltClass: tiltClasses[index % tiltClasses.length],
+    image: coverUrl(quiz),
+    fallback: fallbackUrl(quiz),
+    tiltClass: tiltClass(quiz),
     viewUrl: `/admin/quiz/list-quiz/${quiz.id}`,
     isPublic: !!quiz.is_public,
   }))
@@ -598,6 +587,7 @@ const handleCreateQuiz = async () => {
         :created-at="quiz.createdAt"
         :question-count="quiz.questionCount"
         :image="quiz.image"
+        :fallback="quiz.fallback"
         :tilt-class="quiz.tiltClass"
         :view-url="quiz.viewUrl"
         :is-public="quiz.isPublic"

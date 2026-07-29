@@ -10,7 +10,14 @@
 
     <div class="relative border-[2px] border-jv-ink bg-jv-slate p-2">
       <div class="relative h-[104px] overflow-hidden sm:h-[112px] md:h-[124px]">
-        <img :src="image" :alt="title" class="size-full object-cover" />
+        <QuizCoverImage
+          :src="image"
+          :fallback="fallback"
+          :alt="title"
+          :width="320"
+          :height="124"
+          class="size-full object-cover"
+        />
       </div>
       <span
         v-if="isPublic"
@@ -111,6 +118,7 @@ import {
   Trash2,
 } from "lucide-vue-next";
 import NavigationLink from "@/components/common/NavigationLink.vue";
+import QuizCoverImage from "@/components/QuizCoverImage.vue";
 
 defineProps({
   title: {
@@ -130,6 +138,10 @@ defineProps({
     default: 0,
   },
   image: {
+    type: String,
+    default: "",
+  },
+  fallback: {
     type: String,
     default: "",
   },

@@ -148,6 +148,15 @@ const (
 	MaxCoverImageBytes = 1 << 20
 )
 
+var AllowedCoverImageTypes = map[string]bool{
+	"image/jpeg": true,
+	"image/png":  true,
+	"image/gif":  true,
+	"image/webp": true,
+	"image/heic": true,
+	"image/heif": true,
+}
+
 // components
 const (
 	Waiting  = "Waiting"
