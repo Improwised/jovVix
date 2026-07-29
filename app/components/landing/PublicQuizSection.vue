@@ -33,7 +33,7 @@
 
     <div class="flex flex-col gap-7 sm:gap-9">
       <div
-        v-for="group in groupedQuizzes"
+        v-for="(group, groupIndex) in groupedQuizzes"
         :id="categoryAnchorId(group.name)"
         :key="group.name"
         class="scroll-mt-6"
@@ -49,14 +49,16 @@
         >
           <CarouselContent class="-ml-6 pb-3 pt-4 sm:-ml-8">
             <CarouselItem
-              v-for="(quiz, index) in group.quizzes"
+              v-for="(quiz, quizIndex) in group.quizzes"
               :key="quiz.id"
               class="basis-1/2 pl-6 sm:basis-1/3 sm:pl-8 md:basis-1/4 lg:basis-1/5 xl:basis-1/6"
             >
               <PublicQuizCard
                 :title="quiz.title"
-                :image="coverOf(quiz, index)"
-                :tilt-class="tiltFor(index)"
+                :image="coverUrl(quiz)"
+                :fallback="fallbackUrl(quiz)"
+                :tilt-class="tiltClass(quiz)"
+                :eager="groupIndex === 0 && quizIndex === 0"
                 :starting="startingQuizId === quiz.id"
                 @start-quiz="handleStartQuiz(quiz.id)"
               />
@@ -100,25 +102,7 @@ const { data } = await useFetch(`${apiUrl}/quizzes/public`, {
 
 const publicQuizzes = computed(() => data.value?.data || []);
 
-const fallbackImages = [
-  "/images/landing/homepage-public-quiz-1.png",
-  "/images/landing/homepage-public-quiz-2.png",
-  "/images/landing/homepage-public-quiz-3.png",
-  "/images/landing/homepage-public-quiz-4.png",
-];
-
-const tiltClasses = [
-  "rotate-[-1deg]",
-  "rotate-[1deg]",
-  "rotate-[-0.4deg]",
-  "rotate-[0.6deg]",
-];
-
-const tiltFor = (i) => tiltClasses[i % tiltClasses.length];
-
-const coverOf = (quiz, index) =>
-  nullableString(quiz.cover_image) ||
-  fallbackImages[index % fallbackImages.length];
+const { coverUrl, fallbackUrl, tiltClass } = useQuizCover();
 
 const groupedQuizzes = computed(() => {
   const groups = new Map();
