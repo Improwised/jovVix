@@ -1,7 +1,7 @@
 <template>
   <button
     type="button"
-    class="group relative flex w-full cursor-pointer flex-col bg-jv-white p-3 text-left shadow-brutal-sm jv-border-rough transition-transform duration-150 hover:-translate-y-1 hover:scale-[1.03] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-jv-coral/40 disabled:cursor-wait disabled:opacity-70"
+    class="relative flex w-full cursor-pointer flex-col bg-jv-white p-3 text-left shadow-brutal-sm jv-border-rough transition-transform duration-150 hover:-translate-y-1 hover:scale-[1.03] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-jv-coral/40 disabled:cursor-wait disabled:opacity-70"
     :class="tiltClass"
     :disabled="starting"
     :aria-label="`Start quiz: ${title}`"
@@ -21,7 +21,7 @@
           :width="240"
           :height="128"
           :eager="eager"
-          class="size-full object-cover transition-transform duration-200 group-hover:scale-[1.05]"
+          class="size-full object-cover"
         />
       </span>
       <span
