@@ -10,13 +10,12 @@
 
     <div class="relative border-[2px] border-jv-ink bg-jv-slate p-2">
       <div class="relative h-[104px] overflow-hidden sm:h-[112px] md:h-[124px]">
-        <img
+        <QuizCoverImage
           :src="image"
+          :fallback="fallback"
           :alt="title"
-          width="320"
-          height="124"
-          loading="lazy"
-          decoding="async"
+          :width="320"
+          :height="124"
           class="size-full object-cover"
         />
       </div>
@@ -65,6 +64,7 @@
 import { computed } from "vue";
 import { CircleHelp } from "lucide-vue-next";
 import NavigationLink from "@/components/common/NavigationLink.vue";
+import QuizCoverImage from "@/components/QuizCoverImage.vue";
 
 const props = defineProps({
   details: {
@@ -79,39 +79,14 @@ const props = defineProps({
   },
 });
 
-const quizImages = [
-  "/images/landing/homepage-public-quiz-1.png",
-  "/images/landing/homepage-public-quiz-2.png",
-  "/images/landing/homepage-public-quiz-3.png",
-  "/images/landing/homepage-public-quiz-4.png",
-];
-
-const tiltClasses = [
-  "rotate-[-0.8deg]",
-  "rotate-[0.7deg]",
-  "rotate-[-0.4deg]",
-  "rotate-[0.5deg]",
-];
-
-const hashIndex = (value, length) => {
-  if (!value) return 0;
-  const str = String(value);
-  let hash = 0;
-  for (let i = 0; i < str.length; i += 1) {
-    hash = (hash * 31 + str.charCodeAt(i)) >>> 0;
-  }
-  return hash % length;
-};
-
-const variantIndex = computed(() =>
-  hashIndex(props.details?.id, quizImages.length)
-);
+const { coverUrl, fallbackUrl, tiltClass: coverTiltClass } = useQuizCover();
 
 const title = computed(() => decodeURI(props.details?.title || ""));
 const description = computed(() => props.details?.description?.String || "");
 const questionCount = computed(() => props.details?.total_questions || 0);
-const image = computed(() => quizImages[variantIndex.value]);
-const tiltClass = computed(() => tiltClasses[variantIndex.value]);
+const image = computed(() => coverUrl(props.details));
+const fallback = computed(() => fallbackUrl(props.details));
+const tiltClass = computed(() => coverTiltClass(props.details));
 const createdAtLabel = computed(() =>
   props.details?.created_at ? useGetTime(props.details.created_at) : ""
 );
