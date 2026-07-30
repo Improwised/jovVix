@@ -69,6 +69,27 @@ func (model *SharedQuizzesModel) ListQuizAuthorizedUsersByQuizId(quizId string) 
 	return usersWithAccess, err
 }
 
+// Get shared quiz permission row by its id
+func (model *SharedQuizzesModel) GetSharedQuizById(id string) (SharedQuizzes, error) {
+	var sharedQuiz SharedQuizzes
+
+	found, err := model.db.From(SharedQuizzesTable).
+		Select("id", "quiz_id", "shared_to", "shared_by", "permission").
+		Where(goqu.Ex{"id": id}).
+		Executor().
+		ScanStruct(&sharedQuiz)
+
+	if err != nil {
+		return sharedQuiz, err
+	}
+
+	if !found {
+		return sharedQuiz, sql.ErrNoRows
+	}
+
+	return sharedQuiz, nil
+}
+
 // Update authorized user permission for perticular quiz
 func (model *SharedQuizzesModel) UpdateUserPermissionById(id string, reqUpdatePermission structs.ReqShareQuiz) error {
 

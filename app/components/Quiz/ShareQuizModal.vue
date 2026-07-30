@@ -1,8 +1,9 @@
 <script setup>
 import { computed, ref, watch } from "vue";
 import { usePush } from "notivue";
-import { UserPlus, Users } from "lucide-vue-next";
+import { Lock, UserPlus, Users } from "lucide-vue-next";
 import { Modal } from "@/components/ui/modal";
+import { useUsersStore } from "@/store/users";
 import ShareQuizAuthorizeUser from "./ShareQuizAuthorizeUser.vue";
 import ShareQuizForm from "./ShareQuizForm.vue";
 
@@ -23,6 +24,7 @@ const emits = defineEmits(["update:modelValue"]);
 const toast = usePush();
 const url = useRuntimeConfig().public;
 const headers = useRequestHeaders(["cookie"]);
+const usersStore = useUsersStore();
 
 // edit-form state
 const id = ref("");
@@ -49,6 +51,25 @@ const {
 const authorizedUsers = computed(
   () => quizAuthorizedUsersData.value?.data || []
 );
+
+const isSelf = (user) =>
+  !!usersStore.userData?.email &&
+  user.shared_to?.toLowerCase() === usersStore.userData.email.toLowerCase();
+
+const isPermissionDenied = computed(() => {
+  const code =
+    quizAuthorizedUsersError.value?.data?.code ??
+    quizAuthorizedUsersError.value?.statusCode;
+  return code === 401 || code === 403;
+});
+
+const accessErrorMessage = computed(() => {
+  if (!quizAuthorizedUsersError.value) return "";
+  if (isPermissionDenied.value) {
+    return 'You don\'t have permission to share this quiz. Ask the quiz owner for "share" access to invite others.';
+  }
+  return "Couldn't load who has access to this quiz. Please try again.";
+});
 
 function close() {
   emits("update:modelValue", false);
@@ -88,7 +109,7 @@ const shareQuiz = async (emailVal, permissionVal) => {
     component.value = "";
   } catch (error) {
     console.error("Failed to share the quiz.", error);
-    toast.error("Failed to share the quiz.");
+    toast.error(error.data?.message || "Failed to share the quiz.");
   }
 };
 
@@ -108,7 +129,7 @@ const updateUserPermission = async (idVal, emailVal, permissionVal) => {
     component.value = "";
   } catch (error) {
     console.error("Failed to update user permission.", error);
-    toast.error("Failed to update user permission.");
+    toast.error(error.data?.message || "Failed to update user permission.");
   }
 };
 
@@ -126,7 +147,7 @@ const deleteUserPermission = async (idVal) => {
     quizAuthorizedUsersDataRefresh();
   } catch (error) {
     console.error("Failed to delete user permission.", error);
-    toast.error("Failed to delete user permission.");
+    toast.error(error.data?.message || "Failed to delete user permission.");
   }
 };
 </script>
@@ -150,9 +171,15 @@ const deleteUserPermission = async (idVal) => {
 
     <div
       v-else-if="quizAuthorizedUsersError"
-      class="jv-border-rough border-[2px] border-jv-ink bg-jv-white p-4 text-[15px] font-semibold text-jv-coral"
+      class="jv-border-rough flex items-start gap-3 border-[2px] border-jv-ink p-4 text-[15px] font-semibold"
+      :class="
+        isPermissionDenied
+          ? 'bg-jv-canvas text-jv-ink'
+          : 'bg-jv-white text-jv-coral'
+      "
     >
-      {{ quizAuthorizedUsersError.message || quizAuthorizedUsersError }}
+      <Lock class="mt-[2px] size-5 shrink-0" :stroke-width="2.6" />
+      <p>{{ accessErrorMessage }}</p>
     </div>
 
     <template v-else>
@@ -180,6 +207,7 @@ const deleteUserPermission = async (idVal) => {
         <li v-for="(user, i) in authorizedUsers" :key="i">
           <ShareQuizAuthorizeUser
             :user="user"
+            :is-self="isSelf(user)"
             @show-edit-form="showEditForm"
             @delete-user-permission="deleteUserPermission"
           />

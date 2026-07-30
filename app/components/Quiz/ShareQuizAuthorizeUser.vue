@@ -9,6 +9,10 @@ const props = defineProps({
       return {};
     },
   },
+  isSelf: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const emits = defineEmits(["showEditForm", "deleteUserPermission"]);
@@ -66,24 +70,32 @@ const showEditForm = () => {
       >
         {{ props.user.permission }}
       </span>
-      <button
-        type="button"
-        title="Edit Permission"
-        aria-label="Edit permission"
-        class="grid size-8 place-items-center rounded-[8px] border-[2px] border-jv-ink bg-jv-white text-jv-ink shadow-brutal-sm transition-transform hover:-rotate-[3deg] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
-        @click="showEditForm"
+      <span
+        v-if="props.isSelf"
+        class="rounded-full border-[2px] border-jv-ink bg-jv-canvas px-2.5 py-1 text-[12px] font-black uppercase tracking-[0.08em] text-jv-ink"
       >
-        <Pencil class="size-4" :stroke-width="2.4" />
-      </button>
-      <button
-        type="button"
-        title="Delete Permission"
-        aria-label="Delete permission"
-        class="grid size-8 place-items-center rounded-[8px] border-[2px] border-jv-ink bg-jv-coral text-white shadow-brutal-sm transition-transform hover:rotate-[3deg] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
-        @click="emits('deleteUserPermission', props.user.id)"
-      >
-        <Trash2 class="size-4" :stroke-width="2.4" />
-      </button>
+        You
+      </span>
+      <template v-else>
+        <button
+          type="button"
+          title="Edit Permission"
+          aria-label="Edit permission"
+          class="grid size-8 place-items-center rounded-[8px] border-[2px] border-jv-ink bg-jv-white text-jv-ink shadow-brutal-sm transition-transform hover:-rotate-[3deg] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
+          @click="showEditForm"
+        >
+          <Pencil class="size-4" :stroke-width="2.4" />
+        </button>
+        <button
+          type="button"
+          title="Delete Permission"
+          aria-label="Delete permission"
+          class="grid size-8 place-items-center rounded-[8px] border-[2px] border-jv-ink bg-jv-coral text-white shadow-brutal-sm transition-transform hover:rotate-[3deg] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
+          @click="emits('deleteUserPermission', props.user.id)"
+        >
+          <Trash2 class="size-4" :stroke-width="2.4" />
+        </button>
+      </template>
     </div>
   </div>
 </template>
