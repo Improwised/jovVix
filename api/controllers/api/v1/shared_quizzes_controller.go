@@ -1,9 +1,11 @@
 package v1
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/Improwised/jovvix/api/config"
 	"github.com/Improwised/jovvix/api/constants"
@@ -143,6 +145,37 @@ func (sqctrl *SharedQuizzes) ListQuizAuthorizedUsers(c *fiber.Ctx) error {
 	return utils.JSONSuccess(c, http.StatusOK, quizAuthorizedUsers)
 }
 
+// verifyManageableSharedQuiz checks that the shared quiz permission row belongs to the
+// quiz that was authorized by the middleware and that it is not the caller's own access.
+// It returns a fiber error response when the row must not be touched.
+func (sqctrl *SharedQuizzes) verifyManageableSharedQuiz(c *fiber.Ctx, sharedQuizId string) error {
+	user, ok := quizUtilsHelper.ConvertType[models.User](c.Locals(constants.ContextUser))
+	if !ok {
+		sqctrl.logger.Error(constants.ErrConvertTypeUser)
+		return utils.JSONError(c, http.StatusInternalServerError, constants.ErrGetSharedQuiz)
+	}
+
+	sharedQuiz, err := sqctrl.sharedQuizzesModel.GetSharedQuizById(sharedQuizId)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return utils.JSONError(c, http.StatusNotFound, constants.ErrSharedQuizNotFound)
+		}
+		sqctrl.logger.Error(constants.ErrGetSharedQuiz, zap.Error(err))
+		return utils.JSONError(c, http.StatusInternalServerError, constants.ErrGetSharedQuiz)
+	}
+
+	if sharedQuiz.QuizId != c.Params(constants.QuizId) {
+		sqctrl.logger.Error(constants.ErrUnauthorized, zap.Any(constants.SharedQuizId, sharedQuizId), zap.Any("quizId", c.Params(constants.QuizId)))
+		return utils.JSONError(c, http.StatusForbidden, constants.ErrUnauthorized)
+	}
+
+	if strings.EqualFold(sharedQuiz.SharedTo, user.Email) {
+		return utils.JSONError(c, http.StatusForbidden, constants.ErrCannotChangeOwnAccess)
+	}
+
+	return nil
+}
+
 // UpdateUserPermissionOfQuiz to Update authorized user permission for perticular quiz.
 // swagger:route PUT /v1/shared_quizzes/{quiz_id} ShareQuiz RequestUpdateUserPermissionOfQuiz
 //
@@ -162,6 +195,10 @@ func (sqctrl *SharedQuizzes) UpdateUserPermissionOfQuiz(c *fiber.Ctx) error {
 	sqctrl.logger.Debug("SharedQuizzes.UpdateUserPermissionOfQuiz called", zap.Any(constants.SharedQuizId, sharedQuizId))
 	if sharedQuizId == "" {
 		return utils.JSONError(c, http.StatusBadRequest, constants.BadRequestSharedQuizIdNotFound)
+	}
+
+	if err := sqctrl.verifyManageableSharedQuiz(c, sharedQuizId); err != nil {
+		return err
 	}
 
 	sqctrl.logger.Debug("validate req", zap.Any("Body", c.Body()))
@@ -207,6 +244,10 @@ func (sqctrl *SharedQuizzes) DeleteUserPermissionOfQuiz(c *fiber.Ctx) error {
 	sqctrl.logger.Debug("SharedQuizzes.DeleteUserPermissionOfQuiz called", zap.Any("sharedQuizId", sharedQuizId))
 	if sharedQuizId == "" {
 		return utils.JSONError(c, http.StatusBadRequest, constants.BadRequestSharedQuizIdNotFound)
+	}
+
+	if err := sqctrl.verifyManageableSharedQuiz(c, sharedQuizId); err != nil {
+		return err
 	}
 
 	err := sqctrl.sharedQuizzesModel.DeleteUserPermissionById(sharedQuizId)

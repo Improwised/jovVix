@@ -26,6 +26,20 @@ const {
   mode: "cors",
   credentials: "include",
 });
+
+const quizErrorMessage = computed(() => {
+  const error = quizError.value;
+  if (!error) return "";
+
+  const code = error.data?.code ?? error.statusCode;
+  if (code === 401) {
+    return "Your session has expired. Please log in again to see the quizzes shared with you.";
+  }
+  return (
+    error.data?.message ||
+    "Couldn't load the quizzes shared with you. Please try again."
+  );
+});
 </script>
 
 <template>
@@ -37,7 +51,7 @@ const {
         v-else-if="quizError"
         class="jv-border-rough border-2 border-jv-coral bg-jv-coral/10 p-4 font-body text-jv-ink"
       >
-        {{ quizError.message }}
+        {{ quizErrorMessage }}
       </div>
 
       <template v-else>

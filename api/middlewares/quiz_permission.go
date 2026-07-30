@@ -80,7 +80,7 @@ func (m *Middleware) VerifyQuizShareAccess(c *fiber.Ctx) error {
 	// Retrieve the user's permission for the current quiz from context
 	permission := c.Locals(constants.ContextQuizPermission).(string)
 	if permission != constants.SharePermission {
-		return utils.JSONError(c, http.StatusUnauthorized, constants.ErrUnauthorized)
+		return utils.JSONError(c, http.StatusForbidden, constants.ErrShareNotAllowed)
 	}
 
 	return c.Next()
