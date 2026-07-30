@@ -416,7 +416,7 @@ const avgCompletion = computed(() => {
   if (!data?.length) return 0;
   const mean =
     data.reduce((sum, q) => sum + (q.avg_response_time || 0), 0) / data.length;
-  return mean / 1000;
+  return Math.max(0, mean / 1000);
 });
 
 const overallMessage = computed(() => {
