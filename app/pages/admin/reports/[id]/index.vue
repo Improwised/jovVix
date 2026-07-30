@@ -367,9 +367,14 @@ const {
   transform: (quizAnalysis) => {
     quizAnalysis.data?.map((quiz) => {
       quiz.userParticipants = Object.keys(quiz.selected_answers).length;
+      quiz.skippedParticipants = 0;
       const result = {};
 
       for (const [user, answer] of Object.entries(quiz.selected_answers)) {
+        if (answer == null || (Array.isArray(answer) && !answer.length)) {
+          quiz.skippedParticipants++;
+          continue;
+        }
         if (!result[answer]) {
           result[answer] = [];
         }
@@ -433,7 +438,12 @@ const correctCountFor = (quiz) =>
   );
 
 const incorrectCountFor = (quiz) =>
-  Math.max((quiz.userParticipants || 0) - correctCountFor(quiz), 0);
+  Math.max(
+    (quiz.userParticipants || 0) -
+      (quiz.skippedParticipants || 0) -
+      correctCountFor(quiz),
+    0
+  );
 
 // Question pager: scroll behavior + active tracking
 const activeQuestionIndex = ref(1);
