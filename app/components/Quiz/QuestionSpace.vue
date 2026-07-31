@@ -81,6 +81,9 @@ const time = ref(0);
 const questionStartTime = ref(null);
 const questionDuration = ref(0);
 const isSubmitted = ref(false);
+const skipCooling = ref(false);
+let skipCoolTimer = null;
+const SKIP_COOLDOWN_MS = 2000;
 
 const remainingSeconds = computed(() =>
   Math.max(0, (questionDuration.value || 0) - time.value)
@@ -137,12 +140,16 @@ function handleEvent(message) {
     count.value = null;
     selectedKey.value = null;
     isSubmitted.value = false;
+    clearTimeout(skipCoolTimer);
+    skipCooling.value = false;
 
     handleTimer();
   } else if (message.event == app.$Counter) {
     question.value = null;
     count.value = parseInt(props.data.data.count);
     time.value = 0;
+    clearTimeout(skipCoolTimer);
+    skipCooling.value = false;
     handleCounter(counterSound);
     if (music.value && counterSound) {
       counterSound.play();
@@ -204,6 +211,12 @@ function handleOptionClick(key) {
 
 function handleSkip(e) {
   e.preventDefault();
+  if (skipCooling.value) return;
+  skipCooling.value = true;
+  clearTimeout(skipCoolTimer);
+  skipCoolTimer = setTimeout(() => {
+    skipCooling.value = false;
+  }, SKIP_COOLDOWN_MS);
   emits("askSkip");
 }
 
@@ -215,6 +228,7 @@ onUnmounted(() => {
   if (counter.value) {
     clearInterval(counter.value);
   }
+  clearTimeout(skipCoolTimer);
 });
 </script>
 
@@ -433,7 +447,8 @@ onUnmounted(() => {
             </div>
             <button
               type="button"
-              class="inline-flex h-10 items-center justify-center gap-2 self-end rounded-full border-[2px] border-jv-ink bg-jv-white px-5 font-body text-[14px] font-black text-jv-ink shadow-brutal-sm transition-transform hover:-rotate-[1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none sm:h-11 sm:self-auto sm:px-6 sm:text-[15px]"
+              class="inline-flex h-10 items-center justify-center gap-2 self-end rounded-full border-[2px] border-jv-ink bg-jv-white px-5 font-body text-[14px] font-black text-jv-ink shadow-brutal-sm transition-transform hover:-rotate-[1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none disabled:cursor-not-allowed disabled:opacity-50 sm:h-11 sm:self-auto sm:px-6 sm:text-[15px]"
+              :disabled="skipCooling"
               @click="handleSkip"
             >
               <Trophy
