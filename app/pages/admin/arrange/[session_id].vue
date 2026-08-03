@@ -432,11 +432,11 @@ useSeoMeta({
   <Playground :full-screen-enabled="myRef" @is-full-screen="handleCustomChange">
     <div
       v-if="currentComponent !== 'Waiting' && currentComponent !== 'Loading'"
-      class="code-display flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6 md:px-8"
+      class="code-display grid grid-cols-1 gap-3 px-4 py-3 sm:grid-cols-[1fr_auto_1fr] sm:items-center sm:px-6 md:px-8"
     >
       <div
         v-if="quizTitle"
-        class="flex min-w-0 max-w-full flex-col gap-0.5 jv-border-rough bg-jv-white px-3 py-2 shadow-brutal-sm sm:px-4"
+        class="flex min-w-0 max-w-full flex-col gap-0.5 jv-border-rough bg-jv-white px-3 py-2 shadow-brutal-sm sm:col-start-1 sm:justify-self-start sm:px-4"
         :title="quizTitle"
       >
         <span
@@ -451,7 +451,7 @@ useSeoMeta({
         </span>
       </div>
       <div
-        class="flex min-w-0 items-center justify-between gap-2 jv-border-rough bg-jv-white px-3 py-2 shadow-brutal-sm sm:justify-start"
+        class="flex min-w-0 items-center justify-between gap-2 jv-border-rough bg-jv-white px-3 py-2 shadow-brutal-sm sm:col-start-2 sm:justify-self-center sm:justify-start"
       >
         <span class="text-[18px] font-bold text-jv-muted sm:text-[22px]">
           Code:
@@ -463,10 +463,22 @@ useSeoMeta({
         </span>
       </div>
       <div
-        v-if="currentComponent == 'Question' || currentComponent == 'Score'"
-        class="sm:ml-2"
+        class="flex flex-col gap-3 sm:col-start-3 sm:flex-row sm:items-center sm:justify-self-end"
       >
         <button
+          v-if="currentComponent == 'Score'"
+          :class="[
+            'inline-flex h-11 w-full items-center justify-center rounded-[8px] border-[3px] border-jv-ink px-5 text-[15px] font-black shadow-brutal-sm transition-transform active:translate-x-[2px] active:translate-y-[2px] active:shadow-none sm:w-fit sm:text-[16px]',
+            isPauseQuiz
+              ? 'bg-jv-mint text-jv-ink hover:rotate-[1deg]'
+              : 'bg-jv-coral text-white hover:rotate-[-1deg]',
+          ]"
+          @click="handlePauseQuiz"
+        >
+          {{ isPauseQuiz ? "RESUME" : "PAUSE" }}
+        </button>
+        <button
+          v-if="currentComponent == 'Question' || currentComponent == 'Score'"
           type="button"
           :disabled="terminating"
           class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-[8px] border-[3px] border-jv-ink bg-jv-coral px-5 text-[15px] font-black text-white shadow-brutal-sm transition-transform hover:rotate-[-1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none disabled:cursor-not-allowed disabled:opacity-60 sm:w-fit sm:text-[16px]"
@@ -475,22 +487,6 @@ useSeoMeta({
         >
           <Ban class="size-4" :stroke-width="2.4" />
           <span>{{ terminating ? "Ending..." : "End Quiz" }}</span>
-        </button>
-      </div>
-      <div v-if="currentComponent == 'Score'" class="sm:ml-2">
-        <button
-          v-if="isPauseQuiz"
-          class="inline-flex h-11 w-full items-center justify-center rounded-[8px] border-[3px] border-jv-ink bg-jv-mint px-5 text-[15px] font-black text-jv-ink shadow-brutal-sm transition-transform hover:rotate-[1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none sm:w-fit sm:text-[16px]"
-          @click="handlePauseQuiz"
-        >
-          RESUME
-        </button>
-        <button
-          v-else
-          class="inline-flex h-11 w-full items-center justify-center rounded-[8px] border-[3px] border-jv-ink bg-jv-coral px-5 text-[15px] font-black text-white shadow-brutal-sm transition-transform hover:rotate-[-1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none sm:w-fit sm:text-[16px]"
-          @click="handlePauseQuiz"
-        >
-          PAUSE
         </button>
       </div>
     </div>
