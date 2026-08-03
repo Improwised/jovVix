@@ -66,7 +66,7 @@ const isPermissionDenied = computed(() => {
 const accessErrorMessage = computed(() => {
   if (!quizAuthorizedUsersError.value) return "";
   if (isPermissionDenied.value) {
-    return 'You don\'t have permission to share this quiz. Ask the quiz owner for "share" access to invite others.';
+    return 'You don\'t have permission to share this quiz. Ask the quiz owner for "manage" access to invite others.';
   }
   return "Couldn't load who has access to this quiz. Please try again.";
 });
