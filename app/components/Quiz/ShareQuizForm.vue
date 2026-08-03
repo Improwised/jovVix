@@ -101,7 +101,7 @@ const handleSubmit = () => {
         <option value="" disabled>Select permission level</option>
         <option value="read">Read</option>
         <option value="write">Write</option>
-        <option value="share">Share</option>
+        <option value="share">Manage</option>
       </select>
     </label>
 

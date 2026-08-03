@@ -1,4 +1,5 @@
 <script setup>
+import { computed } from "vue";
 import { Pencil, Trash2 } from "lucide-vue-next";
 
 const props = defineProps({
@@ -16,6 +17,11 @@ const props = defineProps({
 });
 
 const emits = defineEmits(["showEditForm", "deleteUserPermission"]);
+
+const permissionLabels = { read: "Read", write: "Write", share: "Manage" };
+const permissionLabel = computed(
+  () => permissionLabels[props.user.permission] ?? props.user.permission
+);
 
 // open the edit form to change this user's permission for the quiz
 const showEditForm = () => {
@@ -68,7 +74,7 @@ const showEditForm = () => {
       <span
         class="rounded-full border-[2px] border-jv-ink bg-jv-yellow px-2.5 py-1 text-[12px] font-black uppercase tracking-[0.08em] text-jv-ink"
       >
-        {{ props.user.permission }}
+        {{ permissionLabel }}
       </span>
       <span
         v-if="props.isSelf"
