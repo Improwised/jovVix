@@ -483,7 +483,7 @@ useSeoMeta({
           class="inline-flex h-11 w-full items-center justify-center rounded-[8px] border-[3px] border-jv-ink bg-jv-mint px-5 text-[15px] font-black text-jv-ink shadow-brutal-sm transition-transform hover:rotate-[1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none sm:w-fit sm:text-[16px]"
           @click="handlePauseQuiz"
         >
-          START
+          RESUME
         </button>
         <button
           v-else
