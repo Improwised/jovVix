@@ -88,8 +88,8 @@ const filterOptions = [
   "Shared By Me",
   "Shared With Me",
 ];
-const visibilityFilter = ref("All");
-const visibilityOptions = ["All", "Public", "Private"];
+const visibilityFilter = ref("Private");
+const visibilityOptions = ["Private", "Public"];
 
 const { coverUrl, fallbackUrl, tiltClass } = useQuizCover();
 
@@ -255,19 +255,17 @@ const visibilityCounts = computed(() => {
   const publicCount = list.filter((quiz) => quiz.isPublic).length;
 
   return {
-    All: list.length,
-    Public: publicCount,
     Private: list.length - publicCount,
+    Public: publicCount,
   };
 });
 
 const filteredQuizzes = computed(() => {
   const query = searchQuery.value.trim().toLowerCase();
-  const visibility = visibilityFilter.value;
+  const isPublicWanted = visibilityFilter.value === "Public";
 
   return quizzes.value.filter((quiz) => {
-    if (visibility === "Public" && !quiz.isPublic) return false;
-    if (visibility === "Private" && quiz.isPublic) return false;
+    if (quiz.isPublic !== isPublicWanted) return false;
     if (!query) return true;
 
     return (
@@ -279,11 +277,10 @@ const filteredQuizzes = computed(() => {
 
 const noResultsMessage = computed(() => {
   if (searchQuery.value.trim()) return "No quizzes matched your search.";
-  if (visibilityFilter.value === "Public") return "No public quizzes here yet.";
-  if (visibilityFilter.value === "Private")
-    return "No private quizzes here yet.";
 
-  return "No quizzes matched your filters.";
+  return visibilityFilter.value === "Public"
+    ? "No public quizzes here yet."
+    : "No private quizzes here yet.";
 });
 
 const handleStartQuiz = async (quizId) => {
