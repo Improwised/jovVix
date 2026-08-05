@@ -203,8 +203,21 @@
                 min="0"
                 max="20"
                 :disabled="!canEditQuiz || settingsPending"
+                :aria-invalid="!!settingsErrors.points"
+                :aria-describedby="
+                  settingsErrors.points ? 'quiz-points-error' : undefined
+                "
                 class="h-10 w-14 border-[3px] border-jv-ink bg-jv-white px-2 text-center text-[16px] font-black text-jv-ink shadow-brutal-sm outline-none disabled:opacity-60"
               />
+              <span
+                v-if="settingsErrors.points"
+                id="quiz-points-error"
+                :title="settingsErrors.points"
+                class="text-[20px] font-black leading-none text-jv-coral"
+              >
+                <span aria-hidden="true">*</span>
+                <span class="sr-only">{{ settingsErrors.points }}</span>
+              </span>
             </label>
             <label
               class="inline-flex items-center gap-2 text-[15px] font-semibold text-jv-muted"
@@ -233,8 +246,21 @@
                 type="number"
                 min="1"
                 :disabled="!canEditQuiz || settingsPending"
+                :aria-invalid="!!settingsErrors.duration"
+                :aria-describedby="
+                  settingsErrors.duration ? 'quiz-duration-error' : undefined
+                "
                 class="h-10 w-16 border-[3px] border-jv-ink bg-jv-white px-2 text-center text-[16px] font-black text-jv-ink shadow-brutal-sm outline-none disabled:opacity-60"
               />
+              <span
+                v-if="settingsErrors.duration"
+                id="quiz-duration-error"
+                :title="settingsErrors.duration"
+                class="text-[20px] font-black leading-none text-jv-coral"
+              >
+                <span aria-hidden="true">*</span>
+                <span class="sr-only">{{ settingsErrors.duration }}</span>
+              </span>
             </label>
           </TooltipProvider>
         </div>
@@ -688,6 +714,27 @@ const canEditQuiz = computed(() => {
   return hasPermission && (isPublicQuiz.value || isEditable);
 });
 
+// Mirrors the server rules on ReqUpdateQuizSettings so an out-of-range value is
+// caught here instead of coming back as a bare 400.
+const settingsErrors = computed(() => {
+  const errors = {};
+  const points = settings.value.points;
+  const duration = settings.value.duration_in_seconds;
+
+  if (!Number.isInteger(points) || points < 0 || points > 20) {
+    errors.points = "Points must be a whole number between 0 and 20.";
+  }
+  if (!Number.isInteger(duration) || duration < 1) {
+    errors.duration = "Duration must be at least 1 second.";
+  }
+
+  return errors;
+});
+
+const settingsError = computed(
+  () => settingsErrors.value.duration || settingsErrors.value.points || ""
+);
+
 const hasUnsavedSettings = computed(() => {
   const data = quizData.value?.data;
   if (!data) return false;
@@ -767,6 +814,11 @@ const removeCoverImage = () => {
 const saveSettings = async () => {
   if (!canEditQuiz.value) return;
 
+  if (settingsError.value) {
+    toast.error(settingsError.value);
+    return;
+  }
+
   const body = {
     points: Number(settings.value.points),
     duration_in_seconds: Number(settings.value.duration_in_seconds),
@@ -798,7 +850,8 @@ const saveSettings = async () => {
     refresh();
   } catch (error) {
     toast.error(
-      error?.data?.message ||
+      error?.data?.data ||
+        error?.data?.message ||
         error?.message ||
         "Failed to update quiz settings."
     );
@@ -828,7 +881,10 @@ const saveNewQuestion = async ({ payload }) => {
     refresh();
   } catch (error) {
     toast.error(
-      error?.data?.message || error?.message || "Failed to add question."
+      error?.data?.data ||
+        error?.data?.message ||
+        error?.message ||
+        "Failed to add question."
     );
   } finally {
     savingNewQuestion.value = false;
@@ -859,7 +915,10 @@ const saveExistingQuestion = async (question, { payload }) => {
     refresh();
   } catch (error) {
     toast.error(
-      error?.data?.message || error?.message || "Failed to update question."
+      error?.data?.data ||
+        error?.data?.message ||
+        error?.message ||
+        "Failed to update question."
     );
   } finally {
     savingQuestionId.value = "";
@@ -882,7 +941,10 @@ const deleteQuestion = async (questionId) => {
     refresh();
   } catch (error) {
     toast.error(
-      error?.data?.message || error?.message || "Failed to delete question."
+      error?.data?.data ||
+        error?.data?.message ||
+        error?.message ||
+        "Failed to delete question."
     );
   }
 };
@@ -898,7 +960,10 @@ const deleteQuiz = async () => {
     router.push("/admin/quiz/list-quiz");
   } catch (error) {
     toast.error(
-      error?.data?.message || error?.message || "Failed to delete quiz."
+      error?.data?.data ||
+        error?.data?.message ||
+        error?.message ||
+        "Failed to delete quiz."
     );
   }
 };
@@ -988,7 +1053,12 @@ const handleStartQuiz = async () => {
     sessionStore.setSession(activeQuizId);
     router.push(`/admin/arrange/${activeQuizId}`);
   } catch (error) {
-    toast.error(error?.message || "Error while starting quiz.");
+    toast.error(
+      error?.data?.data ||
+        error?.data?.message ||
+        error?.message ||
+        "Error while starting quiz."
+    );
   } finally {
     startingQuiz.value = false;
   }
