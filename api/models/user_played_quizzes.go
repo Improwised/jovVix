@@ -355,6 +355,30 @@ func (model *UserPlayedQuizModel) ListUserPlayedQuizesWithQuestionById(UserPlaye
 	return userPlayedQuizAnalyticsBoard, nil
 }
 
+// JoinedUser model
+type JoinedUser struct {
+	UserID    string `json:"user_id" db:"id"`
+	FirstName string `json:"first_name" db:"first_name"`
+	ImageKey  string `json:"img_key" db:"img_key"`
+}
+
+func (model *UserPlayedQuizModel) GetJoinedUsers(activeQuizId string) ([]JoinedUser, error) {
+	users := []JoinedUser{}
+
+	err := model.db.Select("u.id", "u.first_name", "u.img_key").
+		From(goqu.T(UserPlayedQuizTable).As("upq")).
+		Join(goqu.T(UserTable).As("u"), goqu.On(goqu.I("u.id").Eq(goqu.I("upq.user_id")))).
+		Where(goqu.I("upq.active_quiz_id").Eq(activeQuizId)).
+		Order(goqu.I("upq.created_at").Asc()).
+		ScanStructs(&users)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
+
 func (model *UserPlayedQuizModel) GetCountOfTotalJoinUsers(activeQuizId string) (int64, error) {
 	return model.db.From(UserPlayedQuizTable).Where(goqu.Ex{
 		"active_quiz_id": activeQuizId,

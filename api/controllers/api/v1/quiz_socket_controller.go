@@ -742,6 +742,40 @@ func handleInvitationCodeSend(c *websocket.Conn, response *QuizSendResponse, log
 	return true
 }
 
+func (qc *quizSocketController) rebuildRosterFromDB(sessionId string) []UserInfo {
+	joined, err := qc.userPlayedQuizModel.GetJoinedUsers(sessionId)
+	if err != nil {
+		qc.logger.Error("error while rebuilding roster from db", zap.Error(err))
+		return nil
+	}
+
+	if len(joined) == 0 {
+		return nil
+	}
+
+	roster := make([]UserInfo, 0, len(joined))
+	for _, u := range joined {
+		roster = append(roster, UserInfo{
+			UserId:   u.UserID,
+			UserName: u.FirstName,
+			Avatar:   u.ImageKey,
+			IsAlive:  true,
+		})
+	}
+
+	jsonData, err := json.Marshal(roster)
+	if err != nil {
+		qc.logger.Error("error while marshaling rebuilt roster", zap.Error(err))
+		return roster
+	}
+
+	if err := qc.redis.PubSubModel.Client.Set(qc.redis.PubSubModel.Ctx, sessionId, jsonData, time.Minute*100).Err(); err != nil {
+		qc.logger.Error("error while reseeding roster into redis", zap.Error(err))
+	}
+
+	return roster
+}
+
 // when user connect at that time send data to admin
 func handleConnectedUser(c *websocket.Conn, qc *quizSocketController, sessionId string, adminDisconnected chan bool, arrangeMu *sync.Mutex) {
 	response := QuizSendResponse{}
@@ -753,24 +787,32 @@ func handleConnectedUser(c *websocket.Conn, qc *quizSocketController, sessionId 
 		sessionId,
 	).Result()
 
+	var initialRoster []UserInfo
 	if err == nil && users != "" {
-		var usersData []UserInfo
-		if err := json.Unmarshal([]byte(users), &usersData); err == nil {
+		if err := json.Unmarshal([]byte(users), &initialRoster); err != nil {
+			qc.logger.Error("error while unmarshaling roster from redis", zap.Error(err))
+			initialRoster = nil
+		}
+	}
 
-			response := QuizSendResponse{
-				Component: constants.Waiting,
-				Action:    constants.ActionSendUserData,
-				Data:      usersData,
-			}
+	if initialRoster == nil {
+		initialRoster = qc.rebuildRosterFromDB(sessionId)
+	}
 
-			err = func() error {
-				arrangeMu.Lock()
-				defer arrangeMu.Unlock()
-				return utils.JSONSuccessWs(c, constants.EventSendInvitationCode, response)
-			}()
-			if err != nil {
-				qc.logger.Error("error while sending initial user data to admin", zap.Error(err))
-			}
+	if initialRoster != nil {
+		response := QuizSendResponse{
+			Component: constants.Waiting,
+			Action:    constants.ActionSendUserData,
+			Data:      initialRoster,
+		}
+
+		err = func() error {
+			arrangeMu.Lock()
+			defer arrangeMu.Unlock()
+			return utils.JSONSuccessWs(c, constants.EventSendInvitationCode, response)
+		}()
+		if err != nil {
+			qc.logger.Error("error while sending initial user data to admin", zap.Error(err))
 		}
 	}
 
@@ -1377,6 +1419,21 @@ func (qc *quizSocketController) SetAnswer(c *fiber.Ctx) error {
 	return utils.JSONSuccess(c, http.StatusAccepted, nil)
 }
 
+func (ctrl *quizSocketController) ListActiveSessions(c *fiber.Ctx) error {
+	userId := quizUtilsHelper.GetString(c.Locals(constants.ContextUid))
+	if userId == "" {
+		return utils.JSONError(c, http.StatusUnauthorized, constants.ErrUnauthenticated)
+	}
+
+	sessions, err := ctrl.activeQuizModel.GetActiveSessionsByAdminID(userId)
+	if err != nil {
+		ctrl.logger.Error("error listing active sessions", zap.Error(err))
+		return utils.JSONError(c, http.StatusInternalServerError, constants.UnknownError)
+	}
+
+	return utils.JSONSuccess(c, http.StatusOK, sessions)
+}
+
 func (ctrl *quizSocketController) Terminate(c *fiber.Ctx) error {
 	sessionId := c.Query(constants.SessionIDParam)
 	if sessionId == "" {
@@ -1414,6 +1471,10 @@ func (ctrl *quizSocketController) Terminate(c *fiber.Ctx) error {
 		}
 		ctrl.logger.Error("error deactivating session", zap.Error(err))
 		return utils.JSONError(c, http.StatusInternalServerError, constants.UnknownError)
+	}
+
+	if err := ctrl.redis.PubSubModel.Client.Del(ctrl.redis.PubSubModel.Ctx, session.ID.String()).Err(); err != nil {
+		ctrl.logger.Error("error deleting session roster from redis", zap.Error(err))
 	}
 
 	// Stop any host/join-watcher goroutines still listening for late joiners.
