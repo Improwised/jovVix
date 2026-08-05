@@ -240,11 +240,8 @@ export default class QuizHandler {
 
   async handleTerminate() {
     const sessionStore = useSessionStore();
-    const { getSession, setSession } = sessionStore;
-    // Read the session id BEFORE clearing it — the API requires it as a query
-    // param and would otherwise reject the request with 400.
-    const sessionId = getSession();
-    setSession(null);
+    const sessionId = this.identifier;
+    sessionStore.removeActiveSession(sessionId);
 
     let error = null;
     if (!sessionId) {

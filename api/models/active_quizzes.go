@@ -32,6 +32,15 @@ type ActiveQuiz struct {
 	UpdatedAt            time.Time      `json:"updated_at,omitempty" db:"updated_at,omitempty"`
 }
 
+// ActiveSessionSummary model
+type ActiveSessionSummary struct {
+	ID             uuid.UUID  `json:"id" db:"id"`
+	Title          string     `json:"title" db:"title"`
+	QuizID         uuid.UUID  `json:"quiz_id" db:"quiz_id"`
+	InvitationCode *int32     `json:"invitation_code" db:"invitation_code"`
+	ActivatedFrom  *time.Time `json:"activated_from" db:"activated_from"`
+}
+
 // ActiveQuizModel implements quiz session related database operations
 type ActiveQuizModel struct {
 	db          *goqu.Database
@@ -122,6 +131,25 @@ func (model *ActiveQuizModel) GetActiveQuizByQuizIDAndAdminID(quizID string, adm
 	}
 
 	return activeQuiz, nil
+}
+
+func (model *ActiveQuizModel) GetActiveSessionsByAdminID(adminID string) ([]ActiveSessionSummary, error) {
+	sessions := []ActiveSessionSummary{}
+
+	err := model.db.Select("id", "title", "quiz_id", "invitation_code", "activated_from").
+		From(ActiveQuizzesTable).
+		Where(
+			goqu.I("admin_id").Eq(adminID),
+			goqu.I("is_active").Eq(true),
+		).
+		Order(goqu.I("activated_from").Desc(), goqu.I("updated_at").Desc()).
+		ScanStructs(&sessions)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return sessions, nil
 }
 
 func (model *ActiveQuizModel) GetQuestionsCopy(activeQuizId uuid.UUID, quizId string) error {
