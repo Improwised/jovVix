@@ -25,7 +25,7 @@
     <!-- Tabs -->
     <PageLayout :current-tab="currentTab" @change-tab="changeTab" />
 
-    <!-- Class Performance Overview (visible on both tabs once data is loaded) -->
+    <!-- Game recap (visible on both tabs once data is loaded) -->
     <section
       v-if="quizAnalysis?.data?.length"
       class="jv-border-rough bg-jv-ink p-5 text-white shadow-brutal sm:p-7 md:p-8"
@@ -36,7 +36,7 @@
             class="flex items-center gap-2 text-[12px] font-black uppercase tracking-[0.16em] text-jv-yellow"
           >
             <Zap class="size-4" :stroke-width="2.6" />
-            Class Performance Overview
+            Game Recap
           </div>
           <h2
             class="mt-3 font-headings text-[28px] leading-tight text-white sm:text-[32px] md:text-[36px]"
@@ -46,8 +46,8 @@
           <p
             class="mt-2 max-w-md text-[14px] font-semibold text-white/70 sm:text-[15px]"
           >
-            Review question-level metrics and overall accuracy below. Use the
-            numbered navigator to jump directly to specific items.
+            Scroll down for the question-by-question breakdown, or use the
+            numbered buttons to jump straight to a question.
           </p>
         </div>
 
@@ -56,10 +56,10 @@
         >
           <div class="flex items-baseline justify-between">
             <span class="text-[15px] font-bold sm:text-[16px]"
-              >Class accuracy</span
+              >Answered correctly</span
             >
             <span class="text-[22px] font-black sm:text-[24px]"
-              >{{ classAccuracy.toFixed(0) }}%</span
+              >{{ roomScore.toFixed(0) }}%</span
             >
           </div>
           <div
@@ -67,7 +67,7 @@
           >
             <div
               class="h-full rounded-full bg-jv-accent-green"
-              :style="{ width: `${Math.min(classAccuracy, 100)}%` }"
+              :style="{ width: `${Math.min(roomScore, 100)}%` }"
             ></div>
           </div>
 
@@ -76,7 +76,7 @@
               <div
                 class="text-[10px] font-black uppercase tracking-[0.12em] text-jv-muted"
               >
-                Questions reviewed
+                Questions played
               </div>
               <div class="mt-auto pt-1 text-[20px] font-black text-jv-ink">
                 {{ totalQuestions }}
@@ -86,20 +86,20 @@
               <div
                 class="text-[10px] font-black uppercase tracking-[0.12em] text-jv-muted"
               >
-                Total participants
+                Total Players
               </div>
               <div class="mt-auto pt-1 text-[20px] font-black text-jv-ink">
-                {{ totalParticipants }}
+                {{ totalPlayers }}
               </div>
             </div>
             <div class="flex min-w-0 flex-col">
               <div
                 class="text-[10px] font-black uppercase tracking-[0.12em] text-jv-muted"
               >
-                Avg. completion
+                Avg. answer time
               </div>
               <div class="mt-auto pt-1 text-[20px] font-black text-jv-ink">
-                {{ avgCompletion.toFixed(2) }} sec
+                {{ avgAnswerTime.toFixed(2) }} sec
               </div>
             </div>
           </div>
@@ -399,16 +399,16 @@ const {
   headers: headers,
 });
 
-// Derived overview metrics
+// Derived recap metrics
 const totalQuestions = computed(() => quizAnalysis.value?.data?.length || 0);
 
-const totalParticipants = computed(() => {
+const totalPlayers = computed(() => {
   const data = quizAnalysis.value?.data;
   if (!data?.length) return 0;
   return data.reduce((m, q) => Math.max(m, q.userParticipants || 0), 0);
 });
 
-const classAccuracy = computed(() => {
+const roomScore = computed(() => {
   const data = quizAnalysis.value?.data;
   if (!data?.length) return 0;
   const valid = data.filter((q) => Number.isFinite(q.correctPercentage));
@@ -416,19 +416,20 @@ const classAccuracy = computed(() => {
   return valid.reduce((sum, q) => sum + q.correctPercentage, 0) / valid.length;
 });
 
-const avgCompletion = computed(() => {
+const avgAnswerTime = computed(() => {
   const data = quizAnalysis.value?.data;
   if (!data?.length) return 0;
   const mean =
-    data.reduce((sum, q) => sum + (q.avg_response_time || 0), 0) / data.length;
-  return Math.max(0, mean / 1000);
+    data.reduce((sum, q) => sum + Math.abs(q.avg_response_time || 0), 0) /
+    data.length;
+  return mean / 1000;
 });
 
 const overallMessage = computed(() => {
-  const acc = classAccuracy.value;
-  if (acc >= 70) return "Great overall performance";
-  if (acc >= 50) return "Solid performance";
-  return "Needs improvement";
+  const score = roomScore.value;
+  if (score >= 80) return "An easy round for this crowd.";
+  if (score >= 60) return "A fair challenge.";
+  return "A tough round.";
 });
 
 const correctCountFor = (quiz) =>
