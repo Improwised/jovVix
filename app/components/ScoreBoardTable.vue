@@ -122,9 +122,12 @@ const rankBadgeFor = (rank) => {
               avatarBgFor(index),
             ]"
           >
-            <img
+            <NuxtImg
               :src="getAvatarUrlByName(user?.img_key)"
               :alt="`${user.firstname || user.username || 'Player'} avatar`"
+              width="48"
+              height="48"
+              loading="lazy"
               class="size-full object-cover"
             />
           </span>

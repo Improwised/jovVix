@@ -20,9 +20,12 @@
           @card-click="navigateTo('/admin/quiz/list-quiz?create=1')"
         >
           <template #image>
-            <img
-              src="@/assets/images/add-file.webp"
+            <NuxtImg
+              src="/images/add-file.webp"
               alt=""
+              width="256"
+              height="256"
+              loading="lazy"
               class="max-h-full max-w-full object-contain"
             />
           </template>
@@ -32,9 +35,12 @@
           @card-click="navigateTo('/admin/quiz/list-quiz')"
         >
           <template #image>
-            <img
-              src="@/assets/images/list.webp"
+            <NuxtImg
+              src="/images/list.webp"
               alt=""
+              width="256"
+              height="256"
+              loading="lazy"
               class="max-h-full max-w-full object-contain"
             />
           </template>
@@ -44,9 +50,12 @@
           @card-click="navigateTo('/admin/quiz/shared-quiz')"
         >
           <template #image>
-            <img
-              src="@/assets/images/shared-file.webp"
+            <NuxtImg
+              src="/images/shared-file.webp"
               alt=""
+              width="256"
+              height="256"
+              loading="lazy"
               class="max-h-full max-w-full object-contain"
             />
           </template>
@@ -56,9 +65,12 @@
           @card-click="navigateTo('/admin/quiz/share-with-me')"
         >
           <template #image>
-            <img
-              src="@/assets/images/share-with-me.webp"
+            <NuxtImg
+              src="/images/share-with-me.webp"
               alt=""
+              width="256"
+              height="256"
+              loading="lazy"
               class="max-h-full max-w-full object-contain"
             />
           </template>

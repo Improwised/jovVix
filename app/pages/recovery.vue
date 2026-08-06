@@ -11,9 +11,11 @@
       >
         <header class="mb-6 flex flex-col items-center gap-2">
           <NuxtLink to="/" class="inline-block">
-            <img
-              src="~/assets/images/jovvix-logo.png"
+            <NuxtImg
+              src="/images/jovvix-logo.png"
               alt="Jovvix"
+              width="89"
+              height="36"
               class="h-9 w-auto"
             />
           </NuxtLink>

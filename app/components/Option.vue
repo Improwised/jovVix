@@ -75,7 +75,7 @@ const renderAsImage = computed(
 
     <div class="min-w-0 flex-1">
       <div v-if="renderAsImage" class="flex items-center justify-center">
-        <img
+        <NuxtImg
           :src="props.option"
           :alt="`Option ${props.order}`"
           class="max-h-[120px] w-auto object-contain"

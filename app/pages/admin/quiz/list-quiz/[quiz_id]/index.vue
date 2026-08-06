@@ -148,7 +148,7 @@
             v-else
             class="flex h-14 items-center gap-3 border-[3px] border-jv-ink bg-jv-canvas px-3"
           >
-            <img
+            <NuxtImg
               :src="settings.cover_image"
               alt="Cover image preview"
               class="h-10 w-14 shrink-0 border-2 border-jv-ink object-cover"
@@ -407,7 +407,7 @@
                 class="mt-3 flex justify-center rounded-md bg-jv-canvas p-2"
                 @click.stop
               >
-                <img
+                <NuxtImg
                   :src="question.resource"
                   :alt="question.question"
                   class="max-h-64 w-auto max-w-full object-contain"
@@ -446,7 +446,7 @@
                     class="flex min-w-0 flex-1 justify-start"
                     @click.stop
                   >
-                    <img
+                    <NuxtImg
                       :src="option"
                       :alt="`Option ${optionLabel(key)}`"
                       class="max-h-32 w-auto max-w-full object-contain"

@@ -8,7 +8,14 @@
         to="/"
         class="flex items-center gap-2 text-[20px] sm:text-[22px] md:text-[24px] font-black tracking-[-0.5px] text-jv-ink no-underline w-[100px] lg:w-[180px] h-auto"
       >
-        <img src="@/assets/images/jovvix-logo.png" />
+        <NuxtImg
+          src="/images/jovvix-logo.png"
+          alt="jovVix"
+          width="180"
+          height="73"
+          sizes="100px lg:180px"
+          preload
+        />
       </NuxtLink>
 
       <template v-if="mounted">
@@ -68,9 +75,12 @@
         v-else-if="showAdminNav"
         class="flex items-center gap-3 jv-border-uneven bg-jv-white px-3 py-2 shadow-brutal-sm"
       >
-        <img
+        <NuxtImg
           :src="userAvatar"
           :alt="userName"
+          width="40"
+          height="40"
+          loading="lazy"
           class="size-10 shrink-0 rounded-full border-[2px] border-jv-ink bg-jv-slate object-cover"
         />
         <span
@@ -122,7 +132,13 @@
         to="/"
         class="flex items-center gap-2 text-[20px] sm:text-[22px] md:text-[24px] font-black tracking-[-0.5px] text-jv-ink no-underline w-[120px] lg:w-[150px] h-auto"
       >
-        <img src="@/assets/images/jovvix-logo.png" />
+        <NuxtImg
+          src="/images/jovvix-logo.png"
+          alt="jovVix"
+          width="150"
+          height="61"
+          sizes="120px lg:150px"
+        />
       </NuxtLink>
 
       <button
@@ -172,9 +188,12 @@
           v-if="showAdminNav"
           class="col-span-full mt-1 flex items-center gap-3 jv-border-uneven bg-jv-white px-3 py-2 shadow-brutal-sm"
         >
-          <img
+          <NuxtImg
             :src="userAvatar"
             :alt="userName"
+            width="36"
+            height="36"
+            loading="lazy"
             class="size-9 shrink-0 rounded-full border-[2px] border-jv-ink bg-jv-slate object-cover"
           />
           <span

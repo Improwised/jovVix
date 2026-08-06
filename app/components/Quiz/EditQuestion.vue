@@ -35,7 +35,7 @@
         />
       </label>
       <div v-if="editableQuestion.resource" class="flex justify-center">
-        <img
+        <NuxtImg
           :src="editableQuestion.resource"
           :alt="editableQuestion.question"
           class="max-h-[240px] w-auto border-2 border-jv-ink bg-jv-white object-contain shadow-brutal-sm"
@@ -76,7 +76,7 @@
             />
           </label>
           <div v-if="editableOptions[order]" class="flex justify-center">
-            <img
+            <NuxtImg
               :src="editableOptions[order]"
               :alt="option"
               class="max-h-[160px] w-auto border-2 border-jv-ink bg-jv-white object-contain shadow-brutal-sm"

@@ -390,9 +390,11 @@ const podiumName = (winner) =>
                       : 'size-[56px] sm:size-[68px]',
                   ]"
                 >
-                  <img
+                  <NuxtImg
                     :src="getAvatarUrlByName(step.winner?.img_key)"
                     :alt="`Avatar for ${podiumName(step.winner)}`"
+                    width="96"
+                    height="96"
                     class="size-full object-cover"
                   />
                 </span>

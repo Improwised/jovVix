@@ -124,9 +124,12 @@ const chipAccents = [
           <span
             class="grid size-10 shrink-0 place-items-center overflow-hidden rounded-full border-[2px] border-jv-ink bg-jv-white sm:size-11"
           >
-            <img
+            <NuxtImg
               :src="getAvatarUrlByName(user?.img_key)"
               :alt="`${user?.first_name || user?.username || 'Player'} avatar`"
+              width="48"
+              height="48"
+              loading="lazy"
               class="size-full object-cover"
             />
           </span>

@@ -33,11 +33,12 @@ const { listUsers } = storeToRefs(listUserStore);
         :key="user.UserId"
         class="jv-card flex items-center gap-3 border-2 border-jv-ink bg-jv-white pr-4 shadow-brutal-sm"
       >
-        <img
+        <NuxtImg
           :src="getAvatarUrlByName(user?.Avatar)"
           alt=""
           width="48"
           height="48"
+          loading="lazy"
           class="size-12 rounded-full border-2 border-jv-ink object-cover"
         />
         <span class="pr-2 font-body text-sm font-bold text-jv-ink sm:text-base">

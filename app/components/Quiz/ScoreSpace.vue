@@ -192,7 +192,7 @@ onUnmounted(() => {
           v-if="question.question_media === 'image'"
           class="mt-5 flex justify-center"
         >
-          <img
+          <NuxtImg
             :src="question.resource"
             :alt="question.question"
             class="max-h-[260px] w-auto border-[3px] border-jv-ink bg-jv-white object-contain shadow-brutal-sm"
@@ -257,7 +257,7 @@ onUnmounted(() => {
                 v-if="question.options_media === 'image'"
                 class="flex items-center justify-center"
               >
-                <img
+                <NuxtImg
                   :src="answer?.value"
                   :alt="`Option ${key}`"
                   class="max-h-[120px] w-auto object-contain"
@@ -367,9 +367,12 @@ onUnmounted(() => {
                 avatarBgFor(index),
               ]"
             >
-              <img
+              <NuxtImg
                 :src="getAvatarUrlByName(user?.img_key)"
                 :alt="`${user.firstname || user.username || 'Player'} avatar`"
+                width="48"
+                height="48"
+                loading="lazy"
                 class="size-full object-cover"
               />
             </span>

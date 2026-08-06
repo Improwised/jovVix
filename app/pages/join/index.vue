@@ -197,9 +197,11 @@
                   :aria-label="`Generate new avatar (current: ${avatarName})`"
                   @click="rerollAvatar"
                 >
-                  <img
+                  <NuxtImg
                     :src="avatarUrl"
                     :alt="avatarName"
+                    width="96"
+                    height="96"
                     class="absolute inset-0 size-full object-cover"
                   />
                   <span

@@ -138,9 +138,11 @@ onBeforeUnmount(() => {
       class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
     >
       <div class="flex items-center gap-4 min-w-0">
-        <img
+        <NuxtImg
           :src="avatar"
           :alt="props.data[0].firstname"
+          width="56"
+          height="56"
           class="size-14 shrink-0 rounded-full border-[3px] border-jv-ink bg-jv-slate object-cover shadow-brutal-sm"
         />
         <div class="min-w-0">
@@ -253,9 +255,11 @@ onBeforeUnmount(() => {
           class="flex flex-col gap-4 border-b-[3px] border-jv-ink bg-jv-ink px-5 py-4 text-jv-white sm:flex-row sm:items-center sm:justify-between sm:px-6"
         >
           <div class="flex items-center gap-3 min-w-0">
-            <img
+            <NuxtImg
               :src="avatar"
               :alt="props.data[0].firstname"
+              width="48"
+              height="48"
               class="size-12 shrink-0 rounded-full border-[2px] border-jv-white/30 bg-jv-slate object-cover"
             />
             <div class="min-w-0">
@@ -379,7 +383,7 @@ onBeforeUnmount(() => {
                 v-if="quiz.question_media === 'image' && quiz.resource"
                 class="mt-3 flex justify-center rounded-md bg-jv-canvas p-2"
               >
-                <img
+                <NuxtImg
                   :src="quiz.resource"
                   :alt="quiz.question"
                   class="max-h-64 w-auto max-w-full object-contain"
@@ -410,7 +414,7 @@ onBeforeUnmount(() => {
                     v-if="quiz.options_media === 'image' && option"
                     class="flex min-w-0 flex-1 justify-start"
                   >
-                    <img
+                    <NuxtImg
                       :src="option"
                       :alt="`Option ${optionLabel(key)}`"
                       class="max-h-32 w-auto max-w-full object-contain"
