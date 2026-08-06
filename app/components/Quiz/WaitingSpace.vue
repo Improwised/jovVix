@@ -546,10 +546,12 @@ watch(
         <span
           class="grid size-10 shrink-0 place-items-center overflow-hidden rounded-full border-[2px] border-jv-ink bg-jv-mint sm:size-12"
         >
-          <img
+          <NuxtImg
             v-if="userAvatar"
             :src="userAvatar"
             :alt="`${displayName} avatar`"
+            width="48"
+            height="48"
             class="size-full object-cover"
           />
           <UserRound v-else class="size-5 sm:size-6" :stroke-width="2.4" />

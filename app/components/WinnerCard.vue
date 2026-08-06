@@ -80,9 +80,11 @@ const getOrdinal = (rank) => {
     <div
       class="grid size-24 place-items-center overflow-hidden rounded-full border-[3px] border-jv-ink bg-jv-white shadow-brutal-sm sm:size-28"
     >
-      <img
+      <NuxtImg
         :src="avatar"
         :alt="`Avatar for ${props.winner.firstname}`"
+        width="96"
+        height="96"
         class="size-full object-cover"
       />
     </div>

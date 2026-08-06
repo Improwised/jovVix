@@ -47,6 +47,7 @@ const mountComponent = () =>
       plugins: [pinia],
       stubs: {
         FontAwesomeIcon: true,
+        NuxtImg: true,
       },
     },
   });

@@ -226,7 +226,7 @@
               class="mt-3 flex justify-center rounded-md bg-jv-canvas p-2"
               @click.stop
             >
-              <img
+              <NuxtImg
                 :src="quiz.resource"
                 :alt="quiz.question"
                 class="max-h-64 w-auto max-w-full object-contain"
@@ -261,7 +261,7 @@
                   class="flex min-w-0 flex-1 justify-start"
                   @click.stop
                 >
-                  <img
+                  <NuxtImg
                     :src="option"
                     :alt="option"
                     class="max-h-32 w-auto max-w-full object-contain"

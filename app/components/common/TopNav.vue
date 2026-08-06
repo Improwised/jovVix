@@ -11,7 +11,14 @@
         to="/"
         class="flex items-center gap-2 text-[20px] sm:text-[22px] md:text-[24px] font-black tracking-[-0.5px] text-jv-ink no-underline w-[120px] lg:w-[150px] h-auto"
       >
-        <img src="@/assets/images/jovvix-logo.png" />
+        <NuxtImg
+          src="/images/jovvix-logo.png"
+          alt="jovVix"
+          width="150"
+          height="61"
+          sizes="120px lg:150px"
+          preload
+        />
       </NuxtLink>
 
       <ul

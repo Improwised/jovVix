@@ -67,9 +67,14 @@
         <div
           class="relative overflow-hidden bg-jv-white p-2 sm:p-3 shadow-brutal-lg jv-border-rough"
         >
-          <img
+          <NuxtImg
             src="/images/landing/homepage-hero-section.png"
             alt="Live quiz preview"
+            width="334"
+            height="258"
+            densities="1x"
+            format="webp"
+            preload
             class="w-full h-auto"
           />
         </div>

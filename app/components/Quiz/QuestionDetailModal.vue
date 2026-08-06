@@ -264,9 +264,12 @@ onBeforeUnmount(() => {
                   :key="`c-${u.username}-${i}`"
                   class="flex items-center gap-3 jv-border-rough bg-jv-white px-3 py-2.5 shadow-brutal-sm"
                 >
-                  <img
+                  <NuxtImg
                     :src="u.avatar"
                     :alt="u.firstname"
+                    width="40"
+                    height="40"
+                    loading="lazy"
                     class="size-10 shrink-0 rounded-full border-[2px] border-jv-ink bg-jv-slate object-cover"
                   />
                   <div class="min-w-0 flex-1">
@@ -328,9 +331,12 @@ onBeforeUnmount(() => {
                   :key="`i-${u.username}-${i}`"
                   class="flex items-center gap-3 jv-border-rough bg-jv-white px-3 py-2.5 shadow-brutal-sm"
                 >
-                  <img
+                  <NuxtImg
                     :src="u.avatar"
                     :alt="u.firstname"
+                    width="40"
+                    height="40"
+                    loading="lazy"
                     class="size-10 shrink-0 rounded-full border-[2px] border-jv-ink bg-jv-slate object-cover"
                   />
                   <div class="min-w-0 flex-1">

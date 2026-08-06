@@ -356,7 +356,7 @@ onUnmounted(() => {
           v-if="question.question_media === 'image'"
           class="mt-5 flex justify-center"
         >
-          <img
+          <NuxtImg
             :src="question.resource"
             :alt="question.question"
             class="max-h-[260px] w-auto border-[3px] border-jv-ink bg-jv-white object-contain shadow-brutal-sm"
@@ -396,7 +396,7 @@ onUnmounted(() => {
                 v-if="question.options_media === 'image'"
                 class="flex items-center justify-center"
               >
-                <img
+                <NuxtImg
                   :src="value"
                   :alt="`Option ${key}`"
                   class="max-h-[120px] w-auto object-contain"

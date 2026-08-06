@@ -730,7 +730,7 @@ const handleCreateQuiz = async () => {
                   v-else
                   class="flex h-14 items-center gap-3 border-[3px] border-jv-ink bg-jv-canvas px-3"
                 >
-                  <img
+                  <NuxtImg
                     :src="createQuizForm.cover_image"
                     alt="Cover image preview"
                     class="h-10 w-14 shrink-0 border-2 border-jv-ink object-cover"

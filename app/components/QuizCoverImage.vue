@@ -1,10 +1,12 @@
 <template>
-  <img
+  <NuxtImg
     :src="currentSrc"
     :alt="alt"
     :width="width"
     :height="height"
+    fit="cover"
     :loading="eager ? 'eager' : 'lazy'"
+    :preload="eager"
     :fetchpriority="eager ? 'high' : 'auto'"
     decoding="async"
     @error="failed = true"

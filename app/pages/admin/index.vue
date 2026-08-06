@@ -68,8 +68,10 @@
         >
           <div class="p-5 sm:p-7 md:p-8">
             <div class="flex flex-col gap-5 md:flex-row md:items-center">
-              <img
+              <NuxtImg
                 :src="avatar"
+                width="112"
+                height="112"
                 class="size-24 shrink-0 rounded-full border-[3px] border-jv-ink bg-jv-slate object-cover shadow-brutal-sm sm:size-28"
                 :alt="userData.full_name"
               />

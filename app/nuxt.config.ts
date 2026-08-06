@@ -103,7 +103,11 @@ export default defineNuxtConfig({
     "notivue/nuxt",
     "@nuxtjs/sitemap",
     "@nuxtjs/robots",
+    "@nuxt/image",
   ],
+  image: {
+    quality: 80,
+  },
   site: {
     url: process.env.NUXT_PUBLIC_BASE_URL || "http://127.0.0.1:3001",
   },

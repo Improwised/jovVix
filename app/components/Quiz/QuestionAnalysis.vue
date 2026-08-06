@@ -159,7 +159,7 @@ const userResultChip = computed(() => {
     </h3>
 
     <div v-if="renderQuestionImage" class="mt-4 flex justify-center">
-      <img
+      <NuxtImg
         :src="props.question?.resource"
         alt="Question image"
         class="max-h-[220px] w-auto border-[3px] border-jv-ink bg-jv-white object-contain shadow-brutal-sm"
