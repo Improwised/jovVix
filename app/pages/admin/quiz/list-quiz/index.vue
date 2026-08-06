@@ -72,6 +72,7 @@ const quizPendingDelete = ref(null);
 const createQuizOpen = ref(false);
 const createQuizPending = ref(false);
 const coverImageName = ref("");
+const processingCover = ref(false);
 const createQuizForm = ref({
   title: "",
   description: "",
@@ -388,7 +389,10 @@ const closeCreateQuizModal = () => {
 };
 
 const handleCoverImage = async (event) => {
-  const picked = await pickCoverImage(event);
+  processingCover.value = true;
+  const picked = await pickCoverImage(event).finally(() => {
+    processingCover.value = false;
+  });
   if (!picked) return;
   createQuizForm.value.cover_image = picked.dataUrl;
   coverImageName.value = picked.name;
@@ -711,11 +715,14 @@ const handleCreateQuiz = async () => {
                   class="flex h-14 cursor-pointer items-center justify-center gap-2 border-[3px] border-dashed border-jv-ink/40 bg-jv-canvas px-4 text-[15px] font-semibold text-jv-muted transition-colors hover:bg-jv-yellow/20"
                 >
                   <ImageIcon class="size-4 shrink-0" :stroke-width="2.3" />
-                  <span class="truncate">Upload cover image</span>
+                  <span class="truncate">{{
+                    processingCover ? "Processing image…" : "Upload cover image"
+                  }}</span>
                   <input
                     type="file"
                     class="hidden"
                     accept="image/*"
+                    :disabled="processingCover"
                     @change="handleCoverImage"
                   />
                 </label>

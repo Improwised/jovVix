@@ -73,11 +73,16 @@
         class="mt-1 flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed border-jv-ink/35 bg-jv-canvas px-3 py-3 text-[14px] font-medium text-jv-muted transition-colors hover:bg-jv-yellow/20"
       >
         <ImageIcon class="size-4" :stroke-width="2.3" />
-        <span>{{ questionFileName || "Upload question image" }}</span>
+        <span>{{
+          processingImage
+            ? "Processing image…"
+            : questionFileName || "Upload question image"
+        }}</span>
         <input
           type="file"
           class="hidden"
           accept="image/*"
+          :disabled="processingImage"
           @change="handleQuestionImage"
         />
       </label>
@@ -162,6 +167,7 @@
               type="file"
               class="hidden"
               accept="image/*"
+              :disabled="processingImage"
               @change="handleOptionImage($event, key)"
             />
           </label>
@@ -187,12 +193,9 @@
 <script setup>
 import { computed, reactive, ref, watch } from "vue";
 import { Code2, ImageIcon, Type } from "lucide-vue-next";
-import { usePush } from "notivue";
 import NavigationLink from "../common/NavigationLink.vue";
 
-const app = useNuxtApp();
-const toast = usePush();
-const { maxImageFileSize } = useRuntimeConfig().public;
+const { pickImageFile } = useImagePicker();
 
 const props = defineProps({
   question: {
@@ -234,6 +237,7 @@ const form = reactive({
 const correctAnswer = ref(1);
 const questionFileName = ref("");
 const optionFileNames = ref({});
+const processingImage = ref(false);
 
 const parseAnswers = (value) => {
   if (Array.isArray(value)) return value;
@@ -295,51 +299,35 @@ const showCancel = computed(
   () => props.mode === "edit" || props.mode === "create"
 );
 
-const validateImageFile = (file) => {
-  if (!app.$validImageTypes.includes(file.type)) {
-    toast.error(
-      "Please upload a valid image file (JPEG, PNG, GIF, WEBP, HEIC, HEIF)."
-    );
-    return false;
-  }
-  if (file.size > maxImageFileSize) {
-    const limitKb = Math.round(maxImageFileSize / 1024);
-    toast.error(`Please upload an image less than ${limitKb} KB.`);
-    return false;
-  }
-  return true;
-};
+const pickImage = async (event) => {
+  const file = event.target.files?.[0];
+  if (!file) return null;
 
-const readAsBase64 = (file) =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (e) => resolve(e.target.result);
-    reader.onerror = () => reject(reader.error);
-    reader.readAsDataURL(file);
+  processingImage.value = true;
+  const picked = await pickImageFile(file).finally(() => {
+    processingImage.value = false;
   });
 
+  if (!picked) event.target.value = "";
+  return picked;
+};
+
 const handleQuestionImage = async (event) => {
-  const file = event.target.files?.[0];
-  if (!file) return;
-  if (!validateImageFile(file)) {
-    event.target.value = "";
-    return;
-  }
-  form.resource = await readAsBase64(file);
-  questionFileName.value = file.name;
+  const picked = await pickImage(event);
+  if (!picked) return;
+
+  form.resource = picked.dataUrl;
+  questionFileName.value = picked.name;
 };
 
 const handleOptionImage = async (event, key) => {
-  const file = event.target.files?.[0];
-  if (!file) return;
-  if (!validateImageFile(file)) {
-    event.target.value = "";
-    return;
-  }
-  form.options[key] = await readAsBase64(file);
+  const picked = await pickImage(event);
+  if (!picked) return;
+
+  form.options[key] = picked.dataUrl;
   optionFileNames.value = {
     ...optionFileNames.value,
-    [key]: file.name,
+    [key]: picked.name,
   };
 };
 
