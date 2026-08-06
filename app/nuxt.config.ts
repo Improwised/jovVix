@@ -10,6 +10,9 @@ export default defineNuxtConfig({
       maxImageFileSize: parseInt(
         process.env.NUXT_PUBLIC_MAX_IMAGE_FILE_SIZE || "512000"
       ), // 500 KB default (bytes)
+      maxImageUploadSize: parseInt(
+        process.env.NUXT_PUBLIC_MAX_IMAGE_UPLOAD_SIZE || "10485760"
+      ), // 10 MB default (bytes)
       apiSocketUrl:
         process.env.NUXT_PUBLIC_API_SOCKET_URL ||
         "ws://127.0.0.1:3000/api/v1/socket",

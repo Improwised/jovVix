@@ -23,13 +23,14 @@
         class="jv-card flex w-fit cursor-pointer items-center gap-2 border-2 border-jv-ink bg-jv-yellow px-4 py-2 font-headings text-sm text-jv-ink shadow-brutal-sm transition-transform hover:rotate-[1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
       >
         <Camera class="size-4" :stroke-width="2.4" />
-        Replace Image
+        {{ processingImage ? "Processing…" : "Replace Image" }}
         <input
           id="image-attachment-question"
           type="file"
           accept="image/*"
           class="hidden"
           :name="editableQuestion.question_id"
+          :disabled="processingImage"
           @change="onImageChange"
         />
       </label>
@@ -70,6 +71,7 @@
               accept="image/*"
               class="hidden"
               :name="`${order}_${props.question.question_id}`"
+              :disabled="processingImage"
               @change="onImageChange"
             />
           </label>
@@ -130,10 +132,10 @@
 import { usePush } from "notivue";
 import { Camera, Save } from "lucide-vue-next";
 
-const app = useNuxtApp();
 const url = useRuntimeConfig().public;
 const headers = useRequestHeaders(["cookie"]);
 const toast = usePush();
+const { pickImageFile } = useImagePicker();
 
 const props = defineProps({
   question: {
@@ -158,6 +160,7 @@ const editableOptions = ref({ ...props.question.options });
 const correctAnswers = ref(props.question.correct_answer);
 const checkedNames = ref(JSON.parse(correctAnswers.value));
 const picked = ref(checkedNames.value[0]);
+const processingImage = ref(false);
 
 const changeCode = (data, order) => {
   if (order) {
@@ -167,37 +170,28 @@ const changeCode = (data, order) => {
   editableQuestion.value.resource = data;
 };
 
-const onImageChange = (e) => {
+const onImageChange = async (e) => {
   if (e.target.files.length === 0) {
     toast.error("Please select a file to upload.");
     return;
   }
 
-  const file = e.target.files[0];
+  processingImage.value = true;
+  const pickedImage = await pickImageFile(e.target.files[0]).finally(() => {
+    processingImage.value = false;
+  });
 
-  if (!app.$validImageTypes.includes(file.type)) {
-    toast.error(
-      "Please upload a valid image file (JPEG, PNG, GIF, WEBP, HEIC, HEIF)."
-    );
+  if (!pickedImage) {
+    e.target.value = "";
     return;
   }
 
-  if (file.size > url.maxImageFileSize) {
-    const limitKb = Math.round(url.maxImageFileSize / 1024);
-    toast.error(`Please upload an image less than ${limitKb} KB.`);
-    return;
+  if (e.target.id.startsWith("image-attachment-option")) {
+    const order = e.target.name[0];
+    editableOptions.value[order] = pickedImage.dataUrl;
+  } else {
+    editableQuestion.value.resource = pickedImage.dataUrl;
   }
-
-  const reader = new FileReader();
-  reader.onload = (ev) => {
-    if (e.target.id.startsWith("image-attachment-option")) {
-      const order = e.target.name[0];
-      editableOptions.value[order] = ev.target.result;
-    } else {
-      editableQuestion.value.resource = ev.target.result;
-    }
-  };
-  reader.readAsDataURL(file);
 };
 
 const updateQuestion = async () => {
