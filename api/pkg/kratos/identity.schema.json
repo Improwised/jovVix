@@ -28,14 +28,18 @@
                 },
                 "name": {
                     "type": "object",
-                    "properties": {
+                    "properties": { 
                         "first": {
                             "title": "First Name",
-                            "type": "string"
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 12
                         },
                         "last": {
                             "title": "Last Name",
-                            "type": "string"
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 50
                         }
                     }
                 }
