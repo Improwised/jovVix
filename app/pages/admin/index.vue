@@ -405,9 +405,11 @@ watch(
         user.value.data.identity.traits.name.last;
       userData.first_name = user.value.data.identity.traits.name.first;
       userData.last_name = user.value.data.identity.traits.name.last;
-      userData.email = user.value.data.identity.traits.email;
-      userData.email_verify =
-        user.value.data.identity.verifiable_addresses[0].verified;
+      const verifiableAddress =
+        user.value.data.identity.verifiable_addresses?.[0];
+      userData.email =
+        user.value.data.identity.traits.email || verifiableAddress?.value || "";
+      userData.email_verify = verifiableAddress?.verified ?? false;
       emailVerified.value = userData.email_verify;
     }
     if (userError.value) {
