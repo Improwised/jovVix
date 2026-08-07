@@ -56,6 +56,12 @@ const errors = ref({
 });
 const registerURLWithFlowQuery = ref("");
 const { passwordErrors } = useUserPasswordRules(password, firstname, lastname);
+const FIRSTNAME_MAX_LENGTH = 12;
+const firstnameLengthError = computed(() =>
+  firstname.value && firstname.value.trim().length > FIRSTNAME_MAX_LENGTH
+    ? `First name must be ${FIRSTNAME_MAX_LENGTH} characters or fewer`
+    : ""
+);
 const returnTo = ref(route.query.returnTo || "");
 const signInLink = computed(() =>
   returnTo.value
@@ -66,7 +72,7 @@ const signInLink = computed(() =>
 console.log(); // required so async IIFE below doesn't trigger Nuxt 5xx
 function onSubmit(event) {
   submitted.value = true;
-  if (passwordErrors.value.length > 0) {
+  if (passwordErrors.value.length > 0 || firstnameLengthError.value) {
     return;
   }
   event.target.submit();
@@ -273,11 +279,11 @@ async function setFlowIDAndCSRFToken() {
               />
             </div>
             <p
-              v-if="errors.firstname"
+              v-if="firstnameLengthError || errors.firstname"
               class="font-body text-jv-accent-red text-xs px-0.5 m-0 flex items-center gap-1"
             >
               <AlertCircle class="size-3.5 shrink-0" :stroke-width="2.2" />
-              {{ errors.firstname }}
+              {{ firstnameLengthError || errors.firstname }}
             </p>
           </div>
 
