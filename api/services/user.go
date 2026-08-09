@@ -104,7 +104,7 @@ func (userSvc *UserService) DeleteUserDataById(userId, kratosId string) error {
 	}
 
 	// delete user data from kratos database
-	kratosClient := resty.New().SetBaseURL(userSvc.config.Kratos.BaseUrl+"/admin/identities").SetHeader("accept", "application/json")
+	kratosClient := resty.New().SetBaseURL(userSvc.config.Kratos.AdminUrl+"/identities").SetHeader("accept", "application/json")
 
 	res, err := kratosClient.R().Delete(fmt.Sprintf("/%s", kratosId))
 	if err != nil || res.StatusCode() != http.StatusNoContent {
