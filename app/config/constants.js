@@ -8,6 +8,12 @@ export default {
   UserIdentifier: "user",
   CurrentQuizIdentifier: "user_played_quiz",
   CountTill: 3000,
+  MinimumPoints: 0,
+  MaximumPoints: 20,
+  MinimumDurationInSeconds: 1,
+  MaximumDurationInSeconds: 300,
+  DefaultPoints: 1,
+  DefaultDurationInSeconds: 10,
   ReadyMessage: "Ready to go...",
   AnswerSubmitted: "Answer submitted successfully",
 

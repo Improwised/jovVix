@@ -36,8 +36,8 @@ type ReqUpdateQuestion struct {
 	Type              int               `json:"type" validate:"required"`
 	Options           map[string]string `json:"options" validate:"required"`
 	Answers           []int             `json:"answers" validate:"required"`
-	Points            int16             `json:"points"`
-	DurationInSeconds int               `json:"duration_in_seconds" validate:"required"`
+	Points            int16             `json:"points" validate:"min=0,max=20"`
+	DurationInSeconds int               `json:"duration_in_seconds" validate:"required,min=1,max=300"`
 	QuestionMedia     string            `json:"question_media" validate:"required"`
 	OptionsMedia      string            `json:"options_media" validate:"required"`
 	Resource          string            `json:"resource"`
@@ -46,8 +46,8 @@ type ReqUpdateQuestion struct {
 type ReqCreateQuiz struct {
 	Title             string `json:"title" validate:"required"`
 	Description       string `json:"description"`
-	Points            int16  `json:"points"`
-	DurationInSeconds int    `json:"duration_in_seconds"`
+	Points            int16  `json:"points" validate:"omitempty,min=0,max=20"`
+	DurationInSeconds int    `json:"duration_in_seconds" validate:"omitempty,min=1,max=300"`
 	IsPublic          bool   `json:"is_public"`
 	CategoryId        string `json:"category_id" validate:"omitempty,uuid"`
 	CoverImage        string `json:"cover_image"`
@@ -59,7 +59,7 @@ type ReqQuizCategory struct {
 
 type ReqUpdateQuizSettings struct {
 	Points            int16    `json:"points" validate:"min=0,max=20"`
-	DurationInSeconds int      `json:"duration_in_seconds" validate:"required,min=1"`
+	DurationInSeconds int      `json:"duration_in_seconds" validate:"required,min=1,max=300"`
 	QuestionIds       []string `json:"question_ids" validate:"omitempty,dive,uuid"`
 	CategoryId *string `json:"category_id"`
 	CoverImage *string `json:"cover_image"`
@@ -71,7 +71,7 @@ type ReqCreateQuestion struct {
 	Options           map[string]string `json:"options" validate:"required"`
 	Answers           []int             `json:"answers" validate:"required"`
 	Points            int16             `json:"points" validate:"omitempty,min=0,max=20"`
-	DurationInSeconds int               `json:"duration_in_seconds" validate:"omitempty,min=1"`
+	DurationInSeconds int               `json:"duration_in_seconds" validate:"omitempty,min=1,max=300"`
 	QuestionMedia     string            `json:"question_media" validate:"required"`
 	OptionsMedia      string            `json:"options_media" validate:"required"`
 	Resource          string            `json:"resource"`

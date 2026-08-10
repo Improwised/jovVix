@@ -115,6 +115,10 @@ const (
 	FileSize                    = 100000 // TODO: change file size, ~1mb
 	MaximumPoints               = 20
 	MinimumPoints               = 0
+	MaximumDurationInSeconds    = 300
+	MinimumDurationInSeconds    = 1
+	DefaultDurationInSeconds    = 30
+	DefaultCsvPoints            = 1
 	SheetName                   = "demo"
 	QuizTitle                   = "quiz_title"
 	QuizTitleRequired           = "quiz-title is required"
@@ -135,7 +139,7 @@ const (
 	ErrInsufficientOptions      = "at least 2 options are required"
 	ErrEmptyCorrectAnswer       = "correct answer is required"
 	ErrInvalidCorrectAnswer     = "correct answer must be a number referencing an existing option"
-	ErrInvalidPoints            = "points must be a positive number"
+	ErrInvalidPoints            = "points must be a whole number within the allowed range"
 	ErrInvalidCSVRows           = "the uploaded CSV has invalid rows, please fix them and try again"
 	ErrInvalidQuestionTimeLimit = "question time limit is not configured properly"
 	ErrInvalidQuestionMedia     = "question media must be one of: text, image, code"
