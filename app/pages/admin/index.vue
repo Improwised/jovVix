@@ -63,9 +63,7 @@
       </div>
 
       <template v-else>
-        <section
-          class="rotate-[-0.2deg] jv-border-rough bg-jv-white shadow-brutal-lg"
-        >
+        <section class="jv-border-rough bg-jv-white shadow-brutal-lg">
           <div class="p-5 sm:p-7 md:p-8">
             <div class="flex flex-col gap-5 md:flex-row md:items-center">
               <NuxtImg
@@ -208,9 +206,7 @@
           </form>
         </section>
 
-        <section
-          class="rotate-[0.2deg] jv-border-rough bg-jv-white shadow-brutal-lg"
-        >
+        <section class="jv-border-rough bg-jv-white shadow-brutal-lg">
           <div
             class="flex flex-col gap-4 border-b-2 border-jv-ink p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6"
           >
@@ -268,13 +264,14 @@
 
               <template v-else>
                 <div
-                  class="grid gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 2xl:grid-cols-4"
+                  class="grid gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-5 lg:gap-4 xl:gap-5 2xl:gap-6"
                 >
                   <QuizListCard
                     v-for="quiz in playedQuizzes"
                     :key="quiz.id"
                     :details="quiz"
                     :is-played-quiz="true"
+                    :compact="true"
                   />
                 </div>
 

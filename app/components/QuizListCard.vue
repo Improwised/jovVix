@@ -1,7 +1,10 @@
 <template>
   <article
     class="group relative flex min-h-[342px] flex-col bg-jv-white p-3 shadow-brutal-sm jv-border-rough sm:min-h-[360px] sm:p-4 md:min-h-[372px] md:p-5"
-    :class="tiltClass"
+    :class="[
+      tiltClass,
+      compact ? 'lg:min-h-[330px] lg:p-3 xl:min-h-[352px] xl:p-4' : '',
+    ]"
   >
     <span
       class="absolute left-1/2 top-[-13px] h-4 w-8 -translate-x-1/2 rotate-[-2deg] bg-jv-salmon opacity-90"
@@ -9,7 +12,10 @@
     ></span>
 
     <div class="relative border-[2px] border-jv-ink bg-jv-slate p-2">
-      <div class="relative h-[104px] overflow-hidden sm:h-[112px] md:h-[124px]">
+      <div
+        class="relative h-[104px] overflow-hidden sm:h-[112px] md:h-[124px]"
+        :class="compact ? 'lg:h-[96px] xl:h-[112px]' : ''"
+      >
         <QuizCoverImage
           :src="image"
           :fallback="fallback"
@@ -23,6 +29,7 @@
 
     <h3
       class="mt-4 min-w-0 break-words font-body text-[21px] font-black leading-tight text-jv-ink sm:text-[22px] md:text-[24px]"
+      :class="compact ? 'lg:text-[19px] xl:text-[21px] 2xl:text-[22px]' : ''"
     >
       {{ title }}
     </h3>
@@ -33,6 +40,7 @@
 
     <p
       class="mt-2 min-h-[58px] break-words text-[13px] leading-[1.5] text-jv-muted sm:mt-3 sm:min-h-[66px] sm:text-[14px] sm:leading-[1.55]"
+      :class="compact ? 'lg:min-h-[58px] lg:text-[13px] xl:min-h-[66px]' : ''"
     >
       {{ description }}
     </p>
@@ -73,6 +81,11 @@ const props = defineProps({
     required: true,
   },
   isPlayedQuiz: {
+    type: Boolean,
+    required: false,
+    default: false,
+  },
+  compact: {
     type: Boolean,
     required: false,
     default: false,
