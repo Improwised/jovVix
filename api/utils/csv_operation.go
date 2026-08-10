@@ -78,6 +78,9 @@ func ExtractQuestionsFromCSV(questions []Question, questionTimeLimit string) ([]
 	if err != nil || duration <= 0 {
 		return nil, fmt.Errorf(constants.ErrInvalidQuestionTimeLimit)
 	}
+	if duration > constants.MaximumDurationInSeconds {
+		duration = constants.MaximumDurationInSeconds
+	}
 
 	var validQuestions []models.Question
 	var rowErrors []string
@@ -158,12 +161,12 @@ func ExtractQuestionsFromCSV(questions []Question, questionTimeLimit string) ([]
 			rowIssues = append(rowIssues, fmt.Sprintf("%s (got %q)", constants.ErrInvalidOptionsMedia, u.OptionsMedia))
 		}
 
-		// Points: optional, but if present must be a positive integer.
-		points := 1
+		// Points: optional, but if present must fall inside the allowed range.
+		points := constants.DefaultCsvPoints
 		if strings.TrimSpace(u.Points) != "" {
 			parsedPoints, convErr := strconv.Atoi(strings.TrimSpace(u.Points))
-			if convErr != nil || parsedPoints <= 0 {
-				rowIssues = append(rowIssues, fmt.Sprintf("%s (got %q)", constants.ErrInvalidPoints, u.Points))
+			if convErr != nil || parsedPoints < constants.MinimumPoints || parsedPoints > constants.MaximumPoints {
+				rowIssues = append(rowIssues, fmt.Sprintf("%s (got %q, allowed: %d-%d)", constants.ErrInvalidPoints, u.Points, constants.MinimumPoints, constants.MaximumPoints))
 			} else {
 				points = parsedPoints
 			}

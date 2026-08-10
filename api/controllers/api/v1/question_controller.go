@@ -49,11 +49,26 @@ func InitQuestionController(db *goqu.Database, logger *zap.Logger, appConfig *co
 
 func (ctrl *QuestionController) getDefaultQuestionDuration() int {
 	parsedDuration, err := strconv.Atoi(ctrl.appConfig.Quiz.QuestionTimeLimit)
-	if err != nil || parsedDuration <= 0 {
-		return 0
+	if err != nil || parsedDuration < constants.MinimumDurationInSeconds {
+		return constants.DefaultDurationInSeconds
+	}
+	if parsedDuration > constants.MaximumDurationInSeconds {
+		return constants.MaximumDurationInSeconds
 	}
 
 	return parsedDuration
+}
+
+func (ctrl *QuestionController) getDefaultQuestionPoints() int16 {
+	points := ctrl.appConfig.Quiz.DefaultQuestionPoints
+	if points < constants.MinimumPoints {
+		return constants.MinimumPoints
+	}
+	if points > constants.MaximumPoints {
+		return constants.MaximumPoints
+	}
+
+	return points
 }
 
 // ListQuestionByQuizId to list all questions of quiz with `is_active_quiz_present` and `quiz_played_count`.
@@ -94,7 +109,7 @@ func (ctrl *QuestionController) ListQuestionsWithAnswerByQuizId(c *fiber.Ctx) er
 		return utils.JSONError(c, http.StatusInternalServerError, err.Error())
 	}
 
-	settingsPoints := ctrl.appConfig.Quiz.DefaultQuestionPoints
+	settingsPoints := ctrl.getDefaultQuestionPoints()
 	settingsDuration := ctrl.getDefaultQuestionDuration()
 	if len(questions) > 0 {
 		settingsPoints = int16(questions[0].Points)
@@ -157,12 +172,11 @@ func (ctrl *QuestionController) CreateQuestion(c *fiber.Ctx) error {
 
 	points := questionReq.Points
 	durationInSeconds := questionReq.DurationInSeconds
-	defaultDuration := ctrl.getDefaultQuestionDuration()
 	if questionReq.Points == 0 && questionReq.DurationInSeconds == 0 {
-		points = ctrl.appConfig.Quiz.DefaultQuestionPoints
+		points = ctrl.getDefaultQuestionPoints()
 	}
 	if durationInSeconds <= 0 {
-		durationInSeconds = defaultDuration
+		durationInSeconds = ctrl.getDefaultQuestionDuration()
 	}
 
 	questionIds, err := ctrl.quizSvc.AppendQuestionsToQuiz(quizId, []models.Question{

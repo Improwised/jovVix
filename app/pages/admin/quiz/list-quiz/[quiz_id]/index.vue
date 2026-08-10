@@ -202,8 +202,8 @@
               <input
                 v-model.number="settings.points"
                 type="number"
-                min="0"
-                max="20"
+                :min="constants.MinimumPoints"
+                :max="constants.MaximumPoints"
                 :disabled="!canEditQuiz || settingsPending"
                 :aria-invalid="!!settingsErrors.points"
                 :aria-describedby="
@@ -246,7 +246,8 @@
               <input
                 v-model.number="settings.duration_in_seconds"
                 type="number"
-                min="1"
+                :min="constants.MinimumDurationInSeconds"
+                :max="constants.MaximumDurationInSeconds"
                 :disabled="!canEditQuiz || settingsPending"
                 :aria-invalid="!!settingsErrors.duration"
                 :aria-describedby="
@@ -606,6 +607,7 @@ import draggable from "vuedraggable";
 import QuestionFormCard from "@/components/quiz-manage/QuestionFormCard.vue";
 import CodeBlockComponent from "@/components/CodeBlockComponent.vue";
 import ShareQuizModal from "@/components/Quiz/ShareQuizModal.vue";
+import constants from "~~/config/constants";
 import { useListUserstore } from "~/store/userlist";
 import { useSessionStore } from "~~/store/session";
 import NavigationLink from "~/components/common/NavigationLink.vue";
@@ -661,8 +663,11 @@ const {
 });
 
 const settings = ref({
-  points: Number(quizData.value?.data?.points ?? 10),
-  duration_in_seconds: Number(quizData.value?.data?.duration_in_seconds ?? 10),
+  points: Number(quizData.value?.data?.points ?? constants.DefaultPoints),
+  duration_in_seconds: Number(
+    quizData.value?.data?.duration_in_seconds ??
+      constants.DefaultDurationInSeconds
+  ),
   category_id: nullableString(quizData.value?.data?.category_id),
   cover_image: nullableString(quizData.value?.data?.cover_image),
 });
@@ -724,11 +729,19 @@ const settingsErrors = computed(() => {
   const points = settings.value.points;
   const duration = settings.value.duration_in_seconds;
 
-  if (!Number.isInteger(points) || points < 0 || points > 20) {
-    errors.points = "Points must be a whole number between 0 and 20.";
+  if (
+    !Number.isInteger(points) ||
+    points < constants.MinimumPoints ||
+    points > constants.MaximumPoints
+  ) {
+    errors.points = `Points must be between ${constants.MinimumPoints} and ${constants.MaximumPoints}.`;
   }
-  if (!Number.isInteger(duration) || duration < 1) {
-    errors.duration = "Duration must be at least 1 second.";
+  if (
+    !Number.isInteger(duration) ||
+    duration < constants.MinimumDurationInSeconds ||
+    duration > constants.MaximumDurationInSeconds
+  ) {
+    errors.duration = `Duration must be between ${constants.MinimumDurationInSeconds} and ${constants.MaximumDurationInSeconds} seconds.`;
   }
 
   return errors;
@@ -746,9 +759,10 @@ const hasUnsavedSettings = computed(() => {
     currentIds.length !== originalOrderIds.value.length ||
     currentIds.some((id, i) => id !== originalOrderIds.value[i]);
   return (
-    Number(settings.value.points) !== Number(data.points ?? 10) ||
+    Number(settings.value.points) !==
+      Number(data.points ?? constants.DefaultPoints) ||
     Number(settings.value.duration_in_seconds) !==
-      Number(data.duration_in_seconds ?? 10) ||
+      Number(data.duration_in_seconds ?? constants.DefaultDurationInSeconds) ||
     settings.value.category_id !== nullableString(data.category_id) ||
     settings.value.cover_image !== nullableString(data.cover_image) ||
     orderChanged
@@ -760,8 +774,10 @@ watch(
   (data) => {
     if (!data) return;
     settings.value = {
-      points: Number(data.points ?? 10),
-      duration_in_seconds: Number(data.duration_in_seconds ?? 10),
+      points: Number(data.points ?? constants.DefaultPoints),
+      duration_in_seconds: Number(
+        data.duration_in_seconds ?? constants.DefaultDurationInSeconds
+      ),
       category_id: nullableString(data.category_id),
       cover_image: nullableString(data.cover_image),
     };
