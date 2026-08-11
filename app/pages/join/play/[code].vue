@@ -17,8 +17,14 @@ const app = useNuxtApp();
 useSystemEnv();
 
 const sessionStore = useSessionStore();
-const { setActiveQuizTitle } = sessionStore;
+const {
+  setActiveQuizTitle,
+  setPlaySession,
+  getPlaySessionFor,
+  clearPlaySession,
+} = sessionStore;
 const { activeQuizTitle } = storeToRefs(sessionStore);
+const { apiUrl } = useRuntimeConfig().public;
 
 // define props and emits
 const myRef = ref(false);
@@ -27,27 +33,23 @@ const currentComponent = ref("Loading");
 const userOperationHandler = ref();
 
 const monitorTerminateQuiz = ref(false);
+const cancelled = ref(false);
 
 // for notification bars
 const showConnectingBar = ref(false);
 const showReconnectedBar = ref(false);
 
-// get query params
-const username = computed(() => route.query.username);
-const firstname = computed(() => route.query.firstname);
-const userPlayedQuiz = computed(() => route.query.user_played_quiz);
-const sessionId = computed(() => route.query.session_id);
+const code = route.params.code;
+const play = ref(getPlaySessionFor(code) || {});
+const username = computed(() => play.value.username);
+const firstname = computed(() => play.value.firstname);
+const userPlayedQuiz = computed(() => play.value.userPlayedQuiz);
+const sessionId = computed(() => play.value.sessionId);
 
 const selectedAnswer = ref(0);
 const quizState = ref(app.$Running);
 
-const incomingQuizTitle = (route.query.quiz_title || "").toString().trim();
-if (incomingQuizTitle) {
-  setActiveQuizTitle(incomingQuizTitle);
-}
-const quizTitle = computed(
-  () => activeQuizTitle.value || incomingQuizTitle || ""
-);
+const quizTitle = computed(() => activeQuizTitle.value || "");
 const showQuizTitleBar = computed(
   () => !!quizTitle.value && currentComponent.value !== "Waiting"
 );
@@ -72,23 +74,66 @@ const handleSessionUnavailable = () => {
   );
 };
 
+const resolvePlaySession = async () => {
+  if (userPlayedQuiz.value && sessionId.value) return true;
+
+  const played = await $fetch(`${apiUrl}/user_played_quizes/${code}`, {
+    method: "POST",
+    credentials: "include",
+    headers: { Accept: "application/json" },
+  });
+
+  const who = await $fetch.raw(`${apiUrl}/user/who`, {
+    method: "GET",
+    credentials: "include",
+    headers: { Accept: "application/json" },
+    ignoreResponseError: true,
+  });
+
+  const resolved = {
+    code,
+    username: who._data?.data?.username || "",
+    firstname: who._data?.data?.firstname || "",
+    userPlayedQuiz: played?.data?.user_played_quiz,
+    sessionId: played?.data?.session_id,
+  };
+
+  if (!resolved.userPlayedQuiz || !resolved.sessionId || !resolved.username) {
+    return false;
+  }
+
+  play.value = resolved;
+  setPlaySession(resolved);
+  setActiveQuizTitle(played?.data?.quiz_title || "");
+  return true;
+};
+
 // main functions
-onMounted(() => {
+onMounted(async () => {
   // core logic
-  if (process.client) {
-    try {
-      userOperationHandler.value = new UserOperation(
-        route.params.code,
-        username.value,
-        handleQuizEvents,
-        handleNetworkEvent,
-        handleNetworkEstablished,
-        handleSessionUnavailable
-      );
-    } catch (err) {
-      toast.info(app.$ReloadRequired);
-      console.error(err);
-    }
+  if (!process.client) return;
+
+  try {
+    if (!(await resolvePlaySession())) return handleSessionUnavailable();
+  } catch (err) {
+    console.error(err);
+    return handleSessionUnavailable();
+  }
+
+  if (cancelled.value) return;
+
+  try {
+    userOperationHandler.value = new UserOperation(
+      code,
+      username.value,
+      handleQuizEvents,
+      handleNetworkEvent,
+      handleNetworkEstablished,
+      handleSessionUnavailable
+    );
+  } catch (err) {
+    toast.info(app.$ReloadRequired);
+    console.error(err);
   }
 });
 
@@ -101,9 +146,11 @@ const handleQuizEvents = async (message) => {
   } else if (message.event == app.$TerminateQuiz) {
     monitorTerminateQuiz.value = true;
     toast.info(app.$HostEndedQuizMessage);
-    return await router.push(
-      `/join/${username.value}/scoreboard?user_played_quiz=${userPlayedQuiz.value}`
-    );
+    const scoreboard = `/join/${encodeURIComponent(
+      username.value
+    )}/scoreboard?user_played_quiz=${userPlayedQuiz.value}`;
+    clearPlaySession();
+    return await router.push(scoreboard);
   } else if (message.event == app.$RedirectToAdmin) {
     return await router.push("/admin/arrange/" + message.data.sessionId);
   } else if (
@@ -211,8 +258,9 @@ useSeoMeta({
 });
 
 onBeforeUnmount(() => {
+  cancelled.value = true;
   if (!monitorTerminateQuiz.value) {
-    userOperationHandler.value.endQuiz();
+    userOperationHandler.value?.endQuiz();
   }
 });
 </script>

@@ -9,6 +9,7 @@ export const useSessionStore = defineStore(
     const session = ref(false);
     const lastComponent = ref("");
     const activeQuizTitle = ref("");
+    const playSession = ref(null);
     const activeSessions = ref([]);
     const sessionsSyncedAt = ref(0);
     const sessionsLoading = ref(false);
@@ -35,6 +36,17 @@ export const useSessionStore = defineStore(
       if (typeof title === "string" && title.trim()) {
         activeQuizTitle.value = title.trim();
       }
+    };
+
+    const setPlaySession = (data) => {
+      playSession.value = { ...data, code: String(data.code) };
+    };
+
+    const getPlaySessionFor = (code) =>
+      playSession.value?.code === String(code) ? playSession.value : null;
+
+    const clearPlaySession = () => {
+      playSession.value = null;
     };
 
     const getActiveSessions = () => activeSessions.value;
@@ -91,6 +103,10 @@ export const useSessionStore = defineStore(
       activeQuizTitle,
       getActiveQuizTitle,
       setActiveQuizTitle,
+      playSession,
+      setPlaySession,
+      getPlaySessionFor,
+      clearPlaySession,
       activeSessions,
       sessionsLoading,
       getActiveSessions,
@@ -99,6 +115,13 @@ export const useSessionStore = defineStore(
     };
   },
   {
-    persist: { pick: ["activeQuizTitle"] },
+    persist: [
+      { key: "session-store", pick: ["activeQuizTitle"] },
+      {
+        key: "session-store-play",
+        pick: ["playSession"],
+        storage: import.meta.client ? window.sessionStorage : undefined,
+      },
+    ],
   }
 );
