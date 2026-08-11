@@ -350,7 +350,7 @@ useSeoMeta({
 const userData = useUsersStore();
 const { setUserData } = userData;
 const sessionStore = useSessionStore();
-const { setActiveQuizTitle } = sessionStore;
+const { setActiveQuizTitle, setPlaySession, clearPlaySession } = sessionStore;
 const authChecking = ref(true);
 
 const codeparam = computed(() => route.query.code || "");
@@ -380,6 +380,8 @@ const dismissNotice = () => {
   sessionNotice.value = null;
 };
 onMounted(() => {
+  clearPlaySession();
+
   const err = String(route.query.error || "")
     .trim()
     .toLowerCase();
@@ -508,15 +510,15 @@ const join_quiz = async () => {
     return;
   }
 
-  router.push(
-    `/join/play/${code.value}?username=${encodeURIComponent(
-      username.value
-    )}&firstname=${firstname.value}&user_played_quiz=${
-      userPlayedQuiz.value
-    }&session_id=${sessionId.value}&quiz_title=${encodeURIComponent(
-      quizTitle.value
-    )}`
-  );
+  setPlaySession({
+    code: code.value,
+    username: username.value,
+    firstname: firstname.value,
+    userPlayedQuiz: userPlayedQuiz.value,
+    sessionId: sessionId.value,
+  });
+
+  router.push(`/join/play/${code.value}`);
 };
 
 // get user data — 401 is the expected guest case, so don't throw on it.
