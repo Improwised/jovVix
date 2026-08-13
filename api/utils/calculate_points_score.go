@@ -28,7 +28,7 @@ func CalculatePointsAndScore(userAnswer structs.ReqAnswerSubmit, answers []int, 
 
 	points.Valid = true
 	// for mcq type question
-	if actualAnswerLen == 1 && answerPoints > 0 {
+	if actualAnswerLen == 1 {
 		if answers[0] == userAnswer.AnswerKeys[0] {
 			points.Int16 = answerPoints
 			remainingTime = (answerDurationInSeconds * 1000) - userAnswer.ResponseTime
@@ -38,7 +38,7 @@ func CalculatePointsAndScore(userAnswer structs.ReqAnswerSubmit, answers []int, 
 			return points, finalScore
 		}
 		return points, finalScore
-	} else if questionType == constants.Survey && answerPoints > 0 {
+	} else if questionType == constants.Survey {
 		points.Int16 = answerPoints
 		remainingTime = (answerDurationInSeconds * 1000) - userAnswer.ResponseTime
 		remainingTimeFloat = math.Round(float64(remainingTime) / 1000)

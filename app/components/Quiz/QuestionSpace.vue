@@ -3,7 +3,19 @@
 import { useNuxtApp } from "nuxt/app";
 import { usePush } from "notivue";
 import { useMusicStore } from "~~/store/music";
-import { Check, SkipForward, Trophy, Volume2, VolumeX } from "lucide-vue-next";
+import {
+  Check,
+  Info,
+  SkipForward,
+  Trophy,
+  Volume2,
+  VolumeX,
+} from "lucide-vue-next";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 const musicStore = useMusicStore();
 const { getMusic, setMusic } = musicStore;
@@ -88,6 +100,19 @@ const SKIP_COOLDOWN_MS = 2000;
 const remainingSeconds = computed(() =>
   Math.max(0, (questionDuration.value || 0) - time.value)
 );
+
+const questionPoints = computed(() => {
+  const points = Number(question.value?.points);
+  return Number.isFinite(points) && points >= 0 ? points : null;
+});
+
+const pointsLabel = computed(() => {
+  if (questionPoints.value === null) return null;
+  if (questionPoints.value === 0) return "Speed bonus only";
+  return `Worth ${questionPoints.value} ${
+    questionPoints.value === 1 ? "pt" : "pts"
+  }`;
+});
 
 // Determine if current question is the last one
 const isLastQuestion = computed(() => {
@@ -315,10 +340,52 @@ onUnmounted(() => {
               <span class="text-jv-muted">/ {{ question.totalQuestions }}</span>
             </h2>
             <p
+              v-if="!pointsLabel"
               class="mt-2 font-body text-[12px] font-bold text-jv-muted sm:text-[14px]"
             >
               Let's Play
             </p>
+            <Popover v-else>
+              <PopoverTrigger as-child>
+                <button
+                  type="button"
+                  class="mt-2 inline-flex max-w-full items-center gap-1.5 rotate-[0.5deg] rounded-full border-[2px] border-jv-ink bg-jv-mint px-3 py-1 font-body text-[11px] font-black uppercase tracking-[0.12em] text-jv-ink shadow-brutal-sm transition-transform hover:-rotate-[1deg] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none sm:text-[12px]"
+                  aria-label="How scoring works"
+                >
+                  <span class="truncate">{{ pointsLabel }}</span>
+                  <Info class="size-3 shrink-0" :stroke-width="2.6" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent
+                side="bottom"
+                align="start"
+                :side-offset="8"
+                class="w-72 jv-border-rough bg-jv-white p-4 font-body text-[13px] text-jv-ink shadow-brutal"
+              >
+                <p
+                  class="font-headings text-[15px] uppercase tracking-[0.06em]"
+                >
+                  How your score works
+                </p>
+                <ul class="mt-3 space-y-1.5">
+                  <li>Correct answer: <b>500</b> base points</li>
+                  <li>
+                    Speed bonus: up to <b>400</b>, scaled by how much time is
+                    left
+                  </li>
+                  <li>
+                    Question points: <b>{{ questionPoints }} &times; 100</b>
+                  </li>
+                  <li>
+                    Streak bonus: from your 2nd correct answer in a row,
+                    <b>+100</b> and growing
+                  </li>
+                </ul>
+                <p class="mt-3 text-[12px] font-bold text-jv-muted">
+                  Wrong or unanswered questions score 0 and reset your streak.
+                </p>
+              </PopoverContent>
+            </Popover>
           </div>
 
           <div class="flex shrink-0 items-center gap-2 sm:gap-3">

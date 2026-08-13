@@ -55,6 +55,25 @@ func TestCalculatePointsAndScore(t *testing.T) {
 		assert.Equal(t, 0, score)
 	})
 
+	t.Run("Correct answer with zero points", func(t *testing.T) {
+		userAnswer := structs.ReqAnswerSubmit{AnswerKeys: []int{1}, ResponseTime: 5000}
+		answers := []int{1}
+		answerPoints := int16(0)
+		answerDurationInSeconds := 30
+		questionType := constants.SingleAnswer
+
+		remainingTime := (answerDurationInSeconds * 1000) - userAnswer.ResponseTime
+		remainingTimeFloat := math.Round(float64(remainingTime) / 1000)
+		timePoints := int(math.Round((remainingTimeFloat * 400) / float64(answerDurationInSeconds)))
+		basePoint := 500
+		expectedScore := timePoints + basePoint
+
+		points, score := CalculatePointsAndScore(userAnswer, answers, answerPoints, answerDurationInSeconds, questionType)
+		assert.True(t, points.Valid)
+		assert.Equal(t, answerPoints, points.Int16)
+		assert.Equal(t, expectedScore, score)
+	})
+
 	t.Run("Survey question", func(t *testing.T) {
 		userAnswer := structs.ReqAnswerSubmit{AnswerKeys: []int{1}, ResponseTime: 5000}
 		answers := []int{1}
