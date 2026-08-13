@@ -193,9 +193,10 @@
                     </button>
                   </TooltipTrigger>
                   <TooltipContent side="bottom" align="start">
-                    Maximum points awarded for answering this quiz's questions
-                    correctly. Players who answer faster earn closer to the full
-                    amount; slower correct answers earn proportionally less.
+                    Points awarded in full for each correct answer, adding
+                    points &times; 100 to a player's score. On top of that,
+                    every correct answer earns 500 base points plus a speed
+                    bonus of up to 400, and answer streaks add more.
                   </TooltipContent>
                 </Tooltip>
               </span>
