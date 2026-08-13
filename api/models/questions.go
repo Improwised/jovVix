@@ -394,6 +394,23 @@ func (model *QuestionModel) ListQuestionsWithAnswerByQuizId(QuizId string, media
 	return questionAnalytics, quizPlayedCount, nil
 }
 
+// ListQuestionTextsByQuizId returns just the question text of every question in a
+// quiz, in no particular order. Unlike ListQuestionsWithAnswerByQuizId it does not
+// require the quiz to have been hosted, so it also works on a brand new quiz.
+func (model *QuestionModel) ListQuestionTextsByQuizId(quizId string) ([]string, error) {
+	questionIds := model.db.From(constants.QuizQuestionsTable).
+		Select("question_id").
+		Where(goqu.Ex{"quiz_id": quizId})
+
+	var questions []string
+	err := model.db.From(QuestionTable).
+		Select("question").
+		Where(goqu.Ex{"id": goqu.Op{"in": questionIds}}).
+		Executor().ScanVals(&questions)
+
+	return questions, err
+}
+
 func (model *QuestionModel) GetAnswersPointsDurationType(QuestionID string) ([]int, int16, int, int, error) {
 
 	var answers []int = []int{}

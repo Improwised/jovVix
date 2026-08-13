@@ -29,11 +29,12 @@ func GetAPICommandDef(cfg config.AppConfig, logger *zap.Logger) cobra.Command {
 
 			// Create fiber app
 			app := fiber.New(fiber.Config{
-				BodyLimit: cfg.BodyLimitMB * 1024 * 1024,
+				BodyLimit:      cfg.BodyLimitMB * 1024 * 1024,
+				ReadBufferSize: 8192,
 			})
 
 			app.Use(cors.New(cors.Config{
-				AllowHeaders:     "Origin,Content-Type,Accept,Content-Length,Accept-Language,Accept-Encoding,Connection,Access-Control-Allow-Origin,Authorization,Options",
+				AllowHeaders:     "Origin,Content-Type,Accept,Content-Length,Accept-Language,Accept-Encoding,Connection,Access-Control-Allow-Origin,Authorization,Options,X-AI-Base-Url,X-AI-Api-Key,X-AI-Model",
 				AllowOrigins:     cfg.WebUrl,
 				AllowCredentials: true,
 				AllowMethods:     "GET,POST,HEAD,PUT,DELETE,PATCH,OPTIONS",

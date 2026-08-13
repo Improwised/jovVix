@@ -84,7 +84,7 @@ onBeforeUnmount(() => {
         <div
           :class="
             cn(
-              'jv-modal-card relative z-10 w-full -rotate-[0.4deg] jv-border-rough bg-jv-white p-5 shadow-brutal-lg sm:p-7',
+              'jv-modal-card relative z-10 w-full jv-border-rough bg-jv-white p-5 shadow-brutal-lg sm:p-7',
               widthClass[props.size],
               props.class
             )
@@ -154,6 +154,6 @@ onBeforeUnmount(() => {
 .jv-modal-enter-from .jv-modal-card,
 .jv-modal-leave-to .jv-modal-card {
   opacity: 0;
-  transform: scale(0.92) rotate(-2deg);
+  transform: scale(0.92);
 }
 </style>

@@ -3,6 +3,7 @@ package middlewares
 import (
 	"strings"
 
+	"github.com/Improwised/jovvix/api/constants"
 	pMetrics "github.com/Improwised/jovvix/api/pkg/prometheus"
 	fiber "github.com/gofiber/fiber/v2"
 	"github.com/samber/lo"
@@ -20,7 +21,29 @@ var (
 		"/assets/swagger.json",
 		"/favicon.ico",
 	}
+	redactedHeaders = map[string]bool{
+		"authorization": true,
+		"cookie":        true,
+		"set-cookie":    true,
+		strings.ToLower(constants.HeaderAIApiKey): true,
+	}
 )
+
+func headerLine(visitAll func(func(key, value []byte))) string {
+	var builder strings.Builder
+	visitAll(func(key, value []byte) {
+		name := string(key)
+		builder.WriteString(name)
+		builder.WriteString(": ")
+		if redactedHeaders[strings.ToLower(name)] {
+			builder.WriteString("<redacted>")
+		} else {
+			builder.Write(value)
+		}
+		builder.WriteString("\r\n")
+	})
+	return builder.String()
+}
 
 // Handler will log each request
 func LogHandler(logger *zap.Logger, pMetrics *pMetrics.PrometheusMetrics) fiber.Handler {
@@ -31,15 +54,15 @@ func LogHandler(logger *zap.Logger, pMetrics *pMetrics.PrometheusMetrics) fiber.
 		}
 
 		exits := lo.Contains(ignorePathList, ctx.Path()) || strings.HasPrefix(string(ctx.Response().Header.ContentType()), "image/") || strings.HasPrefix(string(ctx.Response().Header.ContentType()), "text/")
-		if !exits {
+		if !exits && logger.Core().Enabled(zapcore.DebugLevel) {
 			zapCoreField = []zapcore.Field{
 				zap.String("host", ctx.Hostname()),
 				zap.String("method", string(ctx.Request().Header.Method())),
 				zap.String("uri", ctx.BaseURL()),
 				zap.String("protocol", ctx.Protocol()),
 				zap.String("username", string(ctx.Request().URI().Username())),
-				zap.String("requestHeaders", string(ctx.Request().Header.Header())),
-				zap.String("responseHeaders", string(ctx.Response().Header.Header())),
+				zap.String("requestHeaders", headerLine(ctx.Request().Header.VisitAll)),
+				zap.String("responseHeaders", headerLine(ctx.Response().Header.VisitAll)),
 				zap.String("request", string(ctx.Request().Body())),
 				zap.String("response", ctx.Response().String()),
 				zap.Int("status", ctx.Response().Header.StatusCode()),
