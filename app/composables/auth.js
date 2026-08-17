@@ -1,4 +1,5 @@
 import { useUsersStore } from "~~/store/users";
+import { useAiSettingsStore } from "~~/store/aiSettings";
 
 export const returnToPathFromUrl = (absoluteUrl) => {
   if (!absoluteUrl) {
@@ -18,6 +19,7 @@ export const returnToPathFromUrl = (absoluteUrl) => {
 
 export const handleLogout = async () => {
   const { setUserData } = useUsersStore();
+  const { clear: clearAiSettings } = useAiSettingsStore();
   const { kratosUrl } = useRuntimeConfig().public;
   try {
     // Step 1: Fetch logout URL and token from the first API endpoint
@@ -51,8 +53,8 @@ export const handleLogout = async () => {
         "Failed to perform logout with the provided URL and token"
       );
     }
-    console.log("Logged out successfully");
     setUserData(null);
+    clearAiSettings();
     navigateTo("/");
   } catch (error) {
     console.error("Error during logout:", error);

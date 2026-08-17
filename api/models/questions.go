@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 	quizUtilsHelper "github.com/Improwised/jovvix/api/helpers/utils"
 	"github.com/Improwised/jovvix/api/pkg/structs"
 	"github.com/doug-martin/goqu/v9"
+	"github.com/doug-martin/goqu/v9/exp"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
@@ -69,7 +71,7 @@ func InitQuestionModel(goquDB *goqu.Database, logger *zap.Logger) *QuestionModel
 	return &QuestionModel{db: goquDB, logger: logger}
 }
 
-func (model *QuestionModel) RegisterQuizAndQuestions(userId string, title string, description string, questions []Question) (uuid.UUID, error) {
+func (model *QuestionModel) RegisterQuizAndQuestions(userId string, title string, description string, questions []Question) (quizIdResult uuid.UUID, err error) {
 
 	isOk := false
 	transaction, err := model.db.Begin()
@@ -78,16 +80,17 @@ func (model *QuestionModel) RegisterQuizAndQuestions(userId string, title string
 		return uuid.UUID{}, err
 	}
 
+	// The commit error becomes the returned error: reporting success for a quiz
+	// that was rolled back hands the caller ids that do not exist.
 	defer func() {
 		if isOk {
-			err := transaction.Commit()
-			if err != nil {
-				model.logger.Error("error during commit in register question", zap.Error(err))
+			if commitErr := transaction.Commit(); commitErr != nil {
+				model.logger.Error("error during commit in register question", zap.Error(commitErr))
+				err = commitErr
 			}
 		} else {
-			err := transaction.Rollback()
-			if err != nil {
-				model.logger.Error("error during rollback in register question", zap.Error(err))
+			if rollbackErr := transaction.Rollback(); rollbackErr != nil {
+				model.logger.Error("error during rollback in register question", zap.Error(rollbackErr))
 			}
 		}
 	}()
@@ -125,10 +128,27 @@ func (model *QuestionModel) AppendQuestionsToQuiz(transaction *goqu.TxDatabase, 
 		return ids, err
 	}
 
+	if len(ids) == 0 {
+		return ids, errors.New(constants.ErrAIAppendFailed)
+	}
+
+	// Lock the quiz row so two appends to the same quiz cannot both read the same
+	// tail and overwrite each other's link, orphaning one batch.
+	var lockedQuizId sql.NullString
+	_, err = transaction.From(constants.QuizzesTable).
+		Select("id").
+		Where(goqu.Ex{"id": quizId}).
+		ForUpdate(exp.Wait).
+		ScanVal(&lockedQuizId)
+	if err != nil {
+		return ids, err
+	}
+
 	var previousLastQuestion sql.NullString
 	_, err = transaction.From(constants.QuizQuestionsTable).
 		Select("question_id").
 		Where(goqu.Ex{"quiz_id": quizId, "next_question": nil}).
+		Order(goqu.C("question_id").Asc()).
 		Limit(1).
 		ScanVal(&previousLastQuestion)
 	if err != nil && err != sql.ErrNoRows {
@@ -392,6 +412,23 @@ func (model *QuestionModel) ListQuestionsWithAnswerByQuizId(QuizId string, media
 	}
 
 	return questionAnalytics, quizPlayedCount, nil
+}
+
+// ListQuestionTextsByQuizId returns just the question text of every question in a
+// quiz, in no particular order. Unlike ListQuestionsWithAnswerByQuizId it does not
+// require the quiz to have been hosted, so it also works on a brand new quiz.
+func (model *QuestionModel) ListQuestionTextsByQuizId(quizId string) ([]string, error) {
+	questionIds := model.db.From(constants.QuizQuestionsTable).
+		Select("question_id").
+		Where(goqu.Ex{"quiz_id": quizId})
+
+	var questions []string
+	err := model.db.From(QuestionTable).
+		Select("question").
+		Where(goqu.Ex{"id": goqu.Op{"in": questionIds}}).
+		Executor().ScanVals(&questions)
+
+	return questions, err
 }
 
 func (model *QuestionModel) GetAnswersPointsDurationType(QuestionID string) ([]int, int16, int, int, error) {

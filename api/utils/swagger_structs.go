@@ -514,3 +514,130 @@ type ResError struct {
 		Message string      `json:"message"`
 	} `json:"body"`
 }
+
+// swagger:parameters RequestGenerateAIQuestions
+type RequestGenerateAIQuestions struct {
+	// Optional caller-supplied provider. Omit all three to use the server's.
+	// in: header
+	AIBaseUrl string `json:"X-AI-Base-Url"`
+
+	// in: header
+	AIApiKey string `json:"X-AI-Api-Key"`
+
+	// in: header
+	AIModel string `json:"X-AI-Model"`
+
+	// in:body
+	Body structs.ReqGenerateAIQuestions `json:"body"`
+}
+
+// swagger:response ResponseGenerateAIQuestions
+type ResponseGenerateAIQuestions struct {
+	// in: body
+	Body struct {
+		Status string                         `json:"status"`
+		Data   structs.ResGenerateAIQuestions `json:"data"`
+	} `json:"body"`
+}
+
+// swagger:parameters RequestGenerateAIQuestionsForQuiz
+type RequestGenerateAIQuestionsForQuiz struct {
+	// in: path
+	// required: true
+	QuizId string `json:"quiz_id"`
+
+	// in: header
+	// required: true
+	AIBaseUrl string `json:"X-AI-Base-Url"`
+
+	// in: header
+	AIApiKey string `json:"X-AI-Api-Key"`
+
+	// in: header
+	// required: true
+	AIModel string `json:"X-AI-Model"`
+
+	// in: body
+	Body structs.ReqGenerateAIQuestions `json:"body"`
+}
+
+// swagger:parameters RequestCreateQuizFromAI
+type RequestCreateQuizFromAI struct {
+	// in:body
+	Body structs.ReqCreateQuizFromAI `json:"body"`
+}
+
+// swagger:parameters RequestAppendAIQuestions
+type RequestAppendAIQuestions struct {
+	// in:path
+	// required: true
+	QuizId string `json:"quiz_id"`
+
+	// in:body
+	Body structs.ReqAppendAIQuestions `json:"body"`
+}
+
+// swagger:response ResponseAppendAIQuestions
+type ResponseAppendAIQuestions struct {
+	// in: body
+	Body struct {
+		Status string                       `json:"status"`
+		Data   structs.ResAppendAIQuestions `json:"data"`
+	} `json:"body"`
+}
+
+// swagger:parameters RequestAIStatus
+type RequestAIStatus struct{}
+
+// swagger:response ResponseAIStatus
+type ResponseAIStatus struct {
+	// in: body
+	Body struct {
+		Status string              `json:"status"`
+		Data   structs.ResAIStatus `json:"data"`
+	} `json:"body"`
+}
+
+// AI provider credentials ride in headers rather than the body so they never
+// reach request-body logging. Documented by name only.
+// swagger:parameters RequestAITestConnection
+type RequestAITestConnection struct {
+	// in: header
+	// required: true
+	AIBaseUrl string `json:"X-AI-Base-Url"`
+
+	// in: header
+	AIApiKey string `json:"X-AI-Api-Key"`
+
+	// in: header
+	// required: true
+	AIModel string `json:"X-AI-Model"`
+}
+
+// swagger:parameters RequestAIModels
+type RequestAIModels struct {
+	// in: header
+	// required: true
+	AIBaseUrl string `json:"X-AI-Base-Url"`
+
+	// in: header
+	AIApiKey string `json:"X-AI-Api-Key"`
+}
+
+// swagger:response ResponseAIModels
+type ResponseAIModels struct {
+	// in: body
+	Body struct {
+		Status string              `json:"status"`
+		Data   structs.ResAIModels `json:"data"`
+	} `json:"body"`
+}
+
+// swagger:response ResponseAITestConnection
+type ResponseAITestConnection struct {
+	// in: body
+	Body struct {
+		Status string                      `json:"status"`
+		Data   structs.ResAITestConnection `json:"data"`
+	} `json:"body"`
+}

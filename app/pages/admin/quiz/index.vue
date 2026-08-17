@@ -13,7 +13,7 @@
       </header>
 
       <div
-        class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8"
+        class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8"
       >
         <ActionCard
           action-title="Create New Quiz"
@@ -28,6 +28,14 @@
               loading="lazy"
               class="max-h-full max-w-full object-contain"
             />
+          </template>
+        </ActionCard>
+        <ActionCard
+          action-title="Generate with AI"
+          @card-click="navigateTo('/admin/quiz/list-quiz?generate=1')"
+        >
+          <template #image>
+            <Sparkles class="size-24 text-jv-coral" :stroke-width="1.5" />
           </template>
         </ActionCard>
         <ActionCard
@@ -81,6 +89,7 @@
 </template>
 
 <script setup>
+import { Sparkles } from "lucide-vue-next";
 import ActionCard from "~~/components/Quiz/ActionCard.vue";
 
 definePageMeta({

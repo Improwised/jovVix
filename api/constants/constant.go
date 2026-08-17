@@ -145,6 +145,49 @@ const (
 	ErrInvalidQuestionMedia     = "question media must be one of: text, image, code"
 	ErrInvalidOptionsMedia      = "options media must be one of: text, image, code"
 
+	// ai quiz generation
+	ErrAINotConfigured            = "ai quiz generation is not configured"
+	ErrAIRequestFailed            = "could not reach the ai service, please try again"
+	ErrAIRateLimited              = "the ai service is busy right now, please try again in a moment"
+	ErrAIBudgetExhausted          = "the ai service usage limit has been reached, please try again later"
+	ErrAIEmptyResponse            = "the ai service returned an empty response, please try again"
+	ErrAIInvalidResponse          = "could not read the questions returned by the ai service, please try again"
+	ErrAINoValidQuestions         = "the ai service did not return any usable questions, please try again"
+	ErrAIInvalidQuestions         = "the generated questions are invalid, please regenerate"
+	ErrAITooManyQuestions         = "number of questions must be between 1 and %d"
+	ErrAITopicSingleLine          = "topic must be a single line"
+	ErrAIDuplicateQuestion        = "duplicate question text"
+	ErrAIDuplicateOption          = "two options are identical"
+	ErrAITooManyOptions           = "at most %d options are allowed"
+	ErrAIBlankOption              = "options must not be blank"
+	ErrAICorrectAnswerOutOfRange  = "correct answer does not reference an existing option"
+	ErrAIUnsupportedQuestionMedia = "question media must be text or code"
+	ErrAIUnsupportedOptionsMedia  = "options media must be text or code"
+	ErrAIMissingCodeResource      = "question media is code but no snippet was provided"
+	ErrAIResourceTooLong          = "code snippet is too long"
+	ErrAIOptionTooLong            = "an option is too long"
+	ErrAIQuestionTooLong          = "question text is too long"
+	ErrAIMissingQuizId            = "quiz id is required"
+	ErrAIAppendFailed             = "could not add the generated questions to this quiz"
+	ErrAIBaseUrlInvalid           = "the ai base url is not a valid http(s) url"
+	ErrAIBaseUrlNotHTTPS          = "the ai base url must use https"
+	ErrAIBaseUrlPrivate           = "this server does not allow ai base urls on local or private networks"
+	ErrAIBaseUrlUnresolvable      = "that host name does not resolve"
+	ErrAIModelInvalid             = "the ai model name is not valid"
+	ErrAIApiKeyInvalid            = "the ai api key is not valid"
+	ErrAIIncompleteCredentials    = "ai base url and model are both required"
+	ErrAIModelsUnavailable        = "that provider did not return a model list, type the model name instead"
+	ErrAIProviderUnreachable      = "could not connect to that base url. the jovvix server makes this call, not your browser"
+	ErrAITestKeyRejected          = "the provider rejected that api key"
+	ErrAITestKeyForbidden         = "that api key is not allowed to use this model or endpoint"
+	ErrAITestNotFound             = "endpoint or model not found. check the base url (many providers need /v1) and the model name"
+	ErrAITestBadRequest           = "the provider rejected the request. the model name is probably wrong"
+	ErrAITestServerError          = "the provider returned a server error, please try again"
+	ErrAITestTimedOut             = "timed out connecting to that base url"
+	ErrAITestTLS                  = "tls handshake failed. check http against https"
+	ErrAITestNoValidQuestion      = "connected, but this model did not return a usable quiz question. pick another model"
+	ErrAIResponseTooLarge         = "the ai service returned too much data, please try again"
+
 	// quiz-id
 	QuizId       = "quiz_id"
 	QuestionId   = "question_id"
@@ -328,6 +371,67 @@ const (
 	MediaText  = "text"
 	MediaImage = "image"
 	MediaCode  = "code"
+)
+
+// AI quiz generation
+const (
+	AIDefaultLanguage = "english"
+
+	AIDifficultyEasy   = "easy"
+	AIDifficultyMedium = "medium"
+	AIDifficultyHard   = "hard"
+
+	AIQuestionTypeSingle = "single"
+	AIQuestionTypeSurvey = "survey"
+
+	AICompletionsPath = "/chat/completions"
+	AIModelsPath      = "/models"
+
+	HeaderAIBaseUrl = "X-AI-Base-Url"
+	HeaderAIApiKey  = "X-AI-Api-Key"
+	HeaderAIModel   = "X-AI-Model"
+
+	AIProviderBodyRedacted = "<omitted: caller supplied provider>"
+
+	AIDefaultMaxQuestions       = 20
+	AIMaxQuestionsHardLimit     = 50
+	AIDefaultTimeoutSeconds     = 90
+	AIDefaultTemperature        = 0.4
+	AIDefaultOptionsPerQuestion = 4
+	AIMinOptionsPerQuestion     = 2
+	AIMaxOptionsPerQuestion     = 5
+	AIDefaultQuestionDuration   = 60
+	AIDefaultQuestionPoints     = 1
+	AIProviderLogBodyLimit      = 800
+	AIMaxResourceLength         = 1200
+	AIMaxOptionLength           = 400
+	AIMaxQuestionLength         = 500
+	AIMaxExplanationLength      = 500
+	AIMaxTitleLength            = 50
+	AIMaxDescriptionLength      = 150
+	AIResponseTokenBudget       = 400
+	AIMinResponseTokens         = 1500
+	AITestTimeoutSeconds        = 20
+	AITestGenerateTimeout       = 45
+	AITestTopic                 = "general knowledge"
+	AIMaxRequestAdaptations     = 3
+	AIMaxBaseUrlLength          = 300
+	AIMaxModelLength            = 200
+	AIMaxApiKeyLength           = 512
+	AIDialTimeoutSeconds        = 10
+	AIMaxResponseBytes          = 4 << 20
+	AIMaxListedModels           = 300
+	AIMaxAvoidQuestions         = 40
+	AIMaxAvoidQuestionLength    = 120
+	AIMaxProviderReasonLength   = 200
+
+	AIQuestionsTruncated     = "the ai returned more questions than requested, extras were dropped"
+	NoticeAIFewerQuestions   = "the ai returned %d of the %d questions you asked for"
+	NoticeAIDroppedQuestions = "%d generated questions were dropped because they were malformed"
+
+	AIAdaptationDroppedJSONMode     = "dropped response_format"
+	AIAdaptationMaxCompletionTokens = "switched to max_completion_tokens"
+	AIAdaptationDroppedTemperature  = "dropped temperature"
 )
 
 // Pagination and Filters

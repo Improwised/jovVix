@@ -117,6 +117,11 @@ func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config confi
 		return err
 	}
 
+	err = setupAIController(v1, goqu, logger, middleware, config)
+	if err != nil {
+		return err
+	}
+
 	err = setupUserPlayedQuizeController(v1, goqu, logger, middleware, config)
 	if err != nil {
 		return err
@@ -309,6 +314,30 @@ func setupQuestionController(v1 fiber.Router, db *goqu.Database, logger *zap.Log
 	questionRouter.Get(fmt.Sprintf("/:%s", constants.QuestionId), middleware.VerifyQuizEditAccess, questionController.GetQuestionById)
 	questionRouter.Put(fmt.Sprintf("/:%s", constants.QuestionId), middleware.VerifyQuizEditAccess, questionController.UpdateQuestionById)
 	questionRouter.Delete(fmt.Sprintf("/:%s", constants.QuestionId), middleware.VerifyQuizEditAccess, questionController.DeleteQuestionById)
+
+	return nil
+}
+
+func setupAIController(v1 fiber.Router, db *goqu.Database, logger *zap.Logger, middleware middlewares.Middleware, config config.AppConfig) error {
+	aiController, err := controller.InitAIController(db, logger, &config)
+	if err != nil {
+		return err
+	}
+
+	ai := v1.Group("/ai")
+	ai.Use(middleware.KratosAuthenticated)
+
+	ai.Get("/status", aiController.Status)
+	ai.Get("/models", aiController.ListModels)
+	ai.Post("/test", aiController.TestConnection)
+	ai.Post("/questions/generate", aiController.GenerateQuestions)
+	ai.Post("/quizzes", aiController.CreateQuizFromAI)
+
+	// Same prefix as the question router, which registers KratosAuthenticated and
+	// QuizPermission on it first: adding them here again would run both chains.
+	aiQuizQuestions := v1.Group(fmt.Sprintf("/quizzes/:%s/questions", constants.QuizId))
+	aiQuizQuestions.Post("/ai", middleware.VerifyQuizEditAccess, aiController.AppendAIQuestions)
+	aiQuizQuestions.Post("/ai/generate", middleware.VerifyQuizEditAccess, aiController.GenerateQuestionsForQuiz)
 
 	return nil
 }

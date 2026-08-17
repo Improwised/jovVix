@@ -20,14 +20,23 @@
 
       <template v-if="mounted">
         <NavigationLink
-          v-if="showAdminNav"
           url="/admin/quiz/list-quiz?create=1"
           url-name="Create Quiz"
         >
           <Plus class="size-[18px]" />
         </NavigationLink>
+        <NavigationLink
+          url="/admin/quiz/list-quiz?generate=1"
+          url-name="Generate with AI"
+          class="bg-jv-mint px-3 text-[13px] md:px-4 md:text-[15px]"
+        >
+          <Sparkles class="size-[18px]" />
+        </NavigationLink>
       </template>
-      <Skeleton v-else class="h-12 w-full rounded-[12px] bg-jv-ink/10" />
+      <template v-else>
+        <Skeleton class="h-12 w-full rounded-[12px] bg-jv-ink/10" />
+        <Skeleton class="h-12 w-full rounded-[12px] bg-jv-ink/10" />
+      </template>
 
       <nav class="mt-5 flex flex-col gap-2">
         <template v-if="mounted">
@@ -260,6 +269,7 @@ import {
   Menu,
   MoreVertical,
   Plus,
+  Sparkles,
   Tag,
   UserRound,
   X,
@@ -312,8 +322,6 @@ const canManageCategories = computed(
 const userName = computed(
   () => currentUser.value?.firstname || currentUser.value?.username || "Profile"
 );
-
-console.log("user");
 
 const userAvatar = computed(() =>
   getAvatarUrlByName(currentUser.value?.avatar)
@@ -408,6 +416,11 @@ const mobileNavItems = computed(() => {
         url: "/admin/quiz/list-quiz?create=1",
         icon: Plus,
       },
+      {
+        label: "Generate with AI",
+        url: "/admin/quiz/list-quiz?generate=1",
+        icon: Sparkles,
+      },
     ];
   }
 
@@ -415,6 +428,11 @@ const mobileNavItems = computed(() => {
     { label: "Home", url: "/", icon: Home, active: true },
     { label: "Enter Code", url: "/join" },
     { label: "Create Quiz", url: "/admin/quiz/list-quiz?create=1", icon: Plus },
+    {
+      label: "Generate with AI",
+      url: "/admin/quiz/list-quiz?generate=1",
+      icon: Sparkles,
+    },
     { label: "Sign In", url: "/account/login" },
     { label: "Sign Up", url: "/account/register" },
   ];

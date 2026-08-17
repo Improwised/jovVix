@@ -80,3 +80,37 @@ type ResUserWithQuizPermission struct {
 	ImageKey   sql.NullString `json:"img_key" db:"img_key"`
 	Permission string         `json:"permission" db:"permission"`
 }
+
+type ResGenerateAIQuestions struct {
+	Topic                string       `json:"topic"`
+	Difficulty           string       `json:"difficulty"`
+	Language             string       `json:"language"`
+	Generated            int          `json:"generated"`
+	SuggestedTitle       string       `json:"suggested_title"`
+	SuggestedDescription string       `json:"suggested_description"`
+	Notice               string       `json:"notice,omitempty"`
+	Questions            []AIQuestion `json:"questions"`
+}
+
+type ResAppendAIQuestions struct {
+	Added       int      `json:"added"`
+	QuestionIds []string `json:"question_ids"`
+}
+
+type ResAIStatus struct {
+	MaxQuestions int `json:"max_questions"`
+}
+
+type ResAIModels struct {
+	Models    []string `json:"models"`
+	Filtered  int      `json:"filtered"`
+	Truncated bool     `json:"truncated,omitempty"`
+}
+
+type ResAITestConnection struct {
+	Ok        bool   `json:"ok"`
+	Model     string `json:"model"`
+	Endpoint  string `json:"endpoint"`
+	LatencyMs int    `json:"latency_ms"`
+	Sample    string `json:"sample,omitempty"`
+}
