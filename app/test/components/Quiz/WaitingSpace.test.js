@@ -60,7 +60,7 @@ describe("WaitingSpace test", () => {
 
   it("renders properly", async () => {
     const wrapper = mountComponent();
-    expect(wrapper.find(".join-page-title").text()).toBe("Ready Steady Go");
+    expect(wrapper.find(".join-page-title").text()).toBe("Ready, Steady, Go!");
     expect(wrapper.find('button[type="submit"]').text()).toBe("Start Quiz");
   });
 
