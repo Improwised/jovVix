@@ -79,7 +79,7 @@
           />
         </div>
         <div
-          class="absolute bottom-[-15px] left-[-14px] grid size-10 sm:size-12 rotate-[-10deg] place-items-center rounded-[8px] border-[3px] border-jv-ink bg-white text-jv-coral shadow-brutal-sm"
+          class="absolute bottom-[-15px] left-0 sm:left-[-14px] grid size-10 sm:size-12 rotate-[-10deg] place-items-center rounded-[8px] border-[3px] border-jv-ink bg-white text-jv-coral shadow-brutal-sm"
         >
           <Users class="size-5 sm:size-6" :stroke-width="2.5" />
         </div>

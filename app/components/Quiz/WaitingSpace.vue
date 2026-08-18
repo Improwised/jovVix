@@ -200,27 +200,37 @@ watch(
 <template>
   <main
     v-if="isAdmin"
-    class="flex min-h-screen flex-col gap-8 bg-jv-canvas px-4 py-5 text-jv-ink sm:gap-10 sm:px-6 md:px-8 md:py-6"
+    class="flex min-h-screen flex-col gap-8 bg-jv-canvas px-3 py-5 text-jv-ink sm:gap-10 sm:px-6 md:px-8 md:py-6"
   >
     <section
       class="relative mx-auto flex w-full max-w-[1220px] flex-1 flex-col"
     >
-      <NuxtLink
-        to="/"
-        class="absolute right-0 top-0 z-10 inline-flex h-11 rotate-[0.5deg] items-center justify-center gap-2 rounded-[8px] border-[2px] border-jv-ink bg-jv-white px-4 font-body text-[15px] font-bold text-jv-ink shadow-brutal-sm transition-transform hover:rotate-[-1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none sm:h-12 sm:px-5 sm:text-[18px]"
-        aria-label="Return to home"
-      >
-        <Home class="size-4 sm:size-5" :stroke-width="2.4" />
-        <span>Home</span>
-      </NuxtLink>
-      <header class="mb-7 text-center sm:mb-9">
-        <p
-          class="font-body text-[11px] font-black uppercase tracking-[0.18em] text-jv-muted sm:text-[13px]"
+      <header class="relative mb-7 text-center sm:mb-9">
+        <div
+          class="mb-3 flex items-center justify-between gap-2 sm:mb-2 sm:grid sm:grid-cols-[1fr_auto_1fr]"
         >
-          Quiz Lobby
-        </p>
+          <div class="hidden sm:block" aria-hidden="true"></div>
+
+          <p
+            class="font-body text-[11px] font-black uppercase tracking-[0.18em] text-jv-muted sm:text-[13px] sm:justify-self-center"
+          >
+            Quiz Lobby
+          </p>
+
+          <div class="flex shrink-0 justify-end sm:justify-self-end">
+            <NuxtLink
+              to="/"
+              class="inline-flex h-9 rotate-[0.5deg] items-center justify-center gap-1.5 rounded-[8px] border-[2px] border-jv-ink bg-jv-white px-3 font-body text-[13px] font-bold text-jv-ink shadow-brutal-sm transition-transform hover:rotate-[-1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none sm:h-12 sm:gap-2 sm:px-5 sm:text-[18px]"
+              aria-label="Return to home"
+            >
+              <Home class="size-4 sm:size-5" :stroke-width="2.4" />
+              <span>Home</span>
+            </NuxtLink>
+          </div>
+        </div>
+
         <h1
-          class="relative mx-auto mt-2 inline-block max-w-[940px] break-words font-headings text-[32px] leading-[1.05] text-jv-ink min-[420px]:text-[38px] sm:text-[48px] md:text-[56px]"
+          class="relative mx-auto mt-2 inline-block max-w-[940px] break-words font-headings text-[30px] leading-[1.05] text-jv-ink min-[420px]:text-[38px] sm:text-[48px] md:text-[56px]"
         >
           <span class="relative z-10">{{ quizTitle }}</span>
           <span
@@ -239,7 +249,7 @@ watch(
         class="grid flex-1 gap-6 md:gap-7 xl:grid-cols-[minmax(0,1fr)_minmax(340px,0.95fr)] xl:items-stretch"
       >
         <form
-          class="relative flex min-h-0 rotate-[-0.4deg] flex-col overflow-hidden bg-jv-white shadow-brutal-sm jv-border-rough sm:shadow-brutal-lg xl:min-h-[640px]"
+          class="relative flex min-h-0 rotate-0 sm:rotate-[-0.4deg] flex-col overflow-hidden bg-jv-white shadow-brutal-sm jv-border-rough sm:shadow-brutal-lg xl:min-h-[640px]"
           @submit="start_quiz"
         >
           <span
@@ -249,7 +259,7 @@ watch(
 
           <div class="bg-jv-yellow px-4 pb-7 pt-6 sm:px-8 sm:pb-9 md:px-10">
             <h2
-              class="font-headings text-[30px] leading-tight text-jv-ink min-[420px]:text-[34px] sm:text-[42px] lg:text-[48px]"
+              class="join-page-title font-headings text-[30px] leading-tight text-jv-ink min-[420px]:text-[34px] sm:text-[42px] lg:text-[48px]"
             >
               Ready, Steady, Go!
             </h2>
@@ -365,7 +375,7 @@ watch(
         </form>
 
         <aside
-          class="relative flex min-h-0 rotate-[0.4deg] flex-col bg-jv-white px-4 py-6 shadow-brutal-sm jv-border-rough sm:px-8 sm:py-8 sm:shadow-brutal-lg md:px-10 xl:min-h-[640px]"
+          class="relative flex min-h-0 rotate-0 sm:rotate-[0.4deg] flex-col bg-jv-white px-4 py-6 shadow-brutal-sm jv-border-rough sm:px-8 sm:py-8 sm:shadow-brutal-lg md:px-10 xl:min-h-[640px]"
         >
           <span
             class="absolute left-1/2 top-[-10px] h-4 w-12 -translate-x-1/2 rotate-[1deg] bg-jv-salmon"
@@ -377,7 +387,7 @@ watch(
           >
             <div class="flex min-w-0 items-center gap-3 sm:gap-4">
               <span
-                class="grid size-10 shrink-0 rotate-[-3deg] place-items-center jv-border-rough bg-jv-mint sm:size-12"
+                class="grid size-10 shrink-0 rotate-0 sm:rotate-[-3deg] place-items-center jv-border-rough bg-jv-mint sm:size-12"
               >
                 <Users class="size-5 sm:size-6" :stroke-width="2.4" />
               </span>
@@ -388,7 +398,7 @@ watch(
               </h2>
             </div>
             <span
-              class="grid size-11 shrink-0 rotate-[3deg] place-items-center border-[3px] border-jv-ink bg-jv-yellow font-feature text-[24px] font-black shadow-brutal-sm sm:size-14 sm:text-[30px]"
+              class="grid size-11 shrink-0 rotate-0 sm:rotate-[3deg] place-items-center border-[3px] border-jv-ink bg-jv-yellow font-feature text-[24px] font-black shadow-brutal-sm sm:size-14 sm:text-[30px]"
             >
               {{ participantCount }}
             </span>
@@ -409,7 +419,7 @@ watch(
             >
               <div class="flex min-w-0 items-center gap-3">
                 <span
-                  class="grid size-9 shrink-0 rotate-[-2deg] place-items-center border-[2px] border-jv-ink sm:size-10"
+                  class="grid size-9 shrink-0 rotate-0 sm:rotate-[-2deg] place-items-center border-[2px] border-jv-ink sm:size-10"
                   :class="
                     participantAccentClasses[
                       index % participantAccentClasses.length
@@ -430,7 +440,7 @@ watch(
                 </span>
               </div>
               <span
-                class="grid size-8 shrink-0 rotate-[2deg] place-items-center border-[2px] border-jv-ink bg-jv-mint sm:size-9"
+                class="grid size-8 shrink-0 rotate-0 sm:rotate-[2deg] place-items-center border-[2px] border-jv-ink bg-jv-mint sm:size-9"
                 aria-label="Joined"
               >
                 <Check class="size-5" :stroke-width="2.4" />
@@ -574,7 +584,7 @@ watch(
     <section
       class="flex flex-1 items-center justify-center px-4 py-6 sm:px-6 sm:py-10 md:px-10 md:py-12"
     >
-      <div class="relative w-full max-w-[980px] rotate-[-0.5deg]">
+      <div class="relative w-full max-w-[980px] rotate-0 sm:rotate-[-0.5deg]">
         <span
           class="absolute left-1/2 top-[-10px] z-10 h-4 w-20 -translate-x-1/2 rotate-2 bg-jv-yellow/80 shadow-[0_1px_3px_rgba(0,0,0,0.1)]"
           aria-hidden="true"
