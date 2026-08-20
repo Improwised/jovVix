@@ -175,6 +175,14 @@ onMounted(() => {
   }
 });
 
+onBeforeUnmount(() => {
+  if (!winningSound.value) return;
+
+  winningSound.value.pause();
+  winningSound.value.currentTime = 0;
+  winningSound.value = null;
+});
+
 const winners = computed(() => scoreboardData.value.slice(0, 3));
 
 const userRow = computed(() =>
