@@ -1,0 +1,58 @@
+name: Question / Support
+description: Ask a question or get help with jovVix
+title: "[Question]: "
+labels: ["type/question"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Before asking:** Please search [existing discussions](https://github.com/Improwised/jovVix/discussions) and [issues](https://github.com/Improwised/jovVix/issues) — your question may already be answered.
+
+        For security vulnerabilities, see [SECURITY.md](../SECURITY.md) — do not file here.
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Question Category
+      description: What area does your question relate to?
+      options:
+        - Installation / Setup
+        - Configuration / Environment Variables
+        - Usage / How-to
+        - API / Integration
+        - Development / Contributing
+        - Deployment / Production
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Your Question
+      description: What do you need help with? Be specific.
+      placeholder: "I'm trying to..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context / What You've Tried
+      description: What have you already attempted? Include relevant config, logs, error messages, jovVix version, deployment method.
+      placeholder: |
+        - jovVix version:
+        - Deployment method (Docker / local):
+        - Steps tried:
+        - Error messages:
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: searched
+    attributes:
+      label: Confirmation
+      options:
+        - label: I have searched existing issues and discussions
+          required: true
