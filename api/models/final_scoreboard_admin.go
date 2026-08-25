@@ -51,6 +51,7 @@ func (model *FinalScoreBoardAdminModel) GetScoreForAdmin(activeQuizId string) ([
 		Where(goqu.Ex{
 			UserQuizResponseTable + ".user_played_quiz_id": goqu.I(UserPlayedQuizTable + ".id"),
 			UserPlayedQuizTable + ".active_quiz_id":        activeQuizId,
+			UserPlayedQuizTable + ".is_host":               false,
 		}).
 		GroupBy(goqu.I("users.id")).
 		ScanStructs(&finalScoreBoardData)

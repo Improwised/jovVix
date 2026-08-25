@@ -168,7 +168,7 @@ export class UserPlayedScoreQuizControllerTest extends BaseTest {
     );
 
     check(response, {
-      "Host cannot play their own quiz returns 500": (r) => r.status === 500,
+      "Host cannot play their own quiz returns 403": (r) => r.status === 403,
     });
   }
 

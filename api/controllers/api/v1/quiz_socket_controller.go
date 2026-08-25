@@ -680,10 +680,8 @@ func handleCodeGeneration(c *websocket.Conn, qc *quizSocketController, session m
 						qc.logger.Error("error while unmarshaling redis inside updateUserData", zap.Error(err))
 					}
 
-					// A public-quiz host can also be a player. Such a host is recorded in
-					// user_played_quizzes but never in the redis join list (that is only
-					// populated by the join socket), so fall back to the DB participant
-					// count to allow starting with the host playing solo.
+					// A host is never a participant. Use the persisted participant count as
+					// a fallback for real players whose join-list update has not arrived yet.
 					participantCount, countErr := qc.userPlayedQuizModel.GetCountOfTotalJoinUsers(session.ID.String())
 					if countErr != nil {
 						qc.logger.Error(constants.ErrGetTotalJoinUser, zap.Error(countErr))
@@ -1343,6 +1341,15 @@ func (qc *quizSocketController) SetAnswer(c *fiber.Ctx) error {
 	if !ok {
 		qc.logger.Error("Unable to convert to user-model type from locals")
 		return utils.JSONFail(c, http.StatusInternalServerError, "Unable to convert to user-model type from locals")
+	}
+
+	isParticipant, err := qc.userPlayedQuizModel.IsParticipant(user.ID, currentQuizId, sessionId)
+	if err != nil {
+		qc.logger.Error("error validating answer participant", zap.Error(err))
+		return utils.JSONFail(c, http.StatusInternalServerError, constants.UnknownError)
+	}
+	if !isParticipant {
+		return utils.JSONFail(c, http.StatusForbidden, "only session participants can submit answers")
 	}
 
 	var answer structs.ReqAnswerSubmit

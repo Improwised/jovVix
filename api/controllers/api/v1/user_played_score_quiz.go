@@ -143,20 +143,11 @@ func (ctrl *UserPlayedQuizeController) PlayedQuizValidation(c *fiber.Ctx) error 
 	}
 	ctrl.logger.Debug("activeQuizModel.activeQuizModel success", zap.Any("session", session))
 
-	// The host normally cannot play their own session. Exception: for a PUBLIC quiz,
-	// whoever started it may also play — guest, registered user, or the quiz creator
-	// alike. Hosts of non-public (demo/private) sessions stay host-only.
+	// The user who started a session is always its host, never a participant.
+	// This is independent of quiz visibility and ownership.
 	if userId == session.AdminID {
-		quiz, err := ctrl.quizModel.GetQuizById(session.QuizID.String())
-		if err != nil {
-			ctrl.logger.Error("error fetching quiz during PlayedQuizValidation", zap.Error(err))
-			return utils.JSONFail(c, http.StatusInternalServerError, constants.ErrUserQuizSessionValidation)
-		}
-
-		if !quiz.IsPublic {
-			ctrl.logger.Error(constants.ErrAdminCannotBeUser)
-			return utils.JSONFail(c, http.StatusForbidden, constants.ErrAdminCannotBeUser)
-		}
+		ctrl.logger.Error(constants.ErrAdminCannotBeUser)
+		return utils.JSONFail(c, http.StatusForbidden, constants.ErrAdminCannotBeUser)
 	}
 
 	ctrl.logger.Debug("userPlayedQuizModel.CreateUserPlayedQuizIfNotExists called", zap.Any("userId", userId), zap.Any("sessionID", session.ID))

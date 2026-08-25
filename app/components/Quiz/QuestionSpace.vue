@@ -43,12 +43,6 @@ const props = defineProps({
     type: Boolean,
     required: false,
   },
-  // When true, an admin (public-quiz host) is also allowed to answer questions.
-  canPlay: {
-    default: false,
-    type: Boolean,
-    required: false,
-  },
   quizTitle: {
     default: "",
     type: String,
@@ -57,9 +51,7 @@ const props = defineProps({
 });
 const emits = defineEmits(["sendAnswer", "askSkip"]);
 
-// A participant can answer when they are not the admin, or when they are a
-// public-quiz host who is permitted to play alongside the others.
-const answerable = computed(() => !props.isAdmin || props.canPlay);
+const answerable = computed(() => !props.isAdmin);
 
 const clockOffset = ref(0); // Calculated once, used for all timers
 const isOffsetCalculated = ref(false);
