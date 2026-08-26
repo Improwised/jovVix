@@ -1,6 +1,6 @@
 <template>
   <article
-    class="group relative flex min-h-[342px] flex-col bg-jv-white p-3 shadow-brutal-sm jv-border-rough sm:min-h-[360px] sm:p-4 md:min-h-[372px] md:p-5"
+    class="group relative flex min-h-[360px] w-full max-w-[260px] flex-col bg-jv-white p-3.5 shadow-brutal-sm jv-border-rough"
     :class="tiltClass"
   >
     <span
@@ -8,50 +8,42 @@
       aria-hidden="true"
     ></span>
 
-    <div class="relative border-[2px] border-jv-ink bg-jv-slate p-2">
-      <div class="relative h-[104px] overflow-hidden sm:h-[112px] md:h-[124px]">
+    <div class="relative border-[2px] border-jv-ink bg-jv-slate p-1.5">
+      <div class="relative aspect-[5/4] overflow-hidden">
         <QuizCoverImage
           :src="image"
           :fallback="fallback"
           :alt="title"
           :width="320"
-          :height="124"
+          :height="256"
           class="size-full object-cover"
         />
       </div>
-      <span
-        v-if="isPublic"
-        class="absolute right-[-6px] top-[-10px] z-10 inline-flex rotate-[4deg] items-center gap-1 border-[2.5px] border-jv-ink bg-jv-mint px-2 py-[3px] text-[11px] font-black uppercase tracking-[0.12em] text-jv-ink shadow-[2px_2px_0_#2D2D2D]"
-        aria-label="Public quiz"
-      >
-        <Globe class="size-3" :stroke-width="2.6" />
-        Public
-      </span>
     </div>
 
     <div
       ref="actionsMenuRef"
-      class="relative mt-4 flex items-start justify-between gap-3"
+      class="relative mt-3.5 flex min-h-[44px] items-start justify-between gap-2"
     >
       <h3
-        class="min-w-0 break-words font-body text-[21px] font-black leading-tight text-jv-ink sm:text-[22px] md:text-[24px]"
+        class="min-w-0 flex-1 break-words font-body text-[18px] font-black leading-[1.2] text-jv-ink line-clamp-2"
       >
         {{ title }}
       </h3>
       <button
         v-if="showActions"
         type="button"
-        class="grid size-8 shrink-0 place-items-center border-2 border-jv-ink bg-jv-white text-jv-ink shadow-[1px_1px_0_#2D2D2D] transition-transform hover:rotate-[3deg]"
+        class="grid size-7 shrink-0 place-items-center border-2 border-jv-ink bg-jv-white text-jv-ink shadow-[1px_1px_0_#2D2D2D] transition-transform hover:rotate-[3deg]"
         aria-label="Open quiz actions"
         :aria-expanded="actionsOpen"
         @click="toggleActionsMenu"
       >
-        <MoreVertical class="size-4" :stroke-width="2.5" />
+        <MoreVertical class="size-3.5" :stroke-width="2.5" />
       </button>
 
       <div
         v-if="showActions && actionsOpen"
-        class="absolute right-0 top-10 z-20 w-32 rotate-[1deg] border-[3px] border-jv-ink bg-jv-yellow p-2 shadow-brutal-sm jv-card"
+        class="absolute right-0 top-9 z-20 w-32 rotate-[1deg] border-[3px] border-jv-ink bg-jv-yellow p-2 shadow-brutal-sm jv-card"
       >
         <button
           type="button"
@@ -71,35 +63,29 @@
         </button>
       </div>
     </div>
-    <p class="mt-1 text-[12px] leading-[1.4] text-jv-muted sm:text-[13px]">
-      {{ createdAt }}
-    </p>
-    <p
-      class="mt-2 min-h-[58px] break-words text-[13px] leading-[1.5] text-jv-muted sm:mt-3 sm:min-h-[66px] sm:text-[14px] sm:leading-[1.55]"
+    <div
+      class="mt-3 flex items-center justify-between gap-2 border-y border-dashed border-jv-ink/20 py-2.5 text-[12px] leading-none text-jv-muted"
     >
-      {{ description }}
-    </p>
-
-    <span
-      class="inline-flex max-w-full items-center gap-1.5 px-2.5 py-1 text-[12px] leading-none text-jv-muted sm:text-[13px]"
-    >
-      <CircleHelp class="size-3.5" :stroke-width="2.2" />
-      <span class="truncate">{{ questionCount }} Questions</span>
-    </span>
-    <div class="mt-3 border-t-2 border-dashed border-jv-ink/15 pt-3">
+      <span class="truncate">{{ createdAt }}</span>
+      <span class="inline-flex shrink-0 items-center gap-1">
+        <CircleHelp class="size-3" :stroke-width="2.2" />
+        {{ questionCount }} Questions
+      </span>
+    </div>
+    <div class="mt-auto pt-3.5">
       <div
-        class="mt-3 grid gap-2"
+        class="grid gap-1.5"
         :class="showActions ? 'grid-cols-2' : 'grid-cols-1'"
       >
         <NavigationLink
           v-if="showActions"
           url-name="View Quiz"
           :url="viewUrl"
-          class="h-8 rounded-full bg-jv-coral text-white shadow-none"
+          class="h-8 rounded-full bg-jv-coral px-1 font-body text-[12px] font-semibold text-white shadow-none md:px-1 md:text-[14px]"
         />
         <NavigationLink
           url-name="Start Quiz"
-          class="h-8 rounded-full shadow-none"
+          class="h-8 rounded-full px-1 font-body text-[12px] font-semibold shadow-none md:px-1 md:text-[14px]"
           @click="$emit('start-quiz')"
         />
       </div>
@@ -110,13 +96,7 @@
 <script setup>
 import { ref } from "vue";
 import { onClickOutside } from "@vueuse/core";
-import {
-  CircleHelp,
-  Globe,
-  MoreVertical,
-  Share2,
-  Trash2,
-} from "lucide-vue-next";
+import { CircleHelp, MoreVertical, Share2, Trash2 } from "lucide-vue-next";
 import NavigationLink from "@/components/common/NavigationLink.vue";
 import QuizCoverImage from "@/components/QuizCoverImage.vue";
 
@@ -124,10 +104,6 @@ defineProps({
   title: {
     type: String,
     required: true,
-  },
-  description: {
-    type: String,
-    default: "",
   },
   createdAt: {
     type: String,
@@ -160,10 +136,6 @@ defineProps({
   showActions: {
     type: Boolean,
     default: true,
-  },
-  isPublic: {
-    type: Boolean,
-    default: false,
   },
 });
 
