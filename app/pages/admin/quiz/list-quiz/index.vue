@@ -6,11 +6,13 @@ import {
   Filter,
   Image as ImageIcon,
   Search,
+  Sparkles,
   X,
 } from "lucide-vue-next";
 import { usePush } from "notivue";
 import AdminQuizListCard from "@/components/quiz-list/AdminQuizListCard.vue";
 import ShareQuizModal from "@/components/Quiz/ShareQuizModal.vue";
+import GenerateWithAiModal from "@/components/Quiz/GenerateWithAiModal.vue";
 import { useListUserstore } from "~/store/userlist";
 import { useSessionStore } from "~~/store/session";
 import { useUsersStore } from "~~/store/users";
@@ -70,6 +72,7 @@ const shareQuizId = ref("");
 const deleteModalOpen = ref(false);
 const quizPendingDelete = ref(null);
 const createQuizOpen = ref(false);
+const generateAiOpen = ref(false);
 const createQuizPending = ref(false);
 const coverImageName = ref("");
 const processingCover = ref(false);
@@ -200,6 +203,12 @@ watchEffect(() => {
 watchEffect(() => {
   if (route.query.create === "1") {
     createQuizOpen.value = true;
+  }
+});
+
+watchEffect(() => {
+  if (route.query.generate === "1") {
+    generateAiOpen.value = true;
   }
 });
 
@@ -388,6 +397,22 @@ const closeCreateQuizModal = () => {
   }
 };
 
+const setGenerateAiOpen = (open) => {
+  generateAiOpen.value = open;
+  if (!open && route.query.generate === "1") {
+    const query = { ...route.query };
+    delete query.generate;
+    router.replace({ path: route.path, query });
+  }
+};
+
+// Closed directly rather than through setGenerateAiOpen: its query strip is a
+// router.replace on this route, which would cancel the push to the new quiz.
+const onAiQuizCreated = (quizId) => {
+  generateAiOpen.value = false;
+  router.push(`/admin/quiz/list-quiz/${quizId}`);
+};
+
 const handleCoverImage = async (event) => {
   processingCover.value = true;
   const picked = await pickCoverImage(event).finally(() => {
@@ -452,11 +477,20 @@ const handleCreateQuiz = async () => {
           aria-hidden="true"
         ></div>
       </div>
-      <NavigationLink
-        url-name="Create Quiz"
-        class="w-full bg-jv-coral py-2 font-[500] text-white sm:w-fit md:mt-1"
-        @click="createQuizOpen = true"
-      />
+      <div class="flex w-full flex-col gap-3 sm:w-fit sm:flex-row md:mt-1">
+        <NavigationLink
+          url-name="Generate with AI"
+          class="w-full bg-jv-yellow py-2 font-[500] sm:w-fit"
+          @click="setGenerateAiOpen(true)"
+        >
+          <Sparkles class="size-[18px]" :stroke-width="2.4" />
+        </NavigationLink>
+        <NavigationLink
+          url-name="Create Quiz"
+          class="w-full bg-jv-coral py-2 font-[500] text-white sm:w-fit"
+          @click="createQuizOpen = true"
+        />
+      </div>
     </div>
 
     <div
@@ -560,12 +594,23 @@ const handleCreateQuiz = async () => {
         <p class="mt-2 text-[17px] text-jv-muted">
           {{ emptyState.message }}
         </p>
-        <NavigationLink
+        <div
           v-if="emptyState.showCreateAction"
-          url-name="Create Quiz"
-          class="bg-jv-coral text-white font-[500] py-2"
-          @click="createQuizOpen = true"
-        />
+          class="flex flex-wrap justify-center gap-3"
+        >
+          <NavigationLink
+            url-name="Create Quiz"
+            class="bg-jv-coral text-white font-[500] py-2"
+            @click="createQuizOpen = true"
+          />
+          <NavigationLink
+            url-name="Generate with AI"
+            class="bg-jv-yellow font-[500] py-2"
+            @click="setGenerateAiOpen(true)"
+          >
+            <Sparkles class="size-[18px]" :stroke-width="2.4" />
+          </NavigationLink>
+        </div>
       </div>
     </section>
 
@@ -769,6 +814,12 @@ const handleCreateQuiz = async () => {
     </Teleport>
 
     <ShareQuizModal v-model="shareModalOpen" :quiz-id="shareQuizId" />
+    <GenerateWithAiModal
+      mode="create"
+      :model-value="generateAiOpen"
+      @update:model-value="setGenerateAiOpen"
+      @created="onAiQuizCreated"
+    />
     <DeleteDialog
       v-model="deleteModalOpen"
       title="Delete quiz"

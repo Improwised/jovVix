@@ -1,7 +1,13 @@
 {
-  "consumes": ["application/json"],
-  "produces": ["application/json"],
-  "schemes": ["http"],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "schemes": [
+    "http"
+  ],
   "swagger": "2.0",
   "info": {
     "description": "Jovvix",
@@ -13,8 +19,12 @@
     "/healthz": {
       "get": {
         "description": "Overall health check",
-        "produces": ["application/json"],
-        "tags": ["Healthcheck"],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Healthcheck"
+        ],
         "summary": "Overall health check",
         "operationId": "overallHealthCheck",
         "responses": {
@@ -30,8 +40,12 @@
     "/healthz/db": {
       "get": {
         "description": "Database health check",
-        "produces": ["application/json"],
-        "tags": ["Healthcheck"],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Healthcheck"
+        ],
         "summary": "Database health check",
         "operationId": "dbHealthCheck",
         "responses": {
@@ -47,17 +61,28 @@
     "/metrics": {
       "get": {
         "description": "Prometheus metrics endpoint",
-        "produces": ["text/plain"],
-        "tags": ["Metrics"],
+        "produces": [
+          "text/plain"
+        ],
+        "tags": [
+          "Metrics"
+        ],
         "summary": "Prometheus metrics endpoint",
         "operationId": "ReqMetrics"
       }
     },
     "/v1/admin/reports/list": {
       "get": {
-        "consumes": ["application/json"],
-        "schemes": ["http", "https"],
-        "tags": ["Reports"],
+        "consumes": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "Reports"
+        ],
         "summary": "Get details of quizzes list host by Admin.",
         "operationId": "RequestListQuizzesAnalysis",
         "parameters": [
@@ -87,9 +112,16 @@
     },
     "/v1/admin/reports/{active_quiz_id}/analysis": {
       "get": {
-        "consumes": ["application/json"],
-        "schemes": ["http", "https"],
-        "tags": ["Reports"],
+        "consumes": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "Reports"
+        ],
         "summary": "Get details of quizzes host by Admin.",
         "operationId": "RequestGetQuizAnalysis",
         "parameters": [
@@ -117,11 +149,235 @@
         }
       }
     },
+    "/v1/ai/models": {
+      "get": {
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "AI"
+        ],
+        "summary": "List the models available from an AI provider.",
+        "operationId": "RequestAIModels",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "AIBaseUrl",
+            "name": "X-AI-Base-Url",
+            "in": "header",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "AIApiKey",
+            "name": "X-AI-Api-Key",
+            "in": "header"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/ResponseAIModels"
+          },
+          "400": {
+            "$ref": "#/responses/GenericResFailNotFound"
+          },
+          "401": {
+            "$ref": "#/responses/GenericResFailConflict"
+          },
+          "502": {
+            "$ref": "#/responses/GenericResError"
+          },
+          "503": {
+            "$ref": "#/responses/GenericResError"
+          }
+        }
+      }
+    },
+    "/v1/ai/questions/generate": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "AI"
+        ],
+        "summary": "Generate quiz questions for a topic with AI.",
+        "operationId": "RequestGenerateAIQuestions",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "AIBaseUrl",
+            "description": "Optional caller-supplied provider. Omit all three to use the server's.",
+            "name": "X-AI-Base-Url",
+            "in": "header"
+          },
+          {
+            "type": "string",
+            "x-go-name": "AIApiKey",
+            "name": "X-AI-Api-Key",
+            "in": "header"
+          },
+          {
+            "type": "string",
+            "x-go-name": "AIModel",
+            "name": "X-AI-Model",
+            "in": "header"
+          },
+          {
+            "x-go-name": "Body",
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/ReqGenerateAIQuestions"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/ResponseGenerateAIQuestions"
+          },
+          "400": {
+            "$ref": "#/responses/GenericResFailNotFound"
+          },
+          "401": {
+            "$ref": "#/responses/GenericResFailConflict"
+          },
+          "500": {
+            "$ref": "#/responses/GenericResError"
+          }
+        }
+      }
+    },
+    "/v1/ai/quizzes": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "AI"
+        ],
+        "summary": "Create a quiz from AI generated questions.",
+        "operationId": "RequestCreateQuizFromAI",
+        "parameters": [
+          {
+            "x-go-name": "Body",
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/ReqCreateQuizFromAI"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "$ref": "#/responses/ResponseQuizCreated"
+          },
+          "400": {
+            "$ref": "#/responses/GenericResFailNotFound"
+          },
+          "401": {
+            "$ref": "#/responses/GenericResFailConflict"
+          },
+          "500": {
+            "$ref": "#/responses/GenericResError"
+          }
+        }
+      }
+    },
+    "/v1/ai/status": {
+      "get": {
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "AI"
+        ],
+        "summary": "Report whether the server has a provider configured.",
+        "operationId": "RequestAIStatus",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/ResponseAIStatus"
+          },
+          "401": {
+            "$ref": "#/responses/GenericResFailConflict"
+          }
+        }
+      }
+    },
+    "/v1/ai/test": {
+      "post": {
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "AI"
+        ],
+        "summary": "Test an AI provider connection.",
+        "operationId": "RequestAITestConnection",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "AIBaseUrl",
+            "name": "X-AI-Base-Url",
+            "in": "header",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "AIApiKey",
+            "name": "X-AI-Api-Key",
+            "in": "header"
+          },
+          {
+            "type": "string",
+            "x-go-name": "AIModel",
+            "name": "X-AI-Model",
+            "in": "header",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/ResponseAITestConnection"
+          },
+          "400": {
+            "$ref": "#/responses/GenericResFailNotFound"
+          },
+          "401": {
+            "$ref": "#/responses/GenericResFailConflict"
+          },
+          "502": {
+            "$ref": "#/responses/GenericResError"
+          },
+          "503": {
+            "$ref": "#/responses/GenericResError"
+          }
+        }
+      }
+    },
     "/v1/analytics_board/admin": {
       "get": {
-        "consumes": ["application/json"],
-        "schemes": ["http", "https"],
-        "tags": ["AnalyticsBoard"],
+        "consumes": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "AnalyticsBoard"
+        ],
         "summary": "Get a analyticsboard details for admin.",
         "operationId": "RequestAnalyticsBoardForAdmin",
         "parameters": [
@@ -148,9 +404,16 @@
     },
     "/v1/analytics_board/user": {
       "get": {
-        "consumes": ["application/json"],
-        "schemes": ["http", "https"],
-        "tags": ["AnalyticsBoard"],
+        "consumes": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "AnalyticsBoard"
+        ],
         "summary": "Get a analyticsboard details for user.",
         "operationId": "RequestAnalyticsBoardForUser",
         "parameters": [
@@ -177,9 +440,16 @@
     },
     "/v1/final_score/admin": {
       "get": {
-        "consumes": ["application/json"],
-        "schemes": ["http", "https"],
-        "tags": ["FinalScore"],
+        "consumes": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "FinalScore"
+        ],
         "summary": "Get a finalScore details for admin.",
         "operationId": "RequestFinalScoreForAdmin",
         "parameters": [
@@ -206,9 +476,16 @@
     },
     "/v1/final_score/user": {
       "get": {
-        "consumes": ["application/json"],
-        "schemes": ["http", "https"],
-        "tags": ["FinalScore"],
+        "consumes": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "FinalScore"
+        ],
         "summary": "Get a finalScore details for user.",
         "operationId": "RequestFinalScoreForUser",
         "parameters": [
@@ -233,50 +510,18 @@
         }
       }
     },
-    "/v1/images": {
-      "post": {
-        "consumes": ["multipart/form-data"],
-        "schemes": ["http", "https"],
-        "tags": ["FileUpload"],
-        "summary": "Insert image in s3 bucket.",
-        "operationId": "RequestInsertImage",
-        "parameters": [
-          {
-            "type": "string",
-            "x-go-name": "QuizId",
-            "name": "quiz_id",
-            "in": "query",
-            "required": true
-          },
-          {
-            "type": "file",
-            "x-go-name": "File",
-            "name": "image-attachment",
-            "in": "formData",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/ResponseInsertImage"
-          },
-          "400": {
-            "$ref": "#/responses/GenericResFailNotFound"
-          },
-          "401": {
-            "$ref": "#/responses/GenericResFailConflict"
-          },
-          "500": {
-            "$ref": "#/responses/GenericResError"
-          }
-        }
-      }
-    },
     "/v1/kratos/auth": {
       "get": {
-        "consumes": ["application/json"],
-        "schemes": ["http", "https"],
-        "tags": ["Auth"],
+        "consumes": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "Auth"
+        ],
         "summary": "Authenticate user with kratos session id.",
         "operationId": "DoKratosAuth",
         "responses": {
@@ -291,9 +536,16 @@
     },
     "/v1/kratos/user": {
       "put": {
-        "consumes": ["application/json"],
-        "schemes": ["http", "https"],
-        "tags": ["User"],
+        "consumes": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "User"
+        ],
         "summary": "Update user Details.",
         "operationId": "RequestUpadateRegisteredUser",
         "parameters": [
@@ -304,10 +556,6 @@
             "schema": {
               "type": "object",
               "properties": {
-                "email": {
-                  "type": "string",
-                  "x-go-name": "Email"
-                },
                 "first_name": {
                   "type": "string",
                   "x-go-name": "FirstName"
@@ -336,9 +584,16 @@
         }
       },
       "delete": {
-        "consumes": ["application/json"],
-        "schemes": ["http", "https"],
-        "tags": ["User"],
+        "consumes": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "User"
+        ],
         "summary": "Delete user Details and all its related data.",
         "operationId": "DeleteRegisteredUser",
         "responses": {
@@ -356,9 +611,16 @@
     },
     "/v1/kratos/whoami": {
       "get": {
-        "consumes": ["application/json"],
-        "schemes": ["http", "https"],
-        "tags": ["User"],
+        "consumes": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "User"
+        ],
         "summary": "Get Details of Register user.",
         "operationId": "GetRegisteredUser",
         "responses": {
@@ -373,9 +635,16 @@
     },
     "/v1/quizzes": {
       "get": {
-        "consumes": ["application/json"],
-        "schemes": ["http", "https"],
-        "tags": ["Quiz"],
+        "consumes": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "Quiz"
+        ],
         "summary": "Get details of quizzes uploaded by Admin.",
         "operationId": "GetAdminUploadedQuizzes",
         "responses": {
@@ -396,9 +665,16 @@
     },
     "/v1/quizzes/{quiz_id}": {
       "delete": {
-        "consumes": ["application/json"],
-        "schemes": ["http", "https"],
-        "tags": ["Quiz"],
+        "consumes": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "Quiz"
+        ],
         "summary": "Delete quiz that created by user (if no active quiz is present).",
         "operationId": "DeleteQuizById",
         "responses": {
@@ -416,9 +692,16 @@
     },
     "/v1/quizzes/{quiz_id}/demo_session": {
       "post": {
-        "consumes": ["application/json"],
-        "schemes": ["http", "https"],
-        "tags": ["Quiz"],
+        "consumes": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "Quiz"
+        ],
         "summary": "Create quiz active for user.",
         "operationId": "RequestGenerateDemoSession",
         "parameters": [
@@ -445,9 +728,16 @@
     },
     "/v1/quizzes/{quiz_id}/questions": {
       "get": {
-        "consumes": ["application/json"],
-        "schemes": ["http", "https"],
-        "tags": ["Question"],
+        "consumes": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "Question"
+        ],
         "summary": "List all questions of quiz with `is_active_quiz_present` and `quiz_played_count`.",
         "operationId": "RequestListQuestionByQuizId",
         "parameters": [
@@ -472,11 +762,132 @@
         }
       }
     },
+    "/v1/quizzes/{quiz_id}/questions/ai": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "AI"
+        ],
+        "summary": "Append AI generated questions to an existing quiz.",
+        "operationId": "RequestAppendAIQuestions",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "QuizId",
+            "name": "quiz_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "x-go-name": "Body",
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/ReqAppendAIQuestions"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "$ref": "#/responses/ResponseAppendAIQuestions"
+          },
+          "400": {
+            "$ref": "#/responses/GenericResFailNotFound"
+          },
+          "401": {
+            "$ref": "#/responses/GenericResFailConflict"
+          },
+          "500": {
+            "$ref": "#/responses/GenericResError"
+          }
+        }
+      }
+    },
+    "/v1/quizzes/{quiz_id}/questions/ai/generate": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "AI"
+        ],
+        "summary": "Generate quiz questions with AI for an existing quiz.",
+        "operationId": "RequestGenerateAIQuestionsForQuiz",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "QuizId",
+            "name": "quiz_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "AIBaseUrl",
+            "name": "X-AI-Base-Url",
+            "in": "header",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "AIApiKey",
+            "name": "X-AI-Api-Key",
+            "in": "header"
+          },
+          {
+            "type": "string",
+            "x-go-name": "AIModel",
+            "name": "X-AI-Model",
+            "in": "header",
+            "required": true
+          },
+          {
+            "x-go-name": "Body",
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/ReqGenerateAIQuestions"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/ResponseGenerateAIQuestions"
+          },
+          "400": {
+            "$ref": "#/responses/GenericResFailNotFound"
+          },
+          "401": {
+            "$ref": "#/responses/GenericResFailConflict"
+          },
+          "500": {
+            "$ref": "#/responses/GenericResError"
+          }
+        }
+      }
+    },
     "/v1/quizzes/{quiz_id}/questions/{question_id}": {
       "get": {
-        "consumes": ["application/json"],
-        "schemes": ["http", "https"],
-        "tags": ["Question"],
+        "consumes": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "Question"
+        ],
         "summary": "Get question and thier options with answer.",
         "operationId": "RequestGetQuestionById",
         "parameters": [
@@ -508,9 +919,16 @@
         }
       },
       "put": {
-        "consumes": ["application/json"],
-        "schemes": ["http", "https"],
-        "tags": ["Question"],
+        "consumes": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "Question"
+        ],
         "summary": "Update question and thier options with answer.",
         "operationId": "RequestUpdateQuestionById",
         "parameters": [
@@ -545,9 +963,16 @@
         }
       },
       "delete": {
-        "consumes": ["application/json"],
-        "schemes": ["http", "https"],
-        "tags": ["Question"],
+        "consumes": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "Question"
+        ],
         "summary": "Delete question only if no active quiz is present.",
         "operationId": "RequestDeleteQuestionById",
         "parameters": [
@@ -584,9 +1009,16 @@
     },
     "/v1/quizzes/{quiz_title}/upload": {
       "post": {
-        "consumes": ["multipart/form-data"],
-        "schemes": ["http", "https"],
-        "tags": ["Quiz"],
+        "consumes": [
+          "multipart/form-data"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "Quiz"
+        ],
         "summary": "Create a new quiz by uploading a CSV file.",
         "operationId": "RequestQuizCreated",
         "parameters": [
@@ -629,9 +1061,16 @@
     },
     "/v1/shared_quizzes": {
       "get": {
-        "consumes": ["application/json"],
-        "schemes": ["http", "https"],
-        "tags": ["ShareQuiz"],
+        "consumes": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "ShareQuiz"
+        ],
         "summary": "List shared quiz for perticular user (only shared with the user or shared by the user).",
         "operationId": "RequestListSharedQuizzes",
         "parameters": [
@@ -656,9 +1095,16 @@
         }
       },
       "post": {
-        "consumes": ["application/json"],
-        "schemes": ["http", "https"],
-        "tags": ["ShareQuiz"],
+        "consumes": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "ShareQuiz"
+        ],
         "summary": "share quiz to other user.",
         "operationId": "RequestShareQuiz",
         "parameters": [
@@ -703,9 +1149,16 @@
     },
     "/v1/shared_quizzes/{quiz_id}": {
       "get": {
-        "consumes": ["application/json"],
-        "schemes": ["http", "https"],
-        "tags": ["ShareQuiz"],
+        "consumes": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "ShareQuiz"
+        ],
         "summary": "List authorized users for perticular quiz.",
         "operationId": "RequestListQuizAuthorizedUsers",
         "parameters": [
@@ -730,9 +1183,16 @@
         }
       },
       "put": {
-        "consumes": ["application/json"],
-        "schemes": ["http", "https"],
-        "tags": ["ShareQuiz"],
+        "consumes": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "ShareQuiz"
+        ],
         "summary": "Update authorized user permission for perticular quiz.",
         "operationId": "RequestUpdateUserPermissionOfQuiz",
         "parameters": [
@@ -782,9 +1242,16 @@
         }
       },
       "delete": {
-        "consumes": ["application/json"],
-        "schemes": ["http", "https"],
-        "tags": ["ShareQuiz"],
+        "consumes": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "ShareQuiz"
+        ],
         "summary": "Delete authorized user permission for perticular quiz.",
         "operationId": "RequestDeleteUserPermissionOfQuiz",
         "parameters": [
@@ -818,9 +1285,16 @@
     },
     "/v1/user/who": {
       "get": {
-        "consumes": ["application/json"],
-        "schemes": ["http", "https"],
-        "tags": ["User"],
+        "consumes": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "User"
+        ],
         "summary": "Get Details of user.",
         "operationId": "GetUserMeta",
         "responses": {
@@ -838,9 +1312,16 @@
     },
     "/v1/user/{username}": {
       "post": {
-        "consumes": ["application/json"],
-        "schemes": ["http", "https"],
-        "tags": ["User"],
+        "consumes": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "User"
+        ],
         "summary": "Create Guest user to play for quiz directly without login.",
         "operationId": "RequestCreateQuickUser",
         "parameters": [
@@ -874,11 +1355,32 @@
     },
     "/v1/user_played_quizes": {
       "get": {
-        "consumes": ["application/json"],
-        "schemes": ["http", "https"],
-        "tags": ["UserPlayedQuiz"],
+        "consumes": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "UserPlayedQuiz"
+        ],
         "summary": "List played quiz by user.",
-        "operationId": "UserPlayedQuiz",
+        "operationId": "RequestListUserPlayedQuizes",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Page",
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "Title",
+            "name": "title",
+            "in": "query"
+          }
+        ],
         "responses": {
           "200": {
             "$ref": "#/responses/ResponseListUserPlayedQuizes"
@@ -894,9 +1396,16 @@
     },
     "/v1/user_played_quizes/{invitationCode}": {
       "post": {
-        "consumes": ["application/json"],
-        "schemes": ["http", "https"],
-        "tags": ["UserPlayedQuiz"],
+        "consumes": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "UserPlayedQuiz"
+        ],
         "summary": "Validate the code and copy the questions in reponses for user.",
         "operationId": "RequestPlayedQuizValidation",
         "parameters": [
@@ -923,9 +1432,16 @@
     },
     "/v1/user_played_quizes/{user_played_quiz_id}": {
       "get": {
-        "consumes": ["application/json"],
-        "schemes": ["http", "https"],
-        "tags": ["UserPlayedQuiz"],
+        "consumes": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "UserPlayedQuiz"
+        ],
         "summary": "Analysis of played quiz by user.",
         "operationId": "RequestListUserPlayedQuizesWithQuestionById",
         "parameters": [
@@ -952,10 +1468,53 @@
     }
   },
   "definitions": {
+    "AIQuestion": {
+      "description": "AIQuestion is one generated question on the wire: the model emits it, the\npreview renders it, and the browser posts it back on save. Explanation is\npreview-only, no column stores it.",
+      "type": "object",
+      "properties": {
+        "correct_answer": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "CorrectAnswer"
+        },
+        "explanation": {
+          "type": "string",
+          "x-go-name": "Explanation"
+        },
+        "options": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Options"
+        },
+        "options_media": {
+          "type": "string",
+          "x-go-name": "OptionsMedia"
+        },
+        "question": {
+          "type": "string",
+          "x-go-name": "Question"
+        },
+        "question_media": {
+          "type": "string",
+          "x-go-name": "QuestionMedia"
+        },
+        "question_type": {
+          "type": "string",
+          "x-go-name": "QuestionType"
+        },
+        "resource": {
+          "type": "string",
+          "x-go-name": "Resource"
+        }
+      },
+      "x-go-package": "github.com/Improwised/jovvix/api/pkg/structs"
+    },
     "NullString": {
       "description": "var s NullString\nerr := db.QueryRow(\"SELECT name FROM foo WHERE id=?\", id).Scan(\u0026s)\n...\nif s.Valid {\nuse s.String\n} else {\nNULL value\n}",
       "type": "object",
-      "title": "NullString represents a string that may be null.\nNullString implements the Scanner interface so\nit can be used as a scan destination:",
+      "title": "NullString represents a string that may be null.\nNullString implements the [Scanner] interface so\nit can be used as a scan destination:",
       "properties": {
         "String": {
           "type": "string"
@@ -967,9 +1526,9 @@
       "x-go-package": "database/sql"
     },
     "NullTime": {
-      "description": "NullTime implements the Scanner interface so\nit can be used as a scan destination, similar to NullString.",
+      "description": "NullTime implements the [Scanner] interface so\nit can be used as a scan destination, similar to [NullString].",
       "type": "object",
-      "title": "NullTime represents a time.Time that may be null.",
+      "title": "NullTime represents a [time.Time] that may be null.",
       "properties": {
         "Time": {
           "type": "string",
@@ -1045,6 +1604,242 @@
       },
       "x-go-package": "github.com/Improwised/jovvix/api/pkg/structs"
     },
+    "QuizzesAnalysis": {
+      "type": "object",
+      "properties": {
+        "activated_from": {
+          "$ref": "#/definitions/NullTime"
+        },
+        "activated_to": {
+          "$ref": "#/definitions/NullTime"
+        },
+        "correct_answers": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "CorrectAnswers"
+        },
+        "description": {
+          "$ref": "#/definitions/NullString"
+        },
+        "id": {
+          "$ref": "#/definitions/UUID"
+        },
+        "participants": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Participants"
+        },
+        "questions": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Questions"
+        },
+        "title": {
+          "type": "string",
+          "x-go-name": "Title"
+        }
+      },
+      "x-go-package": "github.com/Improwised/jovvix/api/models"
+    },
+    "ReqAppendAIQuestions": {
+      "type": "object",
+      "properties": {
+        "duration_in_seconds": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "DurationInSeconds"
+        },
+        "points": {
+          "type": "integer",
+          "format": "int16",
+          "x-go-name": "Points"
+        },
+        "questions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AIQuestion"
+          },
+          "x-go-name": "Questions"
+        }
+      },
+      "x-go-package": "github.com/Improwised/jovvix/api/pkg/structs"
+    },
+    "ReqCreateQuizFromAI": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string",
+          "x-go-name": "Description"
+        },
+        "questions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AIQuestion"
+          },
+          "x-go-name": "Questions"
+        },
+        "title": {
+          "type": "string",
+          "x-go-name": "Title"
+        }
+      },
+      "x-go-package": "github.com/Improwised/jovvix/api/pkg/structs"
+    },
+    "ReqGenerateAIQuestions": {
+      "type": "object",
+      "properties": {
+        "difficulty": {
+          "type": "string",
+          "x-go-name": "Difficulty"
+        },
+        "language": {
+          "type": "string",
+          "x-go-name": "Language"
+        },
+        "number_of_questions": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "NumberOfQuestions"
+        },
+        "topic": {
+          "type": "string",
+          "x-go-name": "Topic"
+        }
+      },
+      "x-go-package": "github.com/Improwised/jovvix/api/pkg/structs"
+    },
+    "ResAIModels": {
+      "type": "object",
+      "properties": {
+        "models": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Models"
+        }
+      },
+      "x-go-package": "github.com/Improwised/jovvix/api/pkg/structs"
+    },
+    "ResAIStatus": {
+      "type": "object",
+      "properties": {
+        "max_questions": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "MaxQuestions"
+        }
+      },
+      "x-go-package": "github.com/Improwised/jovvix/api/pkg/structs"
+    },
+    "ResAITestConnection": {
+      "type": "object",
+      "properties": {
+        "endpoint": {
+          "type": "string",
+          "x-go-name": "Endpoint"
+        },
+        "latency_ms": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "LatencyMs"
+        },
+        "model": {
+          "type": "string",
+          "x-go-name": "Model"
+        },
+        "ok": {
+          "type": "boolean",
+          "x-go-name": "Ok"
+        }
+      },
+      "x-go-package": "github.com/Improwised/jovvix/api/pkg/structs"
+    },
+    "ResAppendAIQuestions": {
+      "type": "object",
+      "properties": {
+        "added": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Added"
+        },
+        "question_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "QuestionIds"
+        }
+      },
+      "x-go-package": "github.com/Improwised/jovvix/api/pkg/structs"
+    },
+    "ResGenerateAIQuestions": {
+      "type": "object",
+      "properties": {
+        "difficulty": {
+          "type": "string",
+          "x-go-name": "Difficulty"
+        },
+        "generated": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Generated"
+        },
+        "language": {
+          "type": "string",
+          "x-go-name": "Language"
+        },
+        "notice": {
+          "type": "string",
+          "x-go-name": "Notice"
+        },
+        "questions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AIQuestion"
+          },
+          "x-go-name": "Questions"
+        },
+        "suggested_description": {
+          "type": "string",
+          "x-go-name": "SuggestedDescription"
+        },
+        "suggested_title": {
+          "type": "string",
+          "x-go-name": "SuggestedTitle"
+        },
+        "topic": {
+          "type": "string",
+          "x-go-name": "Topic"
+        }
+      },
+      "x-go-package": "github.com/Improwised/jovvix/api/pkg/structs"
+    },
+    "ResUserPlayedQuiz": {
+      "type": "object",
+      "properties": {
+        "created_at": {
+          "type": "string",
+          "x-go-name": "CreatedAt"
+        },
+        "description": {
+          "$ref": "#/definitions/NullString"
+        },
+        "id": {
+          "type": "string",
+          "x-go-name": "Id"
+        },
+        "title": {
+          "type": "string",
+          "x-go-name": "Title"
+        },
+        "total_questions": {
+          "type": "string",
+          "x-go-name": "TotalQuestions"
+        }
+      },
+      "x-go-package": "github.com/Improwised/jovvix/api/pkg/structs"
+    },
     "UUID": {
       "description": "A UUID is a 128 bit (16 byte) Universal Unique IDentifier as defined in RFC\n4122.",
       "type": "array",
@@ -1071,7 +1866,9 @@
           },
           "status": {
             "type": "string",
-            "enum": ["error"],
+            "enum": [
+              "error"
+            ],
             "x-go-name": "Status"
           }
         }
@@ -1088,7 +1885,9 @@
           },
           "status": {
             "type": "string",
-            "enum": ["fail"],
+            "enum": [
+              "fail"
+            ],
             "x-go-name": "Status"
           }
         }
@@ -1105,7 +1904,9 @@
           },
           "status": {
             "type": "string",
-            "enum": ["fail"],
+            "enum": [
+              "fail"
+            ],
             "x-go-name": "Status"
           }
         }
@@ -1122,7 +1923,9 @@
           },
           "status": {
             "type": "string",
-            "enum": ["fail"],
+            "enum": [
+              "fail"
+            ],
             "x-go-name": "Status"
           }
         }
@@ -1139,7 +1942,9 @@
           },
           "status": {
             "type": "string",
-            "enum": ["fail"],
+            "enum": [
+              "fail"
+            ],
             "x-go-name": "Status"
           }
         }
@@ -1152,7 +1957,9 @@
         "properties": {
           "status": {
             "type": "string",
-            "enum": ["success"],
+            "enum": [
+              "success"
+            ],
             "x-go-name": "Status"
           }
         }
@@ -1169,7 +1976,54 @@
           },
           "status": {
             "type": "string",
-            "enum": ["fail"],
+            "enum": [
+              "fail"
+            ],
+            "x-go-name": "Status"
+          }
+        }
+      }
+    },
+    "ResponseAIModels": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/definitions/ResAIModels"
+          },
+          "status": {
+            "type": "string",
+            "x-go-name": "Status"
+          }
+        }
+      }
+    },
+    "ResponseAIStatus": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/definitions/ResAIStatus"
+          },
+          "status": {
+            "type": "string",
+            "x-go-name": "Status"
+          }
+        }
+      }
+    },
+    "ResponseAITestConnection": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/definitions/ResAITestConnection"
+          },
+          "status": {
+            "type": "string",
             "x-go-name": "Status"
           }
         }
@@ -1185,6 +2039,12 @@
             "items": {
               "type": "object",
               "properties": {
+                "category_id": {
+                  "$ref": "#/definitions/NullString"
+                },
+                "category_name": {
+                  "$ref": "#/definitions/NullString"
+                },
                 "created_at": {
                   "type": "string",
                   "format": "date-time",
@@ -1197,8 +2057,16 @@
                 "description": {
                   "$ref": "#/definitions/NullString"
                 },
+                "has_cover_image": {
+                  "type": "boolean",
+                  "x-go-name": "HasCoverImage"
+                },
                 "id": {
                   "$ref": "#/definitions/UUID"
+                },
+                "is_public": {
+                  "type": "boolean",
+                  "x-go-name": "IsPublic"
                 },
                 "title": {
                   "type": "string",
@@ -1435,6 +2303,21 @@
         }
       }
     },
+    "ResponseAppendAIQuestions": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/definitions/ResAppendAIQuestions"
+          },
+          "status": {
+            "type": "string",
+            "x-go-name": "Status"
+          }
+        }
+      }
+    },
     "ResponseFinalScoreForAdmin": {
       "description": "",
       "schema": {
@@ -1523,6 +2406,21 @@
               }
             },
             "x-go-name": "Data"
+          },
+          "status": {
+            "type": "string",
+            "x-go-name": "Status"
+          }
+        }
+      }
+    },
+    "ResponseGenerateAIQuestions": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/definitions/ResGenerateAIQuestions"
           },
           "status": {
             "type": "string",
@@ -1708,6 +2606,10 @@
           "data": {
             "type": "object",
             "properties": {
+              "authenticated_at": {
+                "type": "string",
+                "x-go-name": "AuthenticatedAt"
+              },
               "identity": {
                 "type": "object",
                 "x-go-name": "Identity"
@@ -1746,12 +2648,31 @@
           "data": {
             "type": "object",
             "properties": {
+              "can_edit_public_meta": {
+                "type": "boolean",
+                "x-go-name": "CanEditPublicMeta"
+              },
+              "category_id": {
+                "$ref": "#/definitions/NullString"
+              },
+              "cover_image": {
+                "$ref": "#/definitions/NullString"
+              },
               "data": {
                 "type": "array",
                 "items": {
                   "$ref": "#/definitions/QuestionAnalytics"
                 },
                 "x-go-name": "Data"
+              },
+              "duration_in_seconds": {
+                "type": "integer",
+                "format": "int64",
+                "x-go-name": "DurationInSeconds"
+              },
+              "is_public": {
+                "type": "boolean",
+                "x-go-name": "IsPublic"
               },
               "is_quiz_editable": {
                 "type": "boolean",
@@ -1761,10 +2682,22 @@
                 "type": "string",
                 "x-go-name": "Permission"
               },
+              "points": {
+                "type": "integer",
+                "format": "int16",
+                "x-go-name": "Points"
+              },
+              "quiz_description": {
+                "$ref": "#/definitions/NullString"
+              },
               "quiz_played_count": {
                 "type": "integer",
                 "format": "int64",
                 "x-go-name": "QuizPlayedCount"
+              },
+              "quiz_title": {
+                "type": "string",
+                "x-go-name": "QuizTitle"
               }
             },
             "x-go-name": "Data"
@@ -1828,6 +2761,12 @@
             "items": {
               "type": "object",
               "properties": {
+                "category_id": {
+                  "$ref": "#/definitions/NullString"
+                },
+                "category_name": {
+                  "$ref": "#/definitions/NullString"
+                },
                 "created_at": {
                   "type": "string",
                   "format": "date-time",
@@ -1840,8 +2779,16 @@
                 "description": {
                   "$ref": "#/definitions/NullString"
                 },
+                "has_cover_image": {
+                  "type": "boolean",
+                  "x-go-name": "HasCoverImage"
+                },
                 "id": {
                   "$ref": "#/definitions/UUID"
+                },
+                "is_public": {
+                  "type": "boolean",
+                  "x-go-name": "IsPublic"
                 },
                 "title": {
                   "type": "string",
@@ -1857,6 +2804,36 @@
                   "format": "date-time",
                   "x-go-name": "UpdatedAt"
                 }
+              }
+            },
+            "x-go-name": "Data"
+          },
+          "status": {
+            "type": "string",
+            "x-go-name": "Status"
+          }
+        }
+      }
+    },
+    "ResponseListUserPlayedQuizes": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "count": {
+                "type": "integer",
+                "format": "int64",
+                "x-go-name": "Count"
+              },
+              "data": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/ResUserPlayedQuiz"
+                },
+                "x-go-name": "Data"
               }
             },
             "x-go-name": "Data"
@@ -1982,18 +2959,15 @@
         "type": "object",
         "properties": {
           "data": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "session_id": {
-                  "type": "string",
-                  "x-go-name": "SessionId"
-                },
-                "user_played_quiz": {
-                  "type": "string",
-                  "x-go-name": "UserPlayedQuizId"
-                }
+            "type": "object",
+            "properties": {
+              "session_id": {
+                "type": "string",
+                "x-go-name": "SessionId"
+              },
+              "user_played_quiz": {
+                "type": "string",
+                "x-go-name": "UserPlayedQuizId"
               }
             },
             "x-go-name": "Data"
@@ -2083,47 +3057,20 @@
       "schema": {
         "type": "object",
         "properties": {
-          "count": {
-            "type": "integer",
-            "format": "int64",
-            "x-go-name": "Count"
-          },
           "data": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "activated_from": {
-                  "$ref": "#/definitions/NullTime"
+            "type": "object",
+            "properties": {
+              "count": {
+                "type": "integer",
+                "format": "int64",
+                "x-go-name": "Count"
+              },
+              "data": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/QuizzesAnalysis"
                 },
-                "activated_to": {
-                  "$ref": "#/definitions/NullTime"
-                },
-                "correct_answers": {
-                  "type": "integer",
-                  "format": "int64",
-                  "x-go-name": "CorrectAnswers"
-                },
-                "description": {
-                  "$ref": "#/definitions/NullString"
-                },
-                "id": {
-                  "$ref": "#/definitions/UUID"
-                },
-                "participants": {
-                  "type": "integer",
-                  "format": "int64",
-                  "x-go-name": "Participants"
-                },
-                "questions": {
-                  "type": "integer",
-                  "format": "int64",
-                  "x-go-name": "Questions"
-                },
-                "title": {
-                  "type": "string",
-                  "x-go-name": "Title"
-                }
+                "x-go-name": "Data"
               }
             },
             "x-go-name": "Data"

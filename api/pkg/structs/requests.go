@@ -61,8 +61,8 @@ type ReqUpdateQuizSettings struct {
 	Points            int16    `json:"points" validate:"min=0,max=20"`
 	DurationInSeconds int      `json:"duration_in_seconds" validate:"required,min=1,max=300"`
 	QuestionIds       []string `json:"question_ids" validate:"omitempty,dive,uuid"`
-	CategoryId *string `json:"category_id"`
-	CoverImage *string `json:"cover_image"`
+	CategoryId        *string  `json:"category_id"`
+	CoverImage        *string  `json:"cover_image"`
 }
 
 type ReqCreateQuestion struct {
@@ -80,4 +80,37 @@ type ReqCreateQuestion struct {
 type ReqShareQuiz struct {
 	Email      string `json:"email" validate:"required,email"`
 	Permission string `json:"permission" validate:"required"`
+}
+
+type ReqGenerateAIQuestions struct {
+	Topic             string `json:"topic" validate:"required,min=3,max=200"`
+	NumberOfQuestions int    `json:"number_of_questions" validate:"required,min=1,max=50"`
+	Difficulty        string `json:"difficulty" validate:"required,oneof=easy medium hard"`
+	Language          string `json:"language" validate:"omitempty,oneof=english hindi gujarati marathi bengali tamil telugu spanish french german portuguese arabic chinese japanese"`
+}
+
+// AIQuestion is one generated question on the wire: the model emits it, the
+// preview renders it, and the browser posts it back on save. Explanation is
+// preview-only, no column stores it.
+type AIQuestion struct {
+	Question      string   `json:"question" validate:"required,max=500"`
+	QuestionType  string   `json:"question_type" validate:"omitempty,oneof=single survey"`
+	QuestionMedia string   `json:"question_media" validate:"omitempty,oneof=text code"`
+	Resource      string   `json:"resource" validate:"omitempty,max=1200"`
+	Options       []string `json:"options" validate:"required,min=2,max=5,dive,max=400"`
+	OptionsMedia  string   `json:"options_media" validate:"omitempty,oneof=text code"`
+	CorrectAnswer int      `json:"correct_answer" validate:"omitempty,min=1,max=5"`
+	Explanation   string   `json:"explanation,omitempty" validate:"omitempty,max=500"`
+}
+
+type ReqCreateQuizFromAI struct {
+	Title       string       `json:"title" validate:"required,max=50"`
+	Description string       `json:"description" validate:"omitempty,max=150"`
+	Questions   []AIQuestion `json:"questions" validate:"required,min=1,max=50,dive"`
+}
+
+type ReqAppendAIQuestions struct {
+	Questions         []AIQuestion `json:"questions" validate:"required,min=1,max=50,dive"`
+	Points            int16        `json:"points" validate:"omitempty,min=0,max=20"`
+	DurationInSeconds int          `json:"duration_in_seconds" validate:"omitempty,min=1"`
 }

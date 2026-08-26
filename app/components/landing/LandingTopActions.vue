@@ -5,11 +5,6 @@
       url-name="Enter Code"
       class="bg-jv-coral text-white font-[500] py-2"
     />
-    <NavigationLink
-      url="/admin/quiz/list-quiz?create=1"
-      url-name="Create Quiz"
-      class="bg-jv-coral text-white font-[500] py-2"
-    />
   </div>
 </template>
 

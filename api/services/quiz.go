@@ -98,23 +98,24 @@ func (quizSvc *QuizService) DeleteQuestionById(questionId string) error {
 	return nil
 }
 
-func (quizSvc *QuizService) AppendQuestionsToQuiz(quizId string, questions []models.Question) ([]string, error) {
+func (quizSvc *QuizService) AppendQuestionsToQuiz(quizId string, questions []models.Question) (questionIds []string, err error) {
 	isOk := false
 	transaction, err := quizSvc.db.Begin()
 	if err != nil {
 		return nil, err
 	}
 
+	// The commit error becomes the returned error: reporting success for questions
+	// that were rolled back hands the caller ids that do not exist.
 	defer func() {
 		if isOk {
-			err := transaction.Commit()
-			if err != nil {
-				quizSvc.logger.Error("error during commit in append questions", zap.Error(err))
+			if commitErr := transaction.Commit(); commitErr != nil {
+				quizSvc.logger.Error("error during commit in append questions", zap.Error(commitErr))
+				questionIds, err = nil, commitErr
 			}
 		} else {
-			err := transaction.Rollback()
-			if err != nil {
-				quizSvc.logger.Error("error during rollback in append questions", zap.Error(err))
+			if rollbackErr := transaction.Rollback(); rollbackErr != nil {
+				quizSvc.logger.Error("error during rollback in append questions", zap.Error(rollbackErr))
 			}
 		}
 	}()
@@ -124,7 +125,7 @@ func (quizSvc *QuizService) AppendQuestionsToQuiz(quizId string, questions []mod
 		return nil, err
 	}
 
-	questionIds := make([]string, 0, len(ids))
+	questionIds = make([]string, 0, len(ids))
 	for _, id := range ids {
 		questionIds = append(questionIds, id.String())
 	}
