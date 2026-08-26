@@ -56,7 +56,7 @@ Open-Source Quizzing Built for Live Quiz Experiences
 - **Public Quizzes:** Curated quizzes can be published publicly and explored right from the homepage — no account required:
   - Anyone, including guests who haven't logged in, can start a public quiz instantly
   - The quiz session can be shared with others so they can join and participate together
-  - The host of a public quiz can also play along as a participant
+  - The host runs the session while participants play
 - **Multiple Question Types:** Allows admins to create quizzes with different question formats:
   - Multiple-choice questions
   - Survey-based questions

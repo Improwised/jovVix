@@ -77,32 +77,6 @@ const showHostNameModal = ref(
 );
 const hostNameSubmitting = ref(false);
 
-// Public-quiz host-also-plays support.
-// `public=1` is set by the homepage when a visitor starts a public quiz.
-const isPublicPlay = computed(() => route.query.public === "1");
-const canPlay = ref(false);
-const hostUserPlayedQuiz = ref(null);
-const hostPlayedQuizRequested = ref(false);
-
-// When hosting a public quiz, register the host as a player too. The API allows
-// this for any host of a public quiz; a failure just leaves them host-only.
-const tryEnableHostPlay = async (code) => {
-  if (!isPublicPlay.value || hostPlayedQuizRequested.value || !code) return;
-  hostPlayedQuizRequested.value = true;
-  try {
-    const res = await $fetch(`${apiUrl}/user_played_quizes/${code}`, {
-      method: "POST",
-      credentials: "include",
-    });
-    hostUserPlayedQuiz.value = res?.data?.user_played_quiz || null;
-    canPlay.value = !!hostUserPlayedQuiz.value;
-    if (res?.data?.quiz_title) {
-      setActiveQuizTitle(res.data.quiz_title);
-    }
-  } catch (error) {
-    canPlay.value = false;
-  }
-};
 const quizState = computed(() =>
   isPauseQuiz.value ? app.$Pause : app.$Running
 );
@@ -278,8 +252,6 @@ const handleQuizEvents = async (message) => {
       }
       if (message.data.code !== undefined) {
         invitationCode.value = message.data.code;
-        // Code is now known — register the host as a player if this is a public session.
-        tryEnableHostPlay(message.data.code);
       }
     }
   }
@@ -299,23 +271,6 @@ function handleNetworkEvent(message) {
 
 const startQuiz = () => {
   adminOperationHandler.value.quizStartRequest();
-};
-
-const sendAnswer = async (answers) => {
-  if (!canPlay.value || !hostUserPlayedQuiz.value) return;
-  selectedAnswer.value = 0;
-  const { error } = await adminOperationHandler.value.handleSendAnswer(
-    answers,
-    hostUserPlayedQuiz.value,
-    session_id
-  );
-  if (error) {
-    toast.error(error);
-    return;
-  }
-  if (answers.length > 0) {
-    selectedAnswer.value = answers[0];
-  }
 };
 
 const askSkip = () => {
@@ -347,21 +302,15 @@ const goToScoreboardAfterTerminate = async () => {
   invitationCode.value = undefined;
   removeAllUsers();
   setSession(null);
-  // A guest host who also played gets the podium, then their own player scoreboard —
-  // the admin scoreboard endpoint is Kratos-only and would 401 for them. Registered
-  // hosts keep the admin scoreboard + analytics.
+  // Guest hosts must sign in before accessing the Kratos-protected host scoreboard.
   const isGuestHost = usersStore.getUserData()?.role === "guest-user";
-  if (isGuestHost && canPlay.value && hostUserPlayedQuiz.value) {
-    const playerName = usersStore.getUserData()?.username || "player";
+  const scoreboardPath = `/admin/scoreboard?winner_ui=true&aqi=${session_id}`;
+  if (isGuestHost) {
     return await router.push(
-      `/join/${encodeURIComponent(playerName)}/scoreboard?user_played_quiz=${
-        hostUserPlayedQuiz.value
-      }&host=1&winner_ui=true`
+      `/account/login?returnTo=${encodeURIComponent(scoreboardPath)}`
     );
   }
-  return await router.push(
-    "/admin/scoreboard?winner_ui=true&aqi=" + session_id
-  );
+  return await router.push(scoreboardPath);
 };
 
 const askEndQuiz = () => {
@@ -512,9 +461,7 @@ useSeoMeta({
       v-else-if="currentComponent == 'Question'"
       :data="data"
       :is-admin="true"
-      :can-play="canPlay"
       :quiz-title="quizTitle"
-      @send-answer="sendAnswer"
       @ask-skip="askSkip"
     ></QuizQuestionSpace>
     <QuizScoreSpace

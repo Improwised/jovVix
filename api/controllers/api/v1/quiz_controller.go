@@ -475,8 +475,8 @@ func (ctrl *QuizController) GenerateDemoSession(c *fiber.Ctx) error {
 
 // GeneratePublicSession lets ANY visitor (guest or registered) host a public quiz.
 // Unlike demo_session, it does not require Kratos auth, but it only works for
-// quizzes flagged is_public. The starter becomes the session host; whether they
-// may also play is decided later at PlayedQuizValidation (creators stay host-only).
+// quizzes flagged is_public. The starter becomes the session host and cannot
+// participate in that session.
 func (ctrl *QuizController) GeneratePublicSession(c *fiber.Ctx) error {
 	quizId := c.Params(constants.QuizId)
 	userId := quizUtilsHelper.GetString(c.Locals(constants.ContextUid))

@@ -187,6 +187,22 @@ func (model *UserPlayedQuizModel) GetCurrentActiveQuestion(id string) (uuid.UUID
 	return currentQuestion, nil
 }
 
+// IsParticipant verifies that a played-quiz record belongs to the requesting user,
+// belongs to the requested session, and is not a host record.
+func (model *UserPlayedQuizModel) IsParticipant(userID string, userPlayedQuizID uuid.UUID, activeQuizID string) (bool, error) {
+	count, err := model.db.From(UserPlayedQuizTable).Where(goqu.Ex{
+		"id":             userPlayedQuizID,
+		"user_id":        userID,
+		"active_quiz_id": activeQuizID,
+		"is_host":        false,
+	}).Count()
+	if err != nil {
+		return false, err
+	}
+
+	return count == 1, nil
+}
+
 type UserRank struct {
 	Rank         int    `json:"rank" db:"rank"`
 	Points       int    `json:"points" db:"points"`
@@ -214,7 +230,7 @@ func (model *UserPlayedQuizModel) GetRank(sessionId uuid.UUID, questionId uuid.U
 				"upq.id":             goqu.I("uqr.user_played_quiz_id"),
 				"upq.active_quiz_id": sessionId,
 			}),
-			))
+			).Where(goqu.I("upq.is_host").Eq(false)))
 
 	getSum := core.
 		With("get_sum", goqu.
@@ -279,6 +295,7 @@ func (model *UserPlayedQuizModel) ListUserPlayedQuizes(userId string, page int, 
 		InnerJoin(goqu.T(constants.QuizQuestionsTable), goqu.On(goqu.I(constants.QuizzesTable+".id").Eq(goqu.I(constants.QuizQuestionsTable+".quiz_id")))).
 		Where(goqu.Ex{
 			UserPlayedQuizTable + ".user_id": userId,
+			UserPlayedQuizTable + ".is_host": false,
 		}).GroupBy("user_played_quizzes.id", "quizzes.id").Order(goqu.I("user_played_quizzes.created_at").Desc())
 
 	if titleSearch != "" {
@@ -368,7 +385,7 @@ func (model *UserPlayedQuizModel) GetJoinedUsers(activeQuizId string) ([]JoinedU
 	err := model.db.Select("u.id", "u.first_name", "u.img_key").
 		From(goqu.T(UserPlayedQuizTable).As("upq")).
 		Join(goqu.T(UserTable).As("u"), goqu.On(goqu.I("u.id").Eq(goqu.I("upq.user_id")))).
-		Where(goqu.I("upq.active_quiz_id").Eq(activeQuizId)).
+		Where(goqu.Ex{"upq.active_quiz_id": activeQuizId, "upq.is_host": false}).
 		Order(goqu.I("upq.created_at").Asc()).
 		ScanStructs(&users)
 
@@ -382,6 +399,7 @@ func (model *UserPlayedQuizModel) GetJoinedUsers(activeQuizId string) ([]JoinedU
 func (model *UserPlayedQuizModel) GetCountOfTotalJoinUsers(activeQuizId string) (int64, error) {
 	return model.db.From(UserPlayedQuizTable).Where(goqu.Ex{
 		"active_quiz_id": activeQuizId,
+		"is_host":        false,
 	}).Count()
 }
 

@@ -50,13 +50,13 @@ type QuizzesAnalysis struct {
 }
 
 type QuizWithQuestions struct {
-	ID           uuid.UUID      `json:"id" db:"id"`
-	Title        string         `json:"title" db:"title" validate:"required"`
-	Description  sql.NullString `json:"description,omitempty" db:"description"`
-	CreatorID    *string        `json:"creator_id,omitempty" db:"creator_id"`
-	IsPublic     bool           `json:"is_public" db:"is_public"`
-	CategoryId   sql.NullString `json:"category_id,omitempty" db:"category_id"`
-	CategoryName sql.NullString `json:"category_name,omitempty" db:"category_name"`
+	ID             uuid.UUID      `json:"id" db:"id"`
+	Title          string         `json:"title" db:"title" validate:"required"`
+	Description    sql.NullString `json:"description,omitempty" db:"description"`
+	CreatorID      *string        `json:"creator_id,omitempty" db:"creator_id"`
+	IsPublic       bool           `json:"is_public" db:"is_public"`
+	CategoryId     sql.NullString `json:"category_id,omitempty" db:"category_id"`
+	CategoryName   sql.NullString `json:"category_name,omitempty" db:"category_name"`
 	CoverImage     sql.NullString `json:"-" db:"cover_image"`
 	HasCoverImage  bool           `json:"has_cover_image" db:"has_cover_image"`
 	CreatedAt      time.Time      `json:"created_at,omitempty" db:"created_at,omitempty"`
@@ -462,11 +462,13 @@ func (model *QuizModel) IsAllAnswerGathered(sessionId uuid.UUID, questionId uuid
 					"user_played_quiz_id": goqu.I("upq.id"),
 					"active_quiz_id":      sessionId,
 					"question_id":         questionId,
-				})).Select(
-		goqu.COUNT("upr.id").Eq(goqu.SUM(goqu.Case().
-			When(goqu.I("upr.is_attend").Eq(true), 1).
-			Else(0))).
-			As("is_skippable")).ScanVal(&skippable)
+				})).
+		Where(goqu.I("upq.is_host").Eq(false)).
+		Select(
+			goqu.COUNT("upr.id").Eq(goqu.SUM(goqu.Case().
+				When(goqu.I("upr.is_attend").Eq(true), 1).
+				Else(0))).
+				As("is_skippable")).ScanVal(&skippable)
 
 	if err != nil {
 		return false, err
@@ -491,7 +493,7 @@ func (model *QuizModel) GetQuizAnalysis(activeQuizId string) ([]QuizAnalysis, er
 			goqu.L("jsonb_object_agg(?, ?)", goqu.I("u.username"), goqu.I("uqr.answers")).As("selected_answers"),
 			goqu.L("avg(?)", goqu.I("response_time")).As("avg_response_time"),
 		).
-		Where(goqu.Ex{"upq.active_quiz_id": activeQuizId}).
+		Where(goqu.Ex{"upq.active_quiz_id": activeQuizId, "upq.is_host": false}).
 		GroupBy(goqu.C("question_id").Table("uqr"))
 
 	// Define the final query
@@ -568,7 +570,7 @@ func (model *QuizModel) ListQuizzesAnalysis(name, order, orderBy, date, userId s
 		InnerJoin(goqu.T(ActiveQuizQuestionsTable).As("qq"), goqu.On(goqu.Ex{"aq.id": goqu.I("qq.active_quiz_id")})).
 		InnerJoin(goqu.T(UserPlayedQuizTable).As("upq"), goqu.On(goqu.Ex{"upq.active_quiz_id": goqu.I("aq.id")})).
 		InnerJoin(goqu.T(UserQuizResponsesTable).As("uqr"), goqu.On(goqu.Ex{"uqr.question_id": goqu.I("qq.question_id"), "uqr.user_played_quiz_id": goqu.I("upq.id")})).
-		Where(goqu.Ex{"aq.admin_id": userId, "aq.activated_to": goqu.Op{"isNot": nil}}).
+		Where(goqu.Ex{"aq.admin_id": userId, "aq.activated_to": goqu.Op{"isNot": nil}, "upq.is_host": false}).
 		GroupBy(
 			"aq.id",
 			"aq.activated_from",

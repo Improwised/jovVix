@@ -189,7 +189,7 @@ const handleStartQuiz = async (quizId) => {
     listUserStore.removeAllUsers();
     setSocketObject(null);
     sessionStore.setSession(sessionId);
-    // `public=1` tells the lobby this is a public session where the host may also play.
+    // `public=1` preserves the public-session flow for a guest host.
     await router.push(`/admin/arrange/${sessionId}?public=1`);
   } catch (error) {
     toast.error(
