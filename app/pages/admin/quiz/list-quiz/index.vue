@@ -240,7 +240,7 @@ const quizzes = computed(() =>
   rawQuizzes.value.map((quiz) => ({
     id: quiz.id,
     title: quiz.title,
-    description: quiz.description.String,
+    description: quiz.description?.String || "",
     createdAt: formatCreatedAt(quiz.created_at),
     questionCount: quiz.total_questions || 0,
     image: coverUrl(quiz),
@@ -578,20 +578,18 @@ const handleCreateQuiz = async () => {
 
     <section
       v-else
-      class="grid gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 2xl:grid-cols-4"
+      class="grid items-start justify-items-center gap-7 sm:grid-cols-2 sm:gap-8 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 xl:gap-7"
     >
       <AdminQuizListCard
         v-for="quiz in filteredQuizzes"
         :key="quiz.id"
         :title="quiz.title"
-        :description="quiz.description"
         :created-at="quiz.createdAt"
         :question-count="quiz.questionCount"
         :image="quiz.image"
         :fallback="quiz.fallback"
         :tilt-class="quiz.tiltClass"
         :view-url="quiz.viewUrl"
-        :is-public="quiz.isPublic"
         :starting="startingQuizId === quiz.id"
         @start-quiz="handleStartQuiz(quiz.id)"
         @share="handleShareQuiz(quiz)"
