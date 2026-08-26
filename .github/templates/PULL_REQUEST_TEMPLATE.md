@@ -1,36 +1,59 @@
-<!-- If your PR fixes an open issue, use `Closes #999` to link your PR with the issue. #999 stands for the issue number you are fixing -->
+<!-- If your PR fixes an open issue, use `Closes #999` to link your PR with the issue. -->
 
-## Fixes Issue
+## Summary
+<!-- Brief description of what this PR does and why -->
 
-<!-- Remove this section if not applicable -->
+## Type of Change
+<!-- Mark all that apply with [x] -->
+- [ ] 🐛 Bug fix (non-breaking change fixing an issue)
+- [ ] ✨ New feature (non-breaking change adding functionality)
+- [ ] 💥 Breaking change (fix or feature that changes existing behavior)
+- [ ] 📝 Documentation update
+- [ ] ♻️ Refactor / Code style (no functional change)
+- [ ] ✅ Tests (adding or updating tests)
+- [ ] 🔧 CI / Build / Tooling
 
-<!-- Example: Closes #31 -->
+## Related Issue
+<!-- Link issue(s): Closes #123, Fixes #456, Related to #789 -->
 
-## Changes proposed
+## Changes Made
+<!-- Bullet list of key changes -->
+-
 
-<!-- List all the proposed changes in your PR -->
+## Testing
+<!-- How did you verify this works? -->
+- [ ] All existing tests pass (`npm run test` / `go test ./...`)
+- [ ] Added new tests for new functionality
+- [ ] Tested manually (describe below)
 
-<!-- Mark all the applicable boxes. To mark the box as done follow the following conventions -->
-<!--
-[x] - Correct; marked as done
-[X] - Correct; marked as done
+<details>
+<summary>Manual Test Steps (if applicable)</summary>
 
-[ ] - Not correct; marked as **not** done
--->
+1.
+2.
 
-## Check List (Check all the applicable boxes) <!-- Follow the above conventions to check the box -->
+</details>
 
-- [ ] My code follows the code style of this project.
-- [ ] My change requires changes to the documentation.
-- [ ] I have updated the documentation accordingly.
-- [ ] All new and existing tests passed.
-- [ ] This PR does not contain plagiarized content.
-- [ ] The title of my pull request is a short description of the requested changes.
+<details>
+<summary>Screenshots / Recordings (required for UI changes)</summary>
 
-## Screenshots
+<!-- Drag & drop images here -->
 
-<!-- Add all the screenshots which support your changes -->
+</details>
 
-## Note to reviewers
+<details>
+<summary>Breaking Changes (required if "Breaking change" checked above)</summary>
 
-<!-- Add notes to reviewers if applicable -->
+<!-- Describe impact and migration path -->
+
+</details>
+
+## Checklist
+<!-- All must be checked before merge -->
+- [ ] My code follows the project's [coding standards](../docs/coding-standards.md)
+- [ ] I have updated documentation if needed
+- [ ] No new warnings or errors introduced
+- [ ] PR title follows [conventional commits](../CONTRIBUTING.md#commit-message-convention)
+
+## Notes for Reviewers
+<!-- Any specific areas you'd like reviewers to focus on -->
