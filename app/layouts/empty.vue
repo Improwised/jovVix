@@ -1,9 +1,9 @@
 <template>
   <div class="lg:flex lg:h-screen lg:overflow-hidden">
     <Sidebar v-if="!hideSidebar" />
-    <div class="lg:flex-1 lg:overflow-y-auto">
+    <main id="main-content" tabindex="-1" class="lg:flex-1 lg:overflow-y-auto">
       <slot></slot>
-    </div>
+    </main>
   </div>
 </template>
 
