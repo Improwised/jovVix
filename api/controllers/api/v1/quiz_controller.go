@@ -116,6 +116,9 @@ func (ctrl *QuizController) CreateQuiz(c *fiber.Ctx) error {
 		ctrl.logger.Error("validate req error", zap.Error(err))
 		return utils.JSONFail(c, http.StatusBadRequest, err.Error())
 	}
+	if failMsg := utils.ValidateQuizTitle(quizReq.Title); failMsg != "" {
+		return utils.JSONFail(c, http.StatusBadRequest, failMsg)
+	}
 
 	validate := validator.New()
 	err = validate.Struct(quizReq)
@@ -384,9 +387,9 @@ func (ctrl *QuizController) CreateQuizByCsv(c *fiber.Ctx) error {
 	quizTitle := c.Params(constants.QuizTitle)
 	quizDescription := c.FormValue("description")
 
-	if quizTitle == "" {
+	if failMsg := utils.ValidateQuizTitle(quizTitle); failMsg != "" {
 		ctrl.logger.Error("quiz-title not found")
-		return utils.JSONSuccess(c, http.StatusBadRequest, constants.QuizTitleRequired)
+		return utils.JSONFail(c, http.StatusBadRequest, failMsg)
 	}
 
 	userID := quizUtilsHelper.GetString(c.Locals(constants.ContextUid))

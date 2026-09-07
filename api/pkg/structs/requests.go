@@ -44,7 +44,7 @@ type ReqUpdateQuestion struct {
 }
 
 type ReqCreateQuiz struct {
-	Title             string `json:"title" validate:"required"`
+	Title             string `json:"title" validate:"required,max=50"`
 	Description       string `json:"description"`
 	Points            int16  `json:"points" validate:"omitempty,min=0,max=20"`
 	DurationInSeconds int    `json:"duration_in_seconds" validate:"omitempty,min=1,max=300"`

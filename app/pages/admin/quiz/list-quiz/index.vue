@@ -426,7 +426,10 @@ const handleCreateQuiz = async () => {
     router.push(`/admin/quiz/list-quiz/${quizId}`);
   } catch (error) {
     toast.error(
-      error?.data?.message || error?.message || "Error while creating quiz."
+      error?.data?.data ||
+        error?.data?.message ||
+        error?.message ||
+        "Error while creating quiz."
     );
   } finally {
     createQuizPending.value = false;
@@ -635,8 +638,6 @@ const handleCreateQuiz = async () => {
               <input
                 v-model.trim="createQuizForm.title"
                 type="text"
-                required
-                maxlength="50"
                 class="h-14 border-[3px] border-jv-ink bg-jv-canvas px-4 text-[17px] font-semibold text-jv-ink outline-none transition-shadow focus:shadow-brutal-sm"
               />
             </label>
