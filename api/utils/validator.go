@@ -4,11 +4,27 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"unicode/utf8"
 
+	"github.com/Improwised/jovvix/api/constants"
 	validator "gopkg.in/go-playground/validator.v9"
 )
 
 const VALIDATE_MESSAGE = "fields are invalid."
+
+// ValidateQuizTitle returns a user-facing validation error for a quiz title.
+// Rune counting matches the character limit users see, including non-ASCII titles.
+func ValidateQuizTitle(title string) string {
+	if strings.TrimSpace(title) == "" {
+		return constants.QuizTitleRequired
+	}
+
+	if utf8.RuneCountInString(title) > constants.QuizTitleMaxLength {
+		return constants.ErrQuizTitleTooLong
+	}
+
+	return ""
+}
 
 func ValidateEmail(email string) (bool, error) {
 	return regexp.MatchString("[a-zA-z]+@improwised.com", email)

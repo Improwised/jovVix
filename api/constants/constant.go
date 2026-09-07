@@ -121,7 +121,9 @@ const (
 	DefaultCsvPoints            = 1
 	SheetName                   = "demo"
 	QuizTitle                   = "quiz_title"
-	QuizTitleRequired           = "quiz-title is required"
+	QuizTitleRequired           = "Please enter a quiz title."
+	QuizTitleMaxLength          = 50
+	ErrQuizTitleTooLong         = "Your quiz title is too long. Please make it shorter (maximum 50 characters)."
 	ErrGettingAttachment        = "error in getting file"
 	ErrFileSizeExceed           = "The file is too large to upload. Please select a smaller file."
 	ErrFileIsNotInSupportedType = "file has no supported type"
