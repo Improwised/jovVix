@@ -182,6 +182,27 @@
   }
 }
 
+/* Prevent iOS input-focus zoom. */
+@media (max-width: 767px) {
+  input:not([type="hidden"]),
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
+@supports (min-height: 100dvh) {
+  @media (max-width: 767px) {
+    .min-h-screen {
+      min-height: 100dvh;
+    }
+
+    .h-screen {
+      height: 100dvh;
+    }
+  }
+}
+
 @utility small-text {
   @apply text-[16px] leading-[24px] tracking-normal font-normal;
 }
