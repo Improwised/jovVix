@@ -24,7 +24,8 @@ var (
 		"authorization": true,
 		"cookie":        true,
 		"set-cookie":    true,
-		strings.ToLower(constants.HeaderAIApiKey): true,
+		strings.ToLower(constants.HeaderAIApiKey):        true,
+		strings.ToLower(constants.HeaderAIVaultPassword): true,
 	}
 )
 

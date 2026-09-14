@@ -2,6 +2,7 @@ package v1
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -23,11 +24,12 @@ import (
 )
 
 type AIController struct {
-	questionModel *models.QuestionModel
-	quizSvc       *services.QuizService
-	aiSvc         *services.AIQuizService
-	appConfig     *config.AppConfig
-	logger        *zap.Logger
+	questionModel   *models.QuestionModel
+	aiSettingsModel *models.AISettingsModel
+	quizSvc         *services.QuizService
+	aiSvc           *services.AIQuizService
+	appConfig       *config.AppConfig
+	logger          *zap.Logger
 }
 
 func InitAIController(db *goqu.Database, logger *zap.Logger, appConfig *config.AppConfig) (*AIController, error) {
@@ -35,20 +37,122 @@ func InitAIController(db *goqu.Database, logger *zap.Logger, appConfig *config.A
 	aiSvc := services.NewAIQuizService(logger, &appConfig.AI)
 
 	return &AIController{
-		questionModel: questionModel,
-		quizSvc:       services.NewQuizService(db, logger),
-		aiSvc:         aiSvc,
-		appConfig:     appConfig,
-		logger:        logger,
+		questionModel:   questionModel,
+		aiSettingsModel: models.InitAISettingsModel(db),
+		quizSvc:         services.NewQuizService(db, logger),
+		aiSvc:           aiSvc,
+		appConfig:       appConfig,
+		logger:          logger,
 	}, nil
 }
 
 func (ctrl *AIController) resolveCredentials(c *fiber.Ctx) (services.AICredentials, error) {
-	return services.ResolveAICredentials(
-		c.Get(constants.HeaderAIBaseUrl),
-		c.Get(constants.HeaderAIApiKey),
-		c.Get(constants.HeaderAIModel),
-	)
+	userID := quizUtilsHelper.GetString(c.Locals(constants.ContextUid))
+	s, err := ctrl.aiSettingsModel.Get(userID)
+	if err == sql.ErrNoRows {
+		return services.AICredentials{}, fmt.Errorf(constants.ErrAINotConfigured)
+	}
+	if err != nil {
+		return services.AICredentials{}, err
+	}
+	p := c.Get(constants.HeaderAIVaultPassword)
+	if err := services.ValidateAIVaultPassword(p); err != nil {
+		return services.AICredentials{}, err
+	}
+	key, err := services.DecryptAIKey(userID, s, []byte(p))
+	if err != nil {
+		return services.AICredentials{}, err
+	}
+	defer func() {
+		for i := range key {
+			key[i] = 0
+		}
+	}()
+	return services.ResolveAICredentials(s.BaseURL, string(key), s.Model)
+}
+
+func (ctrl *AIController) resolveHeaderCredentials(c *fiber.Ctx) (services.AICredentials, error) {
+	return services.ResolveAICredentials(c.Get(constants.HeaderAIBaseUrl), c.Get(constants.HeaderAIApiKey), c.Get(constants.HeaderAIModel))
+}
+
+type vaultSettingsRequest struct {
+	Provider string `json:"provider"`
+	BaseURL  string `json:"baseUrl"`
+	Model    string `json:"model"`
+}
+
+func (ctrl *AIController) vaultUser(c *fiber.Ctx) string {
+	return quizUtilsHelper.GetString(c.Locals(constants.ContextUid))
+}
+func (ctrl *AIController) GetVaultSettings(c *fiber.Ctx) error {
+	s, e := ctrl.aiSettingsModel.Get(ctrl.vaultUser(c))
+	if e == sql.ErrNoRows {
+		return utils.JSONSuccess(c, 200, fiber.Map{"configured": false})
+	}
+	if e != nil {
+		return utils.JSONError(c, 500, "could not read AI settings")
+	}
+	return utils.JSONSuccess(c, 200, fiber.Map{"configured": true, "provider": s.Provider, "baseUrl": s.BaseURL, "model": s.Model})
+}
+func (ctrl *AIController) SaveVaultSettings(c *fiber.Ctx) error {
+	u := ctrl.vaultUser(c)
+	var r vaultSettingsRequest
+	if json.Unmarshal(c.Body(), &r) != nil {
+		return utils.JSONFail(c, 400, "invalid AI settings")
+	}
+	cred, e := services.ResolveAICredentials(r.BaseURL, c.Get(constants.HeaderAIApiKey), r.Model)
+	if e != nil {
+		return ctrl.credentialError(c, e)
+	}
+	p := c.Get(constants.HeaderAIVaultPassword)
+	if e = services.ValidateAIVaultPassword(p); e != nil {
+		return utils.JSONFail(c, 400, e.Error())
+	}
+	cipher, salt, nonce, e := services.EncryptAIKey(u, []byte(p), []byte(cred.APIKey))
+	if e != nil {
+		return utils.JSONError(c, 500, "could not save AI settings")
+	}
+	s := models.AISettings{UserID: u, Provider: strings.TrimSpace(r.Provider), BaseURL: cred.BaseURL, Model: cred.Model, Ciphertext: cipher, Salt: salt, Nonce: nonce}
+	if e = ctrl.aiSettingsModel.Save(s); e != nil {
+		ctrl.logger.Error("save AI vault", zap.Error(e))
+		return utils.JSONError(c, 500, "could not save AI settings")
+	}
+	// Confirm the exact bytes persisted by this database can be decrypted before
+	// reporting success. This prevents a later unlock/generate failure.
+	stored, e := ctrl.aiSettingsModel.Get(u)
+	if e != nil {
+		return utils.JSONError(c, 500, "could not save AI settings")
+	}
+	plain, e := services.DecryptAIKey(u, stored, []byte(p))
+	if e != nil {
+		_ = ctrl.aiSettingsModel.Delete(u)
+		ctrl.logger.Error("saved AI vault failed verification", zap.Error(e))
+		return utils.JSONError(c, 500, "could not save AI settings")
+	}
+	for i := range plain {
+		plain[i] = 0
+	}
+	return ctrl.GetVaultSettings(c)
+}
+func (ctrl *AIController) UnlockVault(c *fiber.Ctx) error {
+	s, e := ctrl.aiSettingsModel.Get(ctrl.vaultUser(c))
+	if e != nil {
+		return utils.JSONFail(c, 404, "AI settings are not configured")
+	}
+	p, e := services.DecryptAIKey(ctrl.vaultUser(c), s, []byte(c.Get(constants.HeaderAIVaultPassword)))
+	if e != nil {
+		return utils.JSONFail(c, 401, e.Error())
+	}
+	for i := range p {
+		p[i] = 0
+	}
+	return utils.JSONSuccess(c, 200, fiber.Map{"unlocked": true})
+}
+func (ctrl *AIController) DeleteVault(c *fiber.Ctx) error {
+	if e := ctrl.aiSettingsModel.Delete(ctrl.vaultUser(c)); e != nil {
+		return utils.JSONError(c, 500, "could not delete AI settings")
+	}
+	return c.SendStatus(204)
 }
 
 func (ctrl *AIController) credentialError(c *fiber.Ctx, err error) error {
@@ -122,7 +226,7 @@ func (ctrl *AIController) Status(c *fiber.Ctx) error {
 //			  502: GenericResError
 //			  503: GenericResError
 func (ctrl *AIController) TestConnection(c *fiber.Ctx) error {
-	cred, err := ctrl.resolveCredentials(c)
+	cred, err := ctrl.resolveHeaderCredentials(c)
 	if err != nil {
 		return ctrl.credentialError(c, err)
 	}

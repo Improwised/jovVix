@@ -90,8 +90,7 @@ type ReqGenerateAIQuestions struct {
 }
 
 // AIQuestion is one generated question on the wire: the model emits it, the
-// preview renders it, and the browser posts it back on save. Explanation is
-// preview-only, no column stores it.
+// preview renders it, and the browser posts it back on save.
 type AIQuestion struct {
 	Question      string   `json:"question" validate:"required,max=500"`
 	QuestionType  string   `json:"question_type" validate:"omitempty,oneof=single survey"`
@@ -100,7 +99,6 @@ type AIQuestion struct {
 	Options       []string `json:"options" validate:"required,min=2,max=5,dive,max=400"`
 	OptionsMedia  string   `json:"options_media" validate:"omitempty,oneof=text code"`
 	CorrectAnswer int      `json:"correct_answer" validate:"omitempty,min=1,max=5"`
-	Explanation   string   `json:"explanation,omitempty" validate:"omitempty,max=500"`
 }
 
 type ReqCreateQuizFromAI struct {

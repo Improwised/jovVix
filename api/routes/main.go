@@ -328,6 +328,10 @@ func setupAIController(v1 fiber.Router, db *goqu.Database, logger *zap.Logger, m
 	ai.Use(middleware.KratosAuthenticated)
 
 	ai.Get("/status", aiController.Status)
+	ai.Get("/settings", aiController.GetVaultSettings)
+	ai.Put("/settings", aiController.SaveVaultSettings)
+	ai.Post("/settings/unlock", aiController.UnlockVault)
+	ai.Delete("/settings", aiController.DeleteVault)
 	ai.Get("/models", aiController.ListModels)
 	ai.Post("/test", aiController.TestConnection)
 	ai.Post("/questions/generate", aiController.GenerateQuestions)

@@ -81,6 +81,15 @@ const ready = ref(false);
 
 onMounted(() => {
   aiSettings.restoreApiKey();
+  aiSettings
+    .fetchSettings()
+    .then(() => {
+      aiSettings.restoreApiKey();
+      if (aiSettings.isConfigured && aiSettings.settings.apiKey) {
+        view.value = "generate";
+      }
+    })
+    .catch(() => null);
   ready.value = true;
 });
 
@@ -92,7 +101,9 @@ const maxQuestions = computed(
   () => aiStatus.value?.max_questions || DEFAULT_MAX_QUESTIONS
 );
 
-const canGenerate = computed(() => aiSettings.isConfigured);
+const canGenerate = computed(
+  () => aiSettings.isConfigured && !!aiSettings.settings.apiKey
+);
 
 const saveLabel = computed(() =>
   isAppend.value
@@ -154,9 +165,29 @@ watch(
   { immediate: true }
 );
 
-const saveAiSettings = (next) => {
-  aiSettings.setSettings(next);
-  view.value = "generate";
+const saveAiSettings = async (next) => {
+  try {
+    await aiSettings.setSettings(next);
+    view.value = "generate";
+  } catch (error) {
+    toast.error(readApiError(error, "Could not save AI settings."));
+  }
+};
+const unlockAiSettings = async (password) => {
+  try {
+    await aiSettings.unlock(password);
+    view.value = "generate";
+  } catch (error) {
+    toast.error(readApiError(error, "Vault Password is incorrect."));
+  }
+};
+const replaceAiSettings = async () => {
+  try {
+    await aiSettings.deleteSettings();
+    view.value = "settings";
+  } catch (error) {
+    toast.error(readApiError(error, "Could not clear AI settings."));
+  }
 };
 
 const discardResults = () => {
@@ -174,6 +205,10 @@ const requestClose = (next) => {
 };
 
 const handleGenerate = async () => {
+  if (!aiSettings.settings.apiKey) {
+    view.value = "settings";
+    return;
+  }
   const topic = form.value.topic.trim();
   const count = Number(form.value.number_of_questions);
 
@@ -240,7 +275,6 @@ const questionPayload = () =>
     options: question.options,
     options_media: question.options_media || "text",
     correct_answer: question.correct_answer || 0,
-    explanation: question.explanation || "",
   }));
 
 const createQuiz = async () => {
@@ -334,16 +368,21 @@ const handleSave = async () => {
     :close-on-backdrop="false"
     :title="modalTitle"
     :description="modalDescription"
+    class="md:max-w-[960px] lg:max-w-[1040px] xl:max-w-[1120px]"
     @update:model-value="requestClose"
   >
-    <div class="max-h-[62vh] overflow-y-auto pb-3 pr-1">
+    <div
+      class="max-h-[58dvh] overflow-y-auto pb-3 pr-1 sm:max-h-[62dvh] md:max-h-[66dvh] lg:max-h-[70dvh]"
+    >
       <Skeleton v-if="!ready" class="h-64 w-full" />
 
       <AiSettingsForm
         v-else-if="isSettingsView"
         :settings="aiSettings.settings"
-        :can-cancel="canGenerate"
+        :unlocked="!!aiSettings.settings.apiKey"
         @save="saveAiSettings"
+        @unlock="unlockAiSettings"
+        @replace="replaceAiSettings"
         @cancel="view = 'generate'"
       />
 
@@ -571,12 +610,6 @@ const handleSave = async () => {
               </li>
             </ul>
 
-            <p
-              v-if="question.explanation"
-              class="mt-3 font-body text-[14px] italic text-jv-muted"
-            >
-              {{ question.explanation }}
-            </p>
           </article>
         </section>
       </template>

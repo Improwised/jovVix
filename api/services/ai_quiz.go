@@ -125,7 +125,7 @@ Rules:
 - Do not number the questions. Do not prefix options with letters or numbers.
 - No two questions may test the same fact, and no two options within a question may be identical.
 - Each question must be answerable in about 30 seconds with no external material.
-- Write every question, option, explanation, and the quiz title and description in %s. Use plain text only: no markdown, no LaTeX, no HTML, no images.
+- Write every question, option, and the quiz title and description in %s. Use plain text only: no markdown, no LaTeX, no HTML, no images.
 - The JSON keys, and the values of "question_type", "question_media" and "options_media", always stay in English exactly as specified below, whatever language the questions are written in.
 
 Code (use only when the topic is about programming, otherwise set both media fields to "text"):
@@ -141,7 +141,7 @@ Question type:
 - "question_type" is "single" or "survey". No other value is ever allowed.
 - "single" is the default: exactly one option is factually correct.
 - "survey" is for a genuine opinion or preference question where no option is right or wrong, such as which approach the player prefers. Every option counts as correct and everyone scores.
-- Set "correct_answer" to 0 for a survey question, and write the "explanation" as one sentence about why the question is interesting rather than why an option is right.
+- Set "correct_answer" to 0 for a survey question.
 - Use survey sparingly: at most one in every five questions, and only when the topic genuinely has an opinion to canvass. Never dress up a factual question as a survey.
 
 Difficulty guidance: %s
@@ -149,9 +149,9 @@ Difficulty guidance: %s
 Also invent a quiz "title" of at most 50 characters and a one-sentence "description" of at most 150 characters, both plain text.
 
 Reply with exactly this JSON shape and no other keys:
-{"title":"...","description":"...","questions":[{"question":"...","question_type":"single","question_media":"text","resource":"","options":["...","...","...","..."],"options_media":"text","correct_answer":1,"explanation":"one short sentence saying why the correct option is right"}]}
+{"title":"...","description":"...","questions":[{"question":"...","question_type":"single","question_media":"text","resource":"","options":["...","...","...","..."],"options_media":"text","correct_answer":1}]}
 
-Every question object must contain all eight keys, even when the value is "". The "questions" array must contain exactly %d objects.`
+Every question object must contain all seven keys, even when the value is "". The "questions" array must contain exactly %d objects.`
 
 func NewAIQuizService(logger *zap.Logger, aiConfig *config.AIConfig) *AIQuizService {
 	client := resty.New().

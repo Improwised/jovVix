@@ -1469,17 +1469,13 @@
   },
   "definitions": {
     "AIQuestion": {
-      "description": "AIQuestion is one generated question on the wire: the model emits it, the\npreview renders it, and the browser posts it back on save. Explanation is\npreview-only, no column stores it.",
+      "description": "AIQuestion is one generated question on the wire: the model emits it, the\npreview renders it, and the browser posts it back on save.",
       "type": "object",
       "properties": {
         "correct_answer": {
           "type": "integer",
           "format": "int64",
           "x-go-name": "CorrectAnswer"
-        },
-        "explanation": {
-          "type": "string",
-          "x-go-name": "Explanation"
         },
         "options": {
           "type": "array",

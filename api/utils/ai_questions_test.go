@@ -20,7 +20,6 @@ func validAIQuestion() structs.AIQuestion {
 		Options:       []string{"Paris", "Rome", "Madrid", "Berlin"},
 		OptionsMedia:  constants.MediaText,
 		CorrectAnswer: 1,
-		Explanation:   "Paris has been the capital since 987.",
 	}
 }
 

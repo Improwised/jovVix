@@ -242,7 +242,6 @@ func NormalizeAIQuestions(raw []structs.AIQuestion, opts AIQuestionOptions) (AIN
 			Options:       options,
 			OptionsMedia:  optionsMedia,
 			CorrectAnswer: correctAnswer,
-			Explanation:   TruncateRunes(strings.TrimSpace(item.Explanation), constants.AIMaxExplanationLength),
 		})
 	}
 

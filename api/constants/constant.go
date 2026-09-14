@@ -387,9 +387,10 @@ const (
 	AICompletionsPath = "/chat/completions"
 	AIModelsPath      = "/models"
 
-	HeaderAIBaseUrl = "X-AI-Base-Url"
-	HeaderAIApiKey  = "X-AI-Api-Key"
-	HeaderAIModel   = "X-AI-Model"
+	HeaderAIBaseUrl       = "X-AI-Base-Url"
+	HeaderAIApiKey        = "X-AI-Api-Key"
+	HeaderAIModel         = "X-AI-Model"
+	HeaderAIVaultPassword = "X-AI-Vault-Password"
 
 	AIProviderBodyRedacted = "<omitted: caller supplied provider>"
 
@@ -406,7 +407,6 @@ const (
 	AIMaxResourceLength         = 1200
 	AIMaxOptionLength           = 400
 	AIMaxQuestionLength         = 500
-	AIMaxExplanationLength      = 500
 	AIMaxTitleLength            = 50
 	AIMaxDescriptionLength      = 150
 	AIResponseTokenBudget       = 400

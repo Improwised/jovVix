@@ -1,11 +1,12 @@
 import { defineStore } from "pinia";
 
-const KEY_STORAGE_ID = "ai-settings-key";
+const KEY_STORAGE_ID = "ai-vault-password";
 
 const emptySettings = () => ({
   provider: "",
   baseUrl: "",
   apiKey: "",
+  configured: false,
   model: "",
 });
 
@@ -33,15 +34,57 @@ export const useAiSettingsStore = defineStore(
   () => {
     const settings = ref(emptySettings());
 
-    // The key lives in sessionStorage so it does not outlive the browser session,
-    // and is left out of the persisted state so it never reaches localStorage.
+    // Only the Vault Password lives for this browser session; the provider key
+    // is encrypted in the database and never persisted by this store.
     const restoreApiKey = () => {
       settings.value.apiKey = readStoredKey();
     };
 
-    const setSettings = (next) => {
-      settings.value = { ...emptySettings(), ...next };
-      writeStoredKey(settings.value.apiKey);
+    const fetchSettings = async () => {
+      const response = await $fetch(
+        `${useRuntimeConfig().public.apiUrl}/ai/settings`,
+        { credentials: "include" }
+      );
+      settings.value = { ...emptySettings(), ...(response?.data || {}) };
+    };
+    const setSettings = async (next) => {
+      const headers = {
+        "X-AI-Api-Key": next.apiKey,
+        "X-AI-Vault-Password": next.vaultPassword,
+      };
+      const response = await $fetch(
+        `${useRuntimeConfig().public.apiUrl}/ai/settings`,
+        {
+          method: "PUT",
+          credentials: "include",
+          headers,
+          body: {
+            provider: next.provider,
+            baseUrl: next.baseUrl,
+            model: next.model,
+          },
+        }
+      );
+      settings.value = { ...emptySettings(), ...(response?.data || {}) };
+      writeStoredKey(next.vaultPassword);
+      settings.value.apiKey = next.vaultPassword;
+    };
+    const unlock = async (password) => {
+      await $fetch(`${useRuntimeConfig().public.apiUrl}/ai/settings/unlock`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "X-AI-Vault-Password": password },
+      });
+      settings.value.apiKey = password;
+      writeStoredKey(password);
+    };
+    const deleteSettings = async () => {
+      await $fetch(`${useRuntimeConfig().public.apiUrl}/ai/settings`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      settings.value = emptySettings();
+      writeStoredKey("");
     };
 
     const clear = () => {
@@ -50,27 +93,29 @@ export const useAiSettingsStore = defineStore(
     };
 
     const isConfigured = computed(
-      () => !!settings.value.baseUrl && !!settings.value.model
+      () =>
+        !!settings.value.configured &&
+        !!settings.value.baseUrl &&
+        !!settings.value.model
     );
 
     const aiHeaders = () => {
       if (!isConfigured.value) return {};
 
       const headers = {
-        "X-AI-Base-Url": settings.value.baseUrl,
-        "X-AI-Model": settings.value.model,
+        "X-AI-Vault-Password": settings.value.apiKey,
       };
-      if (settings.value.apiKey) {
-        headers["X-AI-Api-Key"] = settings.value.apiKey;
-      }
       return headers;
     };
 
     return {
       settings,
       setSettings,
+      unlock,
+      deleteSettings,
       clear,
       restoreApiKey,
+      fetchSettings,
       isConfigured,
       aiHeaders,
     };
