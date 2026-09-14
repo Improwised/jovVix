@@ -158,16 +158,15 @@ func (ctrl *UserPlayedQuizeController) PlayedQuizValidation(c *fiber.Ctx) error 
 	}
 	ctrl.logger.Debug("userPlayedQuizModel.CreateUserPlayedQuizIfNotExists success", zap.Any("userPlayedQuizId", userPlayedQuizId))
 
-	// insert initial records of question if user is new for quiz(isNonExistingParticipants == 2 => new user)
-	if isNonExistingParticipants == 2 {
-		ctrl.logger.Debug("userQuizResponseModel.GetQuestionsCopy called", zap.Any("userPlayedQuizId", userPlayedQuizId), zap.Any("sessionID", session.ID))
-		err = ctrl.userQuizResponseModel.GetQuestionsCopy(userPlayedQuizId, session.ID)
-		if err != nil {
-			ctrl.logger.Error("error while get question copy", zap.Error(err))
-			return utils.JSONFail(c, http.StatusInternalServerError, "error while get question copy")
-		}
-		ctrl.logger.Debug("userQuizResponseModel.GetQuestionsCopy success")
+	// Ensure response rows on every validation. This repairs a partially-created
+	// participant from a previously failed join without duplicating existing rows.
+	ctrl.logger.Debug("userQuizResponseModel.GetQuestionsCopy called", zap.Any("userPlayedQuizId", userPlayedQuizId), zap.Any("sessionID", session.ID), zap.Int("participant_status", isNonExistingParticipants))
+	err = ctrl.userQuizResponseModel.GetQuestionsCopy(userPlayedQuizId, session.ID)
+	if err != nil {
+		ctrl.logger.Error("error while get question copy", zap.Error(err))
+		return utils.JSONFail(c, http.StatusInternalServerError, "error while get question copy")
 	}
+	ctrl.logger.Debug("userQuizResponseModel.GetQuestionsCopy success")
 
 	ctrl.logger.Debug("UserPlayedQuizeController.PlayedQuizValidation success", zap.Any("userPlayedQuizId", userPlayedQuizId.String()))
 

@@ -187,12 +187,16 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 		return
 	}
 
+	userPlayedQuizId, err := qc.userPlayedQuizModel.GetUserPlayedQuizID(userId, session.ID)
+	if err != nil && err != sql.ErrNoRows {
+		qc.logger.Error("error getting player quiz for option randomization", zap.Error(err))
+	}
+
 	// when user join at that time publish userName to admin
 	publishUserOnJoin(qc, response, user.FirstName, userId, user.ImageKey, session.ID.String())
 	response.Action = constants.QuizQuestionStatus
-	onConnectHandleUser(c, qc, &response, session, &JoinMu)
-	// userPlayedQuizId := quizUtilsHelper.GetString(c.Locals(constants.CurrentUserQuiz))
-	handleQuestion(c, qc, session, response, isUserConnected, &JoinMu)
+	onConnectHandleUser(c, qc, &response, session, userPlayedQuizId, &JoinMu)
+	handleQuestion(c, qc, session, response, userPlayedQuizId, isUserConnected, &JoinMu)
 }
 
 func publishUserOnJoin(qc *quizSocketController, quizResponse QuizSendResponse, userName string, userId string, avatar string, sessionId string) {
@@ -258,7 +262,7 @@ func publishUserOnJoin(qc *quizSocketController, quizResponse QuizSendResponse, 
 	}
 }
 
-func handleQuestion(c *websocket.Conn, qc *quizSocketController, session models.ActiveQuiz, response QuizSendResponse, isUserConnected chan bool, joinMu *sync.Mutex) {
+func handleQuestion(c *websocket.Conn, qc *quizSocketController, session models.ActiveQuiz, response QuizSendResponse, userPlayedQuizId uuid.UUID, isUserConnected chan bool, joinMu *sync.Mutex) {
 	pubsub := qc.redis.PubSubModel.Client.Subscribe(qc.redis.PubSubModel.Ctx, session.ID.String())
 	defer func() {
 		if pubsub != nil {
@@ -286,6 +290,11 @@ func handleQuestion(c *websocket.Conn, qc *quizSocketController, session models.
 			}
 
 			event := quizUtilsHelper.GetString(message["event"])
+			if event == constants.EventSendQuestion && userPlayedQuizId != uuid.Nil {
+				if err := applyPlayerOptionOrder(message, qc, userPlayedQuizId); err != nil {
+					qc.logger.Error("error applying player option order", zap.Error(err))
+				}
+			}
 
 			err = func() error {
 				joinMu.Lock()
@@ -304,7 +313,7 @@ func handleQuestion(c *websocket.Conn, qc *quizSocketController, session models.
 	}
 }
 
-func onConnectHandleUser(c *websocket.Conn, qc *quizSocketController, response *QuizSendResponse, session models.ActiveQuiz, joinMu *sync.Mutex) {
+func onConnectHandleUser(c *websocket.Conn, qc *quizSocketController, response *QuizSendResponse, session models.ActiveQuiz, userPlayedQuizId uuid.UUID, joinMu *sync.Mutex) {
 	if session.CurrentQuestion.Valid {
 
 		totalQuestion, err := qc.questionModel.GetTotalQuestionCount(session.ID.String())
@@ -323,6 +332,15 @@ func onConnectHandleUser(c *websocket.Conn, qc *quizSocketController, response *
 			qc.logger.Error("unable to get the current question and the question id was "+session.CurrentQuestion.String, zap.Error(err))
 		}
 
+		options := currentQuestion.Options
+		if userPlayedQuizId != uuid.Nil {
+			options, err = qc.userQuizResponseModel.GetOptionsForPlayer(userPlayedQuizId, currentQuestion.ID, currentQuestion.Options)
+			if err != nil {
+				qc.logger.Error("error getting player-specific option order", zap.Error(err))
+				options = currentQuestion.Options
+			}
+		}
+
 		response.Action = constants.ActionSendQuestion
 		remainingSeconds := currentQuestion.DurationInSeconds - int(time.Since(session.QuestionDeliveryTime.Time).Seconds())
 		if remainingSeconds < 0 {
@@ -336,7 +354,7 @@ func onConnectHandleUser(c *websocket.Conn, qc *quizSocketController, response *
 			"start_time":     session.QuestionDeliveryTime.Time.Format(time.RFC3339),
 			"server_time":    time.Now().UTC().Format(time.RFC3339Nano),
 			"question":       currentQuestion.Question,
-			"options":        currentQuestion.Options,
+			"options":        options,
 			"totalQuestions": totalQuestion,
 			"question_media": currentQuestion.QuestionMedia,
 			"options_media":  currentQuestion.OptionsMedia,
@@ -367,6 +385,46 @@ func onConnectHandleUser(c *websocket.Conn, qc *quizSocketController, response *
 			qc.logger.Error(fmt.Sprintf("socket error send waiting message: %s event, %s action", constants.EventJoinQuiz, response.Action), zap.Error(err))
 		}
 	}
+}
+
+// applyPlayerOptionOrder replaces the canonical options in a Redis question
+// broadcast with the order saved for the connected participant.
+func applyPlayerOptionOrder(message map[string]any, qc *quizSocketController, userPlayedQuizId uuid.UUID) error {
+	response, ok := message["response"].(map[string]any)
+	if !ok {
+		return fmt.Errorf("invalid question response payload")
+	}
+	data, ok := response["data"].(map[string]any)
+	if !ok {
+		return fmt.Errorf("invalid question data payload")
+	}
+	questionIDString, ok := data["id"].(string)
+	if !ok {
+		return fmt.Errorf("invalid question id in payload")
+	}
+	questionID, err := uuid.Parse(questionIDString)
+	if err != nil {
+		return err
+	}
+	rawOptions, ok := data["options"].(map[string]any)
+	if !ok {
+		return fmt.Errorf("invalid question options payload")
+	}
+	options := make(map[string]string, len(rawOptions))
+	for key, value := range rawOptions {
+		option, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("invalid option text for key %s", key)
+		}
+		options[key] = option
+	}
+
+	shuffledOptions, err := qc.userQuizResponseModel.GetOptionsForPlayer(userPlayedQuizId, questionID, options)
+	if err != nil {
+		return err
+	}
+	data["options"] = shuffledOptions
+	return nil
 }
 
 // function to update user IsAlive status
@@ -1380,6 +1438,13 @@ func (qc *quizSocketController) SetAnswer(c *fiber.Ctx) error {
 		qc.logger.Error(constants.ErrQuestionNotActive)
 		return utils.JSONFail(c, http.StatusBadRequest, constants.ErrQuestionNotActive)
 	}
+
+	translatedAnswerKeys, err := qc.userQuizResponseModel.TranslateAnswerKeys(currentQuizId, answer.QuestionId, answer.AnswerKeys)
+	if err != nil {
+		qc.logger.Error("error translating player answer keys", zap.Error(err))
+		return utils.JSONFail(c, http.StatusBadRequest, "invalid answer option")
+	}
+	answer.AnswerKeys = translatedAnswerKeys
 
 	answers, answerPoints, answerDurationInSeconds, questionType, err := qc.questionModel.GetAnswersPointsDurationType(answer.QuestionId.String())
 	if err != nil {

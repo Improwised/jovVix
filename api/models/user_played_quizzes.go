@@ -43,6 +43,21 @@ func InitUserPlayedQuizModel(db *goqu.Database) *UserPlayedQuizModel {
 	}
 }
 
+func (model *UserPlayedQuizModel) GetUserPlayedQuizID(userId string, activeQuizId uuid.UUID) (uuid.UUID, error) {
+	var userPlayedQuizId uuid.UUID
+	found, err := model.db.From(UserPlayedQuizTable).
+		Select("id").
+		Where(goqu.Ex{"user_id": userId, "active_quiz_id": activeQuizId}).
+		ScanVal(&userPlayedQuizId)
+	if err != nil {
+		return uuid.UUID{}, err
+	}
+	if !found {
+		return uuid.UUID{}, sql.ErrNoRows
+	}
+	return userPlayedQuizId, nil
+}
+
 // return: (uuid, int, err) -> user_quiz_session_id, status, err
 // status:
 //
