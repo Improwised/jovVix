@@ -42,7 +42,7 @@ const showEditForm = () => {
     <div class="flex min-w-0 flex-1 items-center gap-3">
       <span class="relative shrink-0">
         <NuxtImg
-          src="https://api.dicebear.com/9.x/bottts/svg?seed=Jade"
+          src="https://api.dicebear.com/10.x/clay/svg?seed=Jade"
           alt="User avatar"
           class="size-10 rounded-full border-[2px] border-jv-ink bg-jv-canvas"
           width="40"

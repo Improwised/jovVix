@@ -25,7 +25,7 @@ vi.mock("../../composables/avatar.js", () => {
   return {
     getAvatarUrlByName: vi
       .fn()
-      .mockReturnValue("https://api.dicebear.com/9.x/bottts/svg?seed=Sophia"),
+      .mockReturnValue("https://api.dicebear.com/10.x/clay/svg?seed=Sophia"),
   };
 });
 
@@ -61,7 +61,7 @@ describe("WinnerCard test", () => {
 
     const avatarImg = wrapper.find("img.avatar-image");
     expect(avatarImg.attributes("src")).toContain(
-      "https://api.dicebear.com/9.x/bottts/svg?seed=Sophia"
+      "https://api.dicebear.com/10.x/clay/svg?seed=Sophia"
     );
   });
 

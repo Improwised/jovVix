@@ -25,7 +25,7 @@ const avatar = computed(() => {
       class="jv-card flex items-center gap-3 border-2 border-jv-ink bg-jv-white py-1.5 pl-1.5 pr-5 shadow-brutal-sm"
     >
       <NuxtImg
-        :src="avatar || 'https://api.dicebear.com/9.x/bottts/svg?seed=Eden'"
+        :src="avatar || 'https://api.dicebear.com/10.x/clay/svg?seed=Eden'"
         :alt="props.userName"
         width="60"
         height="60"

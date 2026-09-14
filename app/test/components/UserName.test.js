@@ -36,7 +36,7 @@ describe("UserName test", () => {
 
     expect(userData.getUserData).toBeCalled();
     expect(avatarImg.attributes("src")).toBe(
-      "https://api.dicebear.com/9.x/bottts/svg?seed=Sophia"
+      "https://api.dicebear.com/10.x/clay/svg?seed=Sophia"
     );
     expect(wrapper.text()).toContain("John Doe");
   });
@@ -45,7 +45,7 @@ describe("UserName test", () => {
     wrapper = mountComponent();
     const avatarImg = wrapper.find("img");
     expect(avatarImg.attributes("src")).toBe(
-      "https://api.dicebear.com/9.x/bottts/svg?seed=Eden"
+      "https://api.dicebear.com/10.x/clay/svg?seed=Eden"
     );
     expect(wrapper.text()).toContain("John Doe");
   });

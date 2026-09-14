@@ -25,7 +25,7 @@ describe("UserAnalyticsSpace test", () => {
   it("renders the component with provided props", () => {
     expect(wrapper.find(".name").text()).toContain("John (john_doe)");
     expect(wrapper.find(".avatar").attributes("src")).toBe(
-      "https://api.dicebear.com/9.x/bottts/svg?seed=Eden"
+      "https://api.dicebear.com/10.x/clay/svg?seed=Eden"
     );
   });
 
@@ -34,7 +34,7 @@ describe("UserAnalyticsSpace test", () => {
 
     const avatarImg = wrapper.find(".avatar");
     expect(avatarImg.attributes("src")).toBe(
-      "https://api.dicebear.com/9.x/bottts/svg?seed=Eden"
+      "https://api.dicebear.com/10.x/clay/svg?seed=Eden"
     );
   });
 });
