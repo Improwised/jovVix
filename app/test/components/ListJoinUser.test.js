@@ -46,12 +46,12 @@ describe("ListJoinUser test", () => {
 
     expect(chips[0].text()).toContain("Alice");
     expect(chips[0].find("img").attributes("src")).toBe(
-      "https://api.dicebear.com/9.x/bottts/svg?seed=Eden"
+      "https://api.dicebear.com/10.x/clay/svg?seed=Eden"
     );
 
     expect(chips[1].text()).toContain("Bob");
     expect(chips[1].find("img").attributes("src")).toBe(
-      "https://api.dicebear.com/9.x/bottts/svg?seed=Eden"
+      "https://api.dicebear.com/10.x/clay/svg?seed=Eden"
     );
   });
 

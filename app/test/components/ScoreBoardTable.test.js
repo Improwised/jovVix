@@ -74,10 +74,10 @@ describe("ScoreBoardTable.vue", () => {
   it("renders avatar URLs correctly", () => {
     const avatars = wrapper.findAll("img");
     expect(avatars[0].attributes("src")).toBe(
-      "https://api.dicebear.com/9.x/bottts/svg?seed=Sophia&scale=75"
+      "https://api.dicebear.com/10.x/clay/svg?seed=Sophia&scale=75"
     );
     expect(avatars[1].attributes("src")).toBe(
-      "https://api.dicebear.com/9.x/bottts/svg?seed=Jude&scale=75"
+      "https://api.dicebear.com/10.x/clay/svg?seed=Jude&scale=75"
     );
   });
 });
