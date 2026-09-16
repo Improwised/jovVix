@@ -16,6 +16,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { useKeyboardShortcuts } from "~~/composables/useKeyboardShortcuts";
 
 const musicStore = useMusicStore();
 const { getMusic, setMusic } = musicStore;
@@ -227,7 +228,7 @@ function handleOptionClick(key) {
 }
 
 function handleSkip(e) {
-  e.preventDefault();
+  e?.preventDefault();
   if (skipCooling.value) return;
   skipCooling.value = true;
   clearTimeout(skipCoolTimer);
@@ -236,6 +237,17 @@ function handleSkip(e) {
   }, SKIP_COOLDOWN_MS);
   emits("askSkip");
 }
+
+useKeyboardShortcuts({
+  // Options are keyed "1".."N" — a survey question can have more than four.
+  onDigit: (key) => {
+    if (question.value?.options?.[key] === undefined) return;
+    handleOptionClick(key);
+  },
+  onEnter: () => {
+    if (props.isAdmin) handleSkip();
+  },
+});
 
 // Cleanup on unmount
 onUnmounted(() => {

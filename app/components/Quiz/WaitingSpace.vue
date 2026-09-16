@@ -37,6 +37,7 @@ import { useUsersStore } from "~~/store/users";
 import { storeToRefs } from "pinia";
 import usecopyToClipboard from "~~/composables/copy_to_clipboard";
 import { getAvatarUrlByName } from "~~/composables/avatar";
+import { useKeyboardShortcuts } from "~~/composables/useKeyboardShortcuts";
 
 const invitationCodeStore = useInvitationCodeStore();
 const { invitationCode } = storeToRefs(invitationCodeStore);
@@ -139,10 +140,16 @@ watch(
 
 // event handlers
 function start_quiz(e) {
-  e.preventDefault();
+  e?.preventDefault();
   startQuiz.value = true;
   emits("startQuiz");
 }
+
+useKeyboardShortcuts({
+  onEnter: () => {
+    if (props.isAdmin) start_quiz();
+  },
+});
 
 // main function
 function handleEvent(message) {
