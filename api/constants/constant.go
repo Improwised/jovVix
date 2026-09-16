@@ -425,6 +425,11 @@ const (
 	AIMaxAvoidQuestionLength    = 120
 	AIMaxProviderReasonLength   = 200
 
+	AIDefaultGenRateLimit   = 10
+	AIDefaultGenRateWindow  = 60
+	AIDefaultMetaRateLimit  = 30
+	AIDefaultMetaRateWindow = 60
+
 	AIQuestionsTruncated     = "the ai returned more questions than requested, extras were dropped"
 	NoticeAIFewerQuestions   = "the ai returned %d of the %d questions you asked for"
 	NoticeAIDroppedQuestions = "%d generated questions were dropped because they were malformed"

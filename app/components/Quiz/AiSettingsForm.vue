@@ -598,7 +598,7 @@ watch(
             <ExternalLink class="size-3" :stroke-width="2.6" />
           </a>
           <span v-if="!selectedProvider?.needsKey">
-            Not needed for a local model.
+            Optional for custom endpoints.
           </span>
           <button
             v-if="form.apiKey"

@@ -609,7 +609,6 @@ const handleSave = async () => {
                 />
               </li>
             </ul>
-
           </article>
         </section>
       </template>

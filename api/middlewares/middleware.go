@@ -3,6 +3,7 @@ package middlewares
 import (
 	"github.com/Improwised/jovvix/api/config"
 	"github.com/Improwised/jovvix/api/models"
+	"github.com/Improwised/jovvix/api/pkg/redis"
 	"github.com/doug-martin/goqu/v9"
 	"go.uber.org/zap"
 )
@@ -13,9 +14,10 @@ type Middleware struct {
 	Db                 *goqu.Database
 	userModel          *models.UserModel
 	sharedQuizzesModel *models.SharedQuizzesModel
+	rateLimiter        *redis.PubSubModel
 }
 
-func NewMiddleware(cfg config.AppConfig, logger *zap.Logger, db *goqu.Database) Middleware {
+func NewMiddleware(cfg config.AppConfig, logger *zap.Logger, db *goqu.Database, rateLimiter *redis.PubSubModel) Middleware {
 
 	userModel, _ := models.InitUserModel(db, logger)
 	sharedQuizzesModel := models.InitSharedQuizzesModel(db, logger)
@@ -26,5 +28,6 @@ func NewMiddleware(cfg config.AppConfig, logger *zap.Logger, db *goqu.Database) 
 		Db:                 db,
 		userModel:          &userModel,
 		sharedQuizzesModel: sharedQuizzesModel,
+		rateLimiter:        rateLimiter,
 	}
 }
