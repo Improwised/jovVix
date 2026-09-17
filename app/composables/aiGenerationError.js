@@ -2,13 +2,19 @@ const errorStatus = (error) =>
   error?.statusCode ||
   error?.status ||
   error?.response?.status ||
-  error?.data?.statusCode;
+  error?.data?.statusCode ||
+  error?.data?.code;
 
 const errorText = (error) =>
   [error?.data?.data, error?.data?.message, error?.message]
     .filter(Boolean)
     .join(" ")
     .toLowerCase();
+
+const hasInvalidAISettings = (text) =>
+  /provider rejected that api key|api key is not allowed|endpoint or model not found|provider rejected the request|model name is probably wrong|invalid api key/.test(
+    text
+  );
 
 export const readAIGenerationError = (error) => {
   const status = errorStatus(error);
@@ -40,7 +46,7 @@ export const readAIGenerationError = (error) => {
     };
   }
 
-  if ([400, 401, 403].includes(status)) {
+  if ([400, 401, 403].includes(status) || hasInvalidAISettings(text)) {
     return {
       message:
         "Your AI settings need attention. Check the API key and selected model, then try again.",

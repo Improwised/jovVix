@@ -55,6 +55,21 @@ describe("AI generation errors", () => {
     );
   });
 
+  it("sends provider key and model failures to AI settings", () => {
+    for (const message of [
+      "the provider rejected that api key",
+      "that api key is not allowed to use this model or endpoint",
+      "endpoint or model not found. check the base url",
+      "the provider rejected the request. the model name is probably wrong",
+    ]) {
+      expect(readAIGenerationError({ data: { code: 502, message } })).toEqual({
+        message:
+          "Your AI settings need attention. Check the API key and selected model, then try again.",
+        needsSettings: true,
+      });
+    }
+  });
+
   it("uses a safe retry message for unknown failures", () => {
     expect(readAIGenerationError(new Error("network failed"))).toEqual({
       message: "Could not generate questions. Try again.",
