@@ -17,6 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import JvSelect from "@/components/ui/select/JvSelect.vue";
 import { useAiSettingsStore } from "~/store/aiSettings";
 import { readApiError } from "@/composables/apiError";
+import { readAIGenerationError } from "@/composables/aiGenerationError";
 
 const MIN_QUESTIONS = 1;
 const DEFAULT_MAX_QUESTIONS = 20;
@@ -74,6 +75,7 @@ const form = ref({
 const generating = ref(false);
 const generated = ref(null);
 const generateError = ref("");
+const generationNeedsSettings = ref(false);
 const saving = ref(false);
 const view = ref("generate");
 const aiStatus = ref(null);
@@ -193,6 +195,7 @@ const replaceAiSettings = async () => {
 const discardResults = () => {
   generated.value = null;
   generateError.value = "";
+  generationNeedsSettings.value = false;
 };
 
 const requestClose = (next) => {
@@ -231,6 +234,7 @@ const handleGenerate = async () => {
   try {
     generating.value = true;
     generateError.value = "";
+    generationNeedsSettings.value = false;
 
     const response = await $fetch(generateUrl(), {
       method: "POST",
@@ -248,7 +252,7 @@ const handleGenerate = async () => {
     const payload = response?.data;
     if (!payload?.questions?.length) {
       generateError.value =
-        "The AI returned no questions. Try a more specific topic.";
+        "The AI did not return usable questions. Try again.";
       toast.error(generateError.value);
       return;
     }
@@ -256,10 +260,9 @@ const handleGenerate = async () => {
     generated.value = payload;
     toast.success(`Generated ${payload.questions.length} questions.`);
   } catch (error) {
-    generateError.value = readApiError(
-      error,
-      "Could not generate questions. Try again."
-    );
+    const generationError = readAIGenerationError(error);
+    generateError.value = generationError.message;
+    generationNeedsSettings.value = generationError.needsSettings;
     toast.error(generateError.value);
   } finally {
     generating.value = false;
@@ -506,13 +509,21 @@ const handleSave = async () => {
           <div class="mt-4 flex flex-wrap gap-3">
             <NavigationLink
               url-name="Try again"
-              class="bg-jv-white py-2 font-[500]"
+              :class="
+                generationNeedsSettings
+                  ? 'bg-jv-white py-2 font-[500]'
+                  : 'bg-jv-coral py-2 font-[500] text-white'
+              "
               :disabled="generating"
               @click="handleGenerate"
             />
             <NavigationLink
               url-name="Fix AI settings"
-              class="bg-jv-yellow py-2 font-[500]"
+              :class="
+                generationNeedsSettings
+                  ? 'bg-jv-coral py-2 font-[500] text-white'
+                  : 'bg-jv-yellow py-2 font-[500]'
+              "
               @click="view = 'settings'"
             >
               <Settings2 class="size-[18px]" :stroke-width="2.4" />
