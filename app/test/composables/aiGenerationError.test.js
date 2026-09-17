@@ -65,15 +65,26 @@ describe("AI generation errors", () => {
 
 describe("AI provider labels", () => {
   it("marks only Groq as recommended", () => {
-    const labels = AI_PROVIDERS.map((provider) =>
-      provider.id === "groq"
-        ? "Groq (Recommended · free tier)"
-        : `${provider.label}${provider.freeTier ? " (free tier)" : ""}`
-    );
+    const providers = AI_PROVIDERS.map((provider) => ({
+      label: `${provider.label}${provider.freeTier ? " (free tier)" : ""}`,
+      badge: provider.id === "groq" ? "Recommended" : "",
+    }));
 
-    expect(labels).toContain("Groq (Recommended · free tier)");
+    expect(providers).toContainEqual({
+      label: "Groq (free tier)",
+      badge: "Recommended",
+    });
     expect(
-      labels.filter((label) => label.includes("Recommended"))
+      providers.filter((provider) => provider.badge === "Recommended")
     ).toHaveLength(1);
+  });
+});
+
+describe("AI provider defaults", () => {
+  it("uses GPT-5 Mini for OpenAI quiz generation", () => {
+    const openai = AI_PROVIDERS.find((provider) => provider.id === "openai");
+
+    expect(openai.model).toBe("gpt-5-mini");
+    expect(openai.verifiedModels[0]).toBe("gpt-5-mini");
   });
 });

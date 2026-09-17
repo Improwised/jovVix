@@ -108,10 +108,8 @@ const TYPED_MODEL = "__typed__";
 const providerOptions = computed(() =>
   AI_PROVIDERS.map((provider) => ({
     value: provider.id,
-    label:
-      provider.id === "groq"
-        ? "Groq (Recommended · free tier)"
-        : `${provider.label}${provider.freeTier ? " (free tier)" : ""}`,
+    label: `${provider.label}${provider.freeTier ? " (free tier)" : ""}`,
+    badge: provider.id === "groq" ? "Recommended" : "",
   }))
 );
 
