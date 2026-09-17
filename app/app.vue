@@ -1,4 +1,9 @@
 <template>
+  <a
+    href="#main-content"
+    class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:bg-white focus:text-black focus:px-4 focus:py-2 focus:rounded"
+    >Skip to main content</a
+  >
   <NuxtLoadingIndicator />
   <div class="bg-jv-canvas text-jv-ink font-body">
     <NuxtLayout>
