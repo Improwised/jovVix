@@ -109,6 +109,7 @@ const providerOptions = computed(() =>
   AI_PROVIDERS.map((provider) => ({
     value: provider.id,
     label: `${provider.label}${provider.freeTier ? " (free tier)" : ""}`,
+    badge: provider.id === "groq" ? "Recommended" : "",
   }))
 );
 

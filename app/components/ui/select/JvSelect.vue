@@ -42,6 +42,9 @@ const items = computed(() =>
 const selectedLabel = computed(
   () => items.value.find((item) => item.value === props.modelValue)?.label || ""
 );
+const selectedItem = computed(() =>
+  items.value.find((item) => item.value === props.modelValue)
+);
 </script>
 
 <template>
@@ -62,6 +65,12 @@ const selectedLabel = computed(
     >
       <span v-if="selectedLabel" class="truncate">{{ selectedLabel }}</span>
       <span v-else class="truncate text-jv-muted">{{ placeholder }}</span>
+      <span
+        v-if="selectedItem?.badge"
+        class="ml-auto shrink-0 text-[17px] font-semibold text-jv-ink"
+      >
+        {{ selectedItem.badge }}
+      </span>
       <ChevronDown
         class="size-5 shrink-0 text-jv-ink"
         :stroke-width="2.6"
@@ -82,7 +91,15 @@ const selectedLabel = computed(
             :value="item.value"
             class="flex cursor-pointer items-center justify-between gap-3 px-3 py-2.5 text-[16px] font-semibold text-jv-ink outline-none data-[highlighted]:bg-jv-yellow/50 data-[state=checked]:bg-jv-mint/50"
           >
-            <SelectItemText class="truncate">{{ item.label }}</SelectItemText>
+            <SelectItemText class="min-w-0 flex-1 truncate">
+              {{ item.label }}
+            </SelectItemText>
+            <span
+              v-if="item.badge"
+              class="ml-auto shrink-0 text-[16px] font-semibold text-jv-ink"
+            >
+              {{ item.badge }}
+            </span>
             <SelectItemIndicator>
               <Check
                 class="size-4 shrink-0"
