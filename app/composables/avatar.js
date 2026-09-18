@@ -1,7 +1,23 @@
 const avatars = [
-  "Sophia", "Jude", "Jade", "Ryan", "Adrian", "Chase", "Nolan",
-  "Sadie", "Brian", "Aidan", "Destiny", "Maria", "Kingston", "Andrea",
-  "Vivian", "Eden", "Wyatt", "Sawyer", "Jocelyn",
+  "Sophia",
+  "Jude",
+  "Jade",
+  "Ryan",
+  "Adrian",
+  "Chase",
+  "Nolan",
+  "Sadie",
+  "Brian",
+  "Aidan",
+  "Destiny",
+  "Maria",
+  "Kingston",
+  "Andrea",
+  "Vivian",
+  "Eden",
+  "Wyatt",
+  "Sawyer",
+  "Jocelyn",
 ];
 
 // Function to get a random avatar
@@ -13,5 +29,7 @@ export const getRandomAvatarName = () => {
 // Function to get avatar URL by name
 export const getAvatarUrlByName = (name) => {
   const seed = avatars.includes(name) ? name : "Eden";
-  return `https://api.dicebear.com/10.x/clay/svg?seed=${encodeURIComponent(seed)}`;
+  return `https://api.dicebear.com/10.x/clay/svg?seed=${encodeURIComponent(
+    seed
+  )}`;
 };

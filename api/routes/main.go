@@ -64,7 +64,7 @@ func Setup(app *fiber.App, goqu *goqu.Database, logger *zap.Logger, config confi
 	}
 
 	// middleware initialization
-	middleware := middlewares.NewMiddleware(config, logger, goqu, redis.PubSubModel)
+	middleware := middlewares.NewMiddleware(config, logger, goqu)
 
 	v1 := router.Group("/v1")
 
@@ -325,7 +325,7 @@ func setupAIController(v1 fiber.Router, db *goqu.Database, logger *zap.Logger, m
 	}
 
 	ai := v1.Group("/ai")
-	ai.Use(middleware.KratosAuthenticated, middleware.AIRateLimit())
+	ai.Use(middleware.KratosAuthenticated)
 
 	ai.Get("/status", aiController.Status)
 	ai.Get("/settings", aiController.GetVaultSettings)
