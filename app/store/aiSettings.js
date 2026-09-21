@@ -8,6 +8,7 @@ const emptySettings = () => ({
   apiKey: "",
   configured: false,
   model: "",
+  maskedApiKey: "",
 });
 
 const readStoredKey = () => {
@@ -41,9 +42,11 @@ export const useAiSettingsStore = defineStore(
     };
 
     const fetchSettings = async () => {
+      const storedKey = readStoredKey();
+      const headers = storedKey ? { "X-AI-Vault-Password": storedKey } : {};
       const response = await $fetch(
         `${useRuntimeConfig().public.apiUrl}/ai/settings`,
-        { credentials: "include" }
+        { credentials: "include", headers }
       );
       settings.value = { ...emptySettings(), ...(response?.data || {}) };
     };

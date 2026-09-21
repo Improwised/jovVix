@@ -349,6 +349,7 @@ watch(
         <span>Provider: {{ form.provider }}</span
         ><span>Base URL: {{ form.baseUrl }}</span
         ><span>Model: {{ form.model }}</span>
+        <span v-if="form.maskedApiKey">API key: {{ form.maskedApiKey }}</span>
       </div>
       <div class="flex justify-end gap-3">
         <NavigationLink

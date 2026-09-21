@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/Improwised/jovvix/api/config"
 	"github.com/Improwised/jovvix/api/constants"
@@ -84,6 +85,17 @@ type vaultSettingsRequest struct {
 func (ctrl *AIController) vaultUser(c *fiber.Ctx) string {
 	return quizUtilsHelper.GetString(c.Locals(constants.ContextUid))
 }
+
+// maskAPIKey shows the first/last 4 chars and replaces the middle with bullets.
+func maskAPIKey(key string) string {
+	runes := []rune(key)
+	n := utf8.RuneCountInString(key)
+	if n < 9 {
+		return strings.Repeat("•", 8)
+	}
+	return string(runes[:4]) + strings.Repeat("•", n-8) + string(runes[n-4:])
+}
+
 func (ctrl *AIController) GetVaultSettings(c *fiber.Ctx) error {
 	s, e := ctrl.aiSettingsModel.Get(ctrl.vaultUser(c))
 	if e == sql.ErrNoRows {
@@ -92,7 +104,19 @@ func (ctrl *AIController) GetVaultSettings(c *fiber.Ctx) error {
 	if e != nil {
 		return utils.JSONError(c, 500, "could not read AI settings")
 	}
-	return utils.JSONSuccess(c, 200, fiber.Map{"configured": true, "provider": s.Provider, "baseUrl": s.BaseURL, "model": s.Model})
+
+	resp := fiber.Map{"configured": true, "provider": s.Provider, "baseUrl": s.BaseURL, "model": s.Model}
+
+	if p := c.Get(constants.HeaderAIVaultPassword); p != "" {
+		if plain, err := services.DecryptAIKey(ctrl.vaultUser(c), s, []byte(p)); err == nil {
+			resp["maskedApiKey"] = maskAPIKey(string(plain))
+			for i := range plain {
+				plain[i] = 0
+			}
+		}
+	}
+
+	return utils.JSONSuccess(c, 200, resp)
 }
 func (ctrl *AIController) SaveVaultSettings(c *fiber.Ctx) error {
 	u := ctrl.vaultUser(c)
