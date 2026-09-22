@@ -1,7 +1,7 @@
 import { describe, it, expect, afterEach, vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import { h } from "vue";
-import { useKeyboardShortcuts } from "~/composables/useKeyboardShortcuts";
+import { useKeyboardShortcuts } from "~~/composables/useKeyboardShortcuts";
 
 const press = (key, init = {}) =>
   window.dispatchEvent(
@@ -68,6 +68,35 @@ describe("useKeyboardShortcuts test", () => {
     press("1");
 
     expect(onDigit).not.toHaveBeenCalled();
+  });
+
+  it("stays silent on Enter while a button is focused, so native activation survives", () => {
+    const onEnter = vi.fn();
+    mountWithShortcuts({ onEnter });
+
+    const button = document.createElement("button");
+    document.body.appendChild(button);
+    button.focus();
+
+    press("Enter");
+
+    expect(onEnter).not.toHaveBeenCalled();
+  });
+
+  it("stays silent while a non-modal popover is open (data-state=open)", () => {
+    const onDigit = vi.fn();
+    const onEnter = vi.fn();
+    mountWithShortcuts({ onDigit, onEnter });
+
+    const popover = document.createElement("div");
+    popover.setAttribute("data-state", "open");
+    document.body.appendChild(popover);
+
+    press("1");
+    press("Enter");
+
+    expect(onDigit).not.toHaveBeenCalled();
+    expect(onEnter).not.toHaveBeenCalled();
   });
 
   it("ignores auto-repeat from a held key", () => {
