@@ -11,6 +11,7 @@ import {
 import AnswerSubmissionChart from "../AnswerSubmissionChart.vue";
 import { useMusicStore } from "~~/store/music";
 import { getAvatarUrlByName } from "~~/composables/avatar";
+import { useKeyboardShortcuts } from "~~/composables/useKeyboardShortcuts";
 
 const app = useNuxtApp();
 const musicStore = useMusicStore();
@@ -106,10 +107,16 @@ function handleTimer() {
 handleTimer();
 
 function handleSkipTimer(e) {
-  e.preventDefault();
+  e?.preventDefault();
   isSkip.value = true;
   emits("askSkipTimer");
 }
+
+useKeyboardShortcuts({
+  onEnter: () => {
+    if (props.isAdmin && !isSkip.value) handleSkipTimer();
+  },
+});
 
 const changeAnalysisTab = (tab) => emits("changeAnalysisTab", tab);
 
@@ -282,7 +289,12 @@ onUnmounted(() => {
           <div
             class="mt-6 border-t-[2px] border-dashed border-jv-ink/30 sm:mt-7"
           ></div>
-          <div class="mt-4 flex justify-end">
+          <div class="mt-4 flex items-center justify-end gap-3">
+            <span
+              class="hidden font-body text-[13px] font-bold text-jv-muted md:inline"
+            >
+              press Enter to {{ isLastQuestion ? "finish" : "skip" }}
+            </span>
             <button
               type="button"
               class="inline-flex h-10 items-center justify-center gap-2 rounded-full border-[2px] border-jv-ink bg-jv-white px-5 font-body text-[14px] font-black text-jv-ink shadow-brutal-sm transition-transform hover:-rotate-[1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none disabled:cursor-not-allowed disabled:opacity-50 sm:h-11 sm:px-6 sm:text-[15px]"
