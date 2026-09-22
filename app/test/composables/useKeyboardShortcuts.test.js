@@ -70,7 +70,7 @@ describe("useKeyboardShortcuts test", () => {
     expect(onDigit).not.toHaveBeenCalled();
   });
 
-  it("stays silent on Enter while a button is focused, so native activation survives", () => {
+  it("leaves Enter to a focused button", () => {
     const onEnter = vi.fn();
     mountWithShortcuts({ onEnter });
 
@@ -83,7 +83,7 @@ describe("useKeyboardShortcuts test", () => {
     expect(onEnter).not.toHaveBeenCalled();
   });
 
-  it("still answers with digits after a button was clicked (and kept focus)", () => {
+  it("still handles digits while a button is focused", () => {
     const onDigit = vi.fn();
     mountWithShortcuts({ onDigit });
 
@@ -96,7 +96,7 @@ describe("useKeyboardShortcuts test", () => {
     expect(onDigit).toHaveBeenCalledWith(2);
   });
 
-  it("stays silent while a non-modal popover is open (data-state=open)", () => {
+  it("stays silent while a popover is open", () => {
     const onDigit = vi.fn();
     const onEnter = vi.fn();
     mountWithShortcuts({ onDigit, onEnter });
