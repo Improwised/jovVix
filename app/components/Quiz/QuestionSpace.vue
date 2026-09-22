@@ -492,6 +492,14 @@ onUnmounted(() => {
           </button>
         </div>
 
+        <p
+          v-if="answerable && !isSubmitted"
+          class="mt-4 hidden text-center font-body text-[12px] font-bold text-jv-muted md:block"
+        >
+          Tip: press 1–{{ Math.min(9, Object.keys(question.options).length) }}
+          to answer (1 = A, 2 = B…)
+        </p>
+
         <!-- Admin footer: waiting status + skip -->
         <template v-if="isAdmin">
           <div
@@ -514,6 +522,9 @@ onUnmounted(() => {
                 class="font-body text-[13px] font-bold text-jv-muted sm:text-[14px]"
               >
                 Waiting for participants to answer
+                <span class="hidden md:inline">
+                  · press Enter to {{ isLastQuestion ? "finish" : "skip" }}
+                </span>
               </p>
             </div>
             <button

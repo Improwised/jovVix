@@ -375,7 +375,10 @@ watch(
                 class="mt-4 flex items-center justify-center gap-2 text-center font-body text-[12px] leading-[1.4] text-jv-muted sm:text-[13px]"
               >
                 <Info class="size-4" :stroke-width="2.3" />
-                <span>Host can start the quiz at any time</span>
+                <span>
+                  Host can start the quiz at any time
+                  <span class="hidden md:inline">· press Enter to start</span>
+                </span>
               </p>
             </div>
           </div>

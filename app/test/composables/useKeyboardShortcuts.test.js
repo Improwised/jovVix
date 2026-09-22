@@ -83,6 +83,19 @@ describe("useKeyboardShortcuts test", () => {
     expect(onEnter).not.toHaveBeenCalled();
   });
 
+  it("still answers with digits after a button was clicked (and kept focus)", () => {
+    const onDigit = vi.fn();
+    mountWithShortcuts({ onDigit });
+
+    const button = document.createElement("button");
+    document.body.appendChild(button);
+    button.focus();
+
+    press("2");
+
+    expect(onDigit).toHaveBeenCalledWith(2);
+  });
+
   it("stays silent while a non-modal popover is open (data-state=open)", () => {
     const onDigit = vi.fn();
     const onEnter = vi.fn();
