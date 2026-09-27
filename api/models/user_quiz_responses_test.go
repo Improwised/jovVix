@@ -42,3 +42,22 @@ func TestRandomOptionOrderRejectsNonNumericOptionKeys(t *testing.T) {
 		t.Fatal("expected an error for a non-numeric option key")
 	}
 }
+
+func TestTranslateAnswerKeysToPlayer(t *testing.T) {
+	optionOrder := map[string]int{"1": 3, "2": 1, "3": 2}
+
+	got, err := translateAnswerKeysToPlayer(optionOrder, []int{2})
+	if err != nil {
+		t.Fatalf("translateAnswerKeysToPlayer returned an error: %v", err)
+	}
+	if len(got) != 1 || got[0] != 3 {
+		t.Fatalf("got displayed answer keys %v, want [3]", got)
+	}
+}
+
+func TestTranslateAnswerKeysToPlayerRejectsMissingOriginalKey(t *testing.T) {
+	_, err := translateAnswerKeysToPlayer(map[string]int{"1": 3, "2": 1}, []int{2})
+	if err == nil {
+		t.Fatal("expected an error when the answer key is missing from the option order")
+	}
+}

@@ -290,10 +290,8 @@ func handleQuestion(c *websocket.Conn, qc *quizSocketController, session models.
 			}
 
 			event := quizUtilsHelper.GetString(message["event"])
-			if event == constants.EventSendQuestion && userPlayedQuizId != uuid.Nil {
-				if err := applyPlayerOptionOrder(message, qc, userPlayedQuizId); err != nil {
-					qc.logger.Error("error applying player option order", zap.Error(err))
-				}
+			if err := applyPlayerOptionOrderForEvent(message, event, qc.userQuizResponseModel, userPlayedQuizId); err != nil {
+				qc.logger.Error("error applying player option order", zap.Error(err))
 			}
 
 			err = func() error {
@@ -389,7 +387,19 @@ func onConnectHandleUser(c *websocket.Conn, qc *quizSocketController, response *
 
 // applyPlayerOptionOrder replaces the canonical options in a Redis question
 // broadcast with the order saved for the connected participant.
-func applyPlayerOptionOrder(message map[string]any, qc *quizSocketController, userPlayedQuizId uuid.UUID) error {
+type playerOptionOrderProvider interface {
+	GetOptionsForPlayer(userPlayedQuizId, questionId uuid.UUID, options map[string]string) (map[string]string, error)
+	GetOptionsAndAnswerKeysForPlayer(userPlayedQuizId, questionId uuid.UUID, options map[string]string, answerKeys []int) (map[string]string, []int, error)
+}
+
+func applyPlayerOptionOrderForEvent(message map[string]any, event string, provider playerOptionOrderProvider, userPlayedQuizId uuid.UUID) error {
+	if userPlayedQuizId == uuid.Nil || (event != constants.EventSendQuestion && event != constants.EventShowScore) {
+		return nil
+	}
+	return applyPlayerOptionOrder(message, provider, userPlayedQuizId)
+}
+
+func applyPlayerOptionOrder(message map[string]any, provider playerOptionOrderProvider, userPlayedQuizId uuid.UUID) error {
 	response, ok := message["response"].(map[string]any)
 	if !ok {
 		return fmt.Errorf("invalid question response payload")
@@ -419,12 +429,46 @@ func applyPlayerOptionOrder(message map[string]any, qc *quizSocketController, us
 		options[key] = option
 	}
 
-	shuffledOptions, err := qc.userQuizResponseModel.GetOptionsForPlayer(userPlayedQuizId, questionID, options)
-	if err != nil {
-		return err
+	var shuffledOptions map[string]string
+	if rawAnswerKeys, ok := data["answers"]; ok {
+		answerKeys, err := answerKeysFromPayload(rawAnswerKeys)
+		if err != nil {
+			return err
+		}
+		var displayedAnswerKeys []int
+		shuffledOptions, displayedAnswerKeys, err = provider.GetOptionsAndAnswerKeysForPlayer(userPlayedQuizId, questionID, options, answerKeys)
+		if err != nil {
+			return err
+		}
+		data["answers"] = displayedAnswerKeys
+	} else {
+		shuffledOptions, err = provider.GetOptionsForPlayer(userPlayedQuizId, questionID, options)
+		if err != nil {
+			return err
+		}
 	}
+
 	data["options"] = shuffledOptions
 	return nil
+}
+
+func answerKeysFromPayload(rawAnswerKeys any) ([]int, error) {
+	switch answerKeys := rawAnswerKeys.(type) {
+	case []int:
+		return answerKeys, nil
+	case []any:
+		parsed := make([]int, len(answerKeys))
+		for index, rawKey := range answerKeys {
+			key, ok := rawKey.(float64)
+			if !ok || float64(int(key)) != key {
+				return nil, fmt.Errorf("invalid answer key %v", rawKey)
+			}
+			parsed[index] = int(key)
+		}
+		return parsed, nil
+	default:
+		return nil, fmt.Errorf("invalid answer keys payload %T", rawAnswerKeys)
+	}
 }
 
 // function to update user IsAlive status
@@ -1204,6 +1248,7 @@ func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.Wa
 	shareEvenWithUser(c, qc, response, constants.EventShowScore, session.ID.String(), int(session.InvitationCode.Int32), constants.ToAdmin, arrangeMu)
 
 	response.Data = map[string]any{
+		"id":             question.ID,
 		"question_no":    question.OrderNumber,
 		"quiz_id":        question.QuizId,
 		"rankList":       userRankBoard,

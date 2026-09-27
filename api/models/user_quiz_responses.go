@@ -165,23 +165,59 @@ func randomOptionOrder(options map[string]string) (map[string]int, error) {
 // GetOptionsForPlayer applies a saved MCQ option order. A missing mapping is a
 // backward-compatible fallback for historical responses and survey questions.
 func (model *UserQuizResponseModel) GetOptionsForPlayer(userPlayedQuizId, questionId uuid.UUID, options map[string]string) (map[string]string, error) {
+	optionOrder, found, err := model.getOptionOrderForPlayer(userPlayedQuizId, questionId)
+	if err != nil {
+		return nil, err
+	}
+	if !found {
+		return options, nil
+	}
+	return optionsForPlayer(optionOrder, options)
+}
+
+// GetOptionsAndAnswerKeysForPlayer applies one saved option order to both the
+// participant-visible options and the canonical answer keys in a score event.
+func (model *UserQuizResponseModel) GetOptionsAndAnswerKeysForPlayer(userPlayedQuizId, questionId uuid.UUID, options map[string]string, answerKeys []int) (map[string]string, []int, error) {
+	optionOrder, found, err := model.getOptionOrderForPlayer(userPlayedQuizId, questionId)
+	if err != nil {
+		return nil, nil, err
+	}
+	if !found {
+		return options, answerKeys, nil
+	}
+
+	playerOptions, err := optionsForPlayer(optionOrder, options)
+	if err != nil {
+		return nil, nil, err
+	}
+	playerAnswerKeys, err := translateAnswerKeysToPlayer(optionOrder, answerKeys)
+	if err != nil {
+		return nil, nil, err
+	}
+	return playerOptions, playerAnswerKeys, nil
+}
+
+func (model *UserQuizResponseModel) getOptionOrderForPlayer(userPlayedQuizId, questionId uuid.UUID) (map[string]int, bool, error) {
 	var rawOptionOrder sql.NullString
 	found, err := model.db.From(UserQuizResponsesTable).
 		Select("option_order").
 		Where(goqu.Ex{"user_played_quiz_id": userPlayedQuizId, "question_id": questionId}).
 		ScanVal(&rawOptionOrder)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 	if !found || !rawOptionOrder.Valid || rawOptionOrder.String == "" {
-		return options, nil
+		return nil, false, nil
 	}
 
 	var optionOrder map[string]int
 	if err := json.Unmarshal([]byte(rawOptionOrder.String), &optionOrder); err != nil {
-		return nil, err
+		return nil, false, err
 	}
+	return optionOrder, true, nil
+}
 
+func optionsForPlayer(optionOrder map[string]int, options map[string]string) (map[string]string, error) {
 	shuffledOptions := make(map[string]string, len(optionOrder))
 	for displayedKey, originalKey := range optionOrder {
 		option, ok := options[strconv.Itoa(originalKey)]
@@ -220,6 +256,27 @@ func (model *UserQuizResponseModel) TranslateAnswerKeys(userPlayedQuizId, questi
 			return nil, fmt.Errorf("invalid displayed option key %d", displayedKey)
 		}
 		translatedKeys[index] = originalKey
+	}
+	return translatedKeys, nil
+}
+
+func translateAnswerKeysToPlayer(optionOrder map[string]int, answerKeys []int) ([]int, error) {
+	displayedKeys := make(map[int]int, len(optionOrder))
+	for displayedKey, originalKey := range optionOrder {
+		parsedDisplayedKey, err := strconv.Atoi(displayedKey)
+		if err != nil {
+			return nil, fmt.Errorf("invalid displayed option key %q", displayedKey)
+		}
+		displayedKeys[originalKey] = parsedDisplayedKey
+	}
+
+	translatedKeys := make([]int, len(answerKeys))
+	for index, originalKey := range answerKeys {
+		displayedKey, ok := displayedKeys[originalKey]
+		if !ok {
+			return nil, fmt.Errorf("invalid original option key %d", originalKey)
+		}
+		translatedKeys[index] = displayedKey
 	}
 	return translatedKeys, nil
 }
