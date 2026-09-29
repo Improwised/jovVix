@@ -345,6 +345,7 @@ func (model *UserPlayedQuizModel) ListUserPlayedQuizesWithQuestionById(UserPlaye
 
 	query := model.db.From(UserPlayedQuizTable).
 		Select(
+			goqu.I(constants.UserQuizResponsesTable+".question_id").As("question_id"),
 			goqu.I(constants.UserQuizResponsesTable+".answers").As("selected_answer"),
 			goqu.I(constants.QuestionsTable+".answers").As("correct_answer"),
 			"calculated_score",
@@ -382,6 +383,23 @@ func (model *UserPlayedQuizModel) ListUserPlayedQuizesWithQuestionById(UserPlaye
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	userPlayedQuizUUID, err := uuid.Parse(UserPlayedQuizId)
+	if err != nil {
+		return nil, err
+	}
+	responseModel := &UserQuizResponseModel{db: model.db}
+
+	for index := 0; index < len(userPlayedQuizAnalyticsBoard); index++ {
+		row := &userPlayedQuizAnalyticsBoard[index]
+		options, correctAnswer, selectedAnswer, err := applyOptionOrderForRow(responseModel, userPlayedQuizUUID, row.QuestionID, row.Options, row.CorrectAnswer, row.SelectedAnswer)
+		if err != nil {
+			return nil, err
+		}
+		row.Options = options
+		row.CorrectAnswer = correctAnswer
+		row.SelectedAnswer = selectedAnswer
 	}
 
 	return userPlayedQuizAnalyticsBoard, nil
