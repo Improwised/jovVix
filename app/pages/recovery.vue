@@ -86,10 +86,11 @@
 
           <button
             type="submit"
-            class="jv-card mt-2 inline-flex h-12 items-center justify-center gap-2 border-2 border-jv-ink bg-jv-coral font-headings text-base text-white shadow-brutal-sm transition-transform hover:rotate-[1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none sm:text-lg"
+            :disabled="isLoading"
+            class="jv-card mt-2 inline-flex h-12 items-center justify-center gap-2 border-2 border-jv-ink bg-jv-coral font-headings text-base text-white shadow-brutal-sm transition-transform hover:rotate-[1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:rotate-0 sm:text-lg"
           >
-            Submit
-            <ArrowRight class="size-5" :stroke-width="2.4" />
+            {{ isLoading ? "Verifying..." : "Submit" }}
+            <ArrowRight v-if="!isLoading" class="size-5" :stroke-width="2.4" />
           </button>
         </form>
 
@@ -130,6 +131,7 @@ const otp = ref("");
 const otpError = ref("");
 const flow = ref("");
 const csrfToken = ref("");
+const isLoading = ref(false);
 
 const route = useRoute();
 
@@ -137,12 +139,32 @@ onMounted(async () => {
   await fetchFlowIdAndCsrfToken();
 });
 
+const updateFlowState = (data) => {
+  const tokenNode = data?.ui?.nodes?.find(
+    (node) => node?.attributes?.name === "csrf_token"
+  );
+  if (tokenNode?.attributes?.value) {
+    csrfToken.value = tokenNode.attributes.value;
+  }
+
+  const messages = data?.ui?.messages || [];
+  const errorMsg = messages.find((m) => m.type === "error");
+  if (errorMsg) {
+    otpError.value = errorMsg.text;
+  }
+};
+
 const fetchFlowIdAndCsrfToken = async () => {
   try {
     flow.value = route.query.flow;
 
+    if (!flow.value) {
+      otpError.value = "Recovery session not found. Please request a new code.";
+      return;
+    }
+
     const response = await fetch(
-      `${kratosUrl}/self-service/recovery/browser?aal=&refresh=&return_to=`,
+      `${kratosUrl}/self-service/recovery/flows?id=${flow.value}`,
       {
         method: "GET",
         headers: {
@@ -153,13 +175,11 @@ const fetchFlowIdAndCsrfToken = async () => {
     );
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch CSRF token: ${response.statusText}`);
+      throw new Error(`Failed to fetch recovery flow: ${response.statusText}`);
     }
 
     const data = await response.json();
-    csrfToken.value = data.ui.nodes.find(
-      (node) => node.attributes.name === "csrf_token"
-    ).attributes.value;
+    updateFlowState(data);
   } catch (error) {
     console.error("Error fetching flow ID and CSRF token:", error.message);
   }
@@ -168,10 +188,18 @@ const fetchFlowIdAndCsrfToken = async () => {
 const verifyOTP = async () => {
   try {
     otpError.value = "";
-    if (!otp.value) {
+    const cleanOtp = otp.value ? otp.value.trim() : "";
+    if (!cleanOtp) {
       otpError.value = "Please enter the OTP code";
       return;
     }
+
+    if (!flow.value) {
+      otpError.value = "Recovery session is missing. Please restart recovery.";
+      return;
+    }
+
+    isLoading.value = true;
 
     const otpVerificationResponse = await fetch(
       `${kratosUrl}/self-service/recovery?flow=${flow.value}`,
@@ -183,31 +211,62 @@ const verifyOTP = async () => {
         },
         credentials: "include",
         body: JSON.stringify({
-          code: otp.value,
+          code: cleanOtp,
           csrf_token: csrfToken.value,
           method: "code",
         }),
       }
     );
 
-    if (!otpVerificationResponse.ok) {
-      const errorData = await otpVerificationResponse.json();
-      if (errorData.messages && errorData.messages.length > 0) {
-        const errorMessage = errorData.messages[0].text;
-        otpError.value = errorMessage;
-      } else if (
-        errorData.error &&
-        errorData.error.id === "browser_location_change_required"
-      ) {
-        navigateTo("/account/change-password");
-      } else {
-        throw new Error(errorData.message || "Failed to verify OTP");
-      }
+    const responseData = await otpVerificationResponse.json();
+
+    // 1. Successful verification in Kratos returns 422 with browser_location_change_required
+    if (
+      otpVerificationResponse.status === 422 &&
+      responseData?.error?.id === "browser_location_change_required"
+    ) {
+      navigateTo("/account/change-password");
       return;
     }
+
+    // 2. Kratos returned HTTP 200 (re-rendered flow with error messages or status)
+    if (otpVerificationResponse.ok) {
+      updateFlowState(responseData);
+
+      const uiError = responseData?.ui?.messages?.find(
+        (m) => m.type === "error"
+      )?.text;
+
+      const nodeError = responseData?.ui?.nodes
+        ?.flatMap((n) => n.messages || [])
+        ?.find((m) => m.type === "error")?.text;
+
+      if (uiError || nodeError) {
+        otpError.value = uiError || nodeError;
+        return;
+      }
+
+      if (responseData.state === "passed_challenge") {
+        navigateTo("/account/change-password");
+        return;
+      }
+    }
+
+    // 3. Any other non-OK response from Kratos
+    const uiError = responseData?.ui?.messages?.find(
+      (m) => m.type === "error"
+    )?.text;
+    const generalError =
+      responseData?.error?.message ||
+      responseData?.message ||
+      responseData?.error?.reason;
+    otpError.value =
+      uiError || generalError || "The recovery code is invalid or has expired.";
   } catch (error) {
     console.error("Error verifying OTP:", error.message);
-    otpError.value = error.message;
+    otpError.value = error.message || "Failed to verify OTP";
+  } finally {
+    isLoading.value = false;
   }
 };
 </script>

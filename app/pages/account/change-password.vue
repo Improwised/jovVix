@@ -242,11 +242,25 @@ const handleChangePassword = async () => {
 
     if (!response.ok) {
       const errorData = await response.json();
-      if (errorData.error.id === "session_refresh_required") {
+      if (errorData?.error?.id === "session_refresh_required") {
         window.location.href = errorData.redirect_browser_to;
-      } else {
-        throw new Error(errorData.error.message);
+        return;
       }
+
+      const nodeError = errorData?.ui?.nodes
+        ?.flatMap((n) => n.messages || [])
+        ?.find((m) => m.type === "error")?.text;
+      const uiError = errorData?.ui?.messages?.find(
+        (m) => m.type === "error"
+      )?.text;
+
+      throw new Error(
+        nodeError ||
+          uiError ||
+          errorData?.error?.message ||
+          errorData?.message ||
+          "Failed to update password"
+      );
     }
 
     passwordRequestError.value = "";
