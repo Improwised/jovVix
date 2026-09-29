@@ -1,6 +1,10 @@
 package structs
 
-import "database/sql"
+import (
+	"database/sql"
+
+	"github.com/google/uuid"
+)
 
 // All response structs
 // Response struct have Res prefix
@@ -25,6 +29,7 @@ type ResUserPlayedQuizWithCount struct {
 }
 
 type ResUserPlayedQuizAnalyticsBoard struct {
+	QuestionID       uuid.UUID         `db:"question_id" json:"-"`
 	SelectedAnswer   sql.NullString    `db:"selected_answer,omitempty" json:"selected_answer"`
 	CorrectAnswer    string            `db:"correct_answer,omitempty" json:"correct_answer"`
 	CalculatedScore  int               `db:"calculated_score,omitempty" json:"calculated_score"`

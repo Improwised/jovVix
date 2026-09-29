@@ -7,9 +7,11 @@ import (
 	"github.com/Improwised/jovvix/api/constants"
 	quizUtilsHelper "github.com/Improwised/jovvix/api/helpers/utils"
 	"github.com/doug-martin/goqu/v9"
+	"github.com/google/uuid"
 )
 
 type AnalyticsBoardUser struct {
+	QuestionID       uuid.UUID         `db:"question_id" json:"-"`
 	UserName         string            `db:"username" json:"username"`
 	FirstName        string            `db:"first_name" json:"firstname"`
 	SelectedAnswer   sql.NullString    `db:"selected_answer,omitempty" json:"selected_answer"`
@@ -48,6 +50,7 @@ func (model *AnalyticsBoardUserModel) GetAnalyticsForUser(userPlayedQuizId strin
 	err := model.db.
 		From(goqu.T(constants.UserQuizResponsesTable)).
 		Select(
+			goqu.I(constants.UserQuizResponsesTable+".question_id").As("question_id"),
 			"username",
 			"first_name",
 			goqu.I(constants.UserQuizResponsesTable+".answers").As("selected_answer"),
@@ -78,6 +81,13 @@ func (model *AnalyticsBoardUserModel) GetAnalyticsForUser(userPlayedQuizId strin
 	if err != nil {
 		return nil, err
 	}
+
+	userPlayedQuizUUID, err := uuid.Parse(userPlayedQuizId)
+	if err != nil {
+		return nil, err
+	}
+	responseModel := &UserQuizResponseModel{db: model.db}
+
 	for index := 0; index < len(analyticsBoardData); index++ {
 		json.Unmarshal(analyticsBoardData[index].RawOptions, &analyticsBoardData[index].Options)
 
@@ -85,7 +95,57 @@ func (model *AnalyticsBoardUserModel) GetAnalyticsForUser(userPlayedQuizId strin
 		if err != nil {
 			return nil, err
 		}
+
+		row := &analyticsBoardData[index]
+		options, correctAnswer, selectedAnswer, err := applyOptionOrderForRow(responseModel, userPlayedQuizUUID, row.QuestionID, row.Options, row.CorrectAnswer, row.SelectedAnswer)
+		if err != nil {
+			return nil, err
+		}
+		row.Options = options
+		row.CorrectAnswer = correctAnswer
+		row.SelectedAnswer = selectedAnswer
 	}
 
 	return analyticsBoardData, nil
+}
+
+func applyOptionOrderForRow(responseModel *UserQuizResponseModel, userPlayedQuizId, questionID uuid.UUID, options map[string]string, correctAnswer string, selectedAnswer sql.NullString) (map[string]string, string, sql.NullString, error) {
+	correctKeys := parseAnswerKeys(correctAnswer)
+	selectedKeys := []int{}
+	if selectedAnswer.Valid {
+		selectedKeys = parseAnswerKeys(selectedAnswer.String)
+	}
+
+	reorderedOptions, translatedCorrect, translatedSelected, err := responseModel.ApplyOptionOrder(
+		userPlayedQuizId,
+		questionID,
+		options,
+		correctKeys,
+		selectedKeys,
+	)
+	if err != nil {
+		return options, correctAnswer, selectedAnswer, nil
+	}
+
+	correctAnswer = marshalAnswerKeys(translatedCorrect)
+	if selectedAnswer.Valid {
+		selectedAnswer.String = marshalAnswerKeys(translatedSelected)
+	}
+	return reorderedOptions, correctAnswer, selectedAnswer, nil
+}
+
+func parseAnswerKeys(raw string) []int {
+	keys := []int{}
+	if err := json.Unmarshal([]byte(raw), &keys); err != nil {
+		return []int{}
+	}
+	return keys
+}
+
+func marshalAnswerKeys(keys []int) string {
+	encoded, err := json.Marshal(keys)
+	if err != nil {
+		return "[]"
+	}
+	return string(encoded)
 }

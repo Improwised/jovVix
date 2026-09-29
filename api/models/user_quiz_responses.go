@@ -193,6 +193,73 @@ func (model *UserQuizResponseModel) GetOptionsForPlayer(userPlayedQuizId, questi
 	return shuffledOptions, nil
 }
 
+// ApplyOptionOrder reorders a player's options and answer keys to match the
+// sequence the participant actually saw during the attempt. It returns the
+// inputs unchanged when no per-player order was saved (survey questions,
+// multi-answer questions, or legacy responses).
+func (model *UserQuizResponseModel) ApplyOptionOrder(userPlayedQuizId, questionId uuid.UUID, options map[string]string, correctKeys, selectedKeys []int) (map[string]string, []int, []int, error) {
+	var rawOptionOrder sql.NullString
+	found, err := model.db.From(UserQuizResponsesTable).
+		Select("option_order").
+		Where(goqu.Ex{"user_played_quiz_id": userPlayedQuizId, "question_id": questionId}).
+		ScanVal(&rawOptionOrder)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	if !found || !rawOptionOrder.Valid || rawOptionOrder.String == "" {
+		return options, correctKeys, selectedKeys, nil
+	}
+
+	var optionOrder map[string]int
+	if err := json.Unmarshal([]byte(rawOptionOrder.String), &optionOrder); err != nil {
+		return nil, nil, nil, err
+	}
+
+	return rearrangeOptions(optionOrder, options, correctKeys, selectedKeys)
+}
+
+// rearrangeOptions reorders options and re-maps answer keys from original keys
+// to participant-visible positions using an option order map.
+func rearrangeOptions(optionOrder map[string]int, options map[string]string, correctKeys, selectedKeys []int) (map[string]string, []int, []int, error) {
+	shuffledOptions := make(map[string]string, len(optionOrder))
+	inverse := make(map[int]int, len(optionOrder))
+	for displayedKey, originalKey := range optionOrder {
+		option, ok := options[strconv.Itoa(originalKey)]
+		if !ok {
+			return nil, nil, nil, fmt.Errorf("option order references missing option %d", originalKey)
+		}
+		displayedPos, err := strconv.Atoi(displayedKey)
+		if err != nil {
+			return nil, nil, nil, fmt.Errorf("invalid displayed option key %q", displayedKey)
+		}
+		shuffledOptions[displayedKey] = option
+		inverse[originalKey] = displayedPos
+	}
+
+	translate := func(keys []int) ([]int, error) {
+		translated := make([]int, len(keys))
+		for index, originalKey := range keys {
+			displayedPos, ok := inverse[originalKey]
+			if !ok {
+				return nil, fmt.Errorf("invalid original option key %d", originalKey)
+			}
+			translated[index] = displayedPos
+		}
+		return translated, nil
+	}
+
+	translatedCorrect, err := translate(correctKeys)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	translatedSelected, err := translate(selectedKeys)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	return shuffledOptions, translatedCorrect, translatedSelected, nil
+}
+
 // TranslateAnswerKeys converts a participant-visible option key into the
 // original question option key before the existing score calculation runs.
 func (model *UserQuizResponseModel) TranslateAnswerKeys(userPlayedQuizId, questionId uuid.UUID, answerKeys []int) ([]int, error) {
