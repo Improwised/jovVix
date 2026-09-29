@@ -62,13 +62,13 @@ const handleForgotPassword = async () => {
         Accept: "application/json",
       },
       body: JSON.stringify({
-        email: email.value,
+        email: email.value ? email.value.trim() : "",
         csrf_token: csrfToken,
         method: "code",
       }),
     });
 
-    navigateTo(recoverypage, { external: true });
+    navigateTo(`/recovery?flow=${recovery.id}`);
   } catch (error) {
     console.error(error);
     toast.error("Something went wrong. Please try again.");
