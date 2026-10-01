@@ -91,6 +91,22 @@ api/
   - `/api/v1/socket/join/:invitation_code` — Participant quiz play
 - Message format: `{component, event, data}`
 
+### AI Quiz Generation
+
+jovVix generates quiz questions through OpenAI-compatible chat-completions providers. Each user brings their own provider and API key, configured from the UI.
+
+**Flow:**
+1. User saves provider, model, and API key via `AiSettingsForm` (frontend)
+2. Credentials are encrypted with AES-256-GCM (key derived via Argon2id) and stored in the `ai_settings` table; the Vault Password is never stored
+3. The frontend unlocks the vault, then calls `/api/v1/ai/*` endpoints
+4. `AIController` (`api/controllers/api/v1/ai_controller.go`) validates the request and resolves per-user credentials
+5. `AIQuizService` (`api/services/ai_quiz.go`) builds the prompt, calls the provider, and parses the JSON response; it adapts the request if the provider rejects a parameter (JSON mode, `max_tokens`, temperature)
+6. Generated questions are validated, normalized, and stored or returned to the frontend
+
+**Endpoint group** (`api/routes/main.go`): `/api/v1/ai/{status,settings,models,test,questions/generate,quizzes}` plus `/api/v1/quizzes/:quiz_id/questions/ai{/generate}`.
+
+See the [AI Quiz Generation Guide](./ai-quiz-generation.md) for providers, configuration, and troubleshooting.
+
 ### Database
 
 - **PostgreSQL 15** with UUID primary keys
@@ -111,3 +127,4 @@ api/
 | `user_quiz_responses` | Individual answers |
 | `shared_quizzes` | Quiz sharing permissions |
 | `quiz_categories` | Quiz categorization |
+| `ai_settings` | Encrypted AI provider credentials (AES-256-GCM + Argon2id) |
