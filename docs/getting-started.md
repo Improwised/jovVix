@@ -78,6 +78,10 @@ npm run dev
 | `DB_PASSWORD` | `api/.env` | `jovvix` | A strong password |
 | `SMTP_HOST` | `api/.env` | `your-ip-address` | Your SMTP server |
 | `EMAIL_FROM` | `api/.env` | `example@gmail.com` | Your email address |
+| `AI_TEMPERATURE` | `api/.env` | `0.4` | Controls generation creativity (0.0–2.0) |
+| `AI_TIMEOUT_SECONDS` | `api/.env` | `90` | AI request timeout (keep below the frontend's 120s) |
+| `AI_MAX_QUESTIONS` | `api/.env` | `20` | Max questions per generation (capped at 50) |
+| `AI_JSON_MODE` | `api/.env` | `true` | Enforce JSON response format |
 
 ## Verifying the Setup
 
@@ -130,3 +134,4 @@ npm run dev
 - [API Development Guide](./api-development.md)
 - [Frontend Development Guide](./frontend-development.md)
 - [Coding Standards](./coding-standards.md)
+- [AI Quiz Generation Guide](./ai-quiz-generation.md)

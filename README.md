@@ -75,6 +75,10 @@ Open-Source Quizzing Built for Live Quiz Experiences
     - **Multiple CSV Uploads:** Upload multiple CSV files to combine questions from different files into a single quiz
     - **Add Questions through UI:** You can now also add questions directly through the UI, creating and editing them one by one without preparing a CSV file
     - You can see the CSV formatting guidelines here : [csv-formatting-guide.md](docs/csv-formatting-guide.md)
+- **AI Quiz Generation:** Generate quizzes on any topic using your own AI provider: OpenRouter, Groq, Google AI Studio, OpenAI, or any LiteLLM-compatible endpoint. Supports 14 languages, adjustable difficulty, code and survey questions, and appending to existing quizzes:
+    - Bring Your Own Key: each user supplies their own provider and API key from the UI; no server-side key required
+    - Encrypted Vault: API keys are encrypted with AES-256-GCM + Argon2id behind a Vault Password you choose, which is never stored
+    - See the full guide here : [ai-quiz-generation.md](docs/ai-quiz-generation.md)
 - **Mobile-Friendly Design:** Fully responsive and works seamlessly on mobile and desktop devices.
 - **Admin Tools:** Advanced admin panel for managing quizzes, participants, and results.
 - **API Documentation with Swagger:** Provides a visual interface for exploring API endpoints and testing requests, Useful for developers working with the API
@@ -204,6 +208,7 @@ Open-Source Quizzing Built for Live Quiz Experiences
 - **Authentication:** The app leverages Ory Kratos for user authentication and uses SMTP services for password recovery and email verification flows.
 - **Real-Time Communication:** WebSockets are implemented for handling multiple sessions and managing cookies effectively.
 - **Base64:** We are storing images as base64 
+- **AI Quiz Generation:** Backend proxy that talks to OpenAI-compatible providers on the user's behalf, with encrypted (AES-256-GCM + Argon2id) storage for API keys. See the [AI Quiz Generation Guide](docs/ai-quiz-generation.md).
 
 
  ### API Overview:
