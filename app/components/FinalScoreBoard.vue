@@ -317,7 +317,6 @@ const podiumName = (winner) =>
       </header>
 
       <main
-        id="main-content"
         class="relative z-10 mx-auto flex w-full max-w-[1180px] flex-1 flex-col px-3 pb-6 pt-2 sm:px-6 sm:pb-10 md:px-10"
         role="main"
         aria-label="Quiz winners podium"
@@ -523,7 +522,6 @@ const podiumName = (winner) =>
 
     <main
       v-else
-      id="main-content"
       class="min-h-screen bg-jv-canvas px-3 py-6 text-jv-ink sm:px-6 sm:py-8 md:px-10"
       role="main"
     >
