@@ -16,6 +16,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { useKeyboardShortcuts } from "~~/composables/useKeyboardShortcuts";
 
 const musicStore = useMusicStore();
 const { getMusic, setMusic } = musicStore;
@@ -227,7 +228,7 @@ function handleOptionClick(key) {
 }
 
 function handleSkip(e) {
-  e.preventDefault();
+  e?.preventDefault();
   if (skipCooling.value) return;
   skipCooling.value = true;
   clearTimeout(skipCoolTimer);
@@ -236,6 +237,17 @@ function handleSkip(e) {
   }, SKIP_COOLDOWN_MS);
   emits("askSkip");
 }
+
+useKeyboardShortcuts({
+  // Options are keyed "1".."N" — a survey question can have more than four.
+  onDigit: (key) => {
+    if (question.value?.options?.[key] === undefined) return;
+    handleOptionClick(key);
+  },
+  onEnter: () => {
+    if (props.isAdmin) handleSkip();
+  },
+});
 
 // Cleanup on unmount
 onUnmounted(() => {
@@ -480,6 +492,14 @@ onUnmounted(() => {
           </button>
         </div>
 
+        <p
+          v-if="answerable && !isSubmitted"
+          class="mt-4 hidden text-center font-body text-[12px] font-bold text-jv-muted md:block"
+        >
+          Tip: press 1–{{ Math.min(9, Object.keys(question.options).length) }}
+          to answer (1 = A, 2 = B…)
+        </p>
+
         <!-- Admin footer: waiting status + skip -->
         <template v-if="isAdmin">
           <div
@@ -502,6 +522,9 @@ onUnmounted(() => {
                 class="font-body text-[13px] font-bold text-jv-muted sm:text-[14px]"
               >
                 Waiting for participants to answer
+                <span class="hidden md:inline">
+                  · press Enter to {{ isLastQuestion ? "finish" : "skip" }}
+                </span>
               </p>
             </div>
             <button
