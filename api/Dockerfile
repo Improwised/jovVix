@@ -1,4 +1,4 @@
-FROM golang:1.23.11-alpine3.22 as build
+FROM golang:1.27-alpine as build
 WORKDIR /jovvix
 RUN apk update && apk add build-base
 COPY go.mod go.sum ./
