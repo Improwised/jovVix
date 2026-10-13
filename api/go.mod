@@ -1,6 +1,6 @@
 module github.com/Improwised/jovvix/api
 
-go 1.23.0
+go 1.27.2
 
 require (
 	clevergo.tech/jsend v1.1.3
