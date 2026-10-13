@@ -16,6 +16,14 @@ const props = {
 const mountComponent = () => {
   return mount(WinnerCard, {
     props,
+    global: {
+      stubs: {
+        NuxtImg: {
+          template:
+            '<img :src="$attrs.src" :alt="$attrs.alt" class="size-full object-cover" />',
+        },
+      },
+    },
   });
 };
 
@@ -30,43 +38,37 @@ vi.mock("../../composables/avatar.js", () => {
 });
 
 describe("WinnerCard test", () => {
-  it("renders the correct medal for rank 1", () => {
-    const medal = wrapper.find("img.bg-image");
-    expect(medal.attributes("src")).toBe("/assets/images/medal/1.webp");
+  it("renders the correct rank label", () => {
+    expect(wrapper.text()).toContain("1st Place");
   });
 
-  it("renders the correct medal for rank 2", async () => {
+  it("renders the correct rank label for rank 2", async () => {
     props.winner.rank = 2;
     wrapper.unmount();
     wrapper = mountComponent();
-
-    const medal = wrapper.find("img.bg-image");
-    expect(medal.attributes("src")).toBe("/assets/images/medal/2.webp");
+    expect(wrapper.text()).toContain("2nd Place");
   });
 
-  it("renders the correct medal for rank 3", async () => {
+  it("renders the correct rank label for rank 3", async () => {
     props.winner.rank = 3;
     wrapper.unmount();
     wrapper = mountComponent();
-
-    const medal = wrapper.find("img.bg-image");
-    expect(medal.attributes("src")).toBe("/assets/images/medal/3.webp");
+    expect(wrapper.text()).toContain("3rd Place");
   });
 
   it("renders the correct avatar image", async () => {
     wrapper.unmount();
     wrapper = mountComponent();
     expect(getAvatarUrlByName).toBeCalledWith(props.winner.img_key);
-    // await wrapper.vm.$nextTick();
 
-    const avatarImg = wrapper.find("img.avatar-image");
+    const avatarImg = wrapper.find("img");
     expect(avatarImg.attributes("src")).toContain(
       "https://api.dicebear.com/10.x/clay/svg?seed=Sophia"
     );
   });
 
   it("renders winner details correctly", () => {
-    expect(wrapper.text()).toContain("JOHN");
+    expect(wrapper.text()).toContain("John");
     expect(wrapper.text()).toContain("john_doe");
     expect(wrapper.text()).toContain("8256");
   });

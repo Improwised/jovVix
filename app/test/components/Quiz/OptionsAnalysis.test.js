@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { mount } from "@vue/test-utils";
 import OptionsAnalysis from "~/components/Quiz/OptionsAnalysis.vue";
-import constants from "~/test/constants";
 
 const wrapper = mount(OptionsAnalysis, {
   props: {
@@ -14,7 +13,16 @@ const wrapper = mount(OptionsAnalysis, {
   global: {
     stubs: {
       Option: {
-        template: constants.slotTemplate,
+        template: '<div class="option-item"><slot /></div>',
+        props: [
+          "order",
+          "option",
+          "selected",
+          "isCorrect",
+          "isPicked",
+          "optionsMedia",
+          "isAdminAnalysis",
+        ],
       },
     },
   },
@@ -22,17 +30,20 @@ const wrapper = mount(OptionsAnalysis, {
 
 describe("OptionsAnalysis test", () => {
   it("renders all options", () => {
-    const optionBoxes = wrapper.findAll(".option-box");
-    expect(optionBoxes.length).toBe(4);
+    const optionsEls = wrapper.findAll('[class*="option-item"]');
+    expect(optionsEls.length).toBe(4);
   });
 
   it("applies correct styles for correct answers", () => {
-    const correctOptions = wrapper.findAll(".bg-light-success");
-    expect(correctOptions.length).toBe(1); // Answers 1 and 2 are correct
+    const optionWrappers = wrapper.findAll("div");
+    const wrapperEls = optionWrappers.filter((w) =>
+      w.classes().includes("bg-jv-mint")
+    );
+    expect(wrapperEls.length).toBe(1);
   });
 
   it("applies correct styles for wrong selected answers", async () => {
-    let wrongOptions = wrapper.findAll(".bg-light-danger");
+    let wrongOptions = wrapper.findAll('[class*="bg-jv-salmon"]');
     expect(wrongOptions.length).toBe(0);
 
     await wrapper.setProps({
@@ -43,7 +54,7 @@ describe("OptionsAnalysis test", () => {
       optionsMedia: "text",
       isAdminAnalysis: false,
     });
-    wrongOptions = wrapper.findAll(".bg-light-danger");
+    wrongOptions = wrapper.findAll('[class*="bg-jv-salmon"]');
     expect(wrongOptions.length).toBe(1);
   });
 
@@ -57,7 +68,10 @@ describe("OptionsAnalysis test", () => {
       isAdminAnalysis: false,
     });
 
-    const optionBoxes = wrapper.findAll(".option-box");
-    expect(optionBoxes.length).toBe(0); // No options provided
+    const optionWrappers = wrapper.findAll("div");
+    const wrapperEls = optionWrappers.filter((w) =>
+      w.classes().includes("shadow-brutal-sm")
+    );
+    expect(wrapperEls.length).toBe(0);
   });
 });

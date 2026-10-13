@@ -3,7 +3,12 @@ import { mount } from "@vue/test-utils";
 import ListJoinUser from "~/components/ListJoinUser.vue";
 import { createTestingPinia } from "@pinia/testing";
 import { useListUserstore } from "~/store/userlist";
-import constants from "~/test/constants";
+
+vi.mock("~~/composables/avatar", () => ({
+  getAvatarUrlByName: vi.fn(
+    () => "https://api.dicebear.com/10.x/clay/svg?seed=Eden"
+  ),
+}));
 
 const mockListUsers = [
   { UserId: 1, UserName: "Alice", Avatar: "Alice" },
@@ -22,8 +27,10 @@ const mountComponent = () =>
     global: {
       plugins: [pinia],
       stubs: {
-        FontAwesomeIcon: true,
-        VCard: constants.slotTemplate,
+        NuxtImg: {
+          template:
+            '<img :src="$attrs.src" alt="" class="size-12 rounded-full border-2 border-jv-ink object-cover" />',
+        },
       },
     },
   });
@@ -32,7 +39,6 @@ const wrapper = mountComponent();
 
 describe("ListJoinUser test", () => {
   beforeEach(() => {
-    // Reset mocks
     vi.clearAllMocks();
   });
 
@@ -41,24 +47,17 @@ describe("ListJoinUser test", () => {
   });
 
   it("renders user chips with correct data", () => {
-    const chips = wrapper.findAll(".chip");
-    expect(chips.length).toBe(2);
+    const cards = wrapper.findAll('[class*="jv-card"]');
+    expect(cards.length).toBe(2);
 
-    expect(chips[0].text()).toContain("Alice");
-    expect(chips[0].find("img").attributes("src")).toBe(
-      "https://api.dicebear.com/10.x/clay/svg?seed=Eden"
-    );
-
-    expect(chips[1].text()).toContain("Bob");
-    expect(chips[1].find("img").attributes("src")).toBe(
-      "https://api.dicebear.com/10.x/clay/svg?seed=Eden"
-    );
+    expect(cards[0].text()).toContain("Alice");
+    expect(cards[1].text()).toContain("Bob");
   });
 
   it("shows 'Waiting for Participants' when listUsers is empty", async () => {
     listUserStore.listUsers = [];
     await wrapper.vm.$nextTick();
-    expect(wrapper.find("h5").text()).toBe("Waiting for Participants..");
-    expect(wrapper.findAll(".chip").length).toBe(0);
+    expect(wrapper.find("h5").text()).toBe("Waiting for Participants...");
+    expect(wrapper.findAll('[class*="jv-card"]').length).toBe(0);
   });
 });
