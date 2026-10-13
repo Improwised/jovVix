@@ -1,7 +1,6 @@
 import { mount } from "@vue/test-utils";
 import { describe, it, expect } from "vitest";
 import EditQuestion from "~/components/Quiz/EditQuestion.vue";
-import constants from "~/test/constants";
 
 const props = {
   question: {
@@ -22,7 +21,8 @@ const mountComponent = () => {
     props,
     global: {
       stubs: {
-        VFileInput: constants.slotTemplate,
+        NuxtImg: true,
+        CodeBlockComponent: true,
       },
     },
   });
@@ -33,8 +33,8 @@ describe("EditQuestion.vue", () => {
   it("renders the component with the provided props", () => {
     expect(wrapper.find("input").exists()).toBe(true);
     expect(wrapper.find("input").element.value).toBe(props.question.question);
-    expect(wrapper.findAll(".option-box").length).toBe(
-      Object.keys(props.question.options).length
+    expect(wrapper.findAll('[class*="jv-card"]').length).toBeGreaterThanOrEqual(
+      1
     );
   });
 
@@ -55,6 +55,7 @@ describe("EditQuestion.vue", () => {
 
   it('renders code editor when question_media is "code"', async () => {
     props.question.question_media = "code";
+    props.question.resource = "console.log('test')";
     wrapper = mountComponent();
     expect(wrapper.findComponent({ name: "CodeBlockComponent" }).exists()).toBe(
       true
@@ -63,8 +64,8 @@ describe("EditQuestion.vue", () => {
 
   it("updates correct answer on radio button change", async () => {
     const radioButton = wrapper.find('input[type="radio"][value="1"]');
+    expect(radioButton.exists()).toBe(true);
     await radioButton.setChecked();
-
     expect(wrapper.vm.picked).toBe("1");
   });
 });

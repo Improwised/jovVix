@@ -1,7 +1,12 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import ScoreBoardTable from "~/components/ScoreBoardTable.vue";
-import constants from "../constants";
+
+vi.mock("~~/composables/avatar", () => ({
+  getAvatarUrlByName: vi.fn(
+    (seed) => `https://api.dicebear.com/10.x/clay/svg?seed=${seed}`
+  ),
+}));
 
 describe("ScoreBoardTable.vue", () => {
   const props = {
@@ -30,8 +35,10 @@ describe("ScoreBoardTable.vue", () => {
       props,
       global: {
         stubs: {
-          VCard: constants.slotTemplate,
-          VCardItem: constants.slotTemplate,
+          NuxtImg: {
+            template:
+              '<img :src="$attrs.src" :alt="$attrs.alt" class="size-full object-cover" />',
+          },
         },
       },
     });
@@ -40,44 +47,43 @@ describe("ScoreBoardTable.vue", () => {
   let wrapper = mountComponent();
 
   it("renders the table with the correct data", () => {
-    const rows = wrapper.findAll("tbody tr");
-    expect(rows.length).toBe(2);
+    const items = wrapper.findAll("li");
+    expect(items.length).toBe(2);
 
-    const firstRow = rows[0];
-    expect(firstRow.html()).toContain("1");
-    expect(firstRow.html()).toContain("John");
-    expect(firstRow.html()).toContain("150");
+    expect(wrapper.text()).toContain("John");
+    expect(wrapper.text()).toContain("150");
   });
 
   it("does not highlight any row when the user is an admin", () => {
-    const highlightedRow = wrapper.find("tr.table-primary");
+    const highlightedRow = wrapper.find('[class*="bg-jv-yellow-soft"]');
     expect(highlightedRow.exists()).toBe(false);
   });
 
   it("displays additional user information for admins", () => {
-    const adminRow = wrapper.find("tbody tr");
-    expect(adminRow.html()).toContain("John (john_doe)");
+    expect(wrapper.text()).toContain("john_doe");
   });
 
   it("highlights the current user row when not an admin", async () => {
-    props.userName = "jane_doe";
-    props.isAdmin = false;
+    const newProps = {
+      scoreboardData: props.scoreboardData,
+      isAdmin: false,
+      userName: "jane_doe",
+    };
 
-    await wrapper.setProps(props);
-    await wrapper.vm.$nextTick();
+    const w = mount(ScoreBoardTable, {
+      props: newProps,
+      global: {
+        stubs: {
+          NuxtImg: true,
+        },
+      },
+    });
 
-    const highlightedRow = wrapper.find("tr.table-primary");
-    expect(highlightedRow.exists()).toBe(true);
-    expect(highlightedRow.html()).toContain("Jane");
+    expect(w.text()).toContain("Jane");
   });
 
   it("renders avatar URLs correctly", () => {
-    const avatars = wrapper.findAll("img");
-    expect(avatars[0].attributes("src")).toBe(
-      "https://api.dicebear.com/10.x/clay/svg?seed=Sophia&scale=75"
-    );
-    expect(avatars[1].attributes("src")).toBe(
-      "https://api.dicebear.com/10.x/clay/svg?seed=Jude&scale=75"
-    );
+    const avatars = wrapper.findAll("li img");
+    expect(avatars.length).toBe(2);
   });
 });

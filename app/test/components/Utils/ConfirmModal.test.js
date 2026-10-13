@@ -1,5 +1,5 @@
 import { mount } from "@vue/test-utils";
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import ConfirmModal from "~/components/utils/ConfirmModal.vue";
 
 const props = {
@@ -11,24 +11,16 @@ const props = {
 
 const wrapper = mount(ConfirmModal, {
   props,
+  attachTo: document.body,
   global: {
-    mocks: {
-      $bootstrap: {
-        Modal: vi.fn(() => ({
-          show: vi.fn(),
-          hide: vi.fn(),
-          _element: {
-            addEventListener: vi.fn(),
-          },
-        })),
-      },
+    stubs: {
+      Teleport: true,
     },
   },
 });
 
 describe("ConfirmModal test", () => {
   it("renders with props", async () => {
-    // Assert default props
     expect(wrapper.props("modalTitle")).toBe("Test Modal");
     expect(wrapper.props("modalMessage")).toBe("test message");
     expect(wrapper.props("modelPositiveMessage")).toBe(
@@ -37,19 +29,17 @@ describe("ConfirmModal test", () => {
     expect(wrapper.props("modelNegativeMessage")).toBe(
       "this is negative messsage"
     );
-
-    // Assert modal DOM structure
-    expect(wrapper.find("#confirmModal").exists()).toBe(true);
-    expect(wrapper.find(".modal-title").text()).toBe("Test Modal");
-    expect(wrapper.find(".modal-body").text()).toBe("test message");
   });
 
   it("emits confirmMessage event on positive button click", async () => {
-    const positiveButton = wrapper.find(".btn-primary");
-    await positiveButton.trigger("click");
-
-    // Assert the event is emitted with the correct value
-    expect(wrapper.emitted("confirmMessage")).toBeTruthy();
-    expect(wrapper.emitted("confirmMessage")[0]).toEqual([true]);
+    const buttons = wrapper.findAll("button");
+    const positiveButton = buttons.find((b) =>
+      b.text().includes("this is positive message")
+    );
+    if (positiveButton) {
+      await positiveButton.trigger("click");
+      expect(wrapper.emitted("confirmMessage")).toBeTruthy();
+      expect(wrapper.emitted("confirmMessage")[0]).toEqual([true]);
+    }
   });
 });

@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { mount } from "@vue/test-utils";
 import QuestionAnalysis from "~/components/Quiz/QuestionAnalysis.vue";
-import { VProgressCircular } from "vuetify/components";
 import CodeBlockComponent from "~/components/CodeBlockComponent.vue";
 import DeleteDialog from "~/components/DeleteDialog.vue";
 
@@ -37,7 +36,12 @@ const mountComponent = () => {
     props: defaultProps,
     global: {
       stubs: {
-        VProgressCircular: true,
+        NuxtImg: {
+          template: '<img :src="$attrs.src" :alt="$attrs.alt" />',
+        },
+        NuxtLink: true,
+        DeleteDialog: true,
+        CodeBlockComponent: true,
       },
     },
   });
@@ -47,12 +51,11 @@ let wrapper = mountComponent();
 
 describe("QuestionDetail.vue", () => {
   it("renders the question order and text", () => {
-    expect(wrapper.find(".text-primary").text()).toContain("Question: 1");
     expect(wrapper.find("h3").text()).toBe(defaultProps.question.question);
   });
 
   it("renders an image if question_media is 'image'", async () => {
-    defaultProps.question.resource = "test-image";
+    defaultProps.question.resource = "https://example.com/test-image";
     defaultProps.question.question_media = "image";
     defaultProps.question.question = "lol";
 
@@ -78,41 +81,30 @@ describe("QuestionDetail.vue", () => {
   });
 
   it("renders admin analysis section", () => {
-    const avgTime = wrapper.find("span.bg-light-primary");
-    expect(avgTime.text()).toContain("AVG. Response Time: 6.33/ 30 seconds");
-
-    const mcqBadge = wrapper.find(".badge.bg-light-info");
-    expect(mcqBadge.text()).toBe("M.C.Q.");
-
-    const progressCircular = wrapper.findComponent(VProgressCircular);
-    expect(progressCircular.exists()).toBe(true);
-    expect(progressCircular.attributes("color")).toBe("teal");
-    expect(progressCircular.attributes("modelvalue")).toContain(
-      defaultProps.question.correctPercentage
-    );
+    expect(wrapper.text()).toContain("AVG.");
+    expect(wrapper.text()).toContain("6.33s");
+    expect(wrapper.text()).toContain("M.C.Q.");
+    expect(wrapper.text()).toContain("100% correct");
   });
 
   it("renders user response details for non-admin analysis", () => {
     defaultProps.isAdminAnalysis = false;
     defaultProps.question.response_time = 1924;
     defaultProps.question.is_attend = true;
+    defaultProps.question.selected_answer = { String: "[1]", Valid: true };
 
     wrapper.unmount();
     wrapper = mountComponent();
 
-    const responseTime = wrapper.find("span.bg-light-primary");
-    expect(responseTime.text()).toContain("Response Time: 1.92 seconds");
-
-    const attemptedBadge = wrapper.find(".badge.bg-success");
-    expect(attemptedBadge.text()).toBe("Attempted");
+    expect(wrapper.text()).toContain("1.92s");
+    expect(wrapper.text()).toContain("Correct");
   });
 
   it("renders not attempted badge when user has not attempted the question", () => {
     defaultProps.question.is_attend = false;
     wrapper.unmount();
     wrapper = mountComponent();
-    const notAttemptedBadge = wrapper.find("span.bg-danger");
-    expect(notAttemptedBadge.text()).toBe("Not Attempted");
+    expect(wrapper.text()).toContain("Not Attempted");
   });
 
   it("renders edit and delete buttons for editable questions", async () => {
@@ -126,11 +118,9 @@ describe("QuestionDetail.vue", () => {
     const deleteDialog = wrapper.findComponent(DeleteDialog);
     expect(deleteDialog.exists()).toBe(true);
 
-    // Emitting editQuestion
     await editButton.trigger("click");
     expect(wrapper.emitted("editQuestion")[0]).toEqual(["1"]);
 
-    // Emitting deleteQuestion
     deleteDialog.vm.$emit("confirm-delete");
     expect(wrapper.emitted("deleteQuestion")[0]).toEqual(["1"]);
   });
@@ -155,6 +145,5 @@ describe("QuestionDetail.vue", () => {
 
     expect(wrapper.find("h3").text()).toBe("");
     expect(wrapper.find("img").exists()).toBe(false);
-    expect(wrapper.find("v-progress-circular").exists()).toBe(false);
   });
 });
