@@ -1,5 +1,6 @@
 <script setup>
 import { X } from "lucide-vue-next";
+import { onKeyStroke } from "@vueuse/core";
 
 const props = defineProps({
   joinUrl: {
@@ -54,6 +55,12 @@ function handleFullscreenChange() {
     isOpen.value = false;
   }
 }
+
+// Native fullscreen exits on Esc by itself; this covers the in-page fallback
+// when fullscreen was denied.
+onKeyStroke("Escape", () => {
+  if (isOpen.value) close();
+});
 
 function handleBackdropClick(event) {
   if (event.target === event.currentTarget) {

@@ -37,6 +37,7 @@ import { useUsersStore } from "~~/store/users";
 import { storeToRefs } from "pinia";
 import usecopyToClipboard from "~~/composables/copy_to_clipboard";
 import { getAvatarUrlByName } from "~~/composables/avatar";
+import { useKeyboardShortcuts } from "~~/composables/useKeyboardShortcuts";
 
 const invitationCodeStore = useInvitationCodeStore();
 const { invitationCode } = storeToRefs(invitationCodeStore);
@@ -139,10 +140,16 @@ watch(
 
 // event handlers
 function start_quiz(e) {
-  e.preventDefault();
+  e?.preventDefault();
   startQuiz.value = true;
   emits("startQuiz");
 }
+
+useKeyboardShortcuts({
+  onEnter: () => {
+    if (props.isAdmin) start_quiz();
+  },
+});
 
 // main function
 function handleEvent(message) {
@@ -368,7 +375,10 @@ watch(
                 class="mt-4 flex items-center justify-center gap-2 text-center font-body text-[12px] leading-[1.4] text-jv-muted sm:text-[13px]"
               >
                 <Info class="size-4" :stroke-width="2.3" />
-                <span>Host can start the quiz at any time</span>
+                <span>
+                  Host can start the quiz at any time
+                  <span class="hidden md:inline">· press Enter to start</span>
+                </span>
               </p>
             </div>
           </div>
