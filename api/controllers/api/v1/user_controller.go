@@ -182,10 +182,12 @@ func (ctrl *UserController) CreateGuestUser(c *fiber.Ctx) error {
 		return utils.JSONFail(c, http.StatusInternalServerError, constants.ErrLoginUser)
 	}
 
+	// HttpOnly keeps the session JWT out of reach of page scripts (XSS).
 	userCookie := &fiber.Cookie{
-		Name:    constants.CookieUser,
-		Value:   token,
-		Expires: time.Now().Add(cookieExpirationTime),
+		Name:     constants.CookieUser,
+		Value:    token,
+		Expires:  time.Now().Add(cookieExpirationTime),
+		HTTPOnly: true,
 	}
 
 	c.Cookie(userCookie)

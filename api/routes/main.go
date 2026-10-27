@@ -264,7 +264,7 @@ func setupQuizController(v1 fiber.Router, db *goqu.Database, logger *zap.Logger,
 	quizzes := v1.Group("/quizzes")
 	quizzes.Use(middleware.KratosAuthenticated)
 
-	quizzes.Post(fmt.Sprintf("/:%s/demo_session", constants.QuizId), quizController.GenerateDemoSession)
+	quizzes.Post(fmt.Sprintf("/:%s/demo_session", constants.QuizId), middleware.QuizPermission, quizController.GenerateDemoSession)
 	quizzes.Post(fmt.Sprintf("/:%s/upload", constants.QuizTitle), middleware.ValidateCsv, middleware.KratosAuthenticated, quizController.CreateQuizByCsv)
 	quizzes.Post("/", quizController.CreateQuiz)
 	quizzes.Get("/", quizController.GetAdminUploadedQuizzes)
@@ -273,7 +273,7 @@ func setupQuizController(v1 fiber.Router, db *goqu.Database, logger *zap.Logger,
 
 	report := admin.Group("/reports")
 	report.Get("/list", quizController.ListQuizzesAnalysis)
-	report.Get(fmt.Sprintf("/:%s/analysis", constants.ActiveQuizId), middleware.KratosAuthenticated, quizController.GetQuizAnalysis)
+	report.Get(fmt.Sprintf("/:%s/analysis", constants.ActiveQuizId), middleware.VerifySessionHost, quizController.GetQuizAnalysis)
 	return nil
 }
 
@@ -360,7 +360,7 @@ func setUpFinalScoreBoardController(v1 fiber.Router, goqu *goqu.Database, logger
 
 	finalScore := v1.Group("/final_score")
 	finalScore.Get("/user", finalScoreBoardController.GetScore)
-	finalScore.Get("/admin", middlewares.KratosAuthenticated, finalScoreBoardControllerAdmin.GetScoreForAdmin)
+	finalScore.Get("/admin", middlewares.KratosAuthenticated, middlewares.VerifySessionHost, finalScoreBoardControllerAdmin.GetScoreForAdmin)
 
 	return nil
 }
@@ -378,7 +378,7 @@ func setUpAnalyticsBoardController(v1 fiber.Router, goqu *goqu.Database, logger 
 
 	analyticsBoard := v1.Group("/analytics_board")
 	analyticsBoard.Get("/user", analyticsBoardUserController.GetAnalyticsForUser)
-	analyticsBoard.Get("/admin", middlewares.KratosAuthenticated, analyticsBoardAdminController.GetAnalyticsForAdmin)
+	analyticsBoard.Get("/admin", middlewares.KratosAuthenticated, middlewares.VerifySessionHost, analyticsBoardAdminController.GetAnalyticsForAdmin)
 
 	return nil
 }

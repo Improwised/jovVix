@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, beforeAll } from "vitest";
 import { useQuizCover } from "../../composables/quiz_cover";
 
 const fallbacks = [
@@ -16,7 +16,12 @@ const tilts = [
 ];
 
 describe("useQuizCover", () => {
-  const { fallbackUrl, coverUrl, tiltClass } = useQuizCover();
+  let fallbackUrl, coverUrl, tiltClass;
+  // useQuizCover reads runtime config, which is only available once
+  // @nuxt/test-utils has started the Nuxt app in its beforeAll hook.
+  beforeAll(() => {
+    ({ fallbackUrl, coverUrl, tiltClass } = useQuizCover());
+  });
 
   it("returns one of the known fallback images", () => {
     const url = fallbackUrl({ id: "42" });

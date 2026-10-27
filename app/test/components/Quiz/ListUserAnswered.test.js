@@ -4,7 +4,8 @@ import ListUserAnswerd from "~/components/Quiz/ListUserAnswered.vue";
 import { createTestingPinia } from "@pinia/testing";
 import { useUserThatSubmittedAnswer } from "~/store/userSubmittedAnswer";
 
-vi.mock("notivue", () => ({
+vi.mock("notivue", async (importOriginal) => ({
+  ...(await importOriginal()),
   usePush: vi.fn(() => ({
     error: vi.fn(),
   })),

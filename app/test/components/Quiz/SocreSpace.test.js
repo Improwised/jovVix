@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeAll } from "vitest";
 import { mount } from "@vue/test-utils";
 import ScoreSpace from "~/components/Quiz/ScoreSpace.vue";
 
@@ -52,15 +52,20 @@ const props = {
   quizState: "running",
 };
 
-let wrapper = mount(ScoreSpace, {
-  props,
-  global: {
-    stubs: {
-      NuxtImg: true,
-      NuxtLink: true,
-      CodeBlockComponent: true,
+// @nuxt/test-utils starts the Nuxt app in a beforeAll hook, so mount
+// there rather than at import time.
+let wrapper;
+beforeAll(() => {
+  wrapper = mount(ScoreSpace, {
+    props,
+    global: {
+      stubs: {
+        NuxtImg: true,
+        NuxtLink: true,
+        CodeBlockComponent: true,
+      },
     },
-  },
+  });
 });
 
 describe("ScoreSpace test", () => {

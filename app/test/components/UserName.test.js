@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, beforeAll } from "vitest";
 import { mount } from "@vue/test-utils";
 import UserName from "~/components/UserName.vue";
 import { useUsersStore } from "~/store/users";
@@ -17,7 +17,12 @@ const mountComponent = () => {
   });
 };
 
-let wrapper = mountComponent();
+// @nuxt/test-utils starts the Nuxt app in a beforeAll hook, so mount
+// there rather than at import time.
+let wrapper;
+beforeAll(() => {
+  wrapper = mountComponent();
+});
 
 describe("UserName test", () => {
   beforeEach(() => {
