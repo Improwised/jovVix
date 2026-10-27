@@ -10,7 +10,7 @@ const props = defineProps({
 const emits = defineEmits(["isFullScreen"]);
 
 onMounted(() => {
-  if (process.client) {
+  if (import.meta.client) {
     bodyRef.value = document.documentElement;
 
     addEventListener("fullscreenchange", () => {

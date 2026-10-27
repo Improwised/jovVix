@@ -144,7 +144,8 @@ onBeforeUnmount(() => {
 }
 .jv-modal-enter-active .jv-modal-card,
 .jv-modal-leave-active .jv-modal-card {
-  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+  transition:
+    transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
     opacity 0.2s ease;
 }
 .jv-modal-enter-from,

@@ -343,7 +343,7 @@ const viewReport = (activeQuizId) => {
 const sortEventHandler = (columnName) => {
   let ordercol = order.value;
   if (columnName === orderBy.value) {
-    ordercol === "asc" ? (ordercol = "desc") : (ordercol = "asc");
+    ordercol = ordercol === "asc" ? "desc" : "asc";
   }
   navigateTo({
     path: route.path,

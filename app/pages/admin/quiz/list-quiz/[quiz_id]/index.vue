@@ -1097,7 +1097,9 @@ const handleStartQuiz = async () => {
   border: 3px dashed var(--jv-coral) !important;
   box-shadow: none !important;
   transform: none !important;
-  transition: opacity 0.15s ease, border-color 0.15s ease;
+  transition:
+    opacity 0.15s ease,
+    border-color 0.15s ease;
 }
 
 /* Disable the hover tilt on the ghost while it's acting as drop placeholder. */

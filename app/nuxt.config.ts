@@ -160,7 +160,7 @@ export default defineNuxtConfig({
       },
     },
     build: {
-      rollupOptions: {
+      rolldownOptions: {
         output: {
           manualChunks: (id) => {
             if (id.includes("node_modules")) {

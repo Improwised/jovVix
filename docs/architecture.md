@@ -5,7 +5,7 @@
 ```
 ┌──────────────────────────────────────────────────────────┐
 │                    Client (Browser)                       │
-│               Nuxt 3 SSR / Vue 3 SPA                     │
+│               Nuxt 4 SSR / Vue 3 SPA                     │
 │                Pinia State Management                     │
 │              WebSocket (Real-time Quiz)                   │
 └────────────────────┬─────────────────┬───────────────────┘
@@ -31,7 +31,7 @@
 
 ### Frontend (`app/`)
 
-**Framework:** Nuxt 3 (SSR + SPA hybrid)
+**Framework:** Nuxt 4 (SSR + SPA hybrid)
 
 | Layer | Location | Purpose |
 |-------|----------|---------|

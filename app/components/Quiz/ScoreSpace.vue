@@ -219,8 +219,8 @@ onUnmounted(() => {
               answer.isAnswer
                 ? 'bg-jv-mint'
                 : Number(key) === Number(selectedAnswer)
-                ? 'bg-jv-salmon/40'
-                : 'bg-jv-white',
+                  ? 'bg-jv-salmon/40'
+                  : 'bg-jv-white',
               selectedAnswer && Number(key) === Number(selectedAnswer)
                 ? 'outline-[3px] outline-offset-[2px] outline-jv-ink'
                 : '',

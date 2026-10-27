@@ -158,7 +158,7 @@ const handleStartQuiz = async (quizId) => {
         });
         isLoggedIn = who.data.role && who.data.role !== "guest-user";
       }
-    } catch (error) {
+    } catch {
       // Not authenticated; treat as guest and let the host page collect a name.
     }
 

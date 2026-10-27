@@ -35,8 +35,7 @@ defineEmits<{ "update:modelValue": [value: string] }>();
       )
     "
     @input="
-      (e) =>
-        $emit('update:modelValue', (e.target as HTMLTextAreaElement).value)
+      (e) => $emit('update:modelValue', (e.target as HTMLTextAreaElement).value)
     "
   />
 </template>

@@ -221,7 +221,7 @@ const errors = ref({
 const kratosUrl = urls.kratosUrl;
 
 (async () => {
-  if (process.client) {
+  if (import.meta.client) {
     const user = getUserData();
     const isReauth = !!route.query.returnTo;
 
