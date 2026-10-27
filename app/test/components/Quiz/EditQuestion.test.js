@@ -1,5 +1,5 @@
 import { mount } from "@vue/test-utils";
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeAll } from "vitest";
 import EditQuestion from "~/components/Quiz/EditQuestion.vue";
 
 const props = {
@@ -27,7 +27,12 @@ const mountComponent = () => {
     },
   });
 };
-let wrapper = mountComponent();
+// @nuxt/test-utils starts the Nuxt app in a beforeAll hook, so mount
+// there rather than at import time.
+let wrapper;
+beforeAll(() => {
+  wrapper = mountComponent();
+});
 
 describe("EditQuestion.vue", () => {
   it("renders the component with the provided props", () => {

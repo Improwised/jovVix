@@ -1,6 +1,6 @@
 import { mockNuxtImport } from "@nuxt/test-utils/runtime";
 import { mount } from "@vue/test-utils";
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeAll } from "vitest";
 import FinalScoreBoard from "~/components/FinalScoreBoard.vue";
 import ScoreBoardTable from "~/components/ScoreBoardTable.vue";
 
@@ -30,16 +30,23 @@ const mountComponent = () =>
     },
   });
 
-let wrapper = mountComponent();
+// @nuxt/test-utils starts the Nuxt app in a beforeAll hook, so mount
+// there rather than at import time.
+let wrapper;
+beforeAll(() => {
+  wrapper = mountComponent();
+});
 
-describe("FinalScoreBoard Test", async () => {
-  wrapper.vm.requestPending = false;
-  wrapper.vm.scoreboardData = [
-    { id: 1, firstname: "User 1", username: "User 1", rank: 1, score: 1000 },
-    { id: 2, firstname: "User 2", username: "User 2", rank: 2, score: 900 },
-  ];
+describe("FinalScoreBoard Test", () => {
+  beforeAll(async () => {
+    wrapper.vm.requestPending = false;
+    wrapper.vm.scoreboardData = [
+      { id: 1, firstname: "User 1", username: "User 1", rank: 1, score: 1000 },
+      { id: 2, firstname: "User 2", username: "User 2", rank: 2, score: 900 },
+    ];
 
-  await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+  });
 
   it("fetches scoreboard data for admin", async () => {
     expect(wrapper.vm.scoreboardData).toHaveLength(2);
