@@ -1,9 +1,10 @@
-import { describe, it, expect, vi, afterEach } from "vitest";
+import { describe, it, expect, vi, afterEach, beforeAll } from "vitest";
 import { mount } from "@vue/test-utils";
 import QuestionSpace from "~/components/Quiz/QuestionSpace.vue";
 import constants from "~/config/constants";
 
-vi.mock("notivue", () => ({
+vi.mock("notivue", async (importOriginal) => ({
+  ...(await importOriginal()),
   usePush: vi.fn(() => ({
     error: vi.fn(),
     warning: vi.fn(),
@@ -54,7 +55,12 @@ const mountComponent = () => {
     },
   });
 };
-let wrapper = mountComponent();
+// @nuxt/test-utils starts the Nuxt app in a beforeAll hook, so mount
+// there rather than at import time.
+let wrapper;
+beforeAll(() => {
+  wrapper = mountComponent();
+});
 
 describe("QuestionSpace test", () => {
   afterEach(() => {

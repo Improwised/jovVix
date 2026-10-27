@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeAll } from "vitest";
 import { mount, RouterLinkStub } from "@vue/test-utils";
 import QuizListCard from "~/components/QuizListCard.vue";
 import UtilsStartQuiz from "~/components/utils/StartQuiz.vue";
@@ -25,7 +25,12 @@ const mountComponent = () => {
   });
 };
 
-const wrapper = mountComponent();
+// @nuxt/test-utils starts the Nuxt app in a beforeAll hook, so mount
+// there rather than at import time.
+let wrapper;
+beforeAll(() => {
+  wrapper = mountComponent();
+});
 
 describe("QuizListCard test", () => {
   it("renders correctly with props", () => {

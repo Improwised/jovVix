@@ -1,4 +1,4 @@
-import { describe, it, expect, afterEach, vi } from "vitest";
+import { describe, it, expect, afterEach, beforeAll, vi } from "vitest";
 import { createTestingPinia } from "@pinia/testing";
 import WaitingSpace from "~/components/Quiz/WaitingSpace.vue";
 import { mount } from "@vue/test-utils";
@@ -20,15 +20,23 @@ vi.mock("../../../composables/copy_to_clipboard.js", () => {
   };
 });
 
-mockNuxtImport("useRuntimeConfig", () => {
+// Keep the real config so the Nuxt app (router, plugins) can still start;
+// only the public baseUrl matters to these tests.
+mockNuxtImport("useRuntimeConfig", (original) => {
   return () => {
+    const config = original();
     return {
-      public: { baseUrl: "https//quiz.example.com" },
+      ...config,
+      public: { ...config.public, baseUrl: "https//quiz.example.com" },
     };
   };
 });
 
-vi.stubGlobal("useNuxtApp", () => ({}));
+// Stub after the Nuxt app has started: @nuxt/test-utils sets it up in a
+// beforeAll hook and needs the real useNuxtApp to do so.
+beforeAll(() => {
+  vi.stubGlobal("useNuxtApp", () => ({}));
+});
 const pinia = createTestingPinia({
   createSpy: vi.fn,
 });
@@ -56,6 +64,8 @@ describe("WaitingSpace test", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
+    // Vitest 4's restoreAllMocks no longer resets vi.fn() call history.
+    vi.clearAllMocks();
   });
 
   it("renders properly", async () => {

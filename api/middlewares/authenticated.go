@@ -59,9 +59,10 @@ func (m *Middleware) Authenticated(c *fiber.Ctx) error {
 
 		// Set Coockie
 		c.Cookie(&fiber.Cookie{
-			Name:    constants.CookieUser,
-			Value:   newToken,
-			Expires: time.Now().Add(cookieExpirationTime),
+			Name:     constants.CookieUser,
+			Value:    newToken,
+			Expires:  time.Now().Add(cookieExpirationTime),
+			HTTPOnly: true,
 		})
 	}
 
