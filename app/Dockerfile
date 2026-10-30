@@ -1,4 +1,4 @@
-FROM improwised/docker-nodejs-base:22.21.1-latest
+FROM improwised/docker-nodejs-base:24.22.2-3918fda-1793345930
 WORKDIR /app
 COPY ./package*.json ./
 RUN npm install
