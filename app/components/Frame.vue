@@ -36,7 +36,7 @@ const toastError = () => {
 };
 
 onMounted(() => {
-  if (process.client) {
+  if (import.meta.client) {
     toastError();
   }
 });

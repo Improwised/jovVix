@@ -22,10 +22,10 @@
   },
   "homepage": "https://github.com/Improwised/jovVix#readme",
   "devDependencies": {
-    "@playwright/experimental-ct-vue": "^1.57.0",
-    "@playwright/test": "^1.57.0",
-    "nock": "^14.0.10",
-    "playwright": "^1.57.0",
-    "vue": "^3.5.43"
+    "@playwright/experimental-ct-vue": "~1.62.1",
+    "@playwright/test": "~1.62.1",
+    "nock": "^15.0.5",
+    "playwright": "~1.62.1",
+    "vue": "^3.5.44"
   }
 }

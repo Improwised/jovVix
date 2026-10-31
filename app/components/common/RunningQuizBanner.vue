@@ -422,11 +422,14 @@ const confirmStop = async () => {
 
 <style scoped>
 .dock-enter-active {
-  transition: transform 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.4),
+  transition:
+    transform 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.4),
     opacity 0.25s ease;
 }
 .dock-leave-active {
-  transition: transform 0.2s ease, opacity 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    opacity 0.2s ease;
 }
 .dock-enter-from {
   transform: translateY(120%) rotate(-8deg);

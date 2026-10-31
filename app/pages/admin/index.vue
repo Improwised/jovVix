@@ -332,7 +332,7 @@ const saveButtonText = computed(() =>
 
 const {
   data: user,
-  pending: userPending,
+  status: userStatus,
   error: userError,
 } = useFetch(url.apiUrl + "/kratos/whoami", {
   method: "GET",
@@ -341,6 +341,11 @@ const {
   credentials: "include",
   server: false,
 });
+// With `server: false`, Nuxt 4 reports "idle" (not pending) during SSR; treat
+// it as pending so the server renders the same loading state as the client.
+const userPending = computed(() =>
+  ["idle", "pending"].includes(userStatus.value)
+);
 
 const userData = reactive({
   full_name: "",

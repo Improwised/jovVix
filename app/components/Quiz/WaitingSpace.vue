@@ -169,7 +169,7 @@ const copyToClipBoard = (text) => {
 const openQrFullscreen = () => qrOverlay.value?.open();
 
 function initializeSound() {
-  if (process.client) {
+  if (import.meta.client) {
     waitingSound.value = new Audio("/music/waiting_area_music.mp3");
     if (music.value) {
       waitingSound.value.play();

@@ -69,8 +69,8 @@ const isPicked = (order) => pickedSet.value.has(Number(order));
         isCorrect(order)
           ? 'bg-jv-mint'
           : isPicked(order)
-          ? 'bg-jv-salmon/50'
-          : 'bg-jv-white',
+            ? 'bg-jv-salmon/50'
+            : 'bg-jv-white',
       ]"
     >
       <Option

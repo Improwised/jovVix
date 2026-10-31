@@ -91,7 +91,7 @@ const handleCustomChange = (isFullScreenEvent) => {
 
 // main functions
 onMounted(() => {
-  if (!process.client) return;
+  if (!import.meta.client) return;
   // Guests with a pending session pick a name first; the socket setup runs
   // after the name modal submission redirects to the real session URL.
   if (showHostNameModal.value) return;

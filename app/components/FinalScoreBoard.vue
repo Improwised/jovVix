@@ -127,7 +127,7 @@ const loadData = () => {
   }
 };
 
-if (process.client) {
+if (import.meta.client) {
   loadData();
 } else {
   onMounted(() => loadData());
@@ -167,7 +167,7 @@ watch(
 );
 
 onMounted(() => {
-  if (process.client) {
+  if (import.meta.client) {
     winningSound.value = new Audio("/music/winning.mp3");
     if (winnerUI.value == "true") {
       tryPlay(winningSound.value);

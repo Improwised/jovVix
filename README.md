@@ -270,7 +270,7 @@ This project uses the following key dependencies:
 - Frontend:
 
   - Vue.js: For building reactive user interfaces.
-  - Nuxt 3: Framework for server-side rendering and static site generation.
+  - Nuxt 4: Framework for server-side rendering and static site generation.
 
 - Backend:
 

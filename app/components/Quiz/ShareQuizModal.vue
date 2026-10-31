@@ -37,7 +37,7 @@ const component = ref("");
 const {
   refresh: quizAuthorizedUsersDataRefresh,
   data: quizAuthorizedUsersData,
-  pending: quizAuthorizedUsersPending,
+  status: quizAuthorizedUsersStatus,
   error: quizAuthorizedUsersError,
 } = useFetch(() => `${url.apiUrl}/shared_quizzes/${props.quizId}`, {
   method: "GET",
@@ -47,6 +47,12 @@ const {
   immediate: false,
   watch: [() => props.quizId],
 });
+
+// Nuxt 4 reports "idle" rather than pending before the first request; keep
+// showing the loader until the list has actually been fetched.
+const quizAuthorizedUsersPending = computed(() =>
+  ["idle", "pending"].includes(quizAuthorizedUsersStatus.value)
+);
 
 const authorizedUsers = computed(
   () => quizAuthorizedUsersData.value?.data || []

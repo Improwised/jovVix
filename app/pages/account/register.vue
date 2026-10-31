@@ -79,7 +79,7 @@ function onSubmit(event) {
 }
 
 (async () => {
-  if (process.client) {
+  if (import.meta.client) {
     const user = getUserData();
     if (user && user?.role == "admin-user") {
       navigateTo("/");

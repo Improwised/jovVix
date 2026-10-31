@@ -111,7 +111,7 @@ const resolvePlaySession = async () => {
 // main functions
 onMounted(async () => {
   // core logic
-  if (!process.client) return;
+  if (!import.meta.client) return;
 
   try {
     if (!(await resolvePlaySession())) return handleSessionUnavailable();
@@ -240,7 +240,7 @@ const sendAnswer = async (answers) => {
     if (answers.length > 0) {
       selectedAnswer.value = answers[0];
     }
-  } catch (err) {
+  } catch {
     toast.error("An error occurred while submitting the answer.");
   }
 };
