@@ -11,7 +11,7 @@ require (
 	github.com/gofiber/adaptor/v2 v2.2.1
 	github.com/gofiber/contrib/swagger v1.1.1
 	github.com/gofiber/contrib/websocket v1.3.0
-	github.com/gofiber/fiber/v2 v2.52.13
+	github.com/gofiber/fiber/v2 v2.52.14
 	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
 	github.com/jszwec/csvutil v1.10.0
