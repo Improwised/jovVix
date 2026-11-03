@@ -252,8 +252,7 @@ const podiumOrder = computed(() => {
   ];
 });
 
-const podiumName = (winner) =>
-  winner?.firstname || winner?.username || "Player";
+const podiumName = (winner) => winner?.firstname || "Player";
 </script>
 
 <template>
@@ -372,9 +371,11 @@ const podiumName = (winner) =>
               <template v-if="step.winner">
                 <!-- Name tag -->
                 <span
-                  class="relative z-10 inline-flex max-w-full rotate-[-1deg] items-center justify-center rounded-[6px] border-[2px] border-jv-ink bg-jv-ink px-2.5 py-1 font-feature text-[11px] font-black uppercase tracking-[0.06em] text-white shadow-brutal-sm sm:text-[12px]"
+                  class="relative z-10 inline-flex max-w-full rotate-[-1deg] flex-col items-center justify-center rounded-[6px] border-[2px] border-jv-ink bg-jv-ink px-2.5 py-1 font-feature text-[11px] font-black tracking-[0.06em] text-white shadow-brutal-sm sm:text-[12px]"
                 >
-                  <span class="block max-w-[88px] truncate sm:max-w-[120px]">
+                  <span
+                    class="block max-w-[88px] truncate uppercase sm:max-w-[120px]"
+                  >
                     {{ podiumName(step.winner) }}
                   </span>
                 </span>

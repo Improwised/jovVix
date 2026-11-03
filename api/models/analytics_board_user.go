@@ -52,7 +52,7 @@ func (model *AnalyticsBoardUserModel) GetAnalyticsForUser(userPlayedQuizId strin
 		Select(
 			goqu.I(constants.UserQuizResponsesTable+".question_id").As("question_id"),
 			"username",
-			"first_name",
+			goqu.L("COALESCE(user_played_quizzes.player_name, users.first_name)").As("first_name"),
 			goqu.I(constants.UserQuizResponsesTable+".answers").As("selected_answer"),
 			goqu.I(constants.QuestionsTable+".answers").As("correct_answer"),
 			"calculated_score",

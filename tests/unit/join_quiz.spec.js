@@ -74,6 +74,34 @@ test.describe('Join Quiz (Unit) - Real Implementation', () => {
     await context.dispose();
   });
 
+  test('Quiz names are unique, suggestions can be used, and rejoining keeps the name', async ({ playwright, activeSession }) => {
+    const first = await playwright.request.newContext();
+    const second = await playwright.request.newContext();
+    const suffix = Math.floor(100000 + Math.random() * 900000);
+    try {
+      await first.post(`/api/v1/user/A${suffix}?avatar_name=1.webp`);
+      await second.post(`/api/v1/user/B${suffix}?avatar_name=1.webp`);
+      const name = `P${suffix}`;
+      const [a, b] = await Promise.all([
+        first.post(`/api/v1/user_played_quizes/${activeSession.code}`, { data: { player_name: name } }),
+        second.post(`/api/v1/user_played_quizes/${activeSession.code}`, { data: { player_name: name.toLowerCase() } }),
+      ]);
+      expect([a.status(), b.status()].sort()).toEqual([200, 409]);
+      const winner = a.status() === 200 ? first : second;
+      const loser = a.status() === 409 ? first : second;
+      const conflict = await (a.status() === 409 ? a : b).json();
+      expect(conflict.data.suggestions.length).toBeGreaterThan(0);
+      const retry = await loser.post(`/api/v1/user_played_quizes/${activeSession.code}`, { data: { player_name: conflict.data.suggestions[0] } });
+      expect(retry.status()).toBe(200);
+      const original = await (a.status() === 200 ? a : b).json();
+      const rejoin = await winner.post(`/api/v1/user_played_quizes/${activeSession.code}`, { data: { player_name: "Changed" } });
+      expect((await rejoin.json()).data.player_name).toBe(original.data.player_name);
+    } finally {
+      await first.dispose();
+      await second.dispose();
+    }
+  });
+
   // Edge Case D: Guest Name Boundaries
   test('Guest Name Validation - Boundaries', async ({ request }) => {
     const resEmpty = await request.post(`/api/v1/user/ ?avatar_name=1.webp`); // Trailing space url encoding might vary, strict empty check needed

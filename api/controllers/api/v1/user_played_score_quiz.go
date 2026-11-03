@@ -2,8 +2,11 @@ package v1
 
 import (
 	"database/sql"
+	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/Improwised/jovvix/api/config"
 	"github.com/Improwised/jovvix/api/constants"
@@ -150,13 +153,32 @@ func (ctrl *UserPlayedQuizeController) PlayedQuizValidation(c *fiber.Ctx) error 
 		return utils.JSONFail(c, http.StatusForbidden, constants.ErrAdminCannotBeUser)
 	}
 
-	ctrl.logger.Debug("userPlayedQuizModel.CreateUserPlayedQuizIfNotExists called", zap.Any("userId", userId), zap.Any("sessionID", session.ID))
-	userPlayedQuizId, isNonExistingParticipants, err := ctrl.userPlayedQuizModel.CreateUserPlayedQuizIfNotExists(userId, session.ID)
+	var body struct {
+		PlayerName *string `json:"player_name"`
+	}
+	if len(c.Body()) > 0 {
+		if err := json.Unmarshal(c.Body(), &body); err != nil {
+			return utils.JSONFail(c, http.StatusBadRequest, "Invalid join request")
+		}
+	}
+	requestedName := ""
+	if body.PlayerName != nil {
+		requestedName = strings.TrimSpace(*body.PlayerName)
+		if requestedName == "" {
+			return utils.JSONFail(c, http.StatusBadRequest, models.ErrInvalidPlayerName.Error())
+		}
+	}
+	userPlayedQuizId, isNonExistingParticipants, playerName, suggestions, err := ctrl.userPlayedQuizModel.JoinQuiz(userId, session.ID, requestedName)
+	if errors.Is(err, models.ErrPlayerNameTaken) {
+		return utils.JSONFail(c, http.StatusConflict, fiber.Map{"message": "This name is already taken. Choose another name for this quiz.", "suggestions": suggestions})
+	}
+	if errors.Is(err, models.ErrInvalidPlayerName) {
+		return utils.JSONFail(c, http.StatusBadRequest, err.Error())
+	}
 	if err != nil {
 		ctrl.logger.Error(constants.ErrUserQuizSessionValidation, zap.Error(err))
 		return utils.JSONFail(c, http.StatusInternalServerError, constants.ErrUserQuizSessionValidation)
 	}
-	ctrl.logger.Debug("userPlayedQuizModel.CreateUserPlayedQuizIfNotExists success", zap.Any("userPlayedQuizId", userPlayedQuizId))
 
 	// Ensure response rows on every validation. This repairs a partially-created
 	// participant from a previously failed join without duplicating existing rows.
@@ -174,6 +196,7 @@ func (ctrl *UserPlayedQuizeController) PlayedQuizValidation(c *fiber.Ctx) error 
 		"user_played_quiz": userPlayedQuizId.String(),
 		"session_id":       session.ID.String(),
 		"quiz_title":       session.Title,
+		"player_name":      playerName,
 	}
 
 	return utils.JSONSuccess(c, http.StatusOK, response)

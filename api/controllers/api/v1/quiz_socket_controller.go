@@ -192,8 +192,12 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 		qc.logger.Error("error getting player quiz for option randomization", zap.Error(err))
 	}
 
-	// when user join at that time publish userName to admin
-	publishUserOnJoin(qc, response, user.FirstName, userId, user.ImageKey, session.ID.String())
+	// Publish the session-specific name while preserving the account identity.
+	playerName, nameErr := qc.userPlayedQuizModel.GetPlayerName(userId, session.ID)
+	if nameErr != nil {
+		playerName = user.FirstName
+	}
+	publishUserOnJoin(qc, response, playerName, userId, user.ImageKey, session.ID.String())
 	response.Action = constants.QuizQuestionStatus
 	onConnectHandleUser(c, qc, &response, session, userPlayedQuizId, &JoinMu)
 	handleQuestion(c, qc, session, response, userPlayedQuizId, isUserConnected, &JoinMu)
@@ -918,6 +922,37 @@ func (qc *quizSocketController) rebuildRosterFromDB(sessionId string) []UserInfo
 	return roster
 }
 
+// Refresh names in cached rosters, including entries created before this change.
+func (qc *quizSocketController) fillRosterPlayerNames(sessionId string, roster []UserInfo) {
+	if len(roster) == 0 {
+		return
+	}
+	joined, err := qc.userPlayedQuizModel.GetJoinedUsers(sessionId)
+	if err != nil {
+		qc.logger.Error("error fetching player names for cached roster", zap.Error(err))
+		return
+	}
+	names := make(map[string]string, len(joined))
+	for _, user := range joined {
+		names[user.UserID] = user.FirstName
+	}
+	for i := range roster {
+		if name, ok := names[roster[i].UserId]; ok {
+			roster[i].UserName = name
+		}
+	}
+}
+
+// applyRosterNames preserves names corrected from an older cached roster while
+// leaving new join events and connection state untouched.
+func applyRosterNames(roster []UserInfo, names map[string]string) {
+	for i := range roster {
+		if name, ok := names[roster[i].UserId]; ok {
+			roster[i].UserName = name
+		}
+	}
+}
+
 // when user connect at that time send data to admin
 func handleConnectedUser(c *websocket.Conn, qc *quizSocketController, sessionId string, adminDisconnected chan bool, arrangeMu *sync.Mutex) {
 	response := QuizSendResponse{}
@@ -939,6 +974,14 @@ func handleConnectedUser(c *websocket.Conn, qc *quizSocketController, sessionId 
 
 	if initialRoster == nil {
 		initialRoster = qc.rebuildRosterFromDB(sessionId)
+	} else {
+		qc.fillRosterPlayerNames(sessionId, initialRoster)
+	}
+
+	// Keep the one-time correction for legacy Redis entries when updates arrive.
+	rosterNames := make(map[string]string, len(initialRoster))
+	for _, user := range initialRoster {
+		rosterNames[user.UserId] = user.UserName
 	}
 
 	if initialRoster != nil {
@@ -996,6 +1039,7 @@ func handleConnectedUser(c *websocket.Conn, qc *quizSocketController, sessionId 
 				break
 			}
 
+			applyRosterNames(usersData, rosterNames)
 			response.Data = usersData
 
 			err = func() error {
@@ -1562,6 +1606,13 @@ func (qc *quizSocketController) SetAnswer(c *fiber.Ctx) error {
 		}
 		qc.logger.Error("error during answer submit", zap.Error(err))
 		return utils.JSONFail(c, http.StatusInternalServerError, constants.UnknownError)
+	}
+
+	// The host's answered-player list uses this event's first_name.
+	if quizID, parseErr := uuid.Parse(sessionId); parseErr == nil {
+		if name, nameErr := qc.userPlayedQuizModel.GetPlayerName(user.ID, quizID); nameErr == nil {
+			user.FirstName = name
+		}
 	}
 
 	// Publish to Redis in a goroutine

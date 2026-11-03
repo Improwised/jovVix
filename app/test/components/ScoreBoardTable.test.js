@@ -60,7 +60,7 @@ describe("ScoreBoardTable.vue", () => {
   });
 
   it("displays additional user information for admins", () => {
-    expect(wrapper.text()).toContain("john_doe");
+    expect(wrapper.text()).not.toContain("john_doe");
   });
 
   it("highlights the current user row when not an admin", async () => {
@@ -80,6 +80,9 @@ describe("ScoreBoardTable.vue", () => {
     });
 
     expect(w.text()).toContain("Jane");
+    expect(w.text()).not.toContain("jane_doe");
+    expect(w.text()).not.toContain("john_doe");
+    expect(w.text()).toContain("You");
   });
 
   it("renders avatar URLs correctly", () => {

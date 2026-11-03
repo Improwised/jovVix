@@ -124,7 +124,7 @@ const rankBadgeFor = (rank) => {
           >
             <NuxtImg
               :src="getAvatarUrlByName(user?.img_key)"
-              :alt="`${user.firstname || user.username || 'Player'} avatar`"
+              :alt="`${user.firstname || 'Player'} avatar`"
               width="48"
               height="48"
               loading="lazy"
@@ -143,14 +143,6 @@ const rankBadgeFor = (rank) => {
               >
                 <Star class="size-3" :stroke-width="2.6" />
                 You
-              </span>
-              <span
-                v-else-if="
-                  (isAdmin || user.username === userName) && user.username
-                "
-                class="truncate font-body text-[12px] font-bold text-jv-muted sm:text-[13px]"
-              >
-                @{{ user.username }}
               </span>
             </p>
           </div>

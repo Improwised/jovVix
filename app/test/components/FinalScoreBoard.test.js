@@ -1,15 +1,13 @@
 import { mockNuxtImport } from "@nuxt/test-utils/runtime";
 import { mount } from "@vue/test-utils";
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect, beforeAll, vi } from "vitest";
 import FinalScoreBoard from "~/components/FinalScoreBoard.vue";
 import ScoreBoardTable from "~/components/ScoreBoardTable.vue";
 
-mockNuxtImport("useRoute", () => () => ({
-  query: {
-    aqi: "quiz123",
-    winner_ui: "false",
-  },
+const route = vi.hoisted(() => ({
+  query: { aqi: "quiz123", winner_ui: "false" },
 }));
+mockNuxtImport("useRoute", () => () => route);
 
 const props = {
   userURL: "/scoreboard",
@@ -54,5 +52,33 @@ describe("FinalScoreBoard Test", () => {
 
   it("renders ScoreBoardTable component for admin", async () => {
     expect(wrapper.findComponent(ScoreBoardTable).exists()).toBe(true);
+  });
+
+  it("shows player names without account usernames on the podium", async () => {
+    route.query.winner_ui = "true";
+    const podium = mount(FinalScoreBoard, {
+      props,
+      global: {
+        stubs: {
+          ClientOnly: { template: "<div><slot /></div>" },
+          NuxtImg: true,
+          NuxtLink: true,
+          WinnerConfetti: true,
+        },
+      },
+    });
+    podium.vm.requestPending = false;
+    podium.vm.scoreboardData = [
+      { firstname: "Smit", username: "smit_one" },
+      { firstname: "Smit", username: "smit_two" },
+      { firstname: "Alex" },
+    ];
+    await podium.vm.$nextTick();
+    expect(podium.text()).not.toContain("@smit_one");
+    expect(podium.text()).not.toContain("@smit_two");
+    expect(podium.text()).toContain("Alex");
+    expect(podium.text()).not.toContain("@undefined");
+    podium.unmount();
+    route.query.winner_ui = "false";
   });
 });

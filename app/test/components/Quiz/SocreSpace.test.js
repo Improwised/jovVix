@@ -113,6 +113,7 @@ describe("ScoreSpace test", () => {
   it("renders the rank list correctly", () => {
     expect(wrapper.text()).toContain("1");
     expect(wrapper.text()).toContain("doe");
+    expect(wrapper.text()).not.toContain("@john");
     expect(wrapper.text()).toContain("0");
   });
 });

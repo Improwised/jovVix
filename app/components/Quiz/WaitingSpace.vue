@@ -92,8 +92,7 @@ const participantCount = computed(() => listUsers.value.length);
 const joinUrl = computed(() => `${baseUrl}/join`);
 const joinUrlWithCode = computed(() => `${joinUrl.value}?code=${code.value}`);
 
-const getParticipantName = (user) =>
-  user?.UserName || user?.username || user?.name || "Player";
+const getParticipantName = (user) => user?.UserName || user?.name || "Player";
 
 const quizTitle = computed(
   () =>
@@ -443,11 +442,13 @@ watch(
                   />
                   <UserRound v-else class="size-5" :stroke-width="2.2" />
                 </span>
-                <span
-                  class="truncate font-body text-[16px] font-semibold text-jv-ink sm:text-[20px]"
-                >
-                  {{ getParticipantName(user) }}
-                </span>
+                <div class="min-w-0">
+                  <span
+                    class="block truncate font-body text-[16px] font-semibold text-jv-ink sm:text-[20px]"
+                  >
+                    {{ getParticipantName(user) }}
+                  </span>
+                </div>
               </div>
               <span
                 class="grid size-8 shrink-0 rotate-0 sm:rotate-[2deg] place-items-center border-[2px] border-jv-ink bg-jv-mint sm:size-9"

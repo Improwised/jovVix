@@ -75,7 +75,7 @@ const buckets = computed(() => {
       const responseMs = enrich?.response_time;
       const entry = {
         username,
-        firstname: enrich?.firstname || username,
+        firstname: enrich?.firstname || "Player",
         avatar: getAvatarUrlByName(enrich?.img_key),
         letter,
         optionText: optText,

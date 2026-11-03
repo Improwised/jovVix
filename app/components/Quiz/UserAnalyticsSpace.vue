@@ -151,9 +151,6 @@ onBeforeUnmount(() => {
           >
             {{ props.data[0].firstname }}
           </div>
-          <div class="text-[14px] font-semibold text-jv-muted truncate">
-            ({{ props.data[0].username }})
-          </div>
         </div>
       </div>
 

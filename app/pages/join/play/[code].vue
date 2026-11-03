@@ -8,6 +8,7 @@ import { storeToRefs } from "pinia";
 import UserOperation from "~/composables/user_operation.js";
 import { useSystemEnv } from "~/composables/envs.js";
 import { useSessionStore } from "~~/store/session";
+import { joinRecoveryQuery } from "~~/composables/join_recovery";
 
 // define nuxt configs
 const route = useRoute();
@@ -93,7 +94,7 @@ const resolvePlaySession = async () => {
   const resolved = {
     code,
     username: who._data?.data?.username || "",
-    firstname: who._data?.data?.firstname || "",
+    firstname: played?.data?.player_name || who._data?.data?.firstname || "",
     userPlayedQuiz: played?.data?.user_played_quiz,
     sessionId: played?.data?.session_id,
   };
@@ -114,10 +115,15 @@ onMounted(async () => {
   if (!import.meta.client) return;
 
   try {
-    if (!(await resolvePlaySession())) return handleSessionUnavailable();
+    if (!(await resolvePlaySession())) {
+      return router.replace({ path: "/join", query: joinRecoveryQuery(code) });
+    }
   } catch (err) {
     console.error(err);
-    return handleSessionUnavailable();
+    return router.replace({
+      path: "/join",
+      query: joinRecoveryQuery(code, err),
+    });
   }
 
   if (cancelled.value) return;

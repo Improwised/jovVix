@@ -74,6 +74,28 @@ describe("WaitingSpace test", () => {
     expect(wrapper.find('button[type="submit"]').text()).toBe("Start Quiz");
   });
 
+  it("shows player names from current and older roster entries", () => {
+    listUserStore.listUsers = [
+      { UserId: "1", UserName: "Smit" },
+      { UserId: "2", UserName: "Smit42" },
+      { UserId: "3", UserName: "Older player" },
+    ];
+    const wrapper = mountComponent();
+    expect(wrapper.text()).toContain("Smit42");
+    expect(wrapper.text()).toContain("Older player");
+    listUserStore.listUsers = [];
+  });
+
+  it("shows the player name without the account username", async () => {
+    const wrapper = mountComponent();
+    await wrapper.setProps({
+      isAdmin: false,
+      userName: "Smit",
+    });
+    expect(wrapper.text()).toContain("Smit");
+    expect(wrapper.text()).not.toContain("@smit_ab12");
+  });
+
   it("shows correct invitation code", () => {
     const wrapper = mountComponent({
       data: { status: "success", data: "Welcome" },

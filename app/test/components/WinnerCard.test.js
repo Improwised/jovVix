@@ -69,7 +69,7 @@ describe("WinnerCard test", () => {
 
   it("renders winner details correctly", () => {
     expect(wrapper.text()).toContain("John");
-    expect(wrapper.text()).toContain("john_doe");
+    expect(wrapper.text()).not.toContain("john_doe");
     expect(wrapper.text()).toContain("8256");
   });
 });

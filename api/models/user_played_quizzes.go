@@ -3,8 +3,11 @@ package models
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/Improwised/jovvix/api/constants"
 	quizUtilsHelper "github.com/Improwised/jovvix/api/helpers/utils"
@@ -65,62 +68,122 @@ func (model *UserPlayedQuizModel) GetUserPlayedQuizID(userId string, activeQuizI
 //	1 -> query executed but parse err
 //	2 -> new entry
 //	3 -> existing entry
-func (model *UserPlayedQuizModel) CreateUserPlayedQuizIfNotExists(userId string, quizSessionId uuid.UUID) (uuid.UUID, int, error) {
+var ErrPlayerNameTaken = errors.New("player name is already taken")
+var ErrInvalidPlayerName = errors.New("player name must be between 1 and 12 characters")
 
-	stmt, err := model.db.Prepare(`
-		with user_session_id_is_host as (
-			SELECT id, is_host, 'exists' as status
-			FROM user_played_quizzes us
-			WHERE us.user_id = $1
-			AND us.active_quiz_id = $2
-			limit 1
-		), insert_user_into_session as (
-			INSERT INTO user_played_quizzes
-				(id, user_id, active_quiz_id, is_host)
-			SELECT
-			$3 as id,
-			$1 as user_id,
-			$2 as active_quiz_id,
-			(select qs.admin_id = $1 from active_quizzes qs where qs.id = $2) as is_host
-			WHERE NOT EXISTS (
-				select 1 from user_session_id_is_host
-			) returning id, is_host, 'new' as status
-		)
-		select id, status from user_session_id_is_host
-		union all
-		select id, status from insert_user_into_session;
-	`)
+// JoinQuiz serializes joins for a session, including checks against old records
+// that predate player_name. The unique index also protects new records.
+func (model *UserPlayedQuizModel) JoinQuiz(userID string, sessionID uuid.UUID, requestedName string) (uuid.UUID, int, string, []string, error) {
+	tx, err := model.db.Begin()
 	if err != nil {
-		return model.defaultUUID, 0, err
+		return uuid.Nil, 0, "", nil, err
 	}
-	defer stmt.Close()
-
-	id, err := uuid.NewUUID()
-
-	if err != nil {
-		return model.defaultUUID, 0, err
+	defer tx.Rollback()
+	var locked uuid.UUID
+	if err = tx.QueryRow("SELECT id FROM active_quizzes WHERE id = $1 FOR UPDATE", sessionID).Scan(&locked); err != nil {
+		return uuid.Nil, 0, "", nil, err
 	}
-
-	// Execute the prepared statement
-	rows, err := stmt.Query(userId, quizSessionId, id)
-	if err != nil {
-		return model.defaultUUID, 0, err
+	var id uuid.UUID
+	var savedName string
+	err = tx.QueryRow(`SELECT upq.id, COALESCE(upq.player_name, u.first_name) FROM user_played_quizzes upq JOIN users u ON u.id = upq.user_id WHERE upq.user_id = $1 AND upq.active_quiz_id = $2 LIMIT 1`, userID, sessionID).Scan(&id, &savedName)
+	if err == nil {
+		return id, 3, savedName, nil, nil
 	}
-	defer rows.Close()
-
-	var userPlayedQuizId uuid.UUID
-	var status string
-	if rows.Next() {
-		if err := rows.Scan(&userPlayedQuizId, &status); err != nil {
-			return id, 1, err
+	if err != sql.ErrNoRows {
+		return uuid.Nil, 0, "", nil, err
+	}
+	var first, last string
+	if err = tx.QueryRow("SELECT first_name, COALESCE(last_name, '') FROM users WHERE id = $1", userID).Scan(&first, &last); err != nil {
+		return uuid.Nil, 0, "", nil, err
+	}
+	name := strings.TrimSpace(requestedName)
+	if name == "" {
+		name = strings.TrimSpace(first)
+		if chars := []rune(name); len(chars) > 12 {
+			name = string(chars[:12])
 		}
 	}
-
-	if status == "new" {
-		return userPlayedQuizId, 2, nil
-	} else {
-		return userPlayedQuizId, 3, nil
+	if utf8.RuneCountInString(name) < 1 || utf8.RuneCountInString(name) > 12 {
+		return uuid.Nil, 0, "", nil, ErrInvalidPlayerName
 	}
+	available := func(candidate string) (bool, error) {
+		var taken bool
+		err := tx.QueryRow(`SELECT EXISTS (SELECT 1 FROM user_played_quizzes upq JOIN users u ON u.id = upq.user_id WHERE upq.active_quiz_id = $1 AND upq.is_host = false AND lower(btrim(COALESCE(upq.player_name, u.first_name))) = lower(btrim($2)))`, sessionID, candidate).Scan(&taken)
+		return !taken, err
+	}
+	ok, err := available(name)
+	if err != nil {
+		return uuid.Nil, 0, "", nil, err
+	}
+	if !ok {
+		suggestions, err := suggestPlayerNames(first, last, name, available)
+		if err != nil {
+			return uuid.Nil, 0, "", nil, err
+		}
+		return uuid.Nil, 0, "", suggestions, ErrPlayerNameTaken
+	}
+	id, err = uuid.NewRandom()
+	if err != nil {
+		return uuid.Nil, 0, "", nil, err
+	}
+	_, err = tx.Exec(`INSERT INTO user_played_quizzes (id, user_id, active_quiz_id, is_host, player_name) VALUES ($1, $2, $3, false, $4)`, id, userID, sessionID, name)
+	if err != nil {
+		return uuid.Nil, 0, "", nil, err
+	}
+	if err = tx.Commit(); err != nil {
+		return uuid.Nil, 0, "", nil, err
+	}
+	return id, 2, name, nil, nil
+}
+
+func suggestPlayerNames(first, last, name string, available func(string) (bool, error)) ([]string, error) {
+	suggestions := []string{}
+	seen := map[string]bool{strings.ToLower(name): true}
+	try := func(candidate string) error {
+		candidate = strings.TrimSpace(candidate)
+		key := strings.ToLower(candidate)
+		if candidate == "" || utf8.RuneCountInString(candidate) > 12 || seen[key] {
+			return nil
+		}
+		seen[key] = true
+		free, err := available(candidate)
+		if err == nil && free {
+			suggestions = append(suggestions, candidate)
+		}
+		return err
+	}
+	if strings.TrimSpace(last) != "" {
+		for _, candidate := range []string{last, strings.ReplaceAll(first+last, " ", "")} {
+			if err := try(candidate); err != nil {
+				return nil, err
+			}
+		}
+	}
+	base := []rune(name)
+	if len(base) > 9 {
+		base = base[:9]
+	}
+	for i := 0; i < 30 && len(suggestions) < 4; i++ {
+		if err := try(fmt.Sprintf("%s%d", string(base), quizUtilsHelper.GenerateRandomInt(10, 999))); err != nil {
+			return nil, err
+		}
+	}
+	return suggestions, nil
+}
+
+func (model *UserPlayedQuizModel) GetPlayerName(userID string, sessionID uuid.UUID) (string, error) {
+	var name string
+	found, err := model.db.From(goqu.T(UserPlayedQuizTable).As("upq")).
+		Join(goqu.T(UserTable).As("u"), goqu.On(goqu.I("u.id").Eq(goqu.I("upq.user_id")))).
+		Select(goqu.L("COALESCE(upq.player_name, u.first_name)")).
+		Where(goqu.Ex{"upq.user_id": userID, "upq.active_quiz_id": sessionID}).ScanVal(&name)
+	if err != nil {
+		return "", err
+	}
+	if !found {
+		return "", sql.ErrNoRows
+	}
+	return name, nil
 }
 
 func (model *UserPlayedQuizModel) CreateUserPlayedQuiz(userId sql.NullString, activeQuizId uuid.UUID, isHost bool) (uuid.UUID, error) {
@@ -234,12 +297,13 @@ func (model *UserPlayedQuizModel) GetRank(sessionId uuid.UUID, questionId uuid.U
 	mainQuery := model.db.
 		From(goqu.T("get_question_info").As("gqi")).
 		Join(goqu.T("get_sum").As("gs"), goqu.On(goqu.I("gs.user_id").Eq(goqu.I("gqi.user_id")))).
-		Join(goqu.T(UserTable).As("u"), goqu.On(goqu.I("gs.user_id").Eq(goqu.I("u.id"))))
+		Join(goqu.T(UserTable).As("u"), goqu.On(goqu.I("gs.user_id").Eq(goqu.I("u.id")))).
+		Join(goqu.T(UserPlayedQuizTable).As("participant"), goqu.On(goqu.I("participant.id").Eq(goqu.I("gqi.participant_id"))))
 
 	// Define the common table expressions (CTEs)
 	core := mainQuery.
 		With("core", goqu.
-			Select("uqr.calculated_score", "uqr.calculated_points", "uqr.question_id", "uqr.response_time", "uqr.is_attend", "upq.user_id", "uqr.streak_count").
+			Select("uqr.calculated_score", "uqr.calculated_points", "uqr.question_id", "uqr.response_time", "uqr.is_attend", "upq.user_id", goqu.I("upq.id").As("participant_id"), "uqr.streak_count").
 			From(goqu.T(UserPlayedQuizTable).As("upq")).
 			Join(goqu.T("user_quiz_responses").As("uqr"), goqu.On(goqu.Ex{
 				"upq.id":             goqu.I("uqr.user_played_quiz_id"),
@@ -255,7 +319,7 @@ func (model *UserPlayedQuizModel) GetRank(sessionId uuid.UUID, questionId uuid.U
 		)
 	getQuestionInfo := getSum.
 		With("get_question_info", goqu.
-			Select("is_attend", "user_id", "response_time", "streak_count").
+			Select("is_attend", "user_id", "participant_id", "response_time", "streak_count").
 			From("core").
 			Where(goqu.Ex{
 				"question_id": questionId,
@@ -267,7 +331,7 @@ func (model *UserPlayedQuizModel) GetRank(sessionId uuid.UUID, questionId uuid.U
 		goqu.I("gs.total_points"),
 		goqu.I("gqi.response_time"),
 		goqu.I("u.username"),
-		goqu.I("u.first_name"),
+		goqu.L("COALESCE(participant.player_name, u.first_name)").As("first_name"),
 		goqu.I("u.img_key"),
 		goqu.I("gqi.streak_count"),
 	)
@@ -415,7 +479,7 @@ type JoinedUser struct {
 func (model *UserPlayedQuizModel) GetJoinedUsers(activeQuizId string) ([]JoinedUser, error) {
 	users := []JoinedUser{}
 
-	err := model.db.Select("u.id", "u.first_name", "u.img_key").
+	err := model.db.Select(goqu.I("u.id"), goqu.L("COALESCE(upq.player_name, u.first_name)").As("first_name"), goqu.I("u.img_key")).
 		From(goqu.T(UserPlayedQuizTable).As("upq")).
 		Join(goqu.T(UserTable).As("u"), goqu.On(goqu.I("u.id").Eq(goqu.I("upq.user_id")))).
 		Where(goqu.Ex{"upq.active_quiz_id": activeQuizId, "upq.is_host": false}).

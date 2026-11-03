@@ -155,7 +155,7 @@
                 Invitation Code
               </label>
               <div
-                class="flex items-center gap-2.5 bg-jv-white border-2 border-jv-ink jv-card shadow-brutal-sm focus-within:translate-x-[1px] focus-within:translate-y-[1px] focus-within:shadow-none transition-all px-3 py-2.5"
+                class="flex items-center gap-2.5 bg-jv-white border-2 border-jv-ink jv-card shadow-brutal-sm focus-within:translate-x-[1px] focus-within:translate-y-[1px] focus-within:shadow-none transition-all min-h-[52px] px-3 py-2.5"
               >
                 <Hash
                   class="size-[18px] text-jv-ink/70 shrink-0"
@@ -182,18 +182,19 @@
             </div>
 
             <!-- Player profile (guest) -->
-            <div v-if="!isUserLoggedIn" class="flex flex-col gap-1.5">
+            <div class="flex flex-col gap-1.5">
               <label
                 for="username"
                 class="font-body text-jv-ink text-xs sm:text-[13px] font-bold tracking-wide uppercase px-0.5"
               >
-                Your Player Profile
+                Your quiz name
               </label>
               <div class="flex items-stretch gap-2.5">
                 <!-- Avatar with reroll -->
                 <NavigationLink
+                  v-if="!isUserLoggedIn"
                   type="button"
-                  class="relative size-[46px] shrink-0 !p-0 bg-jv-mint !rounded-none !jv-card overflow-hidden shadow-none hover:rotate-0 hover:scale-110"
+                  class="relative size-[52px] shrink-0 !p-0 bg-jv-mint !rounded-none !jv-card overflow-hidden shadow-none hover:rotate-0 hover:scale-110"
                   :aria-label="`Generate new avatar (current: ${avatarName})`"
                   @click="rerollAvatar"
                 >
@@ -214,7 +215,7 @@
 
                 <!-- Username -->
                 <div
-                  class="flex-1 flex items-center gap-2.5 bg-jv-white border-2 border-jv-ink jv-card shadow-brutal-sm focus-within:translate-x-[1px] focus-within:translate-y-[1px] focus-within:shadow-none transition-all px-3"
+                  class="flex-1 flex items-center gap-2.5 bg-jv-white border-2 border-jv-ink jv-card shadow-brutal-sm focus-within:translate-x-[1px] focus-within:translate-y-[1px] focus-within:shadow-none transition-all min-h-[52px] px-3 py-2.5"
                 >
                   <User
                     class="size-[18px] text-jv-ink/70 shrink-0"
@@ -222,30 +223,47 @@
                   />
                   <input
                     id="username"
-                    v-model.trim="username"
+                    v-model="playerName"
                     type="text"
                     name="username"
                     maxlength="12"
                     placeholder="Pick a name"
-                    class="flex-1 min-w-0 bg-transparent border-0 outline-none font-body text-jv-ink placeholder:text-jv-ink/40 text-sm sm:text-base"
+                    class="flex-1 min-w-0 bg-transparent border-0 outline-none font-body font-bold text-jv-ink placeholder:font-normal placeholder:text-jv-ink/40 text-base sm:text-lg"
+                    @input="
+                      nameError = '';
+                      nameSuggestions = [];
+                      playerNameEdited = true;
+                    "
                   />
                 </div>
               </div>
             </div>
 
-            <!-- Welcome (signed in) -->
             <div
-              v-else
-              class="flex items-center gap-2 bg-jv-yellow-soft border-2 border-jv-ink jv-card shadow-brutal-sm px-3 py-2.5"
+              v-if="nameError"
+              role="alert"
+              class="font-body text-sm sm:text-base"
             >
-              <User
-                class="size-[18px] text-jv-ink/70 shrink-0"
-                :stroke-width="2.2"
-              />
-              <span class="font-body text-jv-ink text-sm sm:text-base">
-                Welcome,
-                <span class="font-bold">{{ firstname || username }}</span>
-              </span>
+              <p class="m-0 font-semibold text-jv-coral">{{ nameError }}</p>
+              <div
+                v-if="nameSuggestions.length"
+                class="mt-2.5 flex flex-wrap items-center gap-2 text-jv-ink"
+              >
+                <span class="font-bold">Try:</span>
+                <button
+                  v-for="suggestion in nameSuggestions"
+                  :key="suggestion"
+                  type="button"
+                  class="rounded border-2 border-jv-ink bg-jv-white px-2.5 py-1 font-semibold text-jv-ink transition-colors hover:bg-jv-yellow-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-jv-ink"
+                  @click="
+                    playerName = suggestion;
+                    nameError = '';
+                    nameSuggestions = [];
+                  "
+                >
+                  {{ suggestion }}
+                </button>
+              </div>
             </div>
 
             <!-- Submit -->
@@ -396,6 +414,10 @@ const code = ref(
 );
 const username = ref("");
 const firstname = ref("");
+const playerName = ref("");
+const playerNameEdited = ref(false);
+const nameError = ref("");
+const nameSuggestions = ref([]);
 const isUserLoggedIn = ref(false);
 const { apiUrl } = useRuntimeConfig().public;
 const router = useRouter();
@@ -429,20 +451,22 @@ function rerollAvatar() {
 }
 
 const join_quiz = async () => {
-  username.value = username.value.trim().replace(/\s+/g, "");
+  playerName.value = playerName.value.trim();
+  nameError.value = "";
+  nameSuggestions.value = [];
 
   if (!code.value || code.value.length !== 6) {
     toast.error("Please enter a valid quiz code (6 characters)");
     return;
   }
 
-  if (!username.value && !isUserLoggedIn.value) {
-    toast.error("Please add your username");
+  if (!playerName.value) {
+    toast.error("Please enter your quiz name");
     return;
   }
 
-  if (username.value.length > 12 && !isUserLoggedIn.value) {
-    toast.error("Username must be a maximum of 12 characters long");
+  if ([...playerName.value].length > 12) {
+    toast.error("Quiz name must be a maximum of 12 characters long");
     return;
   }
 
@@ -452,7 +476,7 @@ const join_quiz = async () => {
 
     try {
       await $fetch(
-        `${apiUrl}/user/${username.value}?avatar_name=${avatarName.value}`,
+        `${apiUrl}/user/${encodeURIComponent(playerName.value)}?avatar_name=${encodeURIComponent(avatarName.value)}`,
         {
           method: "POST",
           credentials: "include",
@@ -485,11 +509,14 @@ const join_quiz = async () => {
     await $fetch(`${apiUrl}/user_played_quizes/${code.value}`, {
       method: "POST",
       credentials: "include",
+      body: { player_name: playerName.value },
       headers: {
         Accept: "application/json",
       },
       onResponse({ response }) {
         if (response.status == 200) {
+          firstname.value =
+            response._data?.data?.player_name || playerName.value;
           userPlayedQuiz.value = response._data?.data?.user_played_quiz;
           sessionId.value = response._data?.data?.session_id;
           quizTitle.value = response._data?.data?.quiz_title || "";
@@ -503,9 +530,16 @@ const join_quiz = async () => {
   } catch (error) {
     userError.value = error.message;
     quickUserPending.value = false;
-    if (error?.status == 400) {
-      toast.error("Please enter a valid quiz code (6 characters)");
-      code.value = "";
+    if (error?.status === 409) {
+      const conflict = error?.data?.data || {};
+      nameError.value =
+        conflict.message || "This name is taken. Please choose another name.";
+      nameSuggestions.value = conflict.suggestions || [];
+    } else {
+      toast.error(
+        error?.data?.data ||
+          "Could not join the quiz. Please check your code and name."
+      );
     }
     return;
   }
@@ -532,8 +566,11 @@ const join_quiz = async () => {
     });
     if (response.status === 200) {
       isUserLoggedIn.value = true;
-      firstname.value = response._data?.data?.firstname;
-      username.value = response._data?.data?.username;
+      firstname.value = response._data?.data?.firstname || "";
+      if (!playerNameEdited.value) {
+        playerName.value = [...firstname.value].slice(0, 12).join("");
+      }
+      username.value = response._data?.data?.username || "";
     } else if (response.status === 401) {
       isUserLoggedIn.value = false;
     } else {
