@@ -319,9 +319,7 @@ const canManageCategories = computed(
   () => !!currentUser.value?.canCreatePublicQuiz
 );
 
-const userName = computed(
-  () => currentUser.value?.firstname || currentUser.value?.username || "Profile"
-);
+const userName = computed(() => currentUser.value?.firstname || "Profile");
 
 const userAvatar = computed(() =>
   getAvatarUrlByName(currentUser.value?.avatar)

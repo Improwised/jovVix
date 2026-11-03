@@ -38,7 +38,7 @@ let wrapper = mountComponent();
 describe("UserAnalyticsSpace test", () => {
   it("renders the component with provided props", () => {
     expect(wrapper.text()).toContain("John");
-    expect(wrapper.text()).toContain("john_doe");
+    expect(wrapper.text()).not.toContain("john_doe");
   });
 
   it("renders the avatar image", async () => {

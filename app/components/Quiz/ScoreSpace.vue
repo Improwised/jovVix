@@ -381,7 +381,7 @@ onUnmounted(() => {
             >
               <NuxtImg
                 :src="getAvatarUrlByName(user?.img_key)"
-                :alt="`${user.firstname || user.username || 'Player'} avatar`"
+                :alt="`${user.firstname || 'Player'} avatar`"
                 width="48"
                 height="48"
                 loading="lazy"
@@ -393,12 +393,6 @@ onUnmounted(() => {
                 class="truncate font-body text-[15px] font-black leading-tight text-jv-ink sm:text-[17px]"
               >
                 {{ user.firstname }}
-              </p>
-              <p
-                v-if="user.username === userName && user.username"
-                class="truncate font-body text-[11px] font-bold text-jv-muted sm:text-[12px]"
-              >
-                @{{ user.username }}
               </p>
             </div>
             <span

@@ -126,7 +126,7 @@ const chipAccents = [
           >
             <NuxtImg
               :src="getAvatarUrlByName(user?.img_key)"
-              :alt="`${user?.first_name || user?.username || 'Player'} avatar`"
+              :alt="`${user?.first_name || 'Player'} avatar`"
               width="48"
               height="48"
               loading="lazy"
@@ -138,12 +138,6 @@ const chipAccents = [
               class="truncate font-body text-[14px] font-black leading-tight text-jv-ink sm:text-[16px]"
             >
               {{ user.first_name }}
-            </span>
-            <span
-              v-if="user.username"
-              class="truncate font-body text-[11px] font-bold text-jv-muted sm:text-[12px]"
-            >
-              @{{ user.username }}
             </span>
           </div>
           <span

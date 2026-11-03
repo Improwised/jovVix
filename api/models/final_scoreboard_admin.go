@@ -36,7 +36,7 @@ func (model *FinalScoreBoardAdminModel) GetScoreForAdmin(activeQuizId string) ([
 		From(goqu.T("users")).
 		Select(
 			goqu.I(constants.UsersTable+".username"),
-			goqu.I(constants.UsersTable+".first_name"),
+			goqu.L("COALESCE(user_played_quizzes.player_name, users.first_name)").As("first_name"),
 			goqu.I(constants.UsersTable+".img_key"),
 			goqu.SUM("user_quiz_responses.calculated_score").As("score"),
 			goqu.SUM("user_quiz_responses.response_time").As("response_time"),
@@ -53,7 +53,7 @@ func (model *FinalScoreBoardAdminModel) GetScoreForAdmin(activeQuizId string) ([
 			UserPlayedQuizTable + ".active_quiz_id":        activeQuizId,
 			UserPlayedQuizTable + ".is_host":               false,
 		}).
-		GroupBy(goqu.I("users.id")).
+		GroupBy(goqu.I("users.id"), goqu.I("user_played_quizzes.player_name")).
 		ScanStructs(&finalScoreBoardData)
 
 	if err != nil {

@@ -96,12 +96,6 @@ const getOrdinal = (rank) => {
       >
         {{ props.winner.firstname }}
       </h2>
-      <p
-        v-if="props.winner.username"
-        class="font-body text-[12px] font-bold text-jv-muted sm:text-[13px]"
-      >
-        @{{ props.winner.username }}
-      </p>
     </div>
 
     <div
