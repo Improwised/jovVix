@@ -44,6 +44,8 @@ const props = defineProps({
     type: Boolean,
     required: false,
   },
+  hostParticipates: { type: Boolean, default: false },
+  restoredAnswer: { type: Number, default: 0 },
   quizTitle: {
     default: "",
     type: String,
@@ -52,7 +54,7 @@ const props = defineProps({
 });
 const emits = defineEmits(["sendAnswer", "askSkip"]);
 
-const answerable = computed(() => !props.isAdmin);
+const answerable = computed(() => !props.isAdmin || props.hostParticipates);
 
 const clockOffset = ref(0); // Calculated once, used for all timers
 const isOffsetCalculated = ref(false);
@@ -156,8 +158,8 @@ function handleEvent(message) {
 
     time.value = 0;
     count.value = null;
-    selectedKey.value = null;
-    isSubmitted.value = false;
+    selectedKey.value = props.restoredAnswer || null;
+    isSubmitted.value = !!props.restoredAnswer;
     clearTimeout(skipCoolTimer);
     skipCooling.value = false;
 

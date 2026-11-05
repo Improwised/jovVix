@@ -44,6 +44,7 @@ type UserInfo struct {
 }
 
 type quizSocketController struct {
+	db                    *goqu.Database
 	activeQuizModel       *models.ActiveQuizModel
 	quizModel             *models.QuizModel
 	userPlayedQuizModel   *models.UserPlayedQuizModel
@@ -63,6 +64,7 @@ func InitQuizConfig(db *goqu.Database, appConfig *config.AppConfig, logger *zap.
 	userQuizResponseModel := models.InitUserQuizResponseModel(db)
 
 	return &quizSocketController{
+		db:                    db,
 		activeQuizModel:       activeQuizModel,
 		quizModel:             quizModel,
 		userPlayedQuizModel:   userPlayedQuizModel,
@@ -780,8 +782,8 @@ func ActivateAndGetSession(c *websocket.Conn, activeQuizModel *models.ActiveQuiz
 }
 
 func handleCodeGeneration(c *websocket.Conn, qc *quizSocketController, session models.ActiveQuiz, isConnected *bool, response *QuizSendResponse, adminDisconnected chan bool, arrangeMu *sync.Mutex) {
-	// is isQuestionActive true -> quiz started
-	isInvitationCodeSent := session.CurrentQuestion.Valid
+	// A non-NULL question state also marks the initial countdown as started.
+	isInvitationCodeSent := session.CurrentQuestion.Valid || session.IsQuestionActive.Valid
 
 	if !isInvitationCodeSent {
 		// handle Waiting page
@@ -816,36 +818,34 @@ func handleCodeGeneration(c *websocket.Conn, qc *quizSocketController, session m
 						qc.logger.Error("error while sending pong message", zap.Error(err))
 					}
 				} else {
-					users, err := qc.redis.PubSubModel.Client.Get(qc.redis.PubSubModel.Ctx, session.ID.String()).Result()
-					if err != nil {
-						qc.logger.Error("error while fetching data from redis inside updateUserData", zap.Error(err))
+					hasParticipants := false
+					if isBreak == constants.EventStartQuiz {
+						var startErr error
+						hasParticipants, startErr = qc.hasHostedParticipants(session.ID)
+						if startErr != nil {
+							qc.logger.Error("failed to check quiz participants", zap.Error(startErr))
+							response.Data = "Could not start the quiz. Please try again."
+							arrangeMu.Lock()
+							err := utils.JSONFailWs(c, constants.EventStartQuiz, response)
+							arrangeMu.Unlock()
+							if err != nil {
+								qc.logger.Error("failed to send start error", zap.Error(err))
+							}
+							continue
+						}
 					}
-
-					var usersData []UserInfo
-					err = json.Unmarshal([]byte(users), &usersData)
-					if err != nil {
-						qc.logger.Error("error while unmarshaling redis inside updateUserData", zap.Error(err))
-					}
-
-					// A host is never a participant. Use the persisted participant count as
-					// a fallback for real players whose join-list update has not arrived yet.
-					participantCount, countErr := qc.userPlayedQuizModel.GetCountOfTotalJoinUsers(session.ID.String())
-					if countErr != nil {
-						qc.logger.Error(constants.ErrGetTotalJoinUser, zap.Error(countErr))
-					}
-					hasParticipants := len(usersData) != 0 || participantCount > 0
 
 					if hasParticipants && isBreak == constants.EventStartQuiz {
 
 						// quiz is start publish for admin to stop looking for user
-						err := qc.redis.PubSubModel.Client.Publish(qc.redis.PubSubModel.Ctx, constants.EventStartQuizByAdmin, constants.EventStartQuizByAdmin).Err()
+						err := qc.redis.PubSubModel.Client.Publish(qc.redis.PubSubModel.Ctx, fmt.Sprintf("%s-%s", constants.EventStartQuizByAdmin, session.ID.String()), constants.EventStartQuizByAdmin).Err()
 						if err != nil {
 							qc.logger.Error("error while start quiz", zap.Error(err))
 						}
 						break
 					} else {
 						// quiz is start publish for admin to stop looking for user becuse no player found
-						err := qc.redis.PubSubModel.Client.Publish(qc.redis.PubSubModel.Ctx, constants.StartQuizByAdminNoPlayerFound, constants.StartQuizByAdminNoPlayerFound).Err()
+						err := qc.redis.PubSubModel.Client.Publish(qc.redis.PubSubModel.Ctx, fmt.Sprintf("%s-%s", constants.StartQuizByAdminNoPlayerFound, session.ID.String()), constants.StartQuizByAdminNoPlayerFound).Err()
 						if err != nil {
 							qc.logger.Error("errro while start quiz but no player found", zap.Error(err))
 						}
@@ -1001,10 +1001,10 @@ func handleConnectedUser(c *websocket.Conn, qc *quizSocketController, sessionId 
 		}
 	}
 
-	pubsub := qc.redis.PubSubModel.Client.Subscribe(qc.redis.PubSubModel.Ctx, fmt.Sprintf("%s-%s", constants.ChannelUserJoin, sessionId), fmt.Sprintf("%s-%s", constants.ChannelUserDisconnect, sessionId), constants.EventTerminateQuiz, constants.EventStartQuizByAdmin, constants.StartQuizByAdminNoPlayerFound)
+	pubsub := qc.redis.PubSubModel.Client.Subscribe(qc.redis.PubSubModel.Ctx, fmt.Sprintf("%s-%s", constants.ChannelUserJoin, sessionId), fmt.Sprintf("%s-%s", constants.ChannelUserDisconnect, sessionId), fmt.Sprintf("%s-%s", constants.EventTerminateQuiz, sessionId), fmt.Sprintf("%s-%s", constants.EventStartQuizByAdmin, sessionId), fmt.Sprintf("%s-%s", constants.StartQuizByAdminNoPlayerFound, sessionId))
 	defer func() {
 		if pubsub != nil {
-			err := pubsub.Unsubscribe(qc.redis.PubSubModel.Ctx, fmt.Sprintf("%s-%s", constants.ChannelUserJoin, sessionId), fmt.Sprintf("%s-%s", constants.ChannelUserDisconnect, sessionId), constants.EventTerminateQuiz, constants.EventStartQuizByAdmin, constants.StartQuizByAdminNoPlayerFound)
+			err := pubsub.Unsubscribe(qc.redis.PubSubModel.Ctx, fmt.Sprintf("%s-%s", constants.ChannelUserJoin, sessionId), fmt.Sprintf("%s-%s", constants.ChannelUserDisconnect, sessionId), fmt.Sprintf("%s-%s", constants.EventTerminateQuiz, sessionId), fmt.Sprintf("%s-%s", constants.EventStartQuizByAdmin, sessionId), fmt.Sprintf("%s-%s", constants.StartQuizByAdminNoPlayerFound, sessionId))
 			if err != nil {
 				qc.logger.Error("unsubscribe failed", zap.Error(err))
 			}
@@ -1139,8 +1139,9 @@ func questionAndScoreHandler(c *websocket.Conn, qc *quizSocketController, respon
 	chanSkipTimer := make(chan bool)
 	chanPauseQuiz := make(chan bool)
 	var isQuizEnd bool = false
+	disconnected := make(chan struct{})
 
-	go listenAllEvents(c, qc, response, session, chanNextEvent, chanSkipEvent, chanSkipTimer, chanPauseQuiz, isQuizEnd, arrangeMu)
+	go listenAllEvents(c, qc, response, session, chanNextEvent, chanSkipEvent, chanSkipTimer, chanPauseQuiz, isQuizEnd, arrangeMu, disconnected)
 
 	// handle question
 	var isFirst bool = lastQuestionDeliveryTime.Valid
@@ -1149,11 +1150,16 @@ func questionAndScoreHandler(c *websocket.Conn, qc *quizSocketController, respon
 		wg.Add(1)
 		if isFirst { // handle running question
 			isFirst = false
-			sendSingleQuestion(c, qc, &wg, response, session, question, lastQuestionDeliveryTime, chanSkipEvent, chanSkipTimer, chanPauseQuiz, totalQuestion, arrangeMu)
+			sendSingleQuestion(c, qc, &wg, response, session, question, lastQuestionDeliveryTime, chanSkipEvent, chanSkipTimer, chanPauseQuiz, totalQuestion, arrangeMu, disconnected)
 		} else { // handle new question
-			sendSingleQuestion(c, qc, &wg, response, session, question, sql.NullTime{}, chanSkipEvent, chanSkipTimer, chanPauseQuiz, totalQuestion, arrangeMu)
+			sendSingleQuestion(c, qc, &wg, response, session, question, sql.NullTime{}, chanSkipEvent, chanSkipTimer, chanPauseQuiz, totalQuestion, arrangeMu, disconnected)
 		}
 
+		select {
+		case <-disconnected:
+			return
+		default:
+		}
 		err := func() error {
 			arrangeMu.Lock()
 			defer arrangeMu.Unlock()
@@ -1165,8 +1171,13 @@ func questionAndScoreHandler(c *websocket.Conn, qc *quizSocketController, respon
 		}
 
 		// handle next question
-		if <-chanNextEvent {
-			continue
+		select {
+		case <-disconnected:
+			return
+		case next := <-chanNextEvent:
+			if next {
+				continue
+			}
 		}
 
 		wg.Wait()
@@ -1179,7 +1190,8 @@ func questionAndScoreHandler(c *websocket.Conn, qc *quizSocketController, respon
 	}
 }
 
-func listenAllEvents(c *websocket.Conn, qc *quizSocketController, response *QuizSendResponse, session models.ActiveQuiz, chanNextEvent chan bool, chanSkipEvent chan bool, chanSkipTimer chan bool, chanPauseQuiz chan bool, isQuizEnd bool, arrangeMu *sync.Mutex) {
+func listenAllEvents(c *websocket.Conn, qc *quizSocketController, response *QuizSendResponse, session models.ActiveQuiz, chanNextEvent chan bool, chanSkipEvent chan bool, chanSkipTimer chan bool, chanPauseQuiz chan bool, isQuizEnd bool, arrangeMu *sync.Mutex, disconnected chan struct{}) {
+	defer close(disconnected)
 	for {
 		message := QuizReceiveResponse{}
 		err := c.ReadJSON(&message)
@@ -1213,7 +1225,7 @@ func listenAllEvents(c *websocket.Conn, qc *quizSocketController, response *Quiz
 	}
 }
 
-func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.WaitGroup, response *QuizSendResponse, session models.ActiveQuiz, question models.Question, lastQuestionTimeStamp sql.NullTime, chanSkipEvent chan bool, chanSkipTimer chan bool, chanPauseQuiz chan bool, totalQuestions int64, arrangeMu *sync.Mutex) {
+func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.WaitGroup, response *QuizSendResponse, session models.ActiveQuiz, question models.Question, lastQuestionTimeStamp sql.NullTime, chanSkipEvent chan bool, chanSkipTimer chan bool, chanPauseQuiz chan bool, totalQuestions int64, arrangeMu *sync.Mutex, disconnected <-chan struct{}) {
 
 	defer wg.Done()
 
@@ -1231,7 +1243,11 @@ func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.Wa
 		response.Action = constants.ActionCounter
 		response.Data = map[string]int{"counter": constants.Counter, "count": constants.Count}
 		shareEvenWithUser(c, qc, response, constants.EventStartCount5, session.ID.String(), int(session.InvitationCode.Int32), constants.ToAll, arrangeMu)
-		time.Sleep(time.Duration(constants.Counter) * time.Second)
+		select {
+		case <-time.After(time.Duration(constants.Counter) * time.Second):
+		case <-disconnected:
+			return
+		}
 
 		// Set the question start time to NOW (after counter finishes)
 		questionStartTime = time.Now()
@@ -1284,8 +1300,13 @@ func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.Wa
 			duration = 1
 		}
 	}
-	go handleAnswerSubmission(c, qc, session, question.ID, duration, wgForQuestion, chanSkipEvent, response, arrangeMu)
+	go handleAnswerSubmission(c, qc, session, question.ID, duration, wgForQuestion, chanSkipEvent, response, arrangeMu, disconnected)
 	wgForQuestion.Wait()
+	select {
+	case <-disconnected:
+		return
+	default:
+	}
 
 	// update current status to deactivate
 	err = qc.quizModel.UpdateCurrentQuestion(session.ID, question.ID, false)
@@ -1353,7 +1374,7 @@ func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.Wa
 	wgForSkipTimer.Add(1)
 
 	// skip timer
-	go handleSkipTimer(c, qc, wgForSkipTimer, response, session, chanSkipTimer, chanPauseQuiz, scoreboardMaxDuration, arrangeMu)
+	go handleSkipTimer(c, qc, wgForSkipTimer, response, session, chanSkipTimer, chanPauseQuiz, scoreboardMaxDuration, arrangeMu, disconnected)
 	wgForSkipTimer.Wait()
 }
 
@@ -1371,7 +1392,7 @@ func terminateQuiz(c *websocket.Conn, qc *quizSocketController, response *QuizSe
 
 	qc.logger.Info("terminateQuiz")
 	// here logic of publishing data of user to admin that terminate quiz so no need to listen for joining users
-	err = qc.redis.PubSubModel.Client.Publish(qc.redis.PubSubModel.Ctx, constants.EventTerminateQuiz, constants.EventTerminateQuiz).Err()
+	err = qc.redis.PubSubModel.Client.Publish(qc.redis.PubSubModel.Ctx, fmt.Sprintf("%s-%s", constants.EventTerminateQuiz, session.ID.String()), constants.EventTerminateQuiz).Err()
 	if err != nil {
 		qc.logger.Error(fmt.Sprintf("socket error while terminationg quiz %s", constants.ActionTerminateQuiz), zap.Error(err))
 		return
@@ -1399,7 +1420,7 @@ func publishTerminateToPlayers(qc *quizSocketController, sessionId string) {
 	}
 }
 
-func handleSkipTimer(c *websocket.Conn, qc *quizSocketController, wg *sync.WaitGroup, response *QuizSendResponse, session models.ActiveQuiz, chanSkipTimer chan bool, chanPauseQuiz chan bool, scoreboardMaxDuration int, arrangeMu *sync.Mutex) {
+func handleSkipTimer(c *websocket.Conn, qc *quizSocketController, wg *sync.WaitGroup, response *QuizSendResponse, session models.ActiveQuiz, chanSkipTimer chan bool, chanPauseQuiz chan bool, scoreboardMaxDuration int, arrangeMu *sync.Mutex, disconnected <-chan struct{}) {
 	defer wg.Done()
 
 	remainingTime := time.Duration(scoreboardMaxDuration) * time.Second
@@ -1409,6 +1430,8 @@ func handleSkipTimer(c *websocket.Conn, qc *quizSocketController, wg *sync.WaitG
 
 	for {
 		select {
+		case <-disconnected:
+			return
 		case <-isTimeout.C:
 			if !timerPaused {
 				return
@@ -1448,10 +1471,11 @@ func handleSkipTimer(c *websocket.Conn, qc *quizSocketController, wg *sync.WaitG
 	}
 }
 
-func handleAnswerSubmission(c *websocket.Conn, qc *quizSocketController, session models.ActiveQuiz, questionId uuid.UUID, duration int, wg *sync.WaitGroup, chanSkipEvent chan bool, response *QuizSendResponse, arrangeMu *sync.Mutex) {
+func handleAnswerSubmission(c *websocket.Conn, qc *quizSocketController, session models.ActiveQuiz, questionId uuid.UUID, duration int, wg *sync.WaitGroup, chanSkipEvent chan bool, response *QuizSendResponse, arrangeMu *sync.Mutex, disconnected <-chan struct{}) {
 	defer wg.Done()
 
 	isTimeout := time.NewTicker(time.Duration(duration) * time.Second)
+	defer isTimeout.Stop()
 
 	pubsub := qc.redis.PubSubModel.Client.Subscribe(qc.redis.PubSubModel.Ctx, fmt.Sprintf("%s-%s", constants.ChannelSetAnswer, session.ID.String()))
 	defer func() {
@@ -1468,6 +1492,8 @@ func handleAnswerSubmission(c *websocket.Conn, qc *quizSocketController, session
 
 	for {
 		select {
+		case <-disconnected:
+			return
 		case <-isTimeout.C:
 			return
 		case isForce := <-chanSkipEvent:
@@ -1690,7 +1716,7 @@ func (ctrl *quizSocketController) Terminate(c *fiber.Ctx) error {
 	}
 
 	// Stop any host/join-watcher goroutines still listening for late joiners.
-	err = ctrl.redis.PubSubModel.Client.Publish(ctrl.redis.PubSubModel.Ctx, constants.EventTerminateQuiz, constants.EventTerminateQuiz).Err()
+	err = ctrl.redis.PubSubModel.Client.Publish(ctrl.redis.PubSubModel.Ctx, fmt.Sprintf("%s-%s", constants.EventTerminateQuiz, session.ID.String()), constants.EventTerminateQuiz).Err()
 	if err != nil {
 		ctrl.logger.Error("error publishing global terminate event", zap.Error(err))
 	}

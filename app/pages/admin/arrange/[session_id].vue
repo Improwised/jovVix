@@ -58,6 +58,7 @@ const confirmNeeded = reactive({
   action: "skip",
 });
 const terminating = ref(false);
+const lobbyError = ref("");
 const currentComponent = ref("Loading");
 const adminOperationHandler = ref();
 const analysisTab = ref("ranking");
@@ -65,6 +66,100 @@ const session_id = route.params.session_id;
 const runningQuizJoinUser = ref(0);
 const isPauseQuiz = ref(false);
 const selectedAnswer = ref(0);
+const hostParticipates = ref(false);
+const hostPlayedQuiz = ref("");
+const hostName = ref("");
+const hostUserId = ref("");
+const hostUsername = ref("");
+const participationPending = ref(false);
+const hostNameError = ref("");
+const hostNameSuggestions = ref([]);
+const restoredAnswer = ref(0);
+const questionRenderKey = ref(0);
+const restoredSubmissions = ref([]);
+const restoredQuestionId = ref("");
+
+const participationUrl = computed(
+  () =>
+    `${apiUrl}/quiz/host-participation?active_quiz_id=${encodeURIComponent(session_id)}`
+);
+const loadParticipation = async () => {
+  const response = await $fetch(participationUrl.value, {
+    credentials: "include",
+  });
+  const participation = response.data;
+  hostParticipates.value = participation.enabled;
+  hostPlayedQuiz.value = participation.user_played_quiz || "";
+  hostName.value = participation.name || "Host";
+  hostUserId.value = participation.user_id || "";
+  hostUsername.value = participation.username || "";
+  restoredAnswer.value = participation.answer?.[0] || 0;
+  restoredSubmissions.value = participation.submitted || [];
+  restoredQuestionId.value = participation.question_id || "";
+  selectedAnswer.value = restoredAnswer.value;
+};
+const updateHostParticipation = async (enabled, playerName = "") => {
+  participationPending.value = true;
+  hostNameError.value = "";
+  hostNameSuggestions.value = [];
+  try {
+    await $fetch(participationUrl.value, {
+      method: "PUT",
+      credentials: "include",
+      body: { enabled, player_name: playerName },
+    });
+    await loadParticipation();
+  } catch (error) {
+    const detail = error?.data?.data;
+    if (
+      enabled &&
+      error?.statusCode === 409 &&
+      detail &&
+      typeof detail === "object"
+    ) {
+      hostNameError.value =
+        detail.message ||
+        "This name is already taken. Choose another name for this quiz.";
+      hostNameSuggestions.value = detail.suggestions || [];
+    } else if (
+      enabled &&
+      error?.statusCode === 400 &&
+      typeof detail === "string"
+    ) {
+      hostNameError.value = detail;
+    } else {
+      toast.error(
+        typeof detail === "string" ? detail : "Unable to update participation"
+      );
+    }
+  } finally {
+    participationPending.value = false;
+  }
+};
+const sendHostAnswer = async (answers) => {
+  try {
+    const elapsed = Math.max(
+      1,
+      adminOperationHandler.value.getAnswerResponseTime() || 1
+    );
+    await $fetch(
+      `${apiUrl}/quiz/answer?user_played_quiz=${hostPlayedQuiz.value}&session_id=${session_id}`,
+      {
+        method: "POST",
+        credentials: "include",
+        body: {
+          id: adminOperationHandler.value.currentQuestion,
+          keys: answers,
+          response_time: elapsed,
+        },
+      }
+    );
+    selectedAnswer.value = answers[0] || 0;
+  } catch (error) {
+    questionRenderKey.value += 1;
+    toast.error(error?.data?.data || "Failed to submit answer");
+  }
+};
 
 // Public-quiz guests land here with session_id="new" and a quiz_id query — they
 // need to pick a display name before the guest user + public session are created.
@@ -82,6 +177,8 @@ const quizState = computed(() =>
 );
 
 // event handlers
+const reloadLobby = () => window.location.reload();
+
 const handleCustomChange = (isFullScreenEvent) => {
   if (!isFullScreenEvent && myRef.value) {
     toast.error("exit fullscreen mode unexpectedly!!!");
@@ -90,12 +187,13 @@ const handleCustomChange = (isFullScreenEvent) => {
 };
 
 // main functions
-onMounted(() => {
+onMounted(async () => {
   if (!import.meta.client) return;
   // Guests with a pending session pick a name first; the socket setup runs
   // after the name modal submission redirects to the real session URL.
   if (showHostNameModal.value) return;
   try {
+    await loadParticipation();
     const lastRenderedComponent = getLastComponent();
     if (socketObject && lastRenderedComponent !== "Waiting") {
       adminOperationHandler.value = new AdminOperations(
@@ -116,7 +214,16 @@ onMounted(() => {
     }
   } catch (err) {
     console.error(err);
-    toast.info(app.$ReloadRequired);
+    if (err?.statusCode === 401) {
+      lobbyError.value =
+        "Your session has expired. Please sign in and try again.";
+    } else if (err?.statusCode === 403 || err?.statusCode === 404) {
+      lobbyError.value =
+        "This quiz session is unavailable, or you do not have access to host it.";
+    } else {
+      lobbyError.value =
+        "The quiz lobby could not connect. Please check your connection and try again.";
+    }
   }
 });
 
@@ -227,7 +334,28 @@ const handleQuizEvents = async (message) => {
     data.value = message;
     currentComponent.value = message.component;
     if (message.component === "Question") {
-      selectedAnswer.value = 0;
+      if (
+        message.event === app.$GetQuestion &&
+        message.data?.id !== restoredQuestionId.value
+      ) {
+        restoredAnswer.value = 0;
+        restoredSubmissions.value = [];
+      }
+      if (
+        message.event === app.$GetQuestion &&
+        message.data?.id === restoredQuestionId.value &&
+        restoredSubmissions.value.length
+      ) {
+        resetUsersSubmittedAnswers();
+        restoredSubmissions.value.forEach(addUserSubmittedAnswer);
+        restoredSubmissions.value = [];
+      }
+      if (message.event === app.$Counter) {
+        selectedAnswer.value = 0;
+        restoredAnswer.value = 0;
+        restoredSubmissions.value = [];
+        restoredQuestionId.value = "";
+      }
     }
     confirmNeeded.value = {
       show: false,
@@ -270,6 +398,7 @@ function handleNetworkEvent(message) {
 }
 
 const startQuiz = () => {
+  if (participationPending.value) return;
   adminOperationHandler.value.quizStartRequest();
 };
 
@@ -305,6 +434,11 @@ const goToScoreboardAfterTerminate = async () => {
   // Guest hosts must sign in before accessing the Kratos-protected host scoreboard.
   const isGuestHost = usersStore.getUserData()?.role === "guest-user";
   const scoreboardPath = `/admin/scoreboard?winner_ui=true&aqi=${session_id}`;
+  if (isGuestHost && hostParticipates.value && hostPlayedQuiz.value) {
+    return await router.push(
+      `/join/${encodeURIComponent(hostUsername.value)}/scoreboard?user_played_quiz=${hostPlayedQuiz.value}&host=1`
+    );
+  }
   if (isGuestHost) {
     return await router.push(
       `/account/login?returnTo=${encodeURIComponent(scoreboardPath)}`
@@ -378,7 +512,28 @@ useSeoMeta({
     :submitting="hostNameSubmitting"
     @submit="handleHostNameSubmit"
   />
-  <Playground :full-screen-enabled="myRef" @is-full-screen="handleCustomChange">
+  <main v-if="lobbyError" class="min-h-screen bg-jv-canvas p-6">
+    <section
+      role="alert"
+      class="mx-auto max-w-xl jv-border-rough bg-jv-white p-6 shadow-brutal-sm"
+    >
+      <h1 class="font-headings text-3xl">Unable to load quiz lobby</h1>
+      <p class="mt-3">{{ lobbyError }}</p>
+      <button
+        type="button"
+        class="mt-5 rounded-full bg-jv-coral px-5 py-2 font-bold text-white"
+        @click="reloadLobby"
+      >
+        Try again
+      </button>
+      <NuxtLink to="/" class="ml-4 font-bold underline">Back to home</NuxtLink>
+    </section>
+  </main>
+  <Playground
+    v-else
+    :full-screen-enabled="myRef"
+    @is-full-screen="handleCustomChange"
+  >
     <div
       v-if="currentComponent !== 'Waiting' && currentComponent !== 'Loading'"
       class="code-display grid grid-cols-1 gap-3 px-4 py-3 sm:grid-cols-[1fr_auto_1fr] sm:items-center sm:px-6 md:px-8"
@@ -454,14 +609,30 @@ useSeoMeta({
       :data="data"
       :is-admin="true"
       :quiz-title-override="quizTitle"
+      :host-participates="hostParticipates"
+      :host-name="hostName"
+      :host-user-id="hostUserId"
+      :participation-pending="participationPending"
+      :host-name-error="hostNameError"
+      :host-name-suggestions="hostNameSuggestions"
+      @update-host-participation="updateHostParticipation"
+      @retry-host-participation="(name) => updateHostParticipation(true, name)"
+      @cancel-host-name="
+        hostNameError = '';
+        hostNameSuggestions = [];
+      "
       @start-quiz="startQuiz"
     >
     </QuizWaitingSpace>
     <QuizQuestionSpace
       v-else-if="currentComponent == 'Question'"
+      :key="questionRenderKey"
       :data="data"
       :is-admin="true"
+      :host-participates="hostParticipates"
+      :restored-answer="restoredAnswer"
       :quiz-title="quizTitle"
+      @send-answer="sendHostAnswer"
       @ask-skip="askSkip"
     ></QuizQuestionSpace>
     <QuizScoreSpace
@@ -469,6 +640,7 @@ useSeoMeta({
       :data="data"
       :is-admin="true"
       :selected-answer="selectedAnswer"
+      :user-name="hostUsername"
       :analysis-tab="analysisTab"
       :quiz-state="quizState"
       :quiz-title="quizTitle"

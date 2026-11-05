@@ -74,6 +74,68 @@ describe("WaitingSpace test", () => {
     expect(wrapper.find('button[type="submit"]').text()).toBe("Start Quiz");
   });
 
+  it("offers the host a choice to participate", async () => {
+    const wrapper = mountComponent();
+    const checkbox = wrapper.find('input[type="checkbox"]');
+    expect(checkbox.element.checked).toBe(false);
+    await checkbox.setValue(true);
+    expect(wrapper.emitted("updateHostParticipation")).toEqual([[true]]);
+    await wrapper.setProps({ hostParticipates: true, hostName: "Quiz host" });
+    expect(wrapper.text()).toContain("Quiz host");
+  });
+
+  it("lets a host resolve a name conflict using suggestions", async () => {
+    const wrapper = mountComponent();
+    await wrapper.setProps({
+      hostName: "Smit",
+      hostNameError: "This name is already taken.",
+      hostNameSuggestions: ["Smit2"],
+    });
+    expect(wrapper.find('input[type="checkbox"]').element.checked).toBe(false);
+    expect(wrapper.get('[role="alert"]').text()).toContain("already taken");
+    const suggestion = wrapper
+      .findAll("button")
+      .find((button) => button.text() === "Smit2");
+    await suggestion.trigger("click");
+    const submit = wrapper
+      .findAll("button")
+      .find((button) => button.text() === "Play with this name");
+    await submit.trigger("click");
+    expect(wrapper.emitted("retryHostParticipation")).toEqual([["Smit2"]]);
+  });
+
+  it("does not duplicate a participating host restored in the roster", async () => {
+    listUserStore.listUsers = [{ UserId: "host-id", UserName: "Quiz host" }];
+    const wrapper = mountComponent();
+    await wrapper.setProps({
+      hostParticipates: true,
+      hostName: "Quiz host",
+      hostUserId: "host-id",
+    });
+    expect(wrapper.text().match(/Quiz host/g)).toHaveLength(1);
+    listUserStore.listUsers = [];
+  });
+
+  it("removes the host from a stale roster when participation is turned off", async () => {
+    listUserStore.listUsers = [
+      { UserId: "host-id", UserName: "Quiz host" },
+      { UserId: "player-id", UserName: "Another player" },
+    ];
+    const wrapper = mountComponent();
+    await wrapper.setProps({
+      hostParticipates: true,
+      hostName: "Quiz host",
+      hostUserId: "host-id",
+    });
+    expect(wrapper.text()).toContain("Quiz host");
+    expect(wrapper.vm.participantCount).toBe(2);
+    await wrapper.setProps({ hostParticipates: false });
+    expect(wrapper.text()).not.toContain("Quiz host");
+    expect(wrapper.text()).toContain("Another player");
+    expect(wrapper.vm.participantCount).toBe(1);
+    listUserStore.listUsers = [];
+  });
+
   it("shows player names from current and older roster entries", () => {
     listUserStore.listUsers = [
       { UserId: "1", UserName: "Smit" },
