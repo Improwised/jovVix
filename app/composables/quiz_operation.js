@@ -239,37 +239,9 @@ export default class QuizHandler {
   }
 
   async handleTerminate() {
+    // The server manages session termination and notifies connected clients.
+    // Players identify their socket by invitation code, not by session UUID.
     const sessionStore = useSessionStore();
-    const sessionId = this.identifier;
-    sessionStore.removeActiveSession(sessionId);
-
-    let error = null;
-    if (!sessionId) {
-      // Nothing to terminate; the API would 400 on an empty id.
-      return { error };
-    }
-
-    try {
-      await $fetch(
-        `${this.apiUrl}/quiz/terminate?session_id=${encodeURIComponent(
-          sessionId
-        )}`,
-        {
-          method: "GET",
-          credentials: "include",
-          mode: "cors",
-        }
-      );
-    } catch (err) {
-      // Terminate is fire-and-forget; surface but don't block the scoreboard.
-      error = err;
-      console.warn(
-        "[quiz] terminate request failed",
-        err?.statusCode,
-        err?.data?.message || err?.message
-      );
-    }
-
-    return { error };
+    sessionStore.removeActiveSession(this.identifier);
   }
 }

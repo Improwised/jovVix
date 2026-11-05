@@ -6,11 +6,15 @@ export const useUserThatSubmittedAnswer = defineStore(
     const usersSubmittedAnswers = ref([]);
 
     const addUserSubmittedAnswer = (user) => {
-      if (usersSubmittedAnswers.value.includes(user)) {
+      const id = user?.id || user?.UserId || user?.user_id;
+      if (
+        !id ||
+        usersSubmittedAnswers.value.some(
+          (entry) => (entry?.id || entry?.UserId || entry?.user_id) === id
+        )
+      )
         return;
-      } else {
-        usersSubmittedAnswers.value.push(user);
-      }
+      usersSubmittedAnswers.value.push(user);
     };
 
     const resetUsersSubmittedAnswers = () => {

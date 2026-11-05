@@ -113,6 +113,37 @@ describe("QuestionSpace test", () => {
     expect(wrapper.text()).toContain("Skip");
   });
 
+  it("lets a participating host answer while retaining host controls", async () => {
+    props.isAdmin = true;
+    props.hostParticipates = true;
+    props.data.event = "send_question";
+    props.data.data.start_time = new Date().toISOString();
+    wrapper.unmount();
+    wrapper = mountComponent();
+    const option = wrapper
+      .findAll("button")
+      .find((button) => button.text().includes("Scenic landscapes"));
+    expect(option.attributes("disabled")).toBeUndefined();
+    await option.trigger("click");
+    expect(wrapper.emitted("sendAnswer")).toEqual([[[1]]]);
+    expect(wrapper.text()).toContain("Skip");
+  });
+
+  it("restores a participating host's submitted answer", async () => {
+    props.isAdmin = true;
+    props.hostParticipates = true;
+    props.restoredAnswer = 1;
+    props.data.event = "send_question";
+    wrapper.unmount();
+    wrapper = mountComponent();
+    const option = wrapper
+      .findAll("button")
+      .find((button) => button.text().includes("Scenic landscapes"));
+    expect(option.attributes("disabled")).toBeDefined();
+    expect(wrapper.text()).toContain("Answer locked");
+    props.restoredAnswer = 0;
+  });
+
   it("renders admin finish button when last question", async () => {
     props.isAdmin = true;
     props.data.event = "send_question";

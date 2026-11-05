@@ -78,17 +78,59 @@ const props = defineProps({
     type: String,
     required: false,
   },
+  hostParticipates: { type: Boolean, default: false },
+  hostName: { type: String, default: "Host" },
+  hostUserId: { type: String, default: "" },
+  participationPending: { type: Boolean, default: false },
+  hostNameError: { type: String, default: "" },
+  hostNameSuggestions: { type: Array, default: () => [] },
   quizTitleOverride: {
     default: "",
     type: String,
     required: false,
   },
 });
-const emits = defineEmits(["startQuiz", "terminateQuiz"]);
+const emits = defineEmits([
+  "startQuiz",
+  "terminateQuiz",
+  "updateHostParticipation",
+  "retryHostParticipation",
+  "cancelHostName",
+]);
+const requestedHostName = ref("");
+const handleParticipationChange = (event) => {
+  const enabled = event.target.checked;
+  event.target.checked = props.hostParticipates;
+  emits("updateHostParticipation", enabled);
+};
+watch(
+  () => props.hostNameError,
+  (error) => {
+    if (error && !requestedHostName.value)
+      requestedHostName.value = props.hostName;
+    if (!error && props.hostParticipates) requestedHostName.value = "";
+  }
+);
 
 // custom refs
 const code = ref(invitationCode.value);
-const participantCount = computed(() => listUsers.value.length);
+const displayedUsers = computed(() => {
+  // The server roster can still contain the host after a reconnect or a toggle.
+  // The participation choice is authoritative for whether the host is shown.
+  const players = listUsers.value.filter(
+    (user) => !props.hostUserId || user.UserId !== props.hostUserId
+  );
+  return props.hostParticipates
+    ? [
+        {
+          UserName: props.hostName || "Host",
+          UserId: props.hostUserId || "participating-host",
+        },
+        ...players,
+      ]
+    : players;
+});
+const participantCount = computed(() => displayedUsers.value.length);
 const joinUrl = computed(() => `${baseUrl}/join`);
 const joinUrlWithCode = computed(() => `${joinUrl.value}?code=${code.value}`);
 
@@ -363,9 +405,69 @@ watch(
               </button>
             </div>
 
+            <label class="mt-4 flex items-center gap-3 font-bold">
+              <input
+                type="checkbox"
+                :checked="hostParticipates"
+                :disabled="participationPending"
+                @change="handleParticipationChange"
+              />
+              I want to play too
+            </label>
+            <div v-if="hostNameError" role="alert" class="mt-3 text-sm">
+              <p class="font-bold text-jv-coral">{{ hostNameError }}</p>
+              <label for="host-player-name" class="mt-2 block font-bold"
+                >Your quiz name</label
+              >
+              <input
+                id="host-player-name"
+                v-model="requestedHostName"
+                maxlength="12"
+                class="mt-1 w-full border-2 border-jv-ink bg-white px-3 py-2"
+                @keydown.enter.prevent="
+                  emits('retryHostParticipation', requestedHostName)
+                "
+              />
+              <div
+                v-if="hostNameSuggestions.length"
+                class="mt-2 flex flex-wrap items-center gap-2"
+              >
+                <span class="font-bold">Try:</span>
+                <button
+                  v-for="suggestion in hostNameSuggestions"
+                  :key="suggestion"
+                  type="button"
+                  class="border-2 border-jv-ink px-2 py-1 font-bold"
+                  @click="requestedHostName = suggestion"
+                >
+                  {{ suggestion }}
+                </button>
+              </div>
+              <div class="mt-3 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  :disabled="participationPending || !requestedHostName.trim()"
+                  class="rounded-full bg-jv-coral px-4 py-2 font-bold text-white disabled:opacity-50"
+                  @click="emits('retryHostParticipation', requestedHostName)"
+                >
+                  Play with this name
+                </button>
+                <button
+                  type="button"
+                  class="px-3 py-2 font-bold underline"
+                  @click="
+                    requestedHostName = '';
+                    emits('cancelHostName');
+                  "
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
             <div class="mt-auto pt-5 sm:pt-6">
               <button
                 type="submit"
+                :disabled="participationPending"
                 class="mx-auto flex h-[52px] w-full max-w-[390px] rotate-[-1deg] items-center justify-center rounded-[999px] border-[3px] border-jv-ink bg-jv-mint px-5 font-headings text-[16px] text-jv-ink shadow-brutal-sm transition-transform hover:rotate-[1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none sm:h-16 sm:px-6 sm:text-[18px]"
               >
                 Start Quiz
@@ -422,7 +524,7 @@ watch(
             class="flex flex-col gap-3 overflow-y-auto pr-1 sm:gap-4 xl:max-h-[430px]"
           >
             <div
-              v-for="(user, index) in listUsers"
+              v-for="(user, index) in displayedUsers"
               :key="user.UserId || user.UserName || index"
               class="flex min-h-14 items-center justify-between gap-3 jv-border-rough bg-jv-white px-3 py-2 shadow-[2px_2px_0_#2D2D2D] sm:min-h-16"
             >

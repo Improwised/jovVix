@@ -235,6 +235,8 @@ func setupQuizSocketController(v1 fiber.Router, db *goqu.Database, logger *zap.L
 	v1.Get(fmt.Sprintf("/socket/admin/arrange/:%s", constants.SessionIDParam), middleware.CheckSessionId, middleware.CustomAuthenticated, websocket.New(quizSocketController.Arrange))
 	v1.Get(fmt.Sprintf("/socket/join/:%s", constants.QuizSessionInvitationCode), middleware.CheckSessionCode, middleware.CustomAuthenticated, websocket.New(quizSocketController.Join))
 	v1.Post("/quiz/answer", middleware.Authenticated, middleware.CustomAuthenticated, quizSocketController.SetAnswer)
+	v1.Get("/quiz/host-participation", middleware.Authenticated, middleware.CustomAuthenticated, quizSocketController.HostParticipation)
+	v1.Put("/quiz/host-participation", middleware.Authenticated, middleware.CustomAuthenticated, quizSocketController.HostParticipation)
 	v1.Get("/quiz/terminate", middleware.Authenticated, quizSocketController.Terminate)
 	v1.Get("/quiz/sessions/active", middleware.Authenticated, quizSocketController.ListActiveSessions)
 

@@ -1,5 +1,6 @@
 <script setup>
 import { useUserThatSubmittedAnswer } from "~/store/userSubmittedAnswer";
+import { storeToRefs } from "pinia";
 import { useNuxtApp } from "nuxt/app";
 import { usePush } from "notivue";
 import { Check, Users } from "lucide-vue-next";
@@ -9,7 +10,7 @@ const app = useNuxtApp();
 const toast = usePush();
 
 const usersThatSubmittedAnswer = useUserThatSubmittedAnswer();
-const { usersSubmittedAnswers } = usersThatSubmittedAnswer;
+const { usersSubmittedAnswers } = storeToRefs(usersThatSubmittedAnswer);
 const totalUser = ref(0);
 
 const emits = defineEmits(["autoSkip"]);
@@ -50,7 +51,10 @@ function handleCountUser(message) {
 watch(
   [totalUser, usersSubmittedAnswers],
   () => {
-    if (totalUser.value <= usersSubmittedAnswers.length) {
+    if (
+      totalUser.value > 0 &&
+      totalUser.value <= usersSubmittedAnswers.value.length
+    ) {
       emits("autoSkip");
     }
   },
@@ -67,7 +71,7 @@ watch(
   { deep: true, immediate: true }
 );
 
-const answeredCount = computed(() => usersSubmittedAnswers.length);
+const answeredCount = computed(() => usersSubmittedAnswers.value.length);
 const chipAccents = [
   "bg-jv-yellow",
   "bg-jv-mint",

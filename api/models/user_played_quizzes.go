@@ -96,31 +96,9 @@ func (model *UserPlayedQuizModel) JoinQuiz(userID string, sessionID uuid.UUID, r
 	if err = tx.QueryRow("SELECT first_name, COALESCE(last_name, '') FROM users WHERE id = $1", userID).Scan(&first, &last); err != nil {
 		return uuid.Nil, 0, "", nil, err
 	}
-	name := strings.TrimSpace(requestedName)
-	if name == "" {
-		name = strings.TrimSpace(first)
-		if chars := []rune(name); len(chars) > 12 {
-			name = string(chars[:12])
-		}
-	}
-	if utf8.RuneCountInString(name) < 1 || utf8.RuneCountInString(name) > 12 {
-		return uuid.Nil, 0, "", nil, ErrInvalidPlayerName
-	}
-	available := func(candidate string) (bool, error) {
-		var taken bool
-		err := tx.QueryRow(`SELECT EXISTS (SELECT 1 FROM user_played_quizzes upq JOIN users u ON u.id = upq.user_id WHERE upq.active_quiz_id = $1 AND upq.is_host = false AND lower(btrim(COALESCE(upq.player_name, u.first_name))) = lower(btrim($2)))`, sessionID, candidate).Scan(&taken)
-		return !taken, err
-	}
-	ok, err := available(name)
+	name, suggestions, err := ResolveQuizPlayerName(tx, sessionID, first, last, requestedName)
 	if err != nil {
-		return uuid.Nil, 0, "", nil, err
-	}
-	if !ok {
-		suggestions, err := suggestPlayerNames(first, last, name, available)
-		if err != nil {
-			return uuid.Nil, 0, "", nil, err
-		}
-		return uuid.Nil, 0, "", suggestions, ErrPlayerNameTaken
+		return uuid.Nil, 0, "", suggestions, err
 	}
 	id, err = uuid.NewRandom()
 	if err != nil {
@@ -134,6 +112,38 @@ func (model *UserPlayedQuizModel) JoinQuiz(userID string, sessionID uuid.UUID, r
 		return uuid.Nil, 0, "", nil, err
 	}
 	return id, 2, name, nil, nil
+}
+
+// ResolveQuizPlayerName validates a name while the caller holds the session row lock.
+// Both hosts and joined players must use this check before inserting a participant.
+func ResolveQuizPlayerName(tx *goqu.TxDatabase, sessionID uuid.UUID, first, last, requestedName string) (string, []string, error) {
+	name := strings.TrimSpace(requestedName)
+	if name == "" {
+		name = strings.TrimSpace(first)
+		if chars := []rune(name); len(chars) > 12 {
+			name = string(chars[:12])
+		}
+	}
+	if utf8.RuneCountInString(name) < 1 || utf8.RuneCountInString(name) > 12 {
+		return "", nil, ErrInvalidPlayerName
+	}
+	available := func(candidate string) (bool, error) {
+		var taken bool
+		err := tx.QueryRow(`SELECT EXISTS (SELECT 1 FROM user_played_quizzes upq JOIN users u ON u.id = upq.user_id WHERE upq.active_quiz_id = $1 AND upq.is_host = false AND lower(btrim(COALESCE(upq.player_name, u.first_name))) = lower(btrim($2)))`, sessionID, candidate).Scan(&taken)
+		return !taken, err
+	}
+	ok, err := available(name)
+	if err != nil {
+		return "", nil, err
+	}
+	if !ok {
+		suggestions, err := suggestPlayerNames(first, last, name, available)
+		if err != nil {
+			return "", nil, err
+		}
+		return "", suggestions, ErrPlayerNameTaken
+	}
+	return name, nil, nil
 }
 
 func suggestPlayerNames(first, last, name string, available func(string) (bool, error)) ([]string, error) {

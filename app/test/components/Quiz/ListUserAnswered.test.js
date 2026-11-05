@@ -94,13 +94,39 @@ describe("LlistUserAnswered Test", () => {
 
     const wrapper = mountComponent();
     await wrapper.setProps({
-      data: { totalJoinUser: 2 },
+      data: { event: "send_question", data: { totalJoinUser: 2 } },
     });
 
     expect(wrapper.emitted("autoSkip")).toBeTruthy();
   });
 
+  it("updates when the answer roster is replaced for a new question", async () => {
+    usersThatSubmittedAnswer.usersSubmittedAnswers = [];
+    const wrapper = mountComponent();
+    await wrapper.setProps({
+      data: { event: "send_question", data: { totalJoinUser: 2 } },
+    });
+    usersThatSubmittedAnswer.usersSubmittedAnswers = [
+      { id: "one", first_name: "One" },
+    ];
+    await wrapper.vm.$nextTick();
+    expect(wrapper.emitted("autoSkip")).toBeUndefined();
+    usersThatSubmittedAnswer.usersSubmittedAnswers = [];
+    await wrapper.vm.$nextTick();
+    expect(wrapper.text()).toContain("No one answered till now");
+    usersThatSubmittedAnswer.usersSubmittedAnswers = [
+      { id: "one", first_name: "One" },
+      { id: "two", first_name: "Two" },
+    ];
+    await wrapper.vm.$nextTick();
+    expect(wrapper.emitted("autoSkip")).toHaveLength(1);
+  });
+
   it("displays the correct number of user chips", async () => {
+    usersThatSubmittedAnswer.usersSubmittedAnswers = [
+      { id: "one", first_name: "Alice" },
+      { id: "two", first_name: "Bob" },
+    ];
     const wrapper = mountComponent();
 
     const chips = wrapper.findAll("li");
