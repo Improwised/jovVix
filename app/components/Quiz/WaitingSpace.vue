@@ -405,14 +405,46 @@ watch(
               </button>
             </div>
 
-            <label class="mt-4 flex items-center gap-3 font-bold">
+            <div class="mt-auto pt-5 sm:pt-6">
+              <button
+                type="submit"
+                :disabled="participationPending"
+                class="mx-auto flex h-[52px] w-full max-w-[390px] rotate-[-1deg] items-center justify-center rounded-[999px] border-[3px] border-jv-ink bg-jv-mint px-5 font-headings text-[16px] text-jv-ink shadow-brutal-sm transition-transform hover:rotate-[1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none sm:h-16 sm:px-6 sm:text-[18px]"
+              >
+                Start Quiz
+              </button>
+              <p
+                class="mt-4 flex items-center justify-center gap-2 text-center font-body text-[12px] leading-[1.4] text-jv-muted sm:text-[13px]"
+              >
+                <Info class="size-4" :stroke-width="2.3" />
+                <span>
+                  Host can start the quiz at any time
+                  <span class="hidden md:inline">· press Enter to start</span>
+                </span>
+              </p>
+            </div>
+
+            <label
+              class="mt-5 flex cursor-pointer items-center gap-3 rounded-xl border-2 border-jv-ink bg-jv-white px-4 py-3 font-body font-bold text-jv-ink shadow-brutal-sm transition-transform hover:-translate-y-0.5 has-[:disabled]:cursor-wait has-[:disabled]:opacity-60"
+            >
               <input
+                class="peer sr-only"
                 type="checkbox"
                 :checked="hostParticipates"
                 :disabled="participationPending"
                 @change="handleParticipationChange"
               />
-              I want to play too
+              <span
+                aria-hidden="true"
+                class="grid size-7 shrink-0 place-items-center rounded-md border-2 border-jv-ink bg-jv-white text-jv-ink transition-colors peer-checked:bg-jv-mint peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-4 peer-focus-visible:outline-jv-ink"
+              >
+                <Check
+                  v-if="hostParticipates"
+                  class="size-5"
+                  :stroke-width="3"
+                />
+              </span>
+              <span>I want to play too</span>
             </label>
             <div v-if="hostNameError" role="alert" class="mt-3 text-sm">
               <p class="font-bold text-jv-coral">{{ hostNameError }}</p>
@@ -463,24 +495,6 @@ watch(
                   Cancel
                 </button>
               </div>
-            </div>
-            <div class="mt-auto pt-5 sm:pt-6">
-              <button
-                type="submit"
-                :disabled="participationPending"
-                class="mx-auto flex h-[52px] w-full max-w-[390px] rotate-[-1deg] items-center justify-center rounded-[999px] border-[3px] border-jv-ink bg-jv-mint px-5 font-headings text-[16px] text-jv-ink shadow-brutal-sm transition-transform hover:rotate-[1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none sm:h-16 sm:px-6 sm:text-[18px]"
-              >
-                Start Quiz
-              </button>
-              <p
-                class="mt-4 flex items-center justify-center gap-2 text-center font-body text-[12px] leading-[1.4] text-jv-muted sm:text-[13px]"
-              >
-                <Info class="size-4" :stroke-width="2.3" />
-                <span>
-                  Host can start the quiz at any time
-                  <span class="hidden md:inline">· press Enter to start</span>
-                </span>
-              </p>
             </div>
           </div>
         </form>
