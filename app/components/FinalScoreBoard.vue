@@ -148,10 +148,6 @@ const showAnalysis = () => {
   router.push({ path: `/admin/reports/${activeQuizId.value}` });
 };
 
-const changeUI = (value) => {
-  navigateTo({ path: route.path, query: { ...route.query, winner_ui: value } });
-};
-
 // Browsers reject autoplay without a user gesture and surface a noisy promise
 // rejection. We can't make a gesture from SSR, so swallow that specific error.
 const tryPlay = (audio) => {
@@ -315,15 +311,6 @@ const podiumName = (winner) => winner?.firstname || "Player";
             @room-id="resultsRoomId = $event"
           >
             <template #actions>
-              <NavigationLink
-                type="button"
-                variant="result"
-                aria-label="Continue to scoreboard table view"
-                @click="changeUI(false)"
-              >
-                View scoreboard
-                <ArrowRight class="size-4" :stroke-width="2.4" />
-              </NavigationLink>
               <NavigationLink
                 url="/"
                 variant="result"
@@ -597,15 +584,6 @@ const podiumName = (winner) => winner?.firstname || "Player";
             >
               <template #actions>
                 <NavigationLink
-                  type="button"
-                  variant="result"
-                  aria-label="View winners podium"
-                  @click="changeUI(true)"
-                >
-                  <Crown class="size-4" :stroke-width="2.4" />
-                  View scoreboard
-                </NavigationLink>
-                <NavigationLink
                   url="/"
                   variant="result"
                   aria-label="Return to home"
@@ -620,27 +598,20 @@ const podiumName = (winner) => winner?.firstname || "Player";
 
         <div
           v-if="resultsRoomId"
-          class="flex flex-wrap justify-center gap-3"
+          class="mx-auto flex w-fit items-center gap-1 jv-border-rough bg-jv-white p-1 shadow-brutal-sm"
           role="group"
           aria-label="Results view"
         >
           <button
+            v-for="tab in ['quiz', 'overall']"
+            :key="tab"
             type="button"
-            class="cursor-pointer rounded-full border-2 border-jv-ink bg-jv-white px-5 py-2 font-bold shadow-brutal-sm"
-            :class="{ 'bg-jv-yellow': resultsView === 'quiz' }"
-            :aria-pressed="resultsView === 'quiz'"
-            @click="resultsView = 'quiz'"
+            class="cursor-pointer rounded-[6px] px-4 py-2 text-sm font-bold text-jv-ink hover:bg-jv-yellow/40"
+            :class="{ 'bg-jv-yellow/60': resultsView === tab }"
+            :aria-pressed="resultsView === tab"
+            @click="resultsView = tab"
           >
-            This quiz
-          </button>
-          <button
-            type="button"
-            class="cursor-pointer rounded-full border-2 border-jv-ink bg-jv-white px-5 py-2 font-bold shadow-brutal-sm"
-            :class="{ 'bg-jv-yellow': resultsView === 'overall' }"
-            :aria-pressed="resultsView === 'overall'"
-            @click="resultsView = 'overall'"
-          >
-            Overall standings
+            {{ tab === "quiz" ? "This quiz" : "Overall standings" }}
           </button>
         </div>
         <RoomStandings
@@ -656,12 +627,7 @@ const podiumName = (winner) => winner?.firstname || "Player";
           <NavigationLink url="/" variant="result" aria-label="Return to home">
             <Home class="size-4" :stroke-width="2.4" />Home
           </NavigationLink>
-          <NavigationLink
-            :url="`/room/report/${resultsRoomId}`"
-            variant="result"
-          >
-            <BarChart3 class="size-4" :stroke-width="2.4" />View room report
-          </NavigationLink>
+
           <NavigationLink
             v-if="!props.isAdmin && roomPhase === 'closed'"
             url="/join"
