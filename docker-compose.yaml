@@ -98,18 +98,6 @@ services:
     volumes:
       - "./api/pkg/kratos:/etc/config/kratos"
 
-  minio:
-    image: quay.io/minio/minio
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    volumes:
-      - ~/minio/data:/data
-    environment:
-      MINIO_ROOT_USER: ROOTNAME
-      MINIO_ROOT_PASSWORD: CHANGEME123
-    command: server /data --console-address ":9001"
-
   mailpit:
     image: axllent/mailpit
     container_name: mailpit

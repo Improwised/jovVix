@@ -40,7 +40,6 @@ docker-compose up --build
 | `kratos` | 4434 | Ory Kratos admin API |
 | `mailpit` | 8025 | Email testing UI |
 | `mailpit` | 1025 | SMTP server |
-| `minio` | 9000 | Object storage |
 
 ## Local Development (Without Docker)
 
