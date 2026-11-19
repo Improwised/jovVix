@@ -190,7 +190,9 @@ async function setFlowIDAndCSRFToken() {
           )}`
         : `?flow=${kratosResponse?.id}`
     );
-    csrfToken.value = kratosResponse?.ui?.nodes[0]?.attributes?.value;
+    csrfToken.value = kratosResponse?.ui?.nodes.find(
+      (node) => node.attributes.name === "csrf_token"
+    )?.attributes?.value;
     registerURLWithFlowQuery.value = kratosResponse?.ui?.action;
   } catch (error) {
     console.error(error);
