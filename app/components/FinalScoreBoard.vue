@@ -316,14 +316,6 @@ const podiumName = (winner) => winner?.firstname || "Player";
           >
             <template #actions>
               <NavigationLink
-                url="/"
-                variant="result"
-                aria-label="Return to home"
-              >
-                <Home class="size-4" :stroke-width="2.4" />
-                Home
-              </NavigationLink>
-              <NavigationLink
                 type="button"
                 variant="result"
                 aria-label="Continue to scoreboard table view"
@@ -331,6 +323,14 @@ const podiumName = (winner) => winner?.firstname || "Player";
               >
                 View scoreboard
                 <ArrowRight class="size-4" :stroke-width="2.4" />
+              </NavigationLink>
+              <NavigationLink
+                url="/"
+                variant="result"
+                aria-label="Return to home"
+              >
+                <Home class="size-4" :stroke-width="2.4" />
+                Home
               </NavigationLink>
             </template>
           </RoomPanel>
@@ -594,7 +594,27 @@ const podiumName = (winner) => winner?.firstname || "Player";
               :participant-id="userPlayedQuiz"
               @room-state="roomPhase = $event"
               @room-id="resultsRoomId = $event"
-            />
+            >
+              <template #actions>
+                <NavigationLink
+                  type="button"
+                  variant="result"
+                  aria-label="View winners podium"
+                  @click="changeUI(true)"
+                >
+                  <Crown class="size-4" :stroke-width="2.4" />
+                  View scoreboard
+                </NavigationLink>
+                <NavigationLink
+                  url="/"
+                  variant="result"
+                  aria-label="Return to home"
+                >
+                  <Home class="size-4" :stroke-width="2.4" />
+                  Home
+                </NavigationLink>
+              </template>
+            </RoomPanel>
           </div>
         </header>
 
@@ -687,14 +707,6 @@ const podiumName = (winner) => winner?.firstname || "Player";
             aria-label="Admin controls"
           >
             <NavigationLink
-              url="/"
-              variant="result"
-              aria-label="Return to home"
-            >
-              <Home class="size-4" :stroke-width="2.4" />
-              Home
-            </NavigationLink>
-            <NavigationLink
               type="button"
               variant="result"
               aria-label="View detailed quiz analysis"
@@ -702,16 +714,6 @@ const podiumName = (winner) => winner?.firstname || "Player";
             >
               <BarChart3 class="size-4" :stroke-width="2.4" />
               Show Analysis
-            </NavigationLink>
-            <NavigationLink
-              type="button"
-              variant="result"
-              class="bg-jv-coral text-white"
-              aria-label="Switch to winners podium view"
-              @click="changeUI(true)"
-            >
-              <Crown class="size-4" :stroke-width="2.4" />
-              Show Winners
             </NavigationLink>
           </div>
 

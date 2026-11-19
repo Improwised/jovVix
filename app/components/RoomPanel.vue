@@ -273,28 +273,24 @@ onBeforeUnmount(() => {
       ></span>
     </p>
     <div
-      class="ml-auto flex w-full min-w-0 max-w-full flex-col items-end gap-1 sm:w-auto"
+      class="ml-auto flex w-full min-w-0 max-w-full flex-wrap items-center justify-center gap-3 sm:w-auto sm:justify-end"
     >
-      <div
-        class="flex w-full flex-wrap items-center justify-center gap-3 sm:w-auto sm:justify-end"
+      <NavigationLink
+        v-if="room && room.phase !== 'closed' && room.is_host"
+        variant="result"
+        :url="`/room/${room.id}`"
+        class="w-full bg-jv-mint sm:w-auto"
+        >Choose next quiz<ArrowRight :stroke-width="2.4"
+      /></NavigationLink>
+      <NavigationLink
+        v-if="room && room.phase !== 'closed' && !room.is_host"
+        variant="result"
+        type="button"
+        :disabled="busy"
+        @click="leave"
+        ><LogOut :stroke-width="2.4" />Leave room</NavigationLink
       >
-        <NavigationLink
-          v-if="room && room.phase !== 'closed' && room.is_host"
-          variant="result"
-          :url="`/room/${room.id}`"
-          class="w-full bg-jv-mint sm:w-auto"
-          >Choose next quiz<ArrowRight :stroke-width="2.4"
-        /></NavigationLink>
-        <NavigationLink
-          v-if="room && room.phase !== 'closed' && !room.is_host"
-          variant="result"
-          type="button"
-          :disabled="busy"
-          @click="leave"
-          ><LogOut :stroke-width="2.4" />Leave room</NavigationLink
-        >
-        <slot name="actions" />
-      </div>
+      <slot name="actions" />
       <NavigationLink
         v-if="room && room.phase !== 'closed' && room.is_host"
         variant="result"
