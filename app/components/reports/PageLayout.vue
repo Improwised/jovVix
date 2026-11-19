@@ -5,15 +5,15 @@
         type="button"
         class="relative -mb-[2px] pb-3 text-[18px] sm:text-[20px] font-bold transition-colors"
         :class="
-          props.currentTab === 'report'
+          props.currentTab === props.firstValue
             ? 'text-jv-ink'
             : 'text-jv-muted hover:text-jv-ink'
         "
-        @click="changeComponent('report')"
+        @click="changeComponent(props.firstValue)"
       >
-        Questions
+        {{ props.firstLabel }}
         <span
-          v-if="props.currentTab === 'report'"
+          v-if="props.currentTab === props.firstValue"
           class="absolute inset-x-0 -bottom-[2px] h-1 bg-jv-yellow"
           aria-hidden="true"
         ></span>
@@ -22,15 +22,15 @@
         type="button"
         class="relative -mb-[2px] pb-3 text-[18px] sm:text-[20px] font-bold transition-colors"
         :class="
-          props.currentTab === 'participants'
+          props.currentTab === props.secondValue
             ? 'text-jv-ink'
             : 'text-jv-muted hover:text-jv-ink'
         "
-        @click="changeComponent('participants')"
+        @click="changeComponent(props.secondValue)"
       >
-        Participants
+        {{ props.secondLabel }}
         <span
-          v-if="props.currentTab === 'participants'"
+          v-if="props.currentTab === props.secondValue"
           class="absolute inset-x-0 -bottom-[2px] h-1 bg-jv-yellow"
           aria-hidden="true"
         ></span>
@@ -41,6 +41,10 @@
 
 <script setup>
 const props = defineProps({
+  firstValue: { type: String, default: "report" },
+  secondValue: { type: String, default: "participants" },
+  firstLabel: { type: String, default: "Questions" },
+  secondLabel: { type: String, default: "Participants" },
   currentTab: {
     default: "report",
     type: String,

@@ -1,5 +1,6 @@
 <script setup>
 const url = "/final_score/admin";
+const route = useRoute();
 
 definePageMeta({
   layout: "empty",
@@ -15,5 +16,9 @@ useSeoMeta({
 </script>
 
 <template>
-  <FinalScoreBoard :is-admin="true" :user-u-r-l="url" />
+  <FinalScoreBoard
+    :key="String(route.query.aqi || '')"
+    :is-admin="true"
+    :user-u-r-l="url"
+  />
 </template>

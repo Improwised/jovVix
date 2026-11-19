@@ -21,6 +21,7 @@ import (
 
 // UserController for user controllers
 type UserPlayedQuizeController struct {
+	db                    *goqu.Database
 	userPlayedQuizModel   *models.UserPlayedQuizModel
 	activeQuizModel       *models.ActiveQuizModel
 	userQuizResponseModel *models.UserQuizResponseModel
@@ -39,6 +40,7 @@ func NewUserPlayedQuizeController(goqu *goqu.Database, logger *zap.Logger, appCo
 	quizModel := models.InitQuizModel(goqu)
 
 	return &UserPlayedQuizeController{
+		db:                    goqu,
 		userPlayedQuizModel:   userPlayedQuizModel,
 		activeQuizModel:       activeQuizModel,
 		userQuizResponseModel: userQuizResponseModel,
@@ -166,6 +168,21 @@ func (ctrl *UserPlayedQuizeController) PlayedQuizValidation(c *fiber.Ctx) error 
 		requestedName = strings.TrimSpace(*body.PlayerName)
 		if requestedName == "" {
 			return utils.JSONFail(c, http.StatusBadRequest, models.ErrInvalidPlayerName.Error())
+		}
+	}
+	if session.RoomID.Valid {
+		requestedName, err = models.ResolveRoomMember(ctrl.db, session.RoomID.String, userId, requestedName)
+		if errors.Is(err, models.ErrRoomLeft) || errors.Is(err, models.ErrRoomClosed) {
+			return utils.JSONFail(c, http.StatusForbidden, err.Error())
+		}
+		if errors.Is(err, models.ErrPlayerNameTaken) {
+			return utils.JSONFail(c, http.StatusConflict, fiber.Map{"message": "This name is already taken in this room."})
+		}
+		if errors.Is(err, models.ErrInvalidPlayerName) {
+			return utils.JSONFail(c, http.StatusBadRequest, err.Error())
+		}
+		if err != nil {
+			return utils.JSONFail(c, http.StatusInternalServerError, "Unable to load room membership")
 		}
 	}
 	userPlayedQuizId, isNonExistingParticipants, playerName, suggestions, err := ctrl.userPlayedQuizModel.JoinQuiz(userId, session.ID, requestedName)

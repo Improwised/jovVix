@@ -52,7 +52,12 @@ const brutalClasses =
 const toggleClasses =
   "gap-1.5 rounded-md border px-2.5 h-8 text-[13px] font-semibold transition-colors";
 
-const variantClasses = computed(() =>
-  props.variant === "toggle" ? toggleClasses : brutalClasses
+const resultClasses =
+  "h-11 gap-2 rounded-full border-2 border-jv-ink bg-jv-white px-5 font-body text-sm font-black text-jv-ink shadow-brutal-sm cursor-pointer transition-transform hover:-rotate-1 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none disabled:hover:rotate-0 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-jv-ink [&_svg]:size-4 [&_svg]:shrink-0";
+
+const variantClasses = computed(
+  () =>
+    ({ toggle: toggleClasses, result: resultClasses })[props.variant] ||
+    brutalClasses
 );
 </script>

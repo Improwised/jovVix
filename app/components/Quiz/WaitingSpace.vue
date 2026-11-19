@@ -18,7 +18,7 @@ import {
   Volume2,
   VolumeX,
 } from "lucide-vue-next";
-const { baseUrl } = useRuntimeConfig().public;
+const { baseUrl, apiUrl } = useRuntimeConfig().public;
 const musicStore = useMusicStore();
 const { getMusic, setMusic } = musicStore;
 
@@ -30,6 +30,7 @@ const music = computed(() => {
 const app = useNuxtApp();
 const toast = usePush();
 const router = useRouter();
+const route = useRoute();
 
 import { useInvitationCodeStore } from "~/store/invitationcode.js";
 import { useListUserstore } from "~/store/userlist";
@@ -153,8 +154,23 @@ const waitingMessage = computed(() => {
 
 const toggleMusic = () => setMusic(!music.value);
 
-const leaveLobby = () => {
-  router.push("/join");
+const leaveLobby = async () => {
+  try {
+    const room = await $fetch(
+      `${apiUrl}/rooms/lookup?code=${encodeURIComponent(route.params.code)}`,
+      { credentials: "include" }
+    );
+    await $fetch(`${apiUrl}/rooms/${room.data.id}/leave`, {
+      method: "POST",
+      credentials: "include",
+    });
+  } catch {
+    // Best-effort — the room may have expired or the player's membership was
+    // already cleared. Always navigate away so the user is not stuck.
+  }
+  const { useSessionStore } = await import("~~/store/session");
+  useSessionStore().clearPlaySession();
+  await router.push("/join");
 };
 
 const displayName = computed(() => {

@@ -24,6 +24,7 @@ const mountComponent = () =>
         QuizStatisticsBadges: true,
         QuizAnalysis: true,
         QuizAnalysisLoginGate: true,
+        RoomStandings: true,
       },
     },
   });
@@ -52,6 +53,32 @@ describe("FinalScoreBoard Test", () => {
 
   it("renders ScoreBoardTable component for admin", async () => {
     expect(wrapper.findComponent(ScoreBoardTable).exists()).toBe(true);
+  });
+
+  it("keeps explicitly opened individual results selected after room closure", async () => {
+    route.query.view = "quiz";
+    wrapper.vm.resultsView = "quiz";
+    wrapper.vm.roomPhase = "closed";
+    await wrapper.vm.$nextTick();
+    expect(wrapper.vm.resultsView).toBe("quiz");
+    delete route.query.view;
+    wrapper.vm.roomPhase = null;
+    await wrapper.vm.$nextTick();
+    wrapper.vm.roomPhase = "closed";
+    await wrapper.vm.$nextTick();
+    expect(wrapper.vm.resultsView).toBe("overall");
+    wrapper.vm.resultsView = "quiz";
+  });
+
+  it("keeps home and room report navigation available in overall standings", async () => {
+    wrapper.vm.resultsRoomId = "room123";
+    wrapper.vm.resultsView = "overall";
+    await wrapper.vm.$nextTick();
+    const actions = wrapper.find('[aria-label="Room result actions"]');
+    expect(actions.find('[aria-label="Return to home"]').exists()).toBe(true);
+    expect(actions.find('[to="/room/report/room123"]').exists()).toBe(true);
+    wrapper.vm.resultsRoomId = "";
+    wrapper.vm.resultsView = "quiz";
   });
 
   it("shows player names without account usernames on the podium", async () => {

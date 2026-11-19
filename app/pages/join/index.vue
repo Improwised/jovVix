@@ -368,7 +368,7 @@ useSeoMeta({
 const userData = useUsersStore();
 const { setUserData } = userData;
 const sessionStore = useSessionStore();
-const { setActiveQuizTitle, setPlaySession, clearPlaySession } = sessionStore;
+const { clearPlaySession } = sessionStore;
 const authChecking = ref(true);
 
 const codeparam = computed(() => route.query.code || "");
@@ -381,7 +381,7 @@ const noticePresets = {
   "session was completed": {
     title: "That quiz has ended",
     message:
-      "The host has wrapped up this session, so there's no game to rejoin. Enter a new code below or head back home to browse public quizzes.",
+      "This quiz is complete. If the room is still open, enter its code to rejoin your group. Otherwise, join another quiz.",
   },
   "quiz-session-validation-failed": {
     title: "Session no longer active",
@@ -424,9 +424,6 @@ const router = useRouter();
 const toast = usePush();
 const userError = ref(false);
 const quickUserPending = ref(false);
-const userPlayedQuiz = ref("");
-const sessionId = ref("");
-const quizTitle = ref("");
 const avatarName = ref("Sophia");
 const avatarUrl = computed(() => getAvatarUrlByName(avatarName.value));
 
@@ -506,27 +503,20 @@ const join_quiz = async () => {
 
   try {
     quickUserPending.value = true;
-    await $fetch(`${apiUrl}/user_played_quizes/${code.value}`, {
+    const response = await $fetch(`${apiUrl}/rooms/join/${code.value}`, {
       method: "POST",
       credentials: "include",
       body: { player_name: playerName.value },
-      headers: {
-        Accept: "application/json",
-      },
-      onResponse({ response }) {
-        if (response.status == 200) {
-          firstname.value =
-            response._data?.data?.player_name || playerName.value;
-          userPlayedQuiz.value = response._data?.data?.user_played_quiz;
-          sessionId.value = response._data?.data?.session_id;
-          quizTitle.value = response._data?.data?.quiz_title || "";
-          if (quizTitle.value) {
-            setActiveQuizTitle(quizTitle.value);
-          }
-          quickUserPending.value = false;
-        }
-      },
     });
+    const { data: room } = await $fetch(
+      `${apiUrl}/rooms/${response.data.room_id}`,
+      { credentials: "include" }
+    );
+    quickUserPending.value = false;
+    if (!room.is_host && ["lobby", "playing"].includes(room.phase)) {
+      return router.push(`/join/play/${code.value}`);
+    }
+    return router.push(`/room/${response.data.room_id}`);
   } catch (error) {
     userError.value = error.message;
     quickUserPending.value = false;
@@ -543,16 +533,6 @@ const join_quiz = async () => {
     }
     return;
   }
-
-  setPlaySession({
-    code: code.value,
-    username: username.value,
-    firstname: firstname.value,
-    userPlayedQuiz: userPlayedQuiz.value,
-    sessionId: sessionId.value,
-  });
-
-  router.push(`/join/play/${code.value}`);
 };
 
 // get user data — 401 is the expected guest case, so don't throw on it.

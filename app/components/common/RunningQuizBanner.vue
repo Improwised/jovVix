@@ -53,7 +53,11 @@
               <span
                 class="font-headings text-[11px] tracking-[0.22em] uppercase text-jv-ink/80"
               >
-                Live · Quiz running
+                {{
+                  isBetweenQuizzes(sessions[0])
+                    ? "Your room is still open"
+                    : "Live · Quiz running"
+                }}
               </span>
             </div>
 
@@ -72,17 +76,27 @@
                 @click="resumeQuiz(sessions[0])"
               >
                 <ExternalLink class="size-4" :stroke-width="2.4" />
-                <span>Resume</span>
+                <span>{{
+                  isBetweenQuizzes(sessions[0]) ? "Return to room" : "Resume"
+                }}</span>
               </button>
               <button
                 type="button"
                 :disabled="stopping"
                 class="inline-flex items-center justify-center gap-1.5 jv-border-even bg-jv-coral px-3 py-2 text-[13px] sm:text-sm font-headings text-white shadow-brutal-sm transition-transform active:translate-x-[2px] active:translate-y-[2px] active:shadow-none hover:rotate-1 disabled:opacity-60 disabled:cursor-not-allowed"
-                aria-label="Stop quiz"
+                :aria-label="
+                  isBetweenQuizzes(sessions[0]) ? 'End room' : 'Stop quiz'
+                "
                 @click="openConfirm(sessions[0])"
               >
-                <Ban class="size-4" :stroke-width="2.4" />
-                <span class="sr-only sm:not-sr-only">Stop</span>
+                <component
+                  :is="isBetweenQuizzes(sessions[0]) ? Flag : Ban"
+                  class="size-4"
+                  :stroke-width="2.4"
+                />
+                <span class="sr-only sm:not-sr-only">{{
+                  isBetweenQuizzes(sessions[0]) ? "End room" : "Stop"
+                }}</span>
               </button>
             </div>
           </div>
@@ -101,7 +115,7 @@
             <span
               class="font-headings text-[11px] tracking-[0.18em] uppercase text-jv-ink"
             >
-              Live · {{ sessions.length }} Quiz running
+              {{ sessions.length }} active quizzes / open rooms
             </span>
             <span
               class="grid size-6 place-items-center rounded-full bg-jv-yellow border-2 border-jv-ink"
@@ -125,7 +139,7 @@
             <span
               class="flex-1 font-headings text-[11px] tracking-[0.18em] uppercase text-jv-ink"
             >
-              Live · {{ sessions.length }} quizzes
+              {{ sessions.length }} active quizzes / open rooms
             </span>
             <button
               type="button"
@@ -156,7 +170,8 @@
                   v-if="item.invitation_code"
                   class="mt-0.5 font-feature text-[10px] tracking-[0.16em] uppercase text-jv-ink/55"
                 >
-                  Pin {{ item.invitation_code }}
+                  {{ isBetweenQuizzes(item) ? "Room open · Code" : "Code" }}
+                  {{ item.invitation_code }}
                 </p>
               </div>
 
@@ -164,8 +179,8 @@
                 type="button"
                 :disabled="resumingId === item.id"
                 class="grid size-10 sm:size-9 shrink-0 place-items-center jv-border-even bg-jv-yellow text-jv-ink shadow-brutal-sm transition-transform active:translate-x-[2px] active:translate-y-[2px] active:shadow-none disabled:opacity-60 disabled:cursor-not-allowed"
-                :aria-label="`Resume ${item.title || 'quiz'}`"
-                :title="`Resume ${item.title || 'quiz'}`"
+                :aria-label="`${isBetweenQuizzes(item) ? 'Return to room' : 'Resume'}: ${item.title || 'quiz'}`"
+                :title="`${isBetweenQuizzes(item) ? 'Return to room' : 'Resume'}: ${item.title || 'quiz'}`"
                 @click="resumeQuiz(item)"
               >
                 <ExternalLink class="size-4" :stroke-width="2.4" />
@@ -174,11 +189,15 @@
                 type="button"
                 :disabled="stopping"
                 class="grid size-10 sm:size-9 shrink-0 place-items-center jv-border-even bg-jv-coral text-white shadow-brutal-sm transition-transform active:translate-x-[2px] active:translate-y-[2px] active:shadow-none disabled:opacity-60 disabled:cursor-not-allowed"
-                :aria-label="`Stop ${item.title || 'quiz'}`"
-                :title="`Stop ${item.title || 'quiz'}`"
+                :aria-label="`${isBetweenQuizzes(item) ? 'End room' : 'Stop'}: ${item.title || 'quiz'}`"
+                :title="`${isBetweenQuizzes(item) ? 'End room' : 'Stop'}: ${item.title || 'quiz'}`"
                 @click="openConfirm(item)"
               >
-                <Ban class="size-4" :stroke-width="2.4" />
+                <component
+                  :is="isBetweenQuizzes(item) ? Flag : Ban"
+                  class="size-4"
+                  :stroke-width="2.4"
+                />
               </button>
             </li>
           </ul>
@@ -205,10 +224,18 @@
             id="stop-quiz-title"
             class="font-headings text-xl text-jv-ink mb-2"
           >
-            Stop the running quiz?
+            {{
+              isBetweenQuizzes(pendingStop)
+                ? "End this room?"
+                : "Stop the running quiz?"
+            }}
           </h3>
           <p class="text-sm text-jv-ink/75 mb-5">
-            <template v-if="pendingStop?.title">
+            <template v-if="isBetweenQuizzes(pendingStop)">
+              This will end the room for everyone. Its join code will stop
+              working. Completed quiz results will remain available.
+            </template>
+            <template v-else-if="pendingStop?.title">
               This will terminate
               <span class="font-semibold">{{ pendingStop.title }}</span> for all
               connected players. This cannot be undone.
@@ -233,8 +260,19 @@
               :disabled="stopping"
               @click="confirmStop"
             >
-              <Ban v-if="!stopping" class="size-4" :stroke-width="2.4" />
-              <span>{{ stopping ? "Stopping..." : "Stop quiz" }}</span>
+              <component
+                :is="isBetweenQuizzes(pendingStop) ? Flag : Ban"
+                v-if="!stopping"
+                class="size-4"
+                :stroke-width="2.4"
+              />
+              <span>{{
+                stopping
+                  ? "Please wait..."
+                  : isBetweenQuizzes(pendingStop)
+                    ? "End room"
+                    : "Stop quiz"
+              }}</span>
             </button>
           </div>
         </div>
@@ -247,6 +285,7 @@
 import { computed, h, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import {
   Ban,
+  Flag,
   ChevronDown,
   ChevronUp,
   ExternalLink,
@@ -290,8 +329,16 @@ const stopping = ref(false);
 const resumingId = ref(null);
 const pendingStop = ref(null);
 
+const isBetweenQuizzes = (item) =>
+  Boolean(item?.room_id && item.is_active === false);
+
 const sessions = computed(() => sessionStore.activeSessions);
-const onArrangePage = computed(() => route.path.startsWith("/admin/arrange/"));
+const onArrangePage = computed(
+  () =>
+    route.path.startsWith("/admin/arrange/") ||
+    route.path.startsWith("/room/") ||
+    route.path === "/admin/scoreboard"
+);
 
 const visible = computed(
   () =>
@@ -376,11 +423,19 @@ const resumeQuiz = async (target) => {
   resumingId.value = target.id;
   try {
     await sync(true);
-    if (!sessions.value.some((s) => s.id === target.id)) {
+    const current = sessions.value.find(
+      (s) =>
+        s.id === target.id || (target.room_id && s.room_id === target.room_id)
+    );
+    if (!current) {
       toast.error("That session has already ended.");
       return;
     }
-    router.push(`/admin/arrange/${target.id}`);
+    await router.push(
+      isBetweenQuizzes(current)
+        ? `/room/${current.room_id}`
+        : `/admin/arrange/${current.id}`
+    );
   } finally {
     resumingId.value = null;
   }
@@ -402,18 +457,30 @@ const confirmStop = async () => {
   if (!target?.id || stopping.value) return;
   stopping.value = true;
   try {
-    await $fetch(`${apiUrl}/quiz/terminate?session_id=${target.id}`, {
-      method: "GET",
-      credentials: "include",
-    });
+    const closingRoom = isBetweenQuizzes(target);
+    await $fetch(
+      closingRoom
+        ? `${apiUrl}/rooms/${target.room_id}/close`
+        : `${apiUrl}/quiz/terminate?session_id=${target.id}`,
+      {
+        method: closingRoom ? "POST" : "GET",
+        credentials: "include",
+      }
+    );
     removeActiveSession(target.id);
-    toast.success("Quiz stopped successfully.");
+    toast.success(
+      closingRoom
+        ? "Room ended."
+        : target.room_id
+          ? "Quiz stopped successfully. Your room is still open."
+          : "Quiz stopped successfully."
+    );
     confirmOpen.value = false;
     pendingStop.value = null;
     await sync(true);
   } catch (error) {
     console.error("failed to stop quiz from banner", error);
-    toast.error("Failed to stop running quiz.");
+    toast.error("Could not complete the action. Please try again.");
   } finally {
     stopping.value = false;
   }

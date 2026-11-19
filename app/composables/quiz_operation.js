@@ -21,7 +21,6 @@ export default class QuizHandler {
     this.currentEvent = null;
     this.log = [];
     this.isOpen = false;
-    this.retrying = 0;
 
     // handle question
     this.currentQuestion = null;
@@ -34,6 +33,14 @@ export default class QuizHandler {
 
   // connect and set websocket
   connect() {
+    if (this.disposed) return;
+    if (this.socket) {
+      this.socket.onclose = null;
+      this.socket.onerror = null;
+      this.socket.onmessage = null;
+      this.socket.close(1000);
+    }
+    this.isOpen = false;
     this.socket = new WebSocket(this.socket_url);
     this.socket.onopen = (event) => this.onOpen(event);
     this.socket.onerror = (event) => this.onError(event);
@@ -55,7 +62,7 @@ export default class QuizHandler {
   // handle open event
   onOpen(event) {
     this.isOpen = true;
-    this.retrying = 0;
+    this.reconnectAttempts = 0;
     this.log.push({
       state: "Init",
       message: event,
@@ -197,25 +204,7 @@ export default class QuizHandler {
 
   // handle error and re-connecting
   onError(event) {
-    // websocket can not connect to the server
-    if (this.socket.readyState == WebSocket.CLOSED && !this.isOpen) {
-      // sent alert
-      this.handleConnectionProblem();
-
-      // check if retrying process is undergoing
-      if (this.retrying == 0) {
-        // check for every 2 second
-        const id = setInterval(() => {
-          if (this.retrying < 3 && !this.isOpen) {
-            this.retrying += 1;
-            this.connect();
-          } else {
-            clearInterval(id);
-            this.retrying = -1;
-          }
-        }, 2000);
-      }
-    }
+    if (!this.disposed) this.handleConnectionProblem();
     this.log.push({
       state: "err",
       message: event,
@@ -225,7 +214,7 @@ export default class QuizHandler {
 
   // handle reconnecting problem - this function needs to override by the child
   handleConnectionProblem() {
-    console.log("connection problem, retrying", this.retrying);
+    // overridden in AdminOperations and UserOperation
   }
 
   // handle close event
@@ -236,6 +225,18 @@ export default class QuizHandler {
       time: new Date().toLocaleString(),
     });
     this.printLog();
+  }
+
+  dispose() {
+    this.disposed = true;
+    this.stopPing?.();
+    clearTimeout(this.reconnectTimer);
+    if (this.socket) {
+      this.socket.onclose = null;
+      this.socket.onerror = null;
+      this.socket.onmessage = null;
+      this.socket.close(1000);
+    }
   }
 
   async handleTerminate() {

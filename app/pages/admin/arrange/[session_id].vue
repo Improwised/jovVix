@@ -58,6 +58,7 @@ const confirmNeeded = reactive({
   action: "skip",
 });
 const terminating = ref(false);
+let disposed = false;
 const lobbyError = ref("");
 const currentComponent = ref("Loading");
 const adminOperationHandler = ref();
@@ -186,6 +187,27 @@ const handleCustomChange = (isFullScreenEvent) => {
   }
 };
 
+const recoverHostRoom = async () => {
+  try {
+    const { data: room } = await $fetch(
+      `${apiUrl}/rooms/lookup?session_id=${encodeURIComponent(session_id)}`,
+      { credentials: "include" }
+    );
+    if (disposed) return false;
+    if (
+      !["lobby", "playing"].includes(room.phase) ||
+      room.session_id !== session_id
+    ) {
+      adminOperationHandler.value?.dispose();
+      await router.replace(`/room/${room.id}`);
+      return false;
+    }
+  } catch (err) {
+    if (err?.statusCode !== 404) throw err;
+  }
+  return true;
+};
+
 // main functions
 onMounted(async () => {
   if (!import.meta.client) return;
@@ -193,14 +215,17 @@ onMounted(async () => {
   // after the name modal submission redirects to the real session URL.
   if (showHostNameModal.value) return;
   try {
+    if (!(await recoverHostRoom())) return;
     await loadParticipation();
+    if (disposed) return;
     const lastRenderedComponent = getLastComponent();
     if (socketObject && lastRenderedComponent !== "Waiting") {
       adminOperationHandler.value = new AdminOperations(
         session_id,
         handleQuizEvents,
         handleNetworkEvent,
-        confirmSkip
+        confirmSkip,
+        recoverHostRoom
       );
       continueAdmin();
     } else {
@@ -208,7 +233,8 @@ onMounted(async () => {
         session_id,
         handleQuizEvents,
         handleNetworkEvent,
-        confirmSkip
+        confirmSkip,
+        recoverHostRoom
       );
       connectAdmin();
     }
@@ -284,8 +310,11 @@ const handleHostNameSubmit = async ({ name, avatarName }) => {
   }
 };
 
-onUnmounted(() => {
+onBeforeUnmount(() => {
+  disposed = true;
   setLastComponent(currentComponent.value);
+  adminOperationHandler.value?.dispose();
+  setSocketObject(null);
 });
 
 const handleQuizEvents = async (message) => {
@@ -372,13 +401,10 @@ const handleQuizEvents = async (message) => {
     }
 
     if (currentComponent.value == "Waiting") {
-      if (
-        invitationCode.value != undefined &&
-        message.data != "no player found"
-      ) {
+      if (invitationCode.value != undefined && Array.isArray(message.data)) {
         addUser(message.data);
       }
-      if (message.data.code !== undefined) {
+      if (message.data?.code !== undefined) {
         invitationCode.value = message.data.code;
       }
     }
@@ -428,10 +454,12 @@ const confirmSkip = (message) => {
 // Clean up local session state and route the host to the results view. Shared by
 // both the inbound terminate_quiz handler and the host-initiated "End Quiz" button.
 const goToScoreboardAfterTerminate = async () => {
+  adminOperationHandler.value?.dispose();
+  setSocketObject(null);
   invitationCode.value = undefined;
   removeAllUsers();
   setSession(null);
-  // Guest hosts must sign in before accessing the Kratos-protected host scoreboard.
+  // Authenticated guest hosts can view their own scoreboard and continue the room.
   const isGuestHost = usersStore.getUserData()?.role === "guest-user";
   const scoreboardPath = `/admin/scoreboard?winner_ui=true&aqi=${session_id}`;
   if (isGuestHost && hostParticipates.value && hostPlayedQuiz.value) {
@@ -439,11 +467,7 @@ const goToScoreboardAfterTerminate = async () => {
       `/join/${encodeURIComponent(hostUsername.value)}/scoreboard?user_played_quiz=${hostPlayedQuiz.value}&host=1`
     );
   }
-  if (isGuestHost) {
-    return await router.push(
-      `/account/login?returnTo=${encodeURIComponent(scoreboardPath)}`
-    );
-  }
+
   return await router.push(scoreboardPath);
 };
 
@@ -506,6 +530,11 @@ useSeoMeta({
 </script>
 
 <template>
+  <RoomConnection
+    v-if="session_id !== PENDING_SENTINEL"
+    :session-id="String(session_id)"
+    is-host
+  />
   <div class="bg-image"></div>
   <QuizHostNameModal
     v-if="showHostNameModal"

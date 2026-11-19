@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -124,7 +125,16 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 	}
 
 	userId := quizUtilsHelper.GetString(c.Locals(constants.ContextUid))
-	isUserConnected := make(chan bool)
+	if session.RoomID.Valid && strings.TrimSpace(session.AdminID) != userId {
+		var allowed bool
+		err = qc.db.QueryRow(`SELECT EXISTS(SELECT 1 FROM quiz_rooms r JOIN quiz_room_members m ON m.room_id=r.id WHERE r.id=$1 AND r.current_session_id=$2 AND r.closed_at IS NULL AND r.expires_at>now() AND m.user_id=$3 AND m.left_at IS NULL)`, session.RoomID.String, session.ID, userId).Scan(&allowed)
+		if err != nil || !allowed {
+			c.Close()
+			return
+		}
+	}
+
+	isUserConnected := make(chan bool, 1)
 
 	defer func() {
 		c.Close()
@@ -641,6 +651,12 @@ func (qc *quizSocketController) Arrange(c *websocket.Conn) {
 		return
 	}
 
+	releaseHost, acquired := qc.hostConnection(c, sessionId)
+	if !acquired {
+		c.Close()
+		return
+	}
+	defer releaseHost()
 	defer func() {
 		isConnected = false
 		adminDisconnected <- true
@@ -1693,7 +1709,7 @@ func (ctrl *quizSocketController) Terminate(c *fiber.Ctx) error {
 		return utils.JSONError(c, http.StatusInternalServerError, constants.UnknownError)
 	}
 
-	if session.AdminID != userId {
+	if strings.TrimSpace(session.AdminID) != userId {
 		return utils.JSONError(c, http.StatusUnauthorized, constants.ErrUnauthorized)
 	}
 

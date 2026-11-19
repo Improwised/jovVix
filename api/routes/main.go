@@ -239,6 +239,14 @@ func setupQuizSocketController(v1 fiber.Router, db *goqu.Database, logger *zap.L
 	v1.Put("/quiz/host-participation", middleware.Authenticated, middleware.CustomAuthenticated, quizSocketController.HostParticipation)
 	v1.Get("/quiz/terminate", middleware.Authenticated, quizSocketController.Terminate)
 	v1.Get("/quiz/sessions/active", middleware.Authenticated, quizSocketController.ListActiveSessions)
+	v1.Get("/room-reports", middleware.CustomAuthenticated, quizSocketController.RoomReports)
+	v1.Get("/rooms/:room/report", middleware.CustomAuthenticated, quizSocketController.RoomReport)
+	v1.Get("/rooms/:room", middleware.CustomAuthenticated, quizSocketController.RoomState)
+	v1.Post("/rooms/join/:code", middleware.CustomAuthenticated, quizSocketController.JoinRoom)
+	v1.Post("/rooms/:room/leave", middleware.CustomAuthenticated, quizSocketController.LeaveRoom)
+	v1.Get("/rooms/:room/quizzes", middleware.CustomAuthenticated, quizSocketController.RoomQuizzes)
+	v1.Post("/rooms/:room/next", middleware.CustomAuthenticated, quizSocketController.NextRoomQuiz)
+	v1.Post("/rooms/:room/close", middleware.CustomAuthenticated, quizSocketController.CloseRoom)
 
 	return nil
 }
@@ -362,7 +370,7 @@ func setUpFinalScoreBoardController(v1 fiber.Router, goqu *goqu.Database, logger
 
 	finalScore := v1.Group("/final_score")
 	finalScore.Get("/user", finalScoreBoardController.GetScore)
-	finalScore.Get("/admin", middlewares.KratosAuthenticated, middlewares.VerifySessionHost, finalScoreBoardControllerAdmin.GetScoreForAdmin)
+	finalScore.Get("/admin", middlewares.Authenticated, middlewares.VerifySessionHost, finalScoreBoardControllerAdmin.GetScoreForAdmin)
 
 	return nil
 }

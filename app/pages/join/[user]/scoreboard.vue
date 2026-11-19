@@ -19,6 +19,7 @@ useSeoMeta({
 
 <template>
   <FinalScoreBoard
+    :key="String(route.query.user_played_quiz || '')"
     :is-admin="false"
     :is-host="isHost"
     :user-name="username"

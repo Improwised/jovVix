@@ -2,7 +2,13 @@ import constants from "~~/config/constants";
 import QuizHandler from "./quiz_operation";
 
 export default class AdminOperations extends QuizHandler {
-  constructor(session_id, handler, errorHandler, skipConfirmHandler) {
+  constructor(
+    session_id,
+    handler,
+    errorHandler,
+    skipConfirmHandler,
+    reconnectHandler
+  ) {
     const url = useRuntimeConfig().public;
 
     // Initialize object
@@ -16,6 +22,7 @@ export default class AdminOperations extends QuizHandler {
     this.apiUrl = url.apiUrl;
     this.errorHandler = errorHandler;
     this.skipHandler = skipConfirmHandler;
+    this.reconnectHandler = reconnectHandler;
     this.pingIntervalTime = 45000;
     this.pingInterval = null;
     this.isWaiting = true;
@@ -72,7 +79,23 @@ export default class AdminOperations extends QuizHandler {
 
   handleConnectionProblem() {
     this.errorHandler("problem in connecting with server");
-    this.connect();
+    if (this.disposed || this.reconnectTimer) return;
+    this.reconnectAttempts = (this.reconnectAttempts || 0) + 1;
+    const delay = Math.min(
+      2000 * Math.pow(1.5, this.reconnectAttempts - 1),
+      30000
+    );
+    this.reconnectTimer = setTimeout(async () => {
+      this.reconnectTimer = null;
+      try {
+        if (this.reconnectHandler && !(await this.reconnectHandler())) return;
+        if (this.disposed) return;
+        this.connect();
+        this.startPing();
+      } catch {
+        this.handleConnectionProblem();
+      }
+    }, delay);
   }
 
   async handler(message) {
@@ -95,6 +118,7 @@ export default class AdminOperations extends QuizHandler {
     this.stopPing();
     super.onClose(event);
     setSocketObject(null);
+    if (!this.disposed) this.handleConnectionProblem();
   }
 
   requestPauseQuiz(isPause) {
