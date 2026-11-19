@@ -3,6 +3,7 @@ import { Crown, Medal, Award, Star } from "lucide-vue-next";
 import { getAvatarUrlByName } from "~~/composables/avatar";
 
 const props = defineProps({
+  subtitle: { type: String, default: "Final scoreboard" },
   scoreboardData: {
     type: Array,
     required: true,
@@ -18,6 +19,7 @@ const props = defineProps({
     required: true,
     default: "",
   },
+  flat: { type: Boolean, default: false },
 });
 
 const avatarAccents = [
@@ -41,14 +43,23 @@ const rankBadgeFor = (rank) => {
 <template>
   <section aria-label="Final rankings">
     <article
-      class="relative -rotate-[0.3deg] jv-border-rough bg-jv-white p-5 shadow-brutal sm:p-7 md:p-8"
+      class="relative"
+      :class="
+        props.flat
+          ? ''
+          : '-rotate-[0.3deg] jv-border-rough bg-jv-white p-5 shadow-brutal sm:p-7 md:p-8'
+      "
     >
       <span
+        v-if="!props.flat"
         class="absolute left-1/2 top-[-12px] z-10 h-4 w-16 -translate-x-1/2 rotate-[1deg] bg-jv-coral"
         aria-hidden="true"
       ></span>
 
-      <header class="flex flex-wrap items-end justify-between gap-3">
+      <header
+        v-if="!props.flat"
+        class="flex flex-wrap items-end justify-between gap-3"
+      >
         <div>
           <h2
             class="font-headings text-[26px] leading-none text-jv-ink sm:text-[32px]"
@@ -58,7 +69,7 @@ const rankBadgeFor = (rank) => {
           <p
             class="mt-1.5 font-body text-[12px] font-bold text-jv-muted sm:text-[14px]"
           >
-            Final scoreboard
+            {{ props.subtitle }}
           </p>
         </div>
         <p

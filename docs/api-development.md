@@ -103,6 +103,31 @@ Add Swagger comments to your controller for API documentation:
 func GetQuizStats(c *fiber.Ctx) error { ... }
 ```
 
+### Room Endpoints
+
+The room system groups multiple quiz sessions under one join code. Key endpoints:
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| `GET` | `/rooms/:id` | Room state (phase, members, host status) |
+| `GET` | `/rooms/lookup?code=:code` | Lookup room by join code |
+| `GET` | `/rooms/lookup?session_id=:id` | Lookup room by session ID |
+| `POST` | `/rooms/join/:code` | Join a room, reserve player name |
+| `POST` | `/rooms/:room/leave` | Leave a room |
+| `POST` | `/rooms/:room/next` | Host starts the next quiz in the room |
+| `POST` | `/rooms/:room/close` | End the room |
+| `GET` | `/rooms/:room/quizzes` | List quizzes available for the next round |
+| `GET` | `/rooms/:room/report` | Aggregated standings across all quizzes |
+| `GET` | `/room-reports` | List all rooms with stats |
+
+Room phase is derived from database columns (not stored directly):
+```
+closed  = closed_at IS NOT NULL OR expires_at < now()
+results = NOT closed AND is_active = false
+playing = NOT closed AND is_active = true AND question is active
+lobby   = NOT closed AND is_active = true AND no question yet
+```
+
 ### 6. Regenerate Swagger
 
 ```bash

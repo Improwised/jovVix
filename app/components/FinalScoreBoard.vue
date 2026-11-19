@@ -11,12 +11,16 @@ import {
   Award,
 } from "lucide-vue-next";
 import ScoreBoardTable from "./ScoreBoardTable.vue";
+import NavigationLink from "./common/NavigationLink.vue";
 import { useSessionStore } from "~~/store/session";
 import { useUsersStore } from "~~/store/users";
 import { getAvatarUrlByName } from "~~/composables/avatar";
 
 const url = useRuntimeConfig().public;
 const scoreboardData = ref([]);
+const roomPhase = ref(null);
+const resultsRoomId = ref("");
+const resultsView = ref("quiz");
 const route = useRoute();
 const router = useRouter();
 const activeQuizId = ref("");
@@ -133,12 +137,15 @@ if (import.meta.client) {
   onMounted(() => loadData());
 }
 
+// Once the room is over, the room-wide result is what matters.
+watch(roomPhase, (phase) => {
+  if (phase === "closed" && route.query.view !== "quiz") {
+    resultsView.value = "overall";
+  }
+});
+
 const showAnalysis = () => {
   router.push({ path: `/admin/reports/${activeQuizId.value}` });
-};
-
-const changeUI = (value) => {
-  navigateTo({ path: route.path, query: { ...route.query, winner_ui: value } });
 };
 
 // Browsers reject autoplay without a user gesture and surface a noisy promise
@@ -148,7 +155,7 @@ const tryPlay = (audio) => {
   const result = audio.play();
   if (result && typeof result.catch === "function") {
     result.catch(() => {
-      /* autoplay blocked — fine */
+      /* autoplay blocked - fine */
     });
   }
 };
@@ -205,7 +212,7 @@ const rankBadge = computed(() => {
   return null;
 });
 
-// Podium config — drives the 2nd / 1st / 3rd columns in the winner view.
+// Podium config - drives the 2nd / 1st / 3rd columns in the winner view.
 // `heightClass` controls the colored bar height (1st is tallest, 3rd shortest).
 const sessionStore = useSessionStore();
 const tournamentTitle = computed(() => {
@@ -220,7 +227,7 @@ const tournamentTitle = computed(() => {
 const podiumOrder = computed(() => {
   const w = scoreboardData.value;
   // Render as 2nd, 1st, 3rd so the visual layout matches the physical podium.
-  return [
+  const steps = [
     {
       slot: "second",
       winner: w[1],
@@ -249,7 +256,8 @@ const podiumOrder = computed(() => {
       heightClass: "h-[140px] sm:h-[170px]",
       label: "3rd",
     },
-  ];
+  ].filter((step) => step.winner);
+  return steps.length === 2 ? steps.reverse() : steps;
 });
 
 const podiumName = (winner) => winner?.firstname || "Player";
@@ -267,7 +275,7 @@ const podiumName = (winner) => winner?.firstname || "Player";
 
       <!-- TOP BAR: logo + tournament title + next button -->
       <header
-        class="relative z-10 flex items-center justify-between gap-3 px-4 py-4 sm:px-8 sm:py-5 md:px-12"
+        class="relative z-10 flex flex-wrap items-start justify-between gap-4 px-4 py-4 sm:px-8 sm:py-5 md:px-12"
         role="banner"
       >
         <div class="flex min-w-0 items-center gap-3 sm:gap-4">
@@ -294,24 +302,25 @@ const podiumName = (winner) => winner?.firstname || "Player";
           </div>
         </div>
 
-        <div class="flex items-center gap-2 sm:gap-3">
-          <NuxtLink
-            to="/"
-            class="inline-flex h-10 items-center justify-center gap-1.5 rounded-[8px] border-[2px] border-jv-ink bg-jv-white px-4 font-body text-[13px] font-black text-jv-ink shadow-brutal-sm transition-transform hover:rotate-[-1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none sm:h-11 sm:px-5 sm:text-[14px]"
-            aria-label="Return to home"
+        <div class="min-w-0 w-full sm:ml-auto sm:w-auto">
+          <RoomPanel
+            action-only
+            :session-id="isAdmin ? String(route.query.aqi || '') : ''"
+            :participant-id="userPlayedQuiz"
+            @room-state="roomPhase = $event"
+            @room-id="resultsRoomId = $event"
           >
-            <Home class="size-4" :stroke-width="2.4" />
-            Home
-          </NuxtLink>
-          <button
-            type="button"
-            class="inline-flex h-10 items-center justify-center gap-1.5 rounded-[8px] border-[2px] border-jv-ink bg-jv-white px-4 font-body text-[13px] font-black text-jv-ink shadow-brutal-sm transition-transform hover:rotate-[-1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none sm:h-11 sm:px-5 sm:text-[14px]"
-            aria-label="Continue to scoreboard table view"
-            @click="changeUI(false)"
-          >
-            Next
-            <ArrowRight class="size-4" :stroke-width="2.4" />
-          </button>
+            <template #actions>
+              <NavigationLink
+                url="/"
+                variant="result"
+                aria-label="Return to home"
+              >
+                <Home class="size-4" :stroke-width="2.4" />
+                Home
+              </NavigationLink>
+            </template>
+          </RoomPanel>
         </div>
       </header>
 
@@ -366,7 +375,7 @@ const podiumName = (winner) => winner?.firstname || "Player";
             <div
               v-for="step in podiumOrder"
               :key="step.slot"
-              class="flex flex-1 flex-col items-center"
+              class="flex w-full max-w-[200px] flex-1 flex-col items-center"
             >
               <template v-if="step.winner">
                 <!-- Name tag -->
@@ -433,41 +442,6 @@ const podiumName = (winner) => winner?.firstname || "Player";
                   </span>
                 </div>
               </template>
-
-              <!-- Placeholder when fewer than 3 winners exist -->
-              <template v-else>
-                <span
-                  class="inline-flex items-center gap-1 rounded-full border-[2px] border-dashed border-jv-ink/25 px-3 py-1 font-body text-[11px] font-bold text-jv-muted"
-                >
-                  —
-                </span>
-                <span
-                  class="mt-1 grid place-items-center overflow-hidden rounded-full border-[3px] border-dashed border-jv-ink/25 bg-jv-white"
-                  :class="
-                    step.rank === 1
-                      ? 'size-[72px] sm:size-[88px]'
-                      : 'size-[56px] sm:size-[68px]'
-                  "
-                  aria-hidden="true"
-                ></span>
-                <div
-                  :class="[
-                    'relative mt-2 flex w-full items-center justify-center border-[2px] border-dashed border-jv-ink/25 bg-jv-white',
-                    step.heightClass,
-                  ]"
-                >
-                  <span
-                    class="font-feature font-black text-jv-ink/25"
-                    :class="
-                      step.rank === 1
-                        ? 'text-[40px] sm:text-[56px]'
-                        : 'text-[28px] sm:text-[36px]'
-                    "
-                  >
-                    {{ step.label }}
-                  </span>
-                </div>
-              </template>
             </div>
           </section>
 
@@ -498,7 +472,7 @@ const podiumName = (winner) => winner?.firstname || "Player";
               class="size-2 rounded-full border border-jv-ink bg-jv-mint"
               aria-hidden="true"
             ></span>
-            Tournament completed successfully
+            Quiz complete
           </span>
         </div>
       </main>
@@ -536,11 +510,44 @@ const podiumName = (winner) => winner?.firstname || "Player";
             aria-hidden="true"
           ></span>
 
-          <p
-            class="font-body text-[11px] font-black uppercase tracking-[0.22em] text-jv-muted sm:text-[12px]"
-          >
-            Quiz Complete
-          </p>
+          <div class="flex flex-wrap items-start justify-between gap-3">
+            <p
+              class="font-body text-[11px] font-black uppercase tracking-[0.22em] text-jv-muted sm:text-[12px]"
+            >
+              Quiz Complete
+            </p>
+            <div
+              v-if="!props.isAdmin && rankBadge"
+              class="flex flex-wrap items-start gap-2 sm:gap-3"
+            >
+              <span
+                :class="[
+                  'inline-flex h-9 items-center gap-2 rounded-full border-[2px] border-jv-ink px-3 font-feature text-[13px] font-black text-jv-ink shadow-brutal-sm sm:text-[14px]',
+                  rankBadge.bg,
+                ]"
+              >
+                <component
+                  :is="rankBadge.icon"
+                  class="size-4"
+                  :stroke-width="2.4"
+                />
+                {{ rankBadge.label }}
+              </span>
+              <span
+                class="inline-flex h-9 items-center gap-1.5 rounded-full border-[2px] border-jv-ink bg-jv-white px-3 shadow-brutal-sm"
+              >
+                <span
+                  class="font-body text-[10px] font-bold uppercase leading-none tracking-[0.12em] text-jv-muted"
+                  >Score</span
+                >
+                <span
+                  class="font-feature text-[16px] font-black leading-none tabular-nums text-jv-ink sm:text-[18px]"
+                >
+                  {{ userScore }}
+                </span>
+              </span>
+            </div>
+          </div>
 
           <div
             class="mt-1 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-5"
@@ -565,136 +572,156 @@ const podiumName = (winner) => winner?.firstname || "Player";
                 completed the quiz.
               </p>
             </div>
-
-            <div
-              v-if="!props.isAdmin && rankBadge"
-              class="flex flex-wrap items-center gap-2 sm:gap-3"
+          </div>
+          <div class="mt-5 flex flex-wrap items-center gap-3">
+            <RoomPanel
+              action-only
+              class="w-full"
+              :session-id="isAdmin ? String(route.query.aqi || '') : ''"
+              :participant-id="userPlayedQuiz"
+              @room-state="roomPhase = $event"
+              @room-id="resultsRoomId = $event"
             >
-              <span
-                :class="[
-                  'inline-flex items-center gap-2 rounded-full border-[2px] border-jv-ink px-3 py-1.5 font-feature text-[13px] font-black text-jv-ink shadow-brutal-sm sm:text-[14px]',
-                  rankBadge.bg,
-                ]"
-              >
-                <component
-                  :is="rankBadge.icon"
-                  class="size-4"
-                  :stroke-width="2.4"
-                />
-                {{ rankBadge.label }}
-              </span>
-              <span
-                class="inline-flex items-baseline gap-1.5 rounded-full border-[2px] border-jv-ink bg-jv-white px-3 py-1.5 shadow-brutal-sm"
-              >
-                <span
-                  class="font-body text-[10px] font-bold uppercase tracking-[0.12em] text-jv-muted"
-                  >Score</span
+              <template #actions>
+                <NavigationLink
+                  url="/"
+                  variant="result"
+                  aria-label="Return to home"
                 >
-                <span
-                  class="font-feature text-[16px] font-black tabular-nums text-jv-ink sm:text-[18px]"
-                >
-                  {{ userScore }}
-                </span>
-              </span>
-            </div>
+                  <Home class="size-4" :stroke-width="2.4" />
+                  Home
+                </NavigationLink>
+              </template>
+            </RoomPanel>
           </div>
         </header>
 
-        <!-- USER STATS (non-admin only) -->
-        <section
-          v-if="!props.isAdmin"
-          aria-label="Your quiz statistics"
-          class="contents"
-        >
-          <div
-            v-if="analysisPending"
-            class="mx-auto flex w-fit items-center gap-2 rounded-full border-[2px] border-dashed border-jv-ink/30 bg-jv-white px-5 py-2.5 font-body text-[13px] font-bold text-jv-muted shadow-brutal-sm sm:text-[14px]"
-            role="status"
-            aria-live="polite"
-          >
-            <Sparkles class="size-4" :stroke-width="2.4" />
-            Crunching your stats…
-          </div>
-          <QuizStatisticsBadges v-else :user-statistics="userStatistics" />
-        </section>
-
-        <!-- RANKINGS -->
-        <ScoreBoardTable
-          v-if="scoreboardData"
-          :scoreboard-data="scoreboardData"
-          :is-admin="props.isAdmin"
-          :user-name="props.userName"
-        />
-
-        <!-- ADMIN CONTROLS -->
         <div
-          v-if="props.isAdmin"
-          class="flex flex-col items-stretch gap-3 sm:flex-row sm:justify-center"
+          v-if="resultsRoomId"
+          class="mx-auto flex w-fit items-center gap-1 jv-border-rough bg-jv-white p-1 shadow-brutal-sm"
           role="group"
-          aria-label="Admin controls"
+          aria-label="Results view"
         >
-          <NuxtLink
-            to="/"
-            class="inline-flex h-11 items-center justify-center gap-2 rounded-full border-[2px] border-jv-ink bg-jv-white px-6 font-body text-[14px] font-black text-jv-ink shadow-brutal-sm transition-transform hover:-rotate-[1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none sm:h-12 sm:text-[15px]"
-            aria-label="Return to home"
+          <button
+            v-for="tab in ['quiz', 'overall']"
+            :key="tab"
+            type="button"
+            class="cursor-pointer rounded-[6px] px-4 py-2 text-sm font-bold text-jv-ink hover:bg-jv-yellow/40"
+            :class="{ 'bg-jv-yellow/60': resultsView === tab }"
+            :aria-pressed="resultsView === tab"
+            @click="resultsView = tab"
           >
-            <Home class="size-4" :stroke-width="2.4" />
-            Home
-          </NuxtLink>
-          <NuxtLink
-            class="inline-flex h-11 items-center justify-center gap-2 rounded-full border-[2px] border-jv-ink bg-jv-white px-6 font-body text-[14px] font-black text-jv-ink shadow-brutal-sm transition-transform hover:-rotate-[1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none sm:h-12 sm:text-[15px]"
-            aria-label="View detailed quiz analysis"
-            @click="showAnalysis"
-          >
-            <BarChart3 class="size-4" :stroke-width="2.4" />
-            Show Analysis
-          </NuxtLink>
-          <NuxtLink
-            class="inline-flex h-11 items-center justify-center gap-2 rounded-full border-[2px] border-jv-ink bg-jv-coral px-6 font-body text-[14px] font-black text-white shadow-brutal-sm transition-transform hover:-rotate-[1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none sm:h-12 sm:text-[15px]"
-            aria-label="Switch to winners podium view"
-            @click="changeUI(true)"
-          >
-            <Crown class="size-4" :stroke-width="2.4" />
-            Show Winners
-          </NuxtLink>
+            {{ tab === "quiz" ? "This quiz" : "Overall standings" }}
+          </button>
         </div>
+        <RoomStandings
+          v-if="resultsRoomId && resultsView === 'overall'"
+          :room-id="resultsRoomId"
+        />
+        <div
+          v-if="resultsRoomId && resultsView === 'overall'"
+          class="flex flex-wrap items-center justify-center gap-3"
+          role="group"
+          aria-label="Room result actions"
+        >
+          <NavigationLink url="/" variant="result" aria-label="Return to home">
+            <Home class="size-4" :stroke-width="2.4" />Home
+          </NavigationLink>
 
-        <!-- USER ANALYSIS -->
-        <template v-if="!props.isAdmin">
-          <div
-            v-if="analysisPending || authPending"
-            class="mx-auto flex w-fit items-center gap-2 rounded-full border-[2px] border-dashed border-jv-ink/30 bg-jv-white px-5 py-2.5 font-body text-[13px] font-bold text-jv-muted shadow-brutal-sm sm:text-[14px]"
-            role="status"
-            aria-live="polite"
+          <NavigationLink
+            v-if="!props.isAdmin && roomPhase === 'closed'"
+            url="/join"
+            variant="result"
+            class="bg-jv-yellow"
+            aria-label="Join another quiz"
           >
-            <Sparkles class="size-4" :stroke-width="2.4" />
-            Loading question review…
-          </div>
-          <QuizAnalysis v-else-if="isLoggedIn" :data="analysisData" />
-          <QuizAnalysisLoginGate v-else />
+            Join another quiz<ArrowRight class="size-4" :stroke-width="2.4" />
+          </NavigationLink>
+        </div>
+        <template v-if="!resultsRoomId || resultsView === 'quiz'">
+          <!-- USER STATS (non-admin only) -->
+          <section
+            v-if="!props.isAdmin"
+            aria-label="Your quiz statistics"
+            class="contents"
+          >
+            <div
+              v-if="analysisPending"
+              class="mx-auto flex w-fit items-center gap-2 rounded-full border-[2px] border-dashed border-jv-ink/30 bg-jv-white px-5 py-2.5 font-body text-[13px] font-bold text-jv-muted shadow-brutal-sm sm:text-[14px]"
+              role="status"
+              aria-live="polite"
+            >
+              <Sparkles class="size-4" :stroke-width="2.4" />
+              Crunching your stats…
+            </div>
+            <QuizStatisticsBadges v-else :user-statistics="userStatistics" />
+          </section>
 
+          <!-- RANKINGS -->
+          <ScoreBoardTable
+            v-if="scoreboardData"
+            :scoreboard-data="scoreboardData"
+            :is-admin="props.isAdmin"
+            :user-name="props.userName"
+          />
+
+          <!-- ADMIN CONTROLS -->
           <div
-            class="mb-2 flex flex-col items-stretch gap-3 sm:flex-row sm:justify-center"
+            v-if="props.isAdmin"
+            class="flex flex-wrap items-center justify-center gap-3"
             role="group"
-            aria-label="Quiz end actions"
+            aria-label="Admin controls"
           >
-            <NuxtLink
-              to="/"
-              class="inline-flex h-11 items-center justify-center gap-2 rounded-full border-[2px] border-jv-ink bg-jv-white px-6 font-body text-[14px] font-black text-jv-ink shadow-brutal-sm transition-transform hover:-rotate-[1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none sm:h-12 sm:text-[15px]"
-              aria-label="Return to home"
+            <NavigationLink
+              type="button"
+              variant="result"
+              aria-label="View detailed quiz analysis"
+              @click="showAnalysis"
             >
-              <Home class="size-4" :stroke-width="2.4" />
-              Home
-            </NuxtLink>
-            <NuxtLink
-              to="/join"
-              class="inline-flex h-11 items-center justify-center gap-2 rounded-full border-[2px] border-jv-ink bg-jv-yellow px-6 font-body text-[14px] font-black text-jv-ink shadow-brutal-sm transition-transform hover:rotate-[1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none sm:h-12 sm:text-[15px]"
-              aria-label="Join another quiz"
-            >
-              <ArrowRight class="size-4" :stroke-width="2.4" />
-              Play another
-            </NuxtLink>
+              <BarChart3 class="size-4" :stroke-width="2.4" />
+              Show Analysis
+            </NavigationLink>
           </div>
+
+          <!-- USER ANALYSIS -->
+          <template v-if="!props.isAdmin">
+            <div
+              v-if="analysisPending || authPending"
+              class="mx-auto flex w-fit items-center gap-2 rounded-full border-[2px] border-dashed border-jv-ink/30 bg-jv-white px-5 py-2.5 font-body text-[13px] font-bold text-jv-muted shadow-brutal-sm sm:text-[14px]"
+              role="status"
+              aria-live="polite"
+            >
+              <Sparkles class="size-4" :stroke-width="2.4" />
+              Loading question review…
+            </div>
+            <QuizAnalysis v-else-if="isLoggedIn" :data="analysisData" />
+            <QuizAnalysisLoginGate v-else />
+
+            <div
+              class="mb-2 flex flex-wrap items-center justify-center gap-3"
+              role="group"
+              aria-label="Quiz end actions"
+            >
+              <NavigationLink
+                url="/"
+                variant="result"
+                aria-label="Return to home"
+              >
+                <Home class="size-4" :stroke-width="2.4" />
+                Home
+              </NavigationLink>
+              <NavigationLink
+                v-if="['closed', 'unavailable'].includes(roomPhase)"
+                url="/join"
+                variant="result"
+                class="bg-jv-yellow"
+                aria-label="Join another quiz"
+              >
+                Join another quiz
+                <ArrowRight class="size-4" :stroke-width="2.4" />
+              </NavigationLink>
+            </div>
+          </template>
         </template>
       </div>
     </main>

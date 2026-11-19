@@ -48,6 +48,9 @@ func TestHostParticipationPostgres(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	if _, err = db.Exec(`ALTER TABLE active_quizzes ADD COLUMN room_id uuid`); err != nil {
+		t.Fatal(err)
+	}
 	qc := &quizSocketController{db: goqu.New("postgres", db)}
 	app := fiber.New()
 	app.Use(func(c *fiber.Ctx) error {

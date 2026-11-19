@@ -82,9 +82,13 @@ const selectedItem = computed(() =>
       <SelectContent
         position="popper"
         :side-offset="6"
-        class="z-[1100] max-h-[280px] w-[var(--reka-select-trigger-width)] overflow-hidden jv-border-rough bg-jv-white shadow-brutal"
+        class="z-[1100] flex max-h-[min(280px,var(--reka-select-content-available-height))] w-[var(--reka-select-trigger-width)] flex-col overflow-hidden jv-border-rough bg-jv-white shadow-brutal"
       >
-        <SelectViewport class="max-h-[274px] overflow-y-auto p-1">
+        <div v-if="$slots.header" class="shrink-0">
+          <slot name="header" />
+        </div>
+        <SelectViewport class="min-h-0 overflow-y-auto p-1">
+          <slot v-if="!items.length" name="empty" />
           <SelectItem
             v-for="item in items"
             :key="item.value"

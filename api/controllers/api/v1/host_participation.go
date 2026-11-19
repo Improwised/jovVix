@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/Improwised/jovvix/api/constants"
 	"github.com/Improwised/jovvix/api/models"
@@ -32,6 +33,20 @@ func (qc *quizSocketController) HostParticipation(c *fiber.Ctx) error {
 		return utils.JSONFail(c, 500, "Unable to load session")
 	}
 	defer tx.Rollback()
+	// Room name reservations and participation use the same lock order as joins.
+	var roomID sql.NullString
+	if err = tx.QueryRow(`SELECT room_id::text FROM active_quizzes WHERE id=$1`, sessionID).Scan(&roomID); err != nil {
+		if err == sql.ErrNoRows {
+			return utils.JSONFail(c, 403, "Session not found")
+		}
+		return utils.JSONFail(c, 500, "Unable to load room")
+	}
+	if roomID.Valid {
+		var locked uuid.UUID
+		if err = tx.QueryRow(`SELECT id FROM quiz_rooms WHERE id=$1 FOR UPDATE`, roomID.String).Scan(&locked); err != nil {
+			return utils.JSONFail(c, 500, "Unable to load room")
+		}
+	}
 	var session struct {
 		AdminID        string         `db:"admin_id"`
 		Current        sql.NullString `db:"current_question"`
@@ -43,7 +58,7 @@ func (qc *quizSocketController) HostParticipation(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.JSONFail(c, 500, "Unable to load session")
 	}
-	if !found || session.AdminID != user.ID {
+	if !found || strings.TrimSpace(session.AdminID) != user.ID {
 		return utils.JSONFail(c, 403, "Only the host can change participation")
 	}
 	var participant uuid.UUID
@@ -72,6 +87,15 @@ func (qc *quizSocketController) HostParticipation(c *fiber.Ctx) error {
 			return utils.JSONFail(c, 400, "Invalid participation option")
 		}
 		if *body.Enabled && !found {
+			if roomID.Valid {
+				var reserved string
+				nameErr := tx.QueryRow(`SELECT player_name FROM quiz_room_members WHERE room_id=$1 AND user_id=$2`, roomID.String, user.ID).Scan(&reserved)
+				if nameErr == nil {
+					body.PlayerName = reserved
+				} else if nameErr != sql.ErrNoRows {
+					return utils.JSONFail(c, 500, "Unable to load reserved name")
+				}
+			}
 			var suggestions []string
 			playerName, suggestions, err = models.ResolveQuizPlayerName(tx, sessionID, user.FirstName, user.LastName, body.PlayerName)
 			if errors.Is(err, models.ErrPlayerNameTaken) {
@@ -82,6 +106,18 @@ func (qc *quizSocketController) HostParticipation(c *fiber.Ctx) error {
 			}
 			if err != nil {
 				return utils.JSONFail(c, http.StatusInternalServerError, "Unable to validate quiz name")
+			}
+			if roomID.Valid {
+				var taken bool
+				if err = tx.QueryRow(`SELECT EXISTS(SELECT 1 FROM quiz_room_members WHERE room_id=$1 AND user_id<>$2 AND lower(btrim(player_name))=lower($3))`, roomID.String, user.ID, playerName).Scan(&taken); err != nil {
+					return utils.JSONFail(c, 500, "Unable to validate room name")
+				}
+				if taken {
+					return utils.JSONFail(c, 409, fiber.Map{"message": "This name is reserved by another player in the room."})
+				}
+				if _, err = tx.Exec(`INSERT INTO quiz_room_members(room_id,user_id,player_name) VALUES($1,$2,$3) ON CONFLICT(room_id,user_id) DO UPDATE SET left_at=NULL,last_seen_at=now()`, roomID.String, user.ID, playerName); err != nil {
+					return utils.JSONFail(c, 500, "Unable to reserve host name")
+				}
 			}
 			participant = uuid.New()
 			_, err = tx.Insert("user_played_quizzes").Rows(goqu.Record{"id": participant, "user_id": user.ID, "active_quiz_id": sessionID, "is_host": false, "player_name": playerName}).Executor().Exec()
@@ -107,6 +143,11 @@ func (qc *quizSocketController) HostParticipation(c *fiber.Ctx) error {
 			}
 			if err != nil {
 				return utils.JSONFail(c, 500, "Unable to remove host as player")
+			}
+			if roomID.Valid {
+				if _, err = tx.Exec(`UPDATE quiz_room_members SET left_at=now() WHERE room_id=$1 AND user_id=$2`, roomID.String, user.ID); err != nil {
+					return utils.JSONFail(c, 500, "Unable to update host membership")
+				}
 			}
 			found = false
 		}

@@ -9,7 +9,7 @@
         <h1
           class="font-headings text-[38px] leading-none text-jv-ink min-[420px]:text-[44px] sm:text-[52px] md:text-[56px]"
         >
-          Quiz Reports
+          Reports
         </h1>
         <div
           class="ml-1 mt-1 h-3 w-40 rounded-full border-b-[3px] border-jv-yellow sm:ml-2 sm:w-48"
@@ -17,7 +17,10 @@
         ></div>
       </div>
 
-      <div class="flex flex-col sm:flex-row gap-4 items-center">
+      <div
+        v-if="reportType === 'quizzes'"
+        class="flex flex-col sm:flex-row gap-4 items-center"
+      >
         <label
           class="flex h-11 w-full sm:w-auto min-w-[200px] rotate-[1deg] items-center gap-2.5 jv-border-rough bg-jv-white px-3 shadow-brutal-sm sm:h-12 sm:px-4 cursor-pointer hover:bg-jv-white/80 transition-colors"
         >
@@ -43,232 +46,268 @@
           />
         </label>
       </div>
-    </div>
-
-    <!-- State: Pending -->
-    <div
-      v-if="quizListPending"
-      class="jv-border-rough bg-jv-white p-5 text-center text-[18px] font-semibold text-jv-muted shadow-brutal-sm mt-4"
-    >
-      Loading...
-    </div>
-
-    <!-- State: Error -->
-    <div
-      v-else-if="quizListError"
-      class="jv-border-rough bg-jv-white p-5 text-[18px] font-semibold text-jv-coral shadow-brutal-sm mt-4"
-    >
-      Error while fetching data: {{ quizListError }}
-    </div>
-
-    <!-- State: Success -->
-    <div v-else class="flex flex-col gap-3">
-      <!-- Table Header (Grid) -->
-      <div
-        class="hidden lg:grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr] gap-4 px-5 py-2 text-[12px] font-black uppercase tracking-[0.1em] text-jv-muted"
+      <label
+        v-if="reportType === 'rooms'"
+        class="flex h-11 w-full items-center gap-2.5 rotate-[1deg] jv-border-rough bg-jv-white px-3 shadow-brutal-sm sm:h-12 sm:w-auto"
       >
-        <div
-          role="button"
-          class="flex items-center gap-1 cursor-pointer hover:text-jv-ink transition-colors"
-          @click="sortEventHandler('title')"
-        >
-          QUIZ NAME
-          <ChevronUp
-            v-if="orderBy === 'title' && order === 'asc'"
-            class="size-4"
-          />
-          <ChevronDown
-            v-else-if="orderBy === 'title' && order === 'desc'"
-            class="size-4"
-          />
-          <ChevronsUpDown v-else class="size-4 opacity-40" />
-        </div>
-        <div
-          role="button"
-          class="flex items-center justify-center text-center gap-1 cursor-pointer hover:text-jv-ink transition-colors"
-          @click="sortEventHandler('participants')"
-        >
-          TOTAL <br />
-          PARTICIPANTS
-          <ChevronUp
-            v-if="orderBy === 'participants' && order === 'asc'"
-            class="size-4"
-          />
-          <ChevronDown
-            v-else-if="orderBy === 'participants' && order === 'desc'"
-            class="size-4"
-          />
-          <ChevronsUpDown v-else class="size-4 opacity-40" />
-        </div>
-        <div
-          role="button"
-          class="flex items-center gap-1 cursor-pointer hover:text-jv-ink transition-colors"
-          @click="sortEventHandler('activated_from')"
-        >
-          STARTED AT
-          <ChevronUp
-            v-if="orderBy === 'activated_from' && order === 'asc'"
-            class="size-4"
-          />
-          <ChevronDown
-            v-else-if="orderBy === 'activated_from' && order === 'desc'"
-            class="size-4"
-          />
-          <ChevronsUpDown v-else class="size-4 opacity-40" />
-        </div>
-        <div
-          role="button"
-          class="flex items-center gap-1 cursor-pointer hover:text-jv-ink transition-colors"
-          @click="sortEventHandler('activated_to')"
-        >
-          ENDED AT
-          <ChevronUp
-            v-if="orderBy === 'activated_to' && order === 'asc'"
-            class="size-4"
-          />
-          <ChevronDown
-            v-else-if="orderBy === 'activated_to' && order === 'desc'"
-            class="size-4"
-          />
-          <ChevronsUpDown v-else class="size-4 opacity-40" />
-        </div>
-        <div
-          role="button"
-          class="flex items-center justify-center text-center gap-1 cursor-pointer hover:text-jv-ink transition-colors"
-          @click="sortEventHandler('questions')"
-        >
-          TOTAL <br />
-          QUESTIONS
-          <ChevronUp
-            v-if="orderBy === 'questions' && order === 'asc'"
-            class="size-4"
-          />
-          <ChevronDown
-            v-else-if="orderBy === 'questions' && order === 'desc'"
-            class="size-4"
-          />
-          <ChevronsUpDown v-else class="size-4 opacity-40" />
-        </div>
-        <div class="flex items-center justify-center text-center">ACCURACY</div>
+        <Calendar class="size-5 shrink-0 text-jv-ink/40" :stroke-width="2.4" />
+        <input
+          v-model="roomDate"
+          type="datetime-local"
+          aria-label="Filter rooms by start date"
+          class="h-full min-w-0 flex-1 bg-transparent text-[15px] font-semibold text-jv-ink outline-none sm:text-[16px]"
+        />
+      </label>
+    </div>
+
+    <div
+      class="flex w-fit items-center gap-1 jv-border-rough bg-jv-white p-1 shadow-brutal-sm"
+      role="group"
+      aria-label="Report type"
+    >
+      <button
+        v-for="tab in ['quizzes', 'rooms']"
+        :key="tab"
+        type="button"
+        class="cursor-pointer rounded-[6px] px-4 py-2 text-sm font-bold text-jv-ink hover:bg-jv-yellow/40"
+        :class="{ 'bg-jv-yellow/60': reportType === tab }"
+        :aria-pressed="reportType === tab"
+        @click="reportType = tab"
+      >
+        {{ tab === "quizzes" ? "Quiz reports" : "Room reports" }}
+      </button>
+    </div>
+    <RoomReportList v-if="reportType === 'rooms'" :date="roomDate" />
+    <template v-else>
+      <!-- State: Pending -->
+      <div
+        v-if="quizListPending"
+        class="jv-border-rough bg-jv-white p-5 text-center text-[18px] font-semibold text-jv-muted shadow-brutal-sm mt-4"
+      >
+        Loading...
       </div>
 
-      <!-- No Data -->
+      <!-- State: Error -->
       <div
-        v-if="quizList?.data?.count <= 0"
-        class="jv-border-rough bg-jv-white p-5 text-center text-[18px] font-semibold text-jv-muted shadow-brutal-sm"
+        v-else-if="quizListError"
+        class="jv-border-rough bg-jv-white p-5 text-[18px] font-semibold text-jv-coral shadow-brutal-sm mt-4"
       >
-        No quiz found.
+        Error while fetching data: {{ quizListError }}
       </div>
 
-      <!-- Cards List -->
-      <div
-        v-for="(quiz, index) in quizList?.data?.data"
-        v-else
-        :key="index"
-        role="button"
-        class="grid grid-cols-1 lg:grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr] gap-4 items-center jv-border-rough bg-jv-white px-5 py-4 shadow-brutal-sm hover:translate-y-[-2px] hover:shadow-brutal-md transition-all cursor-pointer"
-        @click="viewReport(quiz.id)"
-      >
-        <!-- Quiz Name -->
-        <div class="min-w-0 pr-4">
-          <h3
-            class="font-headings text-[22px] sm:text-[24px] leading-tight text-jv-ink font-bold truncate"
-          >
-            {{ decodeURI(quiz.title) }}
-          </h3>
-          <p class="text-[14px] font-semibold text-jv-muted mt-1 truncate">
-            {{ quiz.description.String }}
-          </p>
-        </div>
-
-        <!-- Participants -->
-        <div class="lg:text-center text-[22px] font-black text-jv-ink">
-          <span
-            class="lg:hidden text-[14px] text-jv-muted font-bold mr-2 uppercase tracking-wide"
-            >Participants:</span
-          >
-          {{ quiz.participants }}
-        </div>
-
-        <!-- Started At -->
-        <div>
-          <span
-            class="lg:hidden text-[14px] text-jv-muted font-bold mr-2 uppercase tracking-wide"
-            >Started At:</span
-          >
+      <!-- State: Success -->
+      <div v-else class="flex flex-col gap-3">
+        <!-- Table Header (Grid) -->
+        <div
+          class="hidden lg:grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr] gap-4 px-5 py-2 text-[12px] font-black uppercase tracking-[0.1em] text-jv-muted"
+        >
           <div
-            class="inline-block lg:block text-[15px] font-bold text-jv-ink leading-snug"
+            role="button"
+            class="flex items-center gap-1 cursor-pointer hover:text-jv-ink transition-colors"
+            @click="sortEventHandler('title')"
           >
-            <div v-if="quiz.activated_from.Time">
-              {{ quiz.activated_from.Time.split(" ")[0] }}
-            </div>
-            <div
-              v-if="quiz.activated_from.Time"
-              class="text-[13px] font-semibold text-jv-muted"
-            >
-              {{ quiz.activated_from.Time.split(" ")[1] }}
-            </div>
+            QUIZ NAME
+            <ChevronUp
+              v-if="orderBy === 'title' && order === 'asc'"
+              class="size-4"
+            />
+            <ChevronDown
+              v-else-if="orderBy === 'title' && order === 'desc'"
+              class="size-4"
+            />
+            <ChevronsUpDown v-else class="size-4 opacity-40" />
+          </div>
+          <div
+            role="button"
+            class="flex items-center justify-center text-center gap-1 cursor-pointer hover:text-jv-ink transition-colors"
+            @click="sortEventHandler('participants')"
+          >
+            TOTAL <br />
+            PARTICIPANTS
+            <ChevronUp
+              v-if="orderBy === 'participants' && order === 'asc'"
+              class="size-4"
+            />
+            <ChevronDown
+              v-else-if="orderBy === 'participants' && order === 'desc'"
+              class="size-4"
+            />
+            <ChevronsUpDown v-else class="size-4 opacity-40" />
+          </div>
+          <div
+            role="button"
+            class="flex items-center gap-1 cursor-pointer hover:text-jv-ink transition-colors"
+            @click="sortEventHandler('activated_from')"
+          >
+            STARTED AT
+            <ChevronUp
+              v-if="orderBy === 'activated_from' && order === 'asc'"
+              class="size-4"
+            />
+            <ChevronDown
+              v-else-if="orderBy === 'activated_from' && order === 'desc'"
+              class="size-4"
+            />
+            <ChevronsUpDown v-else class="size-4 opacity-40" />
+          </div>
+          <div
+            role="button"
+            class="flex items-center gap-1 cursor-pointer hover:text-jv-ink transition-colors"
+            @click="sortEventHandler('activated_to')"
+          >
+            ENDED AT
+            <ChevronUp
+              v-if="orderBy === 'activated_to' && order === 'asc'"
+              class="size-4"
+            />
+            <ChevronDown
+              v-else-if="orderBy === 'activated_to' && order === 'desc'"
+              class="size-4"
+            />
+            <ChevronsUpDown v-else class="size-4 opacity-40" />
+          </div>
+          <div
+            role="button"
+            class="flex items-center justify-center text-center gap-1 cursor-pointer hover:text-jv-ink transition-colors"
+            @click="sortEventHandler('questions')"
+          >
+            TOTAL <br />
+            QUESTIONS
+            <ChevronUp
+              v-if="orderBy === 'questions' && order === 'asc'"
+              class="size-4"
+            />
+            <ChevronDown
+              v-else-if="orderBy === 'questions' && order === 'desc'"
+              class="size-4"
+            />
+            <ChevronsUpDown v-else class="size-4 opacity-40" />
+          </div>
+          <div class="flex items-center justify-center text-center">
+            ACCURACY
           </div>
         </div>
 
-        <!-- Ended At -->
-        <div>
-          <span
-            class="lg:hidden text-[14px] text-jv-muted font-bold mr-2 uppercase tracking-wide"
-            >Ended At:</span
-          >
-          <div
-            class="inline-block lg:block text-[15px] font-bold text-jv-ink leading-snug"
-          >
-            <div v-if="quiz.activated_to.Time">
-              {{ quiz.activated_to.Time.split(" ")[0] }}
-            </div>
-            <div
-              v-if="quiz.activated_to.Time"
-              class="text-[13px] font-semibold text-jv-muted"
+        <!-- No Data -->
+        <div
+          v-if="quizList?.data?.count <= 0"
+          class="jv-border-rough bg-jv-white p-5 text-center text-[18px] font-semibold text-jv-muted shadow-brutal-sm"
+        >
+          No quiz found.
+        </div>
+
+        <!-- Cards List -->
+        <div
+          v-for="(quiz, index) in quizList?.data?.data"
+          v-else
+          :key="index"
+          role="button"
+          class="grid grid-cols-1 lg:grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr] gap-4 items-center jv-border-rough bg-jv-white px-5 py-4 shadow-brutal-sm hover:translate-y-[-2px] hover:shadow-brutal-md transition-all cursor-pointer"
+          @click="viewReport(quiz.id)"
+        >
+          <!-- Quiz Name -->
+          <div class="min-w-0 pr-4">
+            <h3
+              class="font-headings text-[22px] sm:text-[24px] leading-tight text-jv-ink font-bold truncate"
             >
-              {{ quiz.activated_to.Time.split(" ")[1] }}
+              {{ decodeURI(quiz.title) }}
+            </h3>
+            <p class="text-[14px] font-semibold text-jv-muted mt-1 truncate">
+              {{ quiz.description.String }}
+            </p>
+          </div>
+
+          <!-- Participants -->
+          <div class="lg:text-center text-[22px] font-black text-jv-ink">
+            <span
+              class="lg:hidden text-[14px] text-jv-muted font-bold mr-2 uppercase tracking-wide"
+              >Participants:</span
+            >
+            {{ quiz.participants }}
+          </div>
+
+          <!-- Started At -->
+          <div>
+            <span
+              class="lg:hidden text-[14px] text-jv-muted font-bold mr-2 uppercase tracking-wide"
+              >Started At:</span
+            >
+            <div
+              class="inline-block lg:block text-[15px] font-bold text-jv-ink leading-snug"
+            >
+              <div v-if="quiz.activated_from.Time">
+                {{ quiz.activated_from.Time.split(" ")[0] }}
+              </div>
+              <div
+                v-if="quiz.activated_from.Time"
+                class="text-[13px] font-semibold text-jv-muted"
+              >
+                {{ quiz.activated_from.Time.split(" ")[1] }}
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- Questions -->
-        <div class="lg:text-center text-[22px] font-black text-jv-ink">
-          <span
-            class="lg:hidden text-[14px] text-jv-muted font-bold mr-2 uppercase tracking-wide"
-            >Questions:</span
-          >
-          {{ quiz.questions }}
-        </div>
+          <!-- Ended At -->
+          <div>
+            <span
+              class="lg:hidden text-[14px] text-jv-muted font-bold mr-2 uppercase tracking-wide"
+              >Ended At:</span
+            >
+            <div
+              class="inline-block lg:block text-[15px] font-bold text-jv-ink leading-snug"
+            >
+              <div v-if="quiz.activated_to.Time">
+                {{ quiz.activated_to.Time.split(" ")[0] }}
+              </div>
+              <div
+                v-if="quiz.activated_to.Time"
+                class="text-[13px] font-semibold text-jv-muted"
+              >
+                {{ quiz.activated_to.Time.split(" ")[1] }}
+              </div>
+            </div>
+          </div>
 
-        <!-- Accuracy -->
-        <div class="lg:flex lg:justify-center">
-          <span
-            class="lg:hidden text-[14px] text-jv-muted font-bold mr-2 uppercase tracking-wide"
-            >Accuracy:</span
-          >
-          <div
-            class="inline-flex items-center justify-center px-3 py-1.5 jv-border-rough shadow-brutal-sm text-[16px] font-black min-w-[90px]"
-            :class="
-              getAccuracyClass(
-                (quiz.correct_answers / (quiz.participants * quiz.questions)) *
+          <!-- Questions -->
+          <div class="lg:text-center text-[22px] font-black text-jv-ink">
+            <span
+              class="lg:hidden text-[14px] text-jv-muted font-bold mr-2 uppercase tracking-wide"
+              >Questions:</span
+            >
+            {{ quiz.questions }}
+          </div>
+
+          <!-- Accuracy -->
+          <div class="lg:flex lg:justify-center">
+            <span
+              class="lg:hidden text-[14px] text-jv-muted font-bold mr-2 uppercase tracking-wide"
+              >Accuracy:</span
+            >
+            <div
+              class="inline-flex items-center justify-center px-3 py-1.5 jv-border-rough shadow-brutal-sm text-[16px] font-black min-w-[90px]"
+              :class="
+                getAccuracyClass(
+                  (quiz.correct_answers /
+                    (quiz.participants * quiz.questions)) *
+                    100
+                )
+              "
+            >
+              {{
+                (
+                  (quiz.correct_answers /
+                    (quiz.participants * quiz.questions)) *
                   100
-              )
-            "
-          >
-            {{
-              (
-                (quiz.correct_answers / (quiz.participants * quiz.questions)) *
-                100
-              ).toFixed(2)
-            }}%
+                ).toFixed(2)
+              }}%
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Pagination -->
-    <Pagination :page="page" :num-of-records="quizList?.data?.count / 10" />
+      <!-- Pagination -->
+      <Pagination :page="page" :num-of-records="quizList?.data?.count / 10" />
+    </template>
   </main>
 </template>
 
@@ -290,12 +329,21 @@ definePageMeta({
 });
 
 useSeoMeta({
-  title: "Quiz Reports - jovVix",
+  title: "Reports - jovVix",
   description:
     "View performance reports and analytics for your jovVix quiz sessions.",
   robots: "noindex, nofollow",
 });
 
+const reportType = ref(useRoute().query.type === "rooms" ? "rooms" : "quizzes");
+watch(reportType, (type) => {
+  const current = useRoute();
+  navigateTo(
+    { path: current.path, query: { ...current.query, type } },
+    { replace: true }
+  );
+});
+const roomDate = ref("");
 const { apiUrl } = useRuntimeConfig().public;
 const headers = useRequestHeaders(["cookie"]);
 const route = useRoute();

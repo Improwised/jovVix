@@ -16,6 +16,7 @@ const ActiveQuizzesTable = "active_quizzes"
 
 // ActiveQuiz model
 type ActiveQuiz struct {
+	RoomID               sql.NullString `json:"room_id" db:"room_id"`
 	ID                   uuid.UUID      `json:"id" db:"id"`
 	InvitationCode       sql.NullInt32  `json:"invitation_code" db:"invitation_code"`
 	Title                string         `json:"title,omitempty" db:"title"`
@@ -34,6 +35,8 @@ type ActiveQuiz struct {
 
 // ActiveSessionSummary model
 type ActiveSessionSummary struct {
+	RoomID         *string    `json:"room_id" db:"room_id"`
+	IsActive       bool       `json:"is_active" db:"is_active"`
 	ID             uuid.UUID  `json:"id" db:"id"`
 	Title          string     `json:"title" db:"title"`
 	QuizID         uuid.UUID  `json:"quiz_id" db:"quiz_id"`
@@ -136,14 +139,16 @@ func (model *ActiveQuizModel) GetActiveQuizByQuizIDAndAdminID(quizID string, adm
 func (model *ActiveQuizModel) GetActiveSessionsByAdminID(adminID string) ([]ActiveSessionSummary, error) {
 	sessions := []ActiveSessionSummary{}
 
-	err := model.db.Select("id", "title", "quiz_id", "invitation_code", "activated_from").
-		From(ActiveQuizzesTable).
-		Where(
-			goqu.I("admin_id").Eq(adminID),
-			goqu.I("is_active").Eq(true),
-		).
-		Order(goqu.I("activated_from").Desc(), goqu.I("updated_at").Desc()).
-		ScanStructs(&sessions)
+	err := model.db.ScanStructs(&sessions, `
+		SELECT a.id,a.title,a.quiz_id,COALESCE(r.code,a.invitation_code) AS invitation_code,a.activated_from,
+		       a.room_id::text AS room_id,a.is_active
+		FROM active_quizzes a
+		LEFT JOIN quiz_rooms r ON r.id=a.room_id
+		WHERE a.admin_id=$1 AND (
+		  (a.room_id IS NULL AND a.is_active=true) OR
+		  (r.current_session_id=a.id AND r.closed_at IS NULL AND r.expires_at>now())
+		)
+		ORDER BY a.activated_from DESC,a.updated_at DESC`, adminID)
 
 	if err != nil {
 		return nil, err
@@ -152,7 +157,20 @@ func (model *ActiveQuizModel) GetActiveSessionsByAdminID(adminID string) ([]Acti
 	return sessions, nil
 }
 
+type sessionCopyDB interface {
+	ScanVals(interface{}, string, ...interface{}) error
+	Insert(interface{}) *goqu.InsertDataset
+}
+
 func (model *ActiveQuizModel) GetQuestionsCopy(activeQuizId uuid.UUID, quizId string) error {
+	return copySessionQuestions(model.db, activeQuizId, quizId)
+}
+
+func CopyRoomQuestions(tx *goqu.TxDatabase, activeQuizId uuid.UUID, quizId string) error {
+	return copySessionQuestions(tx, activeQuizId, quizId)
+}
+
+func copySessionQuestions(db sessionCopyDB, activeQuizId uuid.UUID, quizId string) error {
 
 	// Walk the next_question chain so playback honors admin-defined order.
 	// Falls back to created_at for legacy quizzes whose chain was never populated.
@@ -174,7 +192,7 @@ func (model *ActiveQuizModel) GetQuestionsCopy(activeQuizId uuid.UUID, quizId st
 		SELECT question_id FROM chain ORDER BY pos, created_at`
 
 	var questionIDs []uuid.UUID
-	err := model.db.ScanVals(&questionIDs, rawSQL, quizId)
+	err := db.ScanVals(&questionIDs, rawSQL, quizId)
 	if err != nil {
 		return err
 	}
@@ -209,7 +227,10 @@ func (model *ActiveQuizModel) GetQuestionsCopy(activeQuizId uuid.UUID, quizId st
 		activeQuizResponses = append(activeQuizResponses, previousRecord)
 	}
 
-	result, err := model.db.Insert(ActiveQuizQuestionsTable).Rows(activeQuizResponses).Executor().Exec()
+	if len(activeQuizResponses) == 0 {
+		return sql.ErrNoRows
+	}
+	result, err := db.Insert(ActiveQuizQuestionsTable).Rows(activeQuizResponses).Executor().Exec()
 
 	if err != nil {
 		return err
@@ -280,8 +301,18 @@ func (model *ActiveQuizModel) GetOrActivateSession(sessionId string, userId stri
 	}
 	isOk = (invitation_code != -1)
 
+	roomID := uuid.New()
+	_, err = transactionObj.Exec(`INSERT INTO quiz_rooms(id,admin_id,code,current_session_id) VALUES($1,$2,$3,$4)`, roomID, userId, invitation_code, activeQuiz.ID)
+	if err == nil {
+		_, err = transactionObj.Exec(`UPDATE active_quizzes SET room_id=$1 WHERE id=$2`, roomID, activeQuiz.ID)
+	}
+	if err != nil {
+		isOk = false
+		return activeQuiz, err
+	}
 	activeQuiz, err = model.GetSessionById(transactionObj, sessionId)
 	if err != nil {
+		isOk = false
 		return activeQuiz, err
 	}
 	return activeQuiz, nil
@@ -333,7 +364,8 @@ func activateSession(transactionObj *goqu.TxDatabase, maxTry int, sessionId uuid
 			admin_id=$2 and
 			is_active=false and
 			not exists (
-				select 1 from active_quizzes where invitation_code = $3 limit 1
+				select 1 from active_quizzes where invitation_code = $3
+                UNION ALL SELECT 1 FROM quiz_rooms WHERE code = $3 limit 1
 			)
 		returning
 			invitation_code
@@ -441,6 +473,23 @@ func (model *ActiveQuizModel) IsActiveQuizPresent(QuizId string) (bool, error) {
 // This function will delete all quizzes and their related data (user responses, played quizzes)
 // associated with the given user (admin) identified by userId.
 func (model *ActiveQuizModel) DeleteActiveQuizzesAndRelatedDataByUserId(transaction *goqu.TxDatabase, userId string) error {
+	// Rooms reference their current session, and sessions reference their room.
+	// Remove memberships and break that cycle inside the account deletion transaction.
+	hostedRooms := transaction.From("quiz_rooms").Select("id").Where(goqu.Ex{"admin_id": userId})
+	if _, err := transaction.Delete("quiz_room_members").Where(goqu.Or(
+		goqu.Ex{"user_id": userId},
+		goqu.Ex{"room_id": goqu.Op{"in": hostedRooms}},
+	)).Executor().Exec(); err != nil {
+		return err
+	}
+	if _, err := transaction.Update(ActiveQuizzesTable).Set(goqu.Record{"room_id": nil}).Where(
+		goqu.Ex{"room_id": goqu.Op{"in": hostedRooms}},
+	).Executor().Exec(); err != nil {
+		return err
+	}
+	if _, err := transaction.Delete("quiz_rooms").Where(goqu.Ex{"admin_id": userId}).Executor().Exec(); err != nil {
+		return err
+	}
 
 	activeQuizSubquery := transaction.From(ActiveQuizzesTable).Select("id").Where(goqu.Ex{"admin_id": userId})
 

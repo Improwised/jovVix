@@ -47,9 +47,20 @@ func InitUserQuizResponseModel(goqu *goqu.Database) *UserQuizResponseModel {
 	return &UserQuizResponseModel{db: goqu}
 }
 
-func (model *UserQuizResponseModel) GetQuestionsCopy(userPlayedQuizId uuid.UUID, quizId uuid.UUID) error {
+type responseCopyDB interface {
+	From(...interface{}) *goqu.SelectDataset
+	Insert(interface{}) *goqu.InsertDataset
+}
 
-	rows, err := model.db.From(goqu.T("active_quiz_questions").As("qq")).
+func (model *UserQuizResponseModel) GetQuestionsCopy(userPlayedQuizId uuid.UUID, quizId uuid.UUID) error {
+	return copyParticipantResponses(model.db, userPlayedQuizId, quizId)
+}
+func CopyRoomResponses(tx *goqu.TxDatabase, participant, session uuid.UUID) error {
+	return copyParticipantResponses(tx, participant, session)
+}
+func copyParticipantResponses(db responseCopyDB, userPlayedQuizId uuid.UUID, quizId uuid.UUID) error {
+
+	rows, err := db.From(goqu.T("active_quiz_questions").As("qq")).
 		Select(goqu.I("qq.question_id"), goqu.I("q.options"), goqu.I("q.type")).
 		Join(goqu.T(QuestionTable).As("q"), goqu.On(goqu.I("q.id").Eq(goqu.I("qq.question_id")))).
 		LeftJoin(goqu.T(UserQuizResponsesTable).As("uqr"), goqu.On(goqu.Ex{
@@ -115,7 +126,7 @@ func (model *UserQuizResponseModel) GetQuestionsCopy(userPlayedQuizId uuid.UUID,
 		return nil
 	}
 
-	result, err := model.db.Insert(UserQuizResponsesTable).Rows(userQuizResponses).Executor().Exec()
+	result, err := db.Insert(UserQuizResponsesTable).Rows(userQuizResponses).Executor().Exec()
 
 	if err != nil {
 		return err

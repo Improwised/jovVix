@@ -329,7 +329,11 @@ const isActiveRoute = (url) => {
   if (url === "/") return route.path === "/";
   if (url === "/admin/quiz/list-quiz")
     return route.path.startsWith("/admin/quiz");
-  if (url === "/admin/reports") return route.path.startsWith("/admin/reports");
+  if (url === "/admin/reports")
+    return (
+      route.path.startsWith("/admin/reports") ||
+      route.path.startsWith("/room/report/")
+    );
   if (url === "/admin/categories")
     return route.path.startsWith("/admin/categories");
   if (url === "/admin") return route.path === "/admin";

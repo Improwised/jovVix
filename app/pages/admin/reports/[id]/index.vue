@@ -22,6 +22,21 @@
       </p>
     </div>
 
+    <NuxtLink
+      v-if="
+        typeof $route.query.room === 'string' &&
+        /^[0-9a-f-]{36}$/i.test($route.query.room)
+      "
+      :to="`/room/report/${$route.query.room}?tab=quizzes`"
+      class="inline-flex w-fit items-center gap-2 rounded-full border-2 border-jv-ink bg-jv-white px-5 py-2 font-bold text-jv-ink shadow-brutal-sm transition-transform hover:-rotate-1 active:shadow-none"
+      >← Back to room report</NuxtLink
+    >
+    <NuxtLink
+      v-else
+      to="/admin/reports"
+      class="inline-flex w-fit items-center gap-2 rounded-full border-2 border-jv-ink bg-jv-white px-5 py-2 font-bold text-jv-ink shadow-brutal-sm transition-transform hover:-rotate-1 active:shadow-none"
+      >← Back to reports</NuxtLink
+    >
     <!-- Tabs -->
     <PageLayout :current-tab="currentTab" @change-tab="changeTab" />
 

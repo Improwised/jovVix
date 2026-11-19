@@ -75,9 +75,55 @@ const handleSessionUnavailable = () => {
   );
 };
 
-const resolvePlaySession = async () => {
-  if (userPlayedQuiz.value && sessionId.value) return true;
+const recoverRoom = async () => {
+  let response;
+  try {
+    response = await $fetch(
+      `${apiUrl}/rooms/lookup?code=${encodeURIComponent(code)}`,
+      { credentials: "include" }
+    );
+  } catch (err) {
+    if (err?.statusCode === 404) return true;
+    if (err?.statusCode === 401 || err?.statusCode === 403) {
+      if (cancelled.value) return false;
+      userOperationHandler.value?.dispose();
+      clearPlaySession();
+      await router.replace({
+        path: "/join",
+        query: joinRecoveryQuery(code, err),
+      });
+      return false;
+    }
+    throw err;
+  }
+  if (cancelled.value) return false;
+  const room = response.data;
+  if (
+    !["lobby", "playing"].includes(room.phase) ||
+    (sessionId.value && sessionId.value !== room.session_id)
+  ) {
+    userOperationHandler.value?.dispose();
+    const resultParticipant = userPlayedQuiz.value || room.user_played_quiz;
+    const resultUsername = username.value || room.username;
+    if (
+      ["results", "closed"].includes(room.phase) &&
+      resultParticipant &&
+      resultUsername
+    ) {
+      clearPlaySession();
+      await router.replace(
+        `/join/${encodeURIComponent(resultUsername)}/scoreboard?user_played_quiz=${encodeURIComponent(resultParticipant)}`
+      );
+    } else {
+      await router.replace(`/room/${room.id}`);
+    }
+    return false;
+  }
+  return true;
+};
 
+const resolvePlaySession = async () => {
+  if (!(await recoverRoom())) return false;
   const played = await $fetch(`${apiUrl}/user_played_quizes/${code}`, {
     method: "POST",
     credentials: "include",
@@ -90,6 +136,8 @@ const resolvePlaySession = async () => {
     headers: { Accept: "application/json" },
     ignoreResponseError: true,
   });
+
+  if (cancelled.value) return false;
 
   const resolved = {
     code,
@@ -115,10 +163,16 @@ onMounted(async () => {
   if (!import.meta.client) return;
 
   try {
-    if (!(await resolvePlaySession())) {
-      return router.replace({ path: "/join", query: joinRecoveryQuery(code) });
-    }
+    if (!(await resolvePlaySession())) return;
   } catch (err) {
+    if (cancelled.value) return;
+    // The quiz may have ended between checking room state and enrolling.
+    try {
+      if (!(await recoverRoom())) return;
+    } catch {
+      /* Show join recovery below. */
+    }
+    if (cancelled.value) return;
     console.error(err);
     return router.replace({
       path: "/join",
@@ -135,7 +189,8 @@ onMounted(async () => {
       handleQuizEvents,
       handleNetworkEvent,
       handleNetworkEstablished,
-      handleSessionUnavailable
+      handleSessionUnavailable,
+      recoverRoom
     );
   } catch (err) {
     toast.info(app.$ReloadRequired);
@@ -156,6 +211,7 @@ const handleQuizEvents = async (message) => {
       username.value
     )}/scoreboard?user_played_quiz=${userPlayedQuiz.value}`;
     clearPlaySession();
+    userOperationHandler.value?.dispose();
     return await router.push(scoreboard);
   } else if (message.event == app.$RedirectToAdmin) {
     return await router.push("/admin/arrange/" + message.data.sessionId);
@@ -165,7 +221,7 @@ const handleQuizEvents = async (message) => {
     message.data == app.$SessionWasCompleted
   ) {
     // Players hit this when they back-navigate from the scoreboard into a quiz
-    // whose session already terminated — bounce them to /join so the banner can
+    // whose session already terminated, bounce them to /join so the banner can
     // explain what happened instead of leaving them on a stalled play screen.
     return await router.push(
       "/join?status=" + message.status + "&error=" + message.data
@@ -265,13 +321,12 @@ useSeoMeta({
 
 onBeforeUnmount(() => {
   cancelled.value = true;
-  if (!monitorTerminateQuiz.value) {
-    userOperationHandler.value?.endQuiz();
-  }
+  userOperationHandler.value?.dispose();
 });
 </script>
 
 <template>
+  <RoomConnection :session-id="sessionId" />
   <div class="bg-image"></div>
   <div>
     <div v-if="showConnectingBar" class="top-bar-red">
