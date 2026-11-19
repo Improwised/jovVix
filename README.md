@@ -52,6 +52,7 @@ Open-Source Quizzing Built for Live Quiz Experiences
 
 ## Features
 
+- **Multi-Quiz Rooms:** Host can run multiple quizzes in a row under one join code. Players stay in the room and get auto-redirected to each new quiz with their name and scores carried forward.
 - **Real-time Interaction:** Supports real-time quizzes with instant feedback and live leaderboards, ensuring a highly engaging user experience.
 - **Public Quizzes:** Curated quizzes can be published publicly and explored right from the homepage — no account required:
   - Anyone, including guests who haven't logged in, can start a public quiz instantly

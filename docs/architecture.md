@@ -8,6 +8,7 @@
 │               Nuxt 4 SSR / Vue 3 SPA                     │
 │                Pinia State Management                     │
 │              WebSocket (Real-time Quiz)                   │
+│              HTTP Polling (Room State, 3s)                │
 └────────────────────┬─────────────────┬───────────────────┘
                      │ HTTP            │ WebSocket
                      ▼                 ▼
@@ -90,6 +91,19 @@ api/
   - `/api/v1/socket/admin/arrange/:session_id` — Admin quiz control
   - `/api/v1/socket/join/:invitation_code` — Participant quiz play
 - Message format: `{component, event, data}`
+- Host connection lock via Redis `SETNX` prevents duplicate tabs
+
+### Room System (Multi-Quiz Sessions)
+
+- Rooms group multiple quiz sessions under one join code
+- Room state is derived from database columns (no stored state column):
+  - **lobby** — session active, no question started
+  - **playing** — session active, question is open
+  - **results** — session ended, room still open (between quizzes)
+  - **closed** — room ended or expired
+- Clients poll `GET /rooms/:id` every 3 seconds via `RoomPanel` component
+- When the host starts the next quiz, `current_session_id` updates and clients auto-redirect
+- Player names persist across quizzes via `quiz_room_members` table
 
 ### AI Quiz Generation
 
@@ -112,7 +126,7 @@ See the [AI Quiz Generation Guide](./ai-quiz-generation.md) for providers, confi
 - **PostgreSQL 15** with UUID primary keys
 - **golang-migrate** for schema migrations
 - **goqu** query builder for type-safe SQL
-- **Valkey/Redis** for caching and session management
+- **Valkey/Redis** for caching, session management, and host connection locking
 
 ### Key Tables
 
@@ -128,3 +142,5 @@ See the [AI Quiz Generation Guide](./ai-quiz-generation.md) for providers, confi
 | `shared_quizzes` | Quiz sharing permissions |
 | `quiz_categories` | Quiz categorization |
 | `ai_settings` | Encrypted AI provider credentials (AES-256-GCM + Argon2id) |
+| `quiz_rooms` | Room grouping for multi-quiz sessions |
+| `quiz_room_members` | Player name reservations across quizzes in a room |
