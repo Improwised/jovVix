@@ -128,6 +128,20 @@ playing = NOT closed AND is_active = true AND question is active
 lobby   = NOT closed AND is_active = true AND no question yet
 ```
 
+### Solo Endpoints
+
+A solo attempt is a normal session flagged `is_solo`. It creates no room and
+accepts no joins. Key endpoints:
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| `POST` | `/quizzes/:quiz_id/public_session?mode=solo` | Start a solo attempt (also used for a live public session without the mode) |
+| `GET` | `/solo/results/:attempt` | Attempt stats plus the leaderboard for the same quiz fingerprint |
+
+`quiz_version` is the md5 of the quiz questions and quiz-question settings,
+computed when the attempt starts. The leaderboard only includes completed solo
+attempts with the same value, so editing a quiz starts a new comparison group.
+
 ### 6. Regenerate Swagger
 
 ```bash

@@ -52,7 +52,7 @@ func TestQuizRoomsPostgres(t *testing.T) {
  CREATE TABLE questions(id uuid PRIMARY KEY,options json DEFAULT '{"1":"Yes"}',type int DEFAULT 1);
  CREATE TABLE user_quiz_responses(id uuid PRIMARY KEY,question_id uuid,user_played_quiz_id uuid,option_order json,answers json,is_attend bool DEFAULT false);
  CREATE TABLE quiz_questions(id uuid,quiz_id uuid,question_id uuid,next_question uuid,created_at timestamp DEFAULT now());
- CREATE TABLE active_quizzes(id uuid PRIMARY KEY,admin_id bpchar(20),quiz_id uuid,title text,invitation_code integer,is_active bool DEFAULT false,activated_from timestamp,activated_to timestamp,current_question uuid,is_question_active bool);
+ CREATE TABLE active_quizzes(id uuid PRIMARY KEY,admin_id bpchar(20),quiz_id uuid,title text,invitation_code integer,is_active bool DEFAULT false,activated_from timestamp,activated_to timestamp,current_question uuid,is_question_active bool,is_solo bool DEFAULT false);
  CREATE TABLE user_played_quizzes(id uuid PRIMARY KEY,user_id bpchar(20),active_quiz_id uuid,is_host bool,player_name text);
  CREATE TABLE active_quiz_questions(id uuid,question_id uuid,active_quiz_id uuid,next_question uuid,order_no int);
  INSERT INTO users VALUES('host','Host',''),('one','Alpha',''),('two','Beta',''),('new','Gamma','');`)

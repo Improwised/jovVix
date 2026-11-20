@@ -478,8 +478,7 @@ func (ctrl *QuizController) GenerateDemoSession(c *fiber.Ctx) error {
 
 // GeneratePublicSession lets ANY visitor (guest or registered) host a public quiz.
 // Unlike demo_session, it does not require Kratos auth, but it only works for
-// quizzes flagged is_public. The starter becomes the session host and cannot
-// participate in that session.
+// quizzes flagged is_public. The starter hosts live or starts a solo attempt.
 func (ctrl *QuizController) GeneratePublicSession(c *fiber.Ctx) error {
 	quizId := c.Params(constants.QuizId)
 	userId := quizUtilsHelper.GetString(c.Locals(constants.ContextUid))
@@ -509,6 +508,12 @@ func (ctrl *QuizController) GeneratePublicSession(c *fiber.Ctx) error {
 		return utils.JSONFail(c, http.StatusBadRequest, constants.ErrCreatingDemoQuiz)
 	}
 
+	if c.Query("mode") == "solo" {
+		ready, soloErr := ctrl.quizModel.SetSoloSession(sessionId)
+		if soloErr != nil || !ready {
+			return utils.JSONFail(c, 500, "Unable to prepare solo quiz")
+		}
+	}
 	return utils.JSONSuccess(c, http.StatusAccepted, sessionId)
 }
 

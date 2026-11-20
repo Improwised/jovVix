@@ -51,6 +51,9 @@ func TestHostParticipationPostgres(t *testing.T) {
 	if _, err = db.Exec(`ALTER TABLE active_quizzes ADD COLUMN room_id uuid`); err != nil {
 		t.Fatal(err)
 	}
+	if _, err = db.Exec(`CREATE TABLE quizzes(id uuid PRIMARY KEY,is_public boolean); INSERT INTO quizzes VALUES ('00000000-0000-0000-0000-000000000099',true); ALTER TABLE active_quizzes ADD COLUMN quiz_id uuid DEFAULT '00000000-0000-0000-0000-000000000099'; ALTER TABLE active_quizzes ADD COLUMN is_solo boolean DEFAULT false`); err != nil {
+		t.Fatal(err)
+	}
 	qc := &quizSocketController{db: goqu.New("postgres", db)}
 	app := fiber.New()
 	app.Use(func(c *fiber.Ctx) error {
@@ -129,6 +132,18 @@ func TestHostParticipationPostgres(t *testing.T) {
 	}
 	if code, _ = request("PUT", "host", `{"enabled":true}`); code != 200 {
 		t.Fatalf("enable again: %d", code)
+	}
+	if ok, err := qc.hasHostedParticipants(session); err != nil || ok {
+		t.Fatalf("host alone must not start live: %v %v", ok, err)
+	}
+	if _, err = db.Exec(`UPDATE quizzes SET is_public=false`); err != nil {
+		t.Fatal(err)
+	}
+	if code, _ := request("PUT", "host", `{"enabled":true}`); code != 403 {
+		t.Fatalf("private host participation: %d", code)
+	}
+	if _, err = db.Exec(`UPDATE quizzes SET is_public=true; UPDATE active_quizzes SET is_solo=true`); err != nil {
+		t.Fatal(err)
 	}
 	if ok, err := qc.hasHostedParticipants(session); err != nil || !ok {
 		t.Fatalf("solo start: %v %v", ok, err)

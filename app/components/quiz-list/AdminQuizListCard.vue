@@ -79,14 +79,24 @@
       >
         <NavigationLink
           v-if="showActions"
+          :class="details?.is_public ? 'col-span-2' : ''"
           url-name="View Quiz"
           :url="viewUrl"
           class="h-8 rounded-full bg-jv-coral px-1 font-body text-[12px] font-semibold text-white shadow-none md:px-1 md:text-[14px]"
         />
-        <NavigationLink
-          url-name="Start Quiz"
-          class="h-8 rounded-full px-1 font-body text-[12px] font-semibold shadow-none md:px-1 md:text-[14px]"
+        <QuizModeAction
+          label="Host Live"
+          secondary
           @click="$emit('start-quiz')"
+        />
+        <QuizModeAction
+          v-if="details?.is_public"
+          label="Play solo"
+          @click="
+            navigateTo(
+              `/admin/arrange/new?public=1&amp;mode=solo&amp;quiz_id=${details.id}`
+            )
+          "
         />
       </div>
     </div>

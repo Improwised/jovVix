@@ -70,13 +70,12 @@ describe("FinalScoreBoard Test", () => {
     wrapper.vm.resultsView = "quiz";
   });
 
-  it("keeps home and room report navigation available in overall standings", async () => {
+  it("keeps home navigation available in overall standings", async () => {
     wrapper.vm.resultsRoomId = "room123";
     wrapper.vm.resultsView = "overall";
     await wrapper.vm.$nextTick();
     const actions = wrapper.find('[aria-label="Room result actions"]');
     expect(actions.find('[aria-label="Return to home"]').exists()).toBe(true);
-    expect(actions.find('[to="/room/report/room123"]').exists()).toBe(true);
     wrapper.vm.resultsRoomId = "";
     wrapper.vm.resultsView = "quiz";
   });

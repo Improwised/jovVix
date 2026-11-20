@@ -75,6 +75,11 @@ func (qc *quizSocketController) HostParticipation(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.JSONFail(c, 500, "Unable to load participation")
 	}
+	var quizID string
+	var isPublic, isSolo bool
+	if err = tx.QueryRow(`SELECT q.id::text,q.is_public,a.is_solo FROM active_quizzes a JOIN quizzes q ON q.id=a.quiz_id WHERE a.id=$1`, sessionID).Scan(&quizID, &isPublic, &isSolo); err != nil {
+		return utils.JSONFail(c, 500, "Unable to load quiz")
+	}
 	if c.Method() == fiber.MethodPut {
 		if session.QuestionActive.Valid || session.Current.Valid || session.End.Valid || !session.Active {
 			return utils.JSONFail(c, 409, "Participation can only change in the lobby")
@@ -85,6 +90,12 @@ func (qc *quizSocketController) HostParticipation(c *fiber.Ctx) error {
 		}
 		if c.BodyParser(&body) != nil || body.Enabled == nil {
 			return utils.JSONFail(c, 400, "Invalid participation option")
+		}
+		if *body.Enabled && !isPublic {
+			return utils.JSONFail(c, 403, "Private quiz hosts cannot participate")
+		}
+		if isSolo && !*body.Enabled {
+			return utils.JSONFail(c, 403, "Solo participation cannot be disabled")
 		}
 		if *body.Enabled && !found {
 			if roomID.Valid {
@@ -182,7 +193,7 @@ func (qc *quizSocketController) HostParticipation(c *fiber.Ctx) error {
 	if err = tx.Commit(); err != nil {
 		return utils.JSONFail(c, 500, "Unable to save participation")
 	}
-	result := fiber.Map{"enabled": found, "started": session.QuestionActive.Valid || session.Current.Valid, "question_id": session.Current.String, "name": playerName, "user_id": user.ID, "username": user.Username, "answer": answer, "submitted": submitted}
+	result := fiber.Map{"quiz_id": quizID, "is_public": isPublic, "is_solo": isSolo, "enabled": found, "started": session.QuestionActive.Valid || session.Current.Valid, "question_id": session.Current.String, "name": playerName, "user_id": user.ID, "username": user.Username, "answer": answer, "submitted": submitted}
 	if found {
 		result["user_played_quiz"] = participant.String()
 	}
@@ -212,7 +223,8 @@ func (qc *quizSocketController) hasHostedParticipants(sessionID uuid.UUID) (bool
 	if state.QuestionActive.Valid || state.Current.Valid {
 		return false, fmt.Errorf("quiz has already started")
 	}
-	count, err := tx.From("user_played_quizzes").Where(goqu.Ex{"active_quiz_id": sessionID, "is_host": false}).Count()
+	var count int
+	err = tx.QueryRow(`SELECT count(*) FROM user_played_quizzes p JOIN active_quizzes a ON a.id=p.active_quiz_id WHERE a.id=$1 AND p.is_host=false AND (a.is_solo OR p.user_id<>a.admin_id)`, sessionID).Scan(&count)
 	if err != nil || count == 0 {
 		return false, err
 	}

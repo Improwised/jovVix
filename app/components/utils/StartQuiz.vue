@@ -2,7 +2,7 @@
 import { usePush } from "notivue";
 import { useListUserstore } from "~/store/userlist";
 import { useSessionStore } from "~~/store/session";
-import NavigationLink from "@/components/common/NavigationLink.vue";
+
 const sessionStore = useSessionStore();
 const { setSession } = sessionStore;
 const listUserStore = useListUserstore();
@@ -13,6 +13,7 @@ const toast = usePush();
 const requestPending = ref(false);
 const activeQuizId = ref(false);
 const props = defineProps({
+  isPublic: { type: Boolean, default: false },
   quizId: {
     default: () => {
       return "";
@@ -56,9 +57,9 @@ const handleStartDemo = async () => {
 };
 </script>
 <template>
-  <NavigationLink
-    :url-name="requestPending ? 'Pending...' : 'Start Quiz'"
-    class="h-8 rounded-full shadow-none"
+  <QuizModeAction
+    :label="requestPending ? 'Pending...' : 'Host Live'"
+    secondary
     :disabled="requestPending"
     @click="handleStartDemo"
   />

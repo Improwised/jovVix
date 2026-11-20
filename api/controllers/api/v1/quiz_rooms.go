@@ -303,7 +303,7 @@ func (qc *quizSocketController) NextRoomQuiz(c *fiber.Ctx) error {
 	}
 	// Carry a playing host's preference into the new round with fresh responses.
 	var hostName string
-	hostErr := tx.QueryRow(`SELECT player_name FROM user_played_quizzes WHERE active_quiz_id=$1 AND user_id=$2 AND is_host=false LIMIT 1`, r.SessionID, user.ID).Scan(&hostName)
+	hostErr := tx.QueryRow(`SELECT player_name FROM user_played_quizzes WHERE active_quiz_id=$1 AND user_id=$2 AND is_host=false AND EXISTS(SELECT 1 FROM quizzes WHERE id=$3 AND is_public=true) LIMIT 1`, r.SessionID, user.ID, body.QuizID).Scan(&hostName)
 	if hostErr == nil {
 		participant := uuid.New()
 		if _, err = tx.Exec(`INSERT INTO user_played_quizzes(id,user_id,active_quiz_id,is_host,player_name) VALUES($1,$2,$3,false,$4)`, participant, user.ID, session, hostName); err != nil {

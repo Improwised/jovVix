@@ -105,6 +105,15 @@ api/
 - When the host starts the next quiz, `current_session_id` updates and clients auto-redirect
 - Player names persist across quizzes via `quiz_room_members` table
 
+### Solo Mode
+
+- `active_quizzes.is_solo` marks a session as a solo attempt: same engine, same questions, same scoring, with the host as the only player
+- Solo sessions create no room, accept no joins, and ignore host pacing events such as skip, pause and timer skip
+- The quiz is fingerprinted into `active_quizzes.quiz_version` when the attempt starts; the solo leaderboard only compares attempts with the same fingerprint, so editing a quiz starts a new group
+- `active_quizzes.solo_completed` separates finished attempts from abandoned ones
+- Results are served by `GET /api/v1/solo/results/:attempt`
+- Private quiz hosts cannot participate in their own session
+
 ### AI Quiz Generation
 
 jovVix generates quiz questions through OpenAI-compatible chat-completions providers. Each user brings their own provider and API key, configured from the UI.
@@ -135,7 +144,7 @@ See the [AI Quiz Generation Guide](./ai-quiz-generation.md) for providers, confi
 | `users` | User accounts (Kratos-managed) |
 | `quizzes` | Quiz metadata |
 | `questions` | Quiz questions with options |
-| `active_quizzes` | Running quiz sessions |
+| `active_quizzes` | Running quiz sessions (live and solo) |
 | `active_quiz_questions` | Questions in active session |
 | `user_played_quizzes` | Quiz participation records |
 | `user_quiz_responses` | Individual answers |

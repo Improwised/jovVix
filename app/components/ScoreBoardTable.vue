@@ -4,6 +4,7 @@ import { getAvatarUrlByName } from "~~/composables/avatar";
 
 const props = defineProps({
   subtitle: { type: String, default: "Final scoreboard" },
+  title: { type: String, default: "Rankings" },
   scoreboardData: {
     type: Array,
     required: true,
@@ -20,6 +21,9 @@ const props = defineProps({
     default: "",
   },
   flat: { type: Boolean, default: false },
+  rankIcons: { type: Boolean, default: true },
+  // Overrides the computed count when the table shows a sliced list (e.g. solo top 3).
+  totalPlayers: { type: Number, default: null },
 });
 
 const avatarAccents = [
@@ -38,6 +42,12 @@ const rankBadgeFor = (rank) => {
   if (r === 3) return { icon: Award, bg: "bg-jv-mint", aria: "Third place" };
   return null;
 };
+
+// Divider rows ({ divider: true }) are placeholders, not players.
+const playerCount = computed(
+  () =>
+    props.totalPlayers ?? props.scoreboardData.filter((r) => !r.divider).length
+);
 </script>
 
 <template>
@@ -64,7 +74,7 @@ const rankBadgeFor = (rank) => {
           <h2
             class="font-headings text-[26px] leading-none text-jv-ink sm:text-[32px]"
           >
-            Rankings
+            {{ props.title }}
           </h2>
           <p
             class="mt-1.5 font-body text-[12px] font-bold text-jv-muted sm:text-[14px]"
@@ -79,9 +89,7 @@ const rankBadgeFor = (rank) => {
             class="size-2 rounded-full bg-jv-coral"
             aria-hidden="true"
           ></span>
-          {{ props.scoreboardData.length }} player{{
-            props.scoreboardData.length === 1 ? "" : "s"
-          }}
+          {{ playerCount }} player{{ playerCount === 1 ? "" : "s" }}
         </p>
       </header>
 
@@ -94,77 +102,100 @@ const rankBadgeFor = (rank) => {
         v-if="props.scoreboardData.length > 0"
         class="flex flex-col gap-3 sm:gap-3.5"
       >
-        <li
+        <template
           v-for="(user, index) in props.scoreboardData"
           :key="`${user.username}-${user.rank}-${index}`"
-          :class="[
-            'flex items-center gap-3 border-[2px] border-jv-ink px-3 py-2.5 shadow-brutal-sm transition-transform sm:gap-4 sm:px-4 sm:py-3',
-            user.username === userName && !isAdmin
-              ? 'bg-jv-yellow-soft -rotate-[0.3deg]'
-              : 'bg-jv-white',
-          ]"
         >
-          <!-- Rank: medal icon for top 3, number otherwise -->
-          <span
-            v-if="rankBadgeFor(user.rank)"
-            :class="[
-              'grid size-8 shrink-0 place-items-center rounded-[6px] border-[2px] border-jv-ink shadow-brutal-sm sm:size-10',
-              rankBadgeFor(user.rank).bg,
-            ]"
-            :aria-label="rankBadgeFor(user.rank).aria"
+          <li
+            v-if="user.divider"
+            class="flex flex-col items-center gap-2 py-1"
+            aria-hidden="true"
           >
-            <component
-              :is="rankBadgeFor(user.rank).icon"
-              class="size-4 sm:size-5"
-              :stroke-width="2.4"
-            />
-          </span>
-          <span
+            <span class="size-2 rounded-full bg-jv-ink/40"></span>
+            <span class="size-2 rounded-full bg-jv-ink/40"></span>
+            <span class="size-2 rounded-full bg-jv-ink/40"></span>
+          </li>
+          <li
             v-else
-            class="w-8 shrink-0 text-center font-feature text-[16px] font-black text-jv-ink tabular-nums sm:w-10 sm:text-[20px]"
-            :aria-label="`Rank ${user.rank}`"
-          >
-            {{ user.rank }}
-          </span>
-
-          <span
             :class="[
-              'grid size-10 shrink-0 place-items-center overflow-hidden rounded-[6px] border-[2px] border-jv-ink sm:size-11',
-              avatarBgFor(index),
+              'flex items-center gap-3 border-[2px] border-jv-ink px-3 py-2.5 shadow-brutal-sm transition-transform sm:gap-4 sm:px-4 sm:py-3',
+              user.username === userName && !isAdmin
+                ? 'bg-jv-yellow-soft -rotate-[0.3deg]'
+                : 'bg-jv-white',
             ]"
           >
-            <NuxtImg
-              :src="getAvatarUrlByName(user?.img_key)"
-              :alt="`${user.firstname || 'Player'} avatar`"
-              width="48"
-              height="48"
-              loading="lazy"
-              class="size-full object-cover"
-            />
-          </span>
-
-          <div class="min-w-0 flex-1">
-            <p
-              class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 font-body text-[15px] font-black leading-tight text-jv-ink sm:text-[16px]"
+            <!-- Rank: medal icon (default) or colored number (rankIcons=false) for top 3 -->
+            <span
+              v-if="props.rankIcons && rankBadgeFor(user.rank)"
+              :class="[
+                'grid size-8 shrink-0 place-items-center rounded-[6px] border-[2px] border-jv-ink shadow-brutal-sm sm:size-10',
+                rankBadgeFor(user.rank).bg,
+              ]"
+              :aria-label="rankBadgeFor(user.rank).aria"
             >
-              <span class="truncate">{{ user.firstname }}</span>
-              <span
-                v-if="user.username === userName && !isAdmin"
-                class="inline-flex shrink-0 items-center gap-1 rounded-full border-[2px] border-jv-ink bg-jv-white px-2 py-0.5 font-feature text-[10px] font-black uppercase tracking-[0.12em] text-jv-ink"
-              >
-                <Star class="size-3" :stroke-width="2.6" />
-                You
-              </span>
-            </p>
-          </div>
+              <component
+                :is="rankBadgeFor(user.rank).icon"
+                class="size-4 sm:size-5"
+                :stroke-width="2.4"
+              />
+            </span>
+            <span
+              v-else-if="rankBadgeFor(user.rank)"
+              :class="[
+                'grid size-8 shrink-0 place-items-center rounded-[6px] border-[2px] border-jv-ink shadow-brutal-sm font-feature text-[16px] font-black tabular-nums text-jv-ink sm:size-10 sm:text-[18px]',
+                rankBadgeFor(user.rank).bg,
+              ]"
+              :aria-label="`Rank ${user.rank}`"
+            >
+              {{ user.rank }}
+            </span>
+            <span
+              v-else
+              class="w-8 shrink-0 text-center font-feature text-[16px] font-black text-jv-ink tabular-nums sm:w-10 sm:text-[20px]"
+              :aria-label="`Rank ${user.rank}`"
+            >
+              {{ user.rank }}
+            </span>
 
-          <span
-            class="shrink-0 font-feature text-[16px] font-black tabular-nums text-jv-ink sm:text-[20px]"
-            :aria-label="`Score ${user.score}`"
-          >
-            {{ user.score }}
-          </span>
-        </li>
+            <span
+              :class="[
+                'grid size-10 shrink-0 place-items-center overflow-hidden rounded-[6px] border-[2px] border-jv-ink sm:size-11',
+                avatarBgFor(index),
+              ]"
+            >
+              <NuxtImg
+                :src="getAvatarUrlByName(user?.img_key)"
+                :alt="`${user.firstname || 'Player'} avatar`"
+                width="48"
+                height="48"
+                loading="lazy"
+                class="size-full object-cover"
+              />
+            </span>
+
+            <div class="min-w-0 flex-1">
+              <p
+                class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 font-body text-[15px] font-black leading-tight text-jv-ink sm:text-[16px]"
+              >
+                <span class="truncate">{{ user.firstname }}</span>
+                <span
+                  v-if="user.username === userName && !isAdmin"
+                  class="inline-flex shrink-0 items-center gap-1 rounded-full border-[2px] border-jv-ink bg-jv-white px-2 py-0.5 font-feature text-[10px] font-black uppercase tracking-[0.12em] text-jv-ink"
+                >
+                  <Star class="size-3" :stroke-width="2.6" />
+                  You
+                </span>
+              </p>
+            </div>
+
+            <span
+              class="shrink-0 font-feature text-[16px] font-black tabular-nums text-jv-ink sm:text-[20px]"
+              :aria-label="`Score ${user.score}`"
+            >
+              {{ user.score }}
+            </span>
+          </li>
+        </template>
       </ul>
 
       <div

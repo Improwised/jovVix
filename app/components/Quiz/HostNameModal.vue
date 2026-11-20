@@ -5,6 +5,7 @@ import { getRandomAvatarName, getAvatarUrlByName } from "~~/composables/avatar";
 import NavigationLink from "@/components/common/NavigationLink.vue";
 
 const props = defineProps({
+  solo: { type: Boolean, default: false },
   submitting: {
     type: Boolean,
     default: false,
@@ -202,7 +203,7 @@ onUnmounted(() => {
                 <span>Setting up…</span>
               </template>
               <template v-else>
-                <span>Start Hosting</span>
+                <span>{{ solo ? "Play solo" : "Start Hosting" }}</span>
                 <ArrowRight class="size-[18px]" :stroke-width="2.4" />
               </template>
             </NavigationLink>

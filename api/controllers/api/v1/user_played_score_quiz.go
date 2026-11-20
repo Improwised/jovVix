@@ -146,6 +146,9 @@ func (ctrl *UserPlayedQuizeController) PlayedQuizValidation(c *fiber.Ctx) error 
 		ctrl.logger.Error("error in invitation code", zap.Error(err))
 		return utils.JSONFail(c, http.StatusInternalServerError, "error while get session by invitation code")
 	}
+	if session.IsSolo {
+		return utils.JSONFail(c, http.StatusForbidden, "Solo attempts cannot be joined")
+	}
 	ctrl.logger.Debug("activeQuizModel.activeQuizModel success", zap.Any("session", session))
 
 	// The user who started a session is always its host, never a participant.

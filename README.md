@@ -58,6 +58,8 @@ Open-Source Quizzing Built for Live Quiz Experiences
   - Anyone, including guests who haven't logged in, can start a public quiz instantly
   - The quiz session can be shared with others so they can join and participate together
   - The host runs the session while participants play
+  - Public quizzes offer two modes: host live, or play solo
+- **Solo Play:** Finish a public quiz on your own and get a leaderboard of each player's best attempt. Scores are only compared while the quiz questions stay unchanged, so editing a quiz starts a fresh comparable group.
 - **Multiple Question Types:** Allows admins to create quizzes with different question formats:
   - Multiple-choice questions
   - Survey-based questions

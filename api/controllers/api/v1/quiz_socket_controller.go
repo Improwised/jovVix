@@ -125,6 +125,10 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 	}
 
 	userId := quizUtilsHelper.GetString(c.Locals(constants.ContextUid))
+	if session.IsSolo {
+		c.Close()
+		return
+	}
 	if session.RoomID.Valid && strings.TrimSpace(session.AdminID) != userId {
 		var allowed bool
 		err = qc.db.QueryRow(`SELECT EXISTS(SELECT 1 FROM quiz_rooms r JOIN quiz_room_members m ON m.room_id=r.id WHERE r.id=$1 AND r.current_session_id=$2 AND r.closed_at IS NULL AND r.expires_at>now() AND m.user_id=$3 AND m.left_at IS NULL)`, session.RoomID.String, session.ID, userId).Scan(&allowed)
@@ -837,6 +841,20 @@ func handleCodeGeneration(c *websocket.Conn, qc *quizSocketController, session m
 					hasParticipants := false
 					if isBreak == constants.EventStartQuiz {
 						var startErr error
+						if !session.IsSolo {
+							raw, rosterErr := qc.redis.PubSubModel.Client.Get(qc.redis.PubSubModel.Ctx, session.ID.String()).Result()
+							var roster []UserInfo
+							connected := false
+							if rosterErr == nil && json.Unmarshal([]byte(raw), &roster) == nil {
+								connected = hasOtherConnectedPlayer(roster, session.AdminID)
+							}
+							if !connected {
+								arrangeMu.Lock()
+								utils.JSONFailWs(c, constants.EventStartQuiz, "Waiting for another player to join")
+								arrangeMu.Unlock()
+								continue
+							}
+						}
 						hasParticipants, startErr = qc.hasHostedParticipants(session.ID)
 						if startErr != nil {
 							qc.logger.Error("failed to check quiz participants", zap.Error(startErr))
@@ -1220,14 +1238,26 @@ func listenAllEvents(c *websocket.Conn, qc *quizSocketController, response *Quiz
 
 		switch message.Event {
 		case constants.EventSkipAsked:
+			if session.IsSolo {
+				continue
+			}
 			chanSkipEvent <- false
 		case constants.EventForceSkip:
+			if session.IsSolo {
+				continue
+			}
 			chanSkipEvent <- true
 		case constants.EventNextQuestionAsked:
 			chanNextEvent <- true
 		case constants.EventSkipTimer:
+			if session.IsSolo {
+				continue
+			}
 			chanSkipTimer <- true
 		case constants.EventPauseQuiz:
+			if session.IsSolo {
+				continue
+			}
 			isPauseQuiz := message.Data.(bool)
 			chanPauseQuiz <- isPauseQuiz
 		}
@@ -1353,6 +1383,10 @@ func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.Wa
 		}
 	}
 
+	if session.IsSolo {
+		scoreboardMaxDuration = 2
+	}
+
 	response.Data = map[string]any{
 		"id":             question.ID,
 		"question_no":    question.OrderNumber,
@@ -1398,14 +1432,19 @@ func terminateQuiz(c *websocket.Conn, qc *quizSocketController, response *QuizSe
 
 	response.Component = constants.Score
 	response.Data = constants.ActionTerminateQuiz
-	shareEvenWithUser(c, qc, response, constants.EventTerminateQuiz, session.ID.String(), int(session.InvitationCode.Int32), constants.ToAll, arrangeMu)
-
+	if session.IsSolo {
+		if _, err := qc.db.Exec(`UPDATE active_quizzes SET solo_completed=true WHERE id=$1`, session.ID); err != nil {
+			qc.logger.Error("Unable to complete solo attempt", zap.Error(err))
+			return
+		}
+	}
 	err := qc.activeQuizModel.Deactivate(session.ID)
 	if err != nil {
 		qc.logger.Error(fmt.Sprintf("socket error get remaining questions: %s event, %s action %v code", constants.EventStartQuiz, response.Action, session.InvitationCode), zap.Error(err))
 		return
 	}
 
+	shareEvenWithUser(c, qc, response, constants.EventTerminateQuiz, session.ID.String(), int(session.InvitationCode.Int32), constants.ToAll, arrangeMu)
 	qc.logger.Info("terminateQuiz")
 	// here logic of publishing data of user to admin that terminate quiz so no need to listen for joining users
 	err = qc.redis.PubSubModel.Client.Publish(qc.redis.PubSubModel.Ctx, fmt.Sprintf("%s-%s", constants.EventTerminateQuiz, session.ID.String()), constants.EventTerminateQuiz).Err()
@@ -1505,11 +1544,22 @@ func handleAnswerSubmission(c *websocket.Conn, qc *quizSocketController, session
 	}()
 
 	ch := pubsub.Channel()
+	var soloAnswers <-chan time.Time
+	if session.IsSolo {
+		ticker := time.NewTicker(time.Second)
+		defer ticker.Stop()
+		soloAnswers = ticker.C
+	}
 
 	for {
 		select {
 		case <-disconnected:
 			return
+		case <-soloAnswers:
+			answered, err := qc.quizModel.IsAllAnswerGathered(session.ID, questionId)
+			if err == nil && answered {
+				return
+			}
 		case <-isTimeout.C:
 			return
 		case isForce := <-chanSkipEvent:
@@ -1534,6 +1584,10 @@ func handleAnswerSubmission(c *websocket.Conn, qc *quizSocketController, session
 			err := json.Unmarshal([]byte(msg.Payload), &user)
 			if err != nil {
 				qc.logger.Error(fmt.Sprintf("socket error send waiting message: %s event, %s action", constants.EventSendQuestion, constants.ActionAnserSubmittedByUser), zap.Error(err))
+			}
+
+			if session.IsSolo && err == nil && strings.TrimSpace(user.ID) == strings.TrimSpace(session.AdminID) {
+				return
 			}
 
 			response.Data = user
@@ -1583,6 +1637,13 @@ func (qc *quizSocketController) SetAnswer(c *fiber.Ctx) error {
 		return utils.JSONFail(c, http.StatusForbidden, "only session participants can submit answers")
 	}
 
+	var privateHost bool
+	if err := qc.db.QueryRow(`SELECT EXISTS(SELECT 1 FROM active_quizzes a JOIN quizzes q ON q.id=a.quiz_id WHERE a.id=$1 AND a.admin_id=$2 AND NOT q.is_public)`, sessionId, user.ID).Scan(&privateHost); err != nil {
+		return utils.JSONFail(c, 500, "Unable to validate quiz access")
+	}
+	if privateHost {
+		return utils.JSONFail(c, 403, "Private quiz hosts cannot participate")
+	}
 	var answer structs.ReqAnswerSubmit
 
 	err = json.Unmarshal(c.Body(), &answer)
@@ -1738,4 +1799,13 @@ func (ctrl *quizSocketController) Terminate(c *fiber.Ctx) error {
 	}
 
 	return utils.JSONSuccess(c, http.StatusOK, nil)
+}
+
+func hasOtherConnectedPlayer(roster []UserInfo, hostID string) bool {
+	for _, player := range roster {
+		if player.IsAlive && strings.TrimSpace(player.UserId) != strings.TrimSpace(hostID) {
+			return true
+		}
+	}
+	return false
 }
