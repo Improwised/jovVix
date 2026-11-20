@@ -433,7 +433,7 @@ watch(
               <button
                 type="submit"
                 :disabled="participationPending || !otherPlayerCount"
-                class="mx-auto flex h-[52px] w-full max-w-[390px] rotate-[-1deg] items-center justify-center rounded-[999px] border-[3px] border-jv-ink bg-jv-mint px-5 font-headings text-[16px] text-jv-ink shadow-brutal-sm transition-transform hover:rotate-[1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none sm:h-16 sm:px-6 sm:text-[18px]"
+                class="mx-auto flex h-[52px] w-full max-w-[390px] rotate-[-1deg] items-center justify-center rounded-[999px] border-[3px] border-jv-ink bg-jv-mint px-5 font-headings text-[16px] text-jv-ink shadow-brutal-sm transition-transform enabled:hover:rotate-[1deg] enabled:active:translate-x-[2px] enabled:active:translate-y-[2px] enabled:active:shadow-none disabled:cursor-not-allowed disabled:bg-jv-slate disabled:text-jv-muted disabled:shadow-none disabled:saturate-0 sm:h-16 sm:px-6 sm:text-[18px]"
               >
                 Start Quiz
               </button>
