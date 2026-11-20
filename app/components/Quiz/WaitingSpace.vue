@@ -79,7 +79,6 @@ const props = defineProps({
     type: String,
     required: false,
   },
-  soloQuizId: { type: String, default: "" },
   allowHostParticipation: { type: Boolean, default: false },
   hostParticipates: { type: Boolean, default: false },
   hostName: { type: String, default: "Host" },
@@ -95,7 +94,6 @@ const props = defineProps({
 });
 const emits = defineEmits([
   "startQuiz",
-  "playSolo",
   "terminateQuiz",
   "updateHostParticipation",
   "retryHostParticipation",
@@ -454,15 +452,6 @@ watch(
               </p>
             </div>
 
-            <button
-              v-if="soloQuizId && !otherPlayerCount"
-              type="button"
-              :disabled="participationPending"
-              class="mt-4 block w-full text-center font-bold text-jv-coral underline disabled:opacity-50"
-              @click="emits('playSolo')"
-            >
-              Want to play now? Play solo instead
-            </button>
             <label
               v-if="allowHostParticipation"
               class="mt-5 flex cursor-pointer items-center gap-3 rounded-xl border-2 border-jv-ink bg-jv-white px-4 py-3 font-body font-bold text-jv-ink shadow-brutal-sm transition-transform hover:-translate-y-0.5 has-[:disabled]:cursor-wait has-[:disabled]:opacity-60"

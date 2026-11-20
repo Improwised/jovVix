@@ -75,9 +75,7 @@ const hostUsername = ref("");
 const participationPending = ref(false);
 const isSolo = ref(route.query.mode === "solo");
 const isPublicQuiz = ref(false);
-const sourceQuizId = ref("");
 let soloStarting = false;
-let switchingToSolo = false;
 const hostNameError = ref("");
 const hostNameSuggestions = ref([]);
 const restoredAnswer = ref(0);
@@ -96,7 +94,6 @@ const loadParticipation = async () => {
   const participation = response.data;
   isSolo.value = !!participation.is_solo;
   isPublicQuiz.value = !!participation.is_public;
-  sourceQuizId.value = participation.quiz_id || "";
   hostParticipates.value = participation.enabled;
   hostPlayedQuiz.value = participation.user_played_quiz || "";
   hostName.value = participation.name || "Host";
@@ -356,7 +353,6 @@ onBeforeUnmount(() => {
 });
 
 const handleQuizEvents = async (message) => {
-  if (switchingToSolo && message.event === app.$TerminateQuiz) return;
   if (message.status === app.$Fail && message.event === app.$StartQuiz) {
     toast.error(
       typeof message.data === "string"
@@ -483,30 +479,6 @@ function handleNetworkEvent(message) {
 const startQuiz = () => {
   if (participationPending.value) return;
   adminOperationHandler.value.quizStartRequest();
-};
-
-const switchToSolo = async () => {
-  if (participationPending.value || !sourceQuizId.value) return;
-  participationPending.value = true;
-  switchingToSolo = true;
-  try {
-    await $fetch(`${apiUrl}/quiz/terminate?session_id=${session_id}`, {
-      method: "GET",
-      credentials: "include",
-    });
-    adminOperationHandler.value?.dispose();
-    setSocketObject(null);
-    removeAllUsers();
-    setSession(null);
-    await router.replace(
-      `/admin/arrange/new?public=1&mode=solo&quiz_id=${sourceQuizId.value}`
-    );
-  } catch {
-    switchingToSolo = false;
-    toast.error("Unable to switch to solo. Please try again.");
-  } finally {
-    participationPending.value = false;
-  }
 };
 
 const askSkip = () => {
@@ -740,7 +712,6 @@ useSeoMeta({
       :data="data"
       :is-admin="true"
       :quiz-title-override="quizTitle"
-      :solo-quiz-id="isPublicQuiz ? sourceQuizId : ''"
       :allow-host-participation="isPublicQuiz"
       :host-participates="hostParticipates"
       :host-name="hostName"
@@ -755,7 +726,6 @@ useSeoMeta({
         hostNameSuggestions = [];
       "
       @start-quiz="startQuiz"
-      @play-solo="switchToSolo"
     >
     </QuizWaitingSpace>
     <QuizQuestionSpace
