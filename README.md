@@ -142,9 +142,9 @@ Open-Source Quizzing Built for Live Quiz Experiences
 
 | Package | Version |
 | --- | --- |
-| [Node.js](https://nodejs.org/en/) | v18.0+ |
-| [Nuxt](https://nuxt.com/) | v3.0.0 |
-| [Go](https://golang.org/) | v1.21+ |
+| [Node.js](https://nodejs.org/en/) | v24.0+ |
+| [Nuxt](https://nuxt.com/) | 4.x |
+| [Go](https://golang.org/) | v1.27+ |
 
 
 - jovVix is a fun and interactive platform where users can enjoy playing quizzes while admins have the ability to create engaging and diverse quizzes.
@@ -176,7 +176,7 @@ Open-Source Quizzing Built for Live Quiz Experiences
 - Start backend services:
   cd api
   docker-compose up
-  go run app.go migrate
+  go run app.go migrate up
   go run app.go api
 
 
@@ -245,18 +245,18 @@ If you're a developer looking to contribute or modify jovVix, here is a brief gu
 
 ## Adding shadcn-vue Components:
 
-- This project is configured with [shadcn-vue](https://www.shadcn-vue.com/) via the `shadcn-nuxt` module (version `2.2.0`). The configuration lives in [`app/components.json`](app/components.json) and uses the `new-york` style with the `neutral` base color and the `lucide` icon library.
+- This project is configured with [shadcn-vue](https://www.shadcn-vue.com/) via the `shadcn-nuxt` module (version `2.8.2`). The configuration lives in [`app/components.json`](app/components.json) and uses the `new-york` style with the `neutral` base color and the `lucide` icon library.
 - To add a new component to the project, run the shadcn-vue CLI from inside the `app/` directory:
   cd app
-  npx shadcn-vue@2.2.0 add <component-name>
+  npx shadcn-vue@2.8.2 add <component-name>
 
 
 - For example, to add the `button` component:
-  npx shadcn-vue@2.2.0 add button
+  npx shadcn-vue@2.8.2 add button
 
 
 - The CLI reads `components.json` and installs the component into `app/components/ui/<component-name>/` using the aliases defined in that file (`@/components/ui`, `@/lib/utils`, etc.).
-- Please pin to version `2.2.0` of the CLI when adding components so that generated code stays consistent with the rest of the project. If you need to upgrade the CLI/module, bump both `shadcn-nuxt` in [`app/package.json`](app/package.json) and the version used in the command above in the same PR.
+- Please pin to version `2.8.2` of the CLI when adding components so that generated code stays consistent with the rest of the project. If you need to upgrade the CLI/module, bump both `shadcn-nuxt` in [`app/package.json`](app/package.json) and the version used in the command above in the same PR.
 - For the full list of available components and their usage, refer to the [shadcn-vue documentation](https://www.shadcn-vue.com/docs/components).
 
 ## Collaborators:

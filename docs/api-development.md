@@ -229,7 +229,6 @@ go run app.go migrate down   # Rollback last migration
 go test ./...              # All tests
 go test -v ./...           # Verbose
 go test -cover ./...       # With coverage
-make test-coverage         # Coverage report
 ```
 
 ### Writing Tests

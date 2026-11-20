@@ -8,8 +8,8 @@ This guide walks you through setting up jovVix for local development.
 |------|---------|---------|
 | Docker | Latest | [docker.com](https://docs.docker.com/get-docker/) |
 | Docker Compose | v2+ | Included with Docker Desktop |
-| Node.js | v18.0+ | [nodejs.org](https://nodejs.org/) |
-| Go | v1.21+ | [golang.org](https://golang.org/dl/) |
+| Node.js | v24.0+ | [nodejs.org](https://nodejs.org/) |
+| Go | v1.27+ | [golang.org](https://golang.org/dl/) |
 | Git | Latest | [git-scm.com](https://git-scm.com/) |
 
 ## Quick Start (Docker — Recommended)
