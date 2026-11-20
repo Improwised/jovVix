@@ -43,7 +43,7 @@
             {{ quizDescription || "No description added yet." }}
           </p>
         </div>
-        <div class="grid grid-cols-2 gap-2 md:min-w-[220px]">
+        <div class="flex gap-2 md:min-w-[220px] md:justify-end">
           <QuizModeAction
             v-if="isPublicQuiz"
             label="Play solo"
