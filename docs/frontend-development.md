@@ -92,7 +92,7 @@ Components in `components/ui/` are available globally:
 
 ```bash
 cd app
-npx shadcn-vue@2.2.0 add <component-name>
+npx shadcn-vue@2.8.2 add <component-name>
 ```
 
 ## Adding a Composable
@@ -230,9 +230,9 @@ describe('MyComponent', () => {
 ### Running Tests
 
 ```bash
-npm run test           # Run once
-npm run test:watch     # Watch mode
-npm run test:coverage  # With coverage
+npm run test                 # Run once
+npm run test -- --watch       # Watch mode
+npm run test -- --coverage    # With coverage
 ```
 
 ## Code Style
