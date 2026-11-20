@@ -37,7 +37,7 @@ describe("StartQuiz test", () => {
 
   it("renders the button correctly", () => {
     expect(wrapper.find("button").exists()).toBe(true);
-    expect(wrapper.text()).toContain("Start Quiz");
+    expect(wrapper.text()).toContain("Host Live");
   });
 
   it("disables the button and shows 'Pending...' when requestPending is true", async () => {

@@ -79,6 +79,7 @@ const props = defineProps({
     type: String,
     required: false,
   },
+  allowHostParticipation: { type: Boolean, default: false },
   hostParticipates: { type: Boolean, default: false },
   hostName: { type: String, default: "Host" },
   hostUserId: { type: String, default: "" },
@@ -131,6 +132,12 @@ const displayedUsers = computed(() => {
       ]
     : players;
 });
+const otherPlayerCount = computed(
+  () =>
+    listUsers.value.filter(
+      (user) => user.UserId !== props.hostUserId && user.IsAlive !== false
+    ).length
+);
 const participantCount = computed(() => displayedUsers.value.length);
 const joinUrl = computed(() => `${baseUrl}/join`);
 const joinUrlWithCode = computed(() => `${joinUrl.value}?code=${code.value}`);
@@ -198,13 +205,14 @@ watch(
 // event handlers
 function start_quiz(e) {
   e?.preventDefault();
+  if (!otherPlayerCount.value || props.participationPending) return;
   startQuiz.value = true;
   emits("startQuiz");
 }
 
 useKeyboardShortcuts({
   onEnter: () => {
-    if (props.isAdmin) start_quiz();
+    if (props.isAdmin && otherPlayerCount.value > 0) start_quiz();
   },
 });
 
@@ -424,8 +432,8 @@ watch(
             <div class="mt-auto pt-5 sm:pt-6">
               <button
                 type="submit"
-                :disabled="participationPending"
-                class="mx-auto flex h-[52px] w-full max-w-[390px] rotate-[-1deg] items-center justify-center rounded-[999px] border-[3px] border-jv-ink bg-jv-mint px-5 font-headings text-[16px] text-jv-ink shadow-brutal-sm transition-transform hover:rotate-[1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none sm:h-16 sm:px-6 sm:text-[18px]"
+                :disabled="participationPending || !otherPlayerCount"
+                class="mx-auto flex h-[52px] w-full max-w-[390px] rotate-[-1deg] items-center justify-center rounded-[999px] border-[3px] border-jv-ink bg-jv-mint px-5 font-headings text-[16px] text-jv-ink shadow-brutal-sm transition-transform enabled:hover:rotate-[1deg] enabled:active:translate-x-[2px] enabled:active:translate-y-[2px] enabled:active:shadow-none disabled:cursor-not-allowed disabled:bg-jv-slate disabled:text-jv-muted disabled:shadow-none disabled:saturate-0 sm:h-16 sm:px-6 sm:text-[18px]"
               >
                 Start Quiz
               </button>
@@ -434,13 +442,18 @@ watch(
               >
                 <Info class="size-4" :stroke-width="2.3" />
                 <span>
-                  Host can start the quiz at any time
+                  {{
+                    otherPlayerCount
+                      ? "Ready to start"
+                      : "Waiting for another player to join"
+                  }}
                   <span class="hidden md:inline">· press Enter to start</span>
                 </span>
               </p>
             </div>
 
             <label
+              v-if="allowHostParticipation"
               class="mt-5 flex cursor-pointer items-center gap-3 rounded-xl border-2 border-jv-ink bg-jv-white px-4 py-3 font-body font-bold text-jv-ink shadow-brutal-sm transition-transform hover:-translate-y-0.5 has-[:disabled]:cursor-wait has-[:disabled]:opacity-60"
             >
               <input

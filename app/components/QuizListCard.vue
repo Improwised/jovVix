@@ -59,10 +59,24 @@
       >
         <NavigationLink
           url-name="View Quiz"
+          :class="!isPlayedQuiz && details?.is_public ? 'col-span-2' : ''"
           :url="viewUrl"
           class="h-8 rounded-full bg-jv-coral text-white shadow-none"
         />
-        <UtilsStartQuiz v-if="!isPlayedQuiz" :quiz-id="props.details?.id" />
+        <UtilsStartQuiz
+          v-if="!isPlayedQuiz"
+          :quiz-id="props.details?.id"
+          :is-public="!!details?.is_public"
+        />
+        <QuizModeAction
+          v-if="!isPlayedQuiz && details?.is_public"
+          label="Play solo"
+          @click="
+            navigateTo(
+              `/admin/arrange/new?public=1&amp;mode=solo&amp;quiz_id=${details.id}`
+            )
+          "
+        />
       </div>
     </div>
   </article>

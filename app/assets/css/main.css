@@ -171,6 +171,18 @@
     @apply bg-jv-canvas text-jv-ink font-body antialiased;
   }
 
+  button:not(:disabled):not([aria-disabled="true"]),
+  input:is([type="button"], [type="submit"], [type="reset"]):not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  input:is([type="button"], [type="submit"], [type="reset"]):disabled,
+  [role="button"][aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+
   h1,
   h2,
   h3,

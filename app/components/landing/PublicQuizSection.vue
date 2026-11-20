@@ -61,6 +61,7 @@
                 :eager="groupIndex === 0 && quizIndex === 0"
                 :starting="startingQuizId === quiz.id"
                 @start-quiz="handleStartQuiz(quiz.id)"
+                @play-solo="handleStartQuiz(quiz.id, true)"
               />
             </CarouselItem>
           </CarouselContent>
@@ -133,7 +134,7 @@ const scrollToCategory = (name) => {
 // Logged-in visitors host immediately. Guests are routed to the host lobby with
 // a sentinel session_id ("new") so the lobby can show the name-entry modal
 // before creating their guest user and the public session.
-const handleStartQuiz = async (quizId) => {
+const handleStartQuiz = async (quizId, solo = false) => {
   if (startingQuizId.value) return;
   startingQuizId.value = quizId;
   const startedQuiz = publicQuizzes.value.find((q) => q.id === quizId);
@@ -164,13 +165,13 @@ const handleStartQuiz = async (quizId) => {
 
     if (!isLoggedIn) {
       await router.push(
-        `/admin/arrange/new?public=1&quiz_id=${encodeURIComponent(quizId)}`
+        `/admin/arrange/new?public=1&quiz_id=${encodeURIComponent(quizId)}${solo ? "&mode=solo" : ""}`
       );
       return;
     }
 
     const response = await $fetch(
-      `${apiUrl}/quizzes/${quizId}/public_session`,
+      `${apiUrl}/quizzes/${quizId}/public_session${solo ? "?mode=solo" : ""}`,
       {
         method: "POST",
         credentials: "include",
@@ -190,7 +191,9 @@ const handleStartQuiz = async (quizId) => {
     setSocketObject(null);
     sessionStore.setSession(sessionId);
     // `public=1` preserves the public-session flow for a guest host.
-    await router.push(`/admin/arrange/${sessionId}?public=1`);
+    await router.push(
+      `/admin/arrange/${sessionId}?public=1${solo ? "&mode=solo" : ""}`
+    );
   } catch (error) {
     toast.error(
       error?.data?.message || error?.message || "Error while starting quiz."

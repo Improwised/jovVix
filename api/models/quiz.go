@@ -731,3 +731,13 @@ func (model *QuizModel) DeleteCreatedQuizzesByUserId(transaction *goqu.TxDatabas
 
 	return err
 }
+
+// SetSoloSession snapshots the rules used for cross-attempt rankings.
+func (model *QuizModel) SetSoloSession(sessionID uuid.UUID) (bool, error) {
+	result, err := model.db.Exec(`UPDATE active_quizzes SET is_solo=true, quiz_version=(SELECT md5(string_agg((to_jsonb(q) || jsonb_build_object('quiz_settings',to_jsonb(qq)-'id'))::text, '' ORDER BY q.id)) FROM questions q JOIN quiz_questions qq ON qq.question_id=q.id WHERE qq.quiz_id=(SELECT quiz_id FROM active_quizzes WHERE id=$1)) WHERE id=$1 AND EXISTS(SELECT 1 FROM active_quiz_questions WHERE active_quiz_id=$1)`, sessionID)
+	if err != nil {
+		return false, err
+	}
+	count, err := result.RowsAffected()
+	return count == 1, err
+}

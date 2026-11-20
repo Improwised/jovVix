@@ -73,6 +73,9 @@ const hostName = ref("");
 const hostUserId = ref("");
 const hostUsername = ref("");
 const participationPending = ref(false);
+const isSolo = ref(route.query.mode === "solo");
+const isPublicQuiz = ref(false);
+let soloStarting = false;
 const hostNameError = ref("");
 const hostNameSuggestions = ref([]);
 const restoredAnswer = ref(0);
@@ -89,6 +92,8 @@ const loadParticipation = async () => {
     credentials: "include",
   });
   const participation = response.data;
+  isSolo.value = !!participation.is_solo;
+  isPublicQuiz.value = !!participation.is_public;
   hostParticipates.value = participation.enabled;
   hostPlayedQuiz.value = participation.user_played_quiz || "";
   hostName.value = participation.name || "Host";
@@ -213,7 +218,35 @@ onMounted(async () => {
   if (!import.meta.client) return;
   // Guests with a pending session pick a name first; the socket setup runs
   // after the name modal submission redirects to the real session URL.
-  if (showHostNameModal.value) return;
+  if (showHostNameModal.value) {
+    try {
+      const who = await $fetch(`${apiUrl}/user/who`, {
+        credentials: "include",
+      });
+      if (who?.data) {
+        const response = await $fetch(
+          `${apiUrl}/quizzes/${pendingQuizId.value}/public_session${isSolo.value ? "?mode=solo" : ""}`,
+          { method: "POST", credentials: "include" }
+        );
+        if (!response?.data) throw new Error("Unable to start quiz");
+        removeAllUsers();
+        setSocketObject(null);
+        setSession(response.data);
+        await router.replace(
+          `/admin/arrange/${response.data}?public=1${isSolo.value ? "&mode=solo" : ""}`
+        );
+      }
+    } catch (error) {
+      // Only a genuine 401 (no valid identity yet) keeps the name form. Any other
+      // failure must surface instead of being mistaken for a brand-new guest.
+      if (error?.statusCode !== 401 && error?.status !== 401) {
+        showHostNameModal.value = false;
+        lobbyError.value =
+          "Could not start the quiz automatically. Please try again.";
+      }
+    }
+    return;
+  }
   try {
     if (!(await recoverHostRoom())) return;
     await loadParticipation();
@@ -283,7 +316,7 @@ const handleHostNameSubmit = async ({ name, avatarName }) => {
     }
 
     const sessionRes = await $fetch(
-      `${apiUrl}/quizzes/${pendingQuizId.value}/public_session`,
+      `${apiUrl}/quizzes/${pendingQuizId.value}/public_session${isSolo.value ? "?mode=solo" : ""}`,
       {
         method: "POST",
         credentials: "include",
@@ -300,7 +333,9 @@ const handleHostNameSubmit = async ({ name, avatarName }) => {
     setSocketObject(null);
     setSession(newSessionId);
     showHostNameModal.value = false;
-    await router.replace(`/admin/arrange/${newSessionId}?public=1`);
+    await router.replace(
+      `/admin/arrange/${newSessionId}?public=1${isSolo.value ? "&mode=solo" : ""}`
+    );
   } catch (error) {
     toast.error(
       error?.data?.message || error?.message || "Error while starting quiz."
@@ -318,6 +353,14 @@ onBeforeUnmount(() => {
 });
 
 const handleQuizEvents = async (message) => {
+  if (message.status === app.$Fail && message.event === app.$StartQuiz) {
+    toast.error(
+      typeof message.data === "string"
+        ? message.data
+        : message.data?.data || "Unable to start quiz"
+    );
+    return;
+  }
   if (message.status == app.$Error) {
     return await router.push(
       "/error?status=" + message.status + "&error=" + message.data
@@ -401,6 +444,16 @@ const handleQuizEvents = async (message) => {
     }
 
     if (currentComponent.value == "Waiting") {
+      if (isSolo.value && !soloStarting && message.data?.code !== undefined) {
+        soloStarting = true;
+        await updateHostParticipation(true);
+        if (!hostParticipates.value) {
+          soloStarting = false;
+          lobbyError.value = "Unable to start solo quiz. Please try again.";
+          return;
+        }
+        adminOperationHandler.value.quizStartRequest();
+      }
       if (invitationCode.value != undefined && Array.isArray(message.data)) {
         addUser(message.data);
       }
@@ -461,6 +514,8 @@ const goToScoreboardAfterTerminate = async () => {
   setSession(null);
   // Authenticated guest hosts can view their own scoreboard and continue the room.
   const isGuestHost = usersStore.getUserData()?.role === "guest-user";
+  if (isSolo.value)
+    return await router.push(`/solo/results/${hostPlayedQuiz.value}`);
   const scoreboardPath = `/admin/scoreboard?winner_ui=true&aqi=${session_id}`;
   if (isGuestHost && hostParticipates.value && hostPlayedQuiz.value) {
     return await router.push(
@@ -531,13 +586,14 @@ useSeoMeta({
 
 <template>
   <RoomConnection
-    v-if="session_id !== PENDING_SENTINEL"
+    v-if="session_id !== PENDING_SENTINEL && !isSolo"
     :session-id="String(session_id)"
     is-host
   />
   <div class="bg-image"></div>
   <QuizHostNameModal
     v-if="showHostNameModal"
+    :solo="isSolo"
     :submitting="hostNameSubmitting"
     @submit="handleHostNameSubmit"
   />
@@ -564,7 +620,11 @@ useSeoMeta({
     @is-full-screen="handleCustomChange"
   >
     <div
-      v-if="currentComponent !== 'Waiting' && currentComponent !== 'Loading'"
+      v-if="
+        !isSolo &&
+        currentComponent !== 'Waiting' &&
+        currentComponent !== 'Loading'
+      "
       class="code-display grid grid-cols-1 gap-3 px-4 py-3 sm:grid-cols-[1fr_auto_1fr] sm:items-center sm:px-6 md:px-8"
     >
       <div
@@ -630,14 +690,29 @@ useSeoMeta({
       :model-positive-message="confirmNeeded.positive"
       @confirm-message="(c) => handleModal(c)"
     ></UtilsConfirmModal>
+    <div
+      v-if="
+        isSolo &&
+        (currentComponent === 'Loading' || currentComponent === 'Waiting')
+      "
+      role="status"
+      class="grid min-h-[60vh] place-content-center gap-3 text-center text-jv-ink"
+    >
+      <h1 class="font-headings text-4xl">Getting your quiz ready</h1>
+      <p class="font-bold">Your solo game will start automatically.</p>
+    </div>
     <QuizWaitingSpaceSkeleton
-      v-if="currentComponent == 'Loading'"
+      v-else-if="
+        currentComponent == 'Loading' ||
+        (isSolo && currentComponent == 'Waiting')
+      "
     ></QuizWaitingSpaceSkeleton>
     <QuizWaitingSpace
       v-else-if="currentComponent == 'Waiting'"
       :data="data"
       :is-admin="true"
       :quiz-title-override="quizTitle"
+      :allow-host-participation="isPublicQuiz"
       :host-participates="hostParticipates"
       :host-name="hostName"
       :host-user-id="hostUserId"
@@ -657,7 +732,7 @@ useSeoMeta({
       v-else-if="currentComponent == 'Question'"
       :key="questionRenderKey"
       :data="data"
-      :is-admin="true"
+      :is-admin="!isSolo"
       :host-participates="hostParticipates"
       :restored-answer="restoredAnswer"
       :quiz-title="quizTitle"
@@ -667,7 +742,7 @@ useSeoMeta({
     <QuizScoreSpace
       v-else-if="currentComponent == 'Score'"
       :data="data"
-      :is-admin="true"
+      :is-admin="!isSolo"
       :selected-answer="selectedAnswer"
       :user-name="hostUsername"
       :analysis-tab="analysisTab"
@@ -677,7 +752,11 @@ useSeoMeta({
       @ask-skip-timer="askSkipTimer"
     ></QuizScoreSpace>
     <QuizListUserAnswered
-      v-if="currentComponent == 'Question' && data?.event !== '5_sec_counter'"
+      v-if="
+        !isSolo &&
+        currentComponent == 'Question' &&
+        data?.event !== '5_sec_counter'
+      "
       :data="data"
       :running-quiz-join-user="runningQuizJoinUser"
       @auto-skip="askSkip"

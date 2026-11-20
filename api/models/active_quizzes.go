@@ -16,6 +16,9 @@ const ActiveQuizzesTable = "active_quizzes"
 
 // ActiveQuiz model
 type ActiveQuiz struct {
+	SoloCompleted        bool           `json:"-" db:"solo_completed"`
+	IsSolo               bool           `json:"is_solo" db:"is_solo"`
+	QuizVersion          string         `json:"quiz_version" db:"quiz_version"`
 	RoomID               sql.NullString `json:"room_id" db:"room_id"`
 	ID                   uuid.UUID      `json:"id" db:"id"`
 	InvitationCode       sql.NullInt32  `json:"invitation_code" db:"invitation_code"`
@@ -121,6 +124,7 @@ func (model *ActiveQuizModel) GetActiveQuizByQuizIDAndAdminID(quizID string, adm
 
 	found, err := model.db.Select("*").From(ActiveQuizzesTable).Where(
 		goqu.I("quiz_id").Eq(quizID),
+		goqu.I("is_solo").Eq(false),
 		goqu.I("admin_id").Eq(adminID),
 		goqu.I("is_active").Eq(true),
 	).Order(goqu.I("updated_at").Desc()).Limit(1).ScanStruct(&activeQuiz)
@@ -301,6 +305,13 @@ func (model *ActiveQuizModel) GetOrActivateSession(sessionId string, userId stri
 	}
 	isOk = (invitation_code != -1)
 
+	if activeQuiz.IsSolo {
+		activeQuiz, err = model.GetSessionById(transactionObj, sessionId)
+		if err != nil {
+			isOk = false
+		}
+		return activeQuiz, err
+	}
 	roomID := uuid.New()
 	_, err = transactionObj.Exec(`INSERT INTO quiz_rooms(id,admin_id,code,current_session_id) VALUES($1,$2,$3,$4)`, roomID, userId, invitation_code, activeQuiz.ID)
 	if err == nil {

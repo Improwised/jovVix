@@ -43,13 +43,20 @@
             {{ quizDescription || "No description added yet." }}
           </p>
         </div>
-        <NavigationLink
-          url-name="Start Quiz"
-          class="rounded-[999px] bg-jv-coral text-white"
-          @click="handleStartQuiz"
-        >
-          <Play class="size-4 fill-current" :stroke-width="2.4" />
-        </NavigationLink>
+        <div class="grid grid-cols-2 gap-2 md:min-w-[220px]">
+          <QuizModeAction
+            v-if="isPublicQuiz"
+            label="Play solo"
+            :disabled="startingQuiz"
+            @click="handleStartQuiz(true)"
+          />
+          <QuizModeAction
+            label="Host Live"
+            secondary
+            :disabled="startingQuiz"
+            @click="handleStartQuiz(false)"
+          />
+        </div>
       </header>
 
       <div
@@ -613,7 +620,6 @@ import {
   Image as ImageIcon,
   Info,
   Pencil,
-  Play,
   Plus,
   Share2,
   Sparkles,
@@ -1043,7 +1049,7 @@ const handleShareQuiz = () => {
   shareModalOpen.value = true;
 };
 
-const handleStartQuiz = async () => {
+const handleStartQuiz = async (solo = false) => {
   if (questions.value.length === 0) {
     toast.error("Add at least one question before starting the quiz.");
     return;
@@ -1052,7 +1058,7 @@ const handleStartQuiz = async () => {
   try {
     startingQuiz.value = true;
     const response = await $fetch(
-      `${url.apiUrl}/quizzes/${quizId.value}/demo_session`,
+      `${url.apiUrl}/quizzes/${quizId.value}/${solo ? "public_session?mode=solo" : "demo_session"}`,
       {
         method: "POST",
         credentials: "include",
@@ -1075,7 +1081,7 @@ const handleStartQuiz = async () => {
     listUserStore.removeAllUsers();
     setSocketObject(null);
     sessionStore.setSession(activeQuizId);
-    router.push(`/admin/arrange/${activeQuizId}`);
+    router.push(`/admin/arrange/${activeQuizId}${solo ? "?mode=solo" : ""}`);
   } catch (error) {
     toast.error(readApiError(error, "Error while starting quiz."));
   } finally {

@@ -50,6 +50,7 @@ const mountComponent = () =>
     props: {
       data: { status: "success", data: "Welcome" },
       isAdmin: true,
+      allowHostParticipation: true,
     },
     global: {
       plugins: [pinia],
@@ -168,8 +169,25 @@ describe("WaitingSpace test", () => {
 
   it("calls `start_quiz` when the Start Quiz button is clicked", async () => {
     const wrapper = mountComponent();
+    listUserStore.listUsers = [{ UserId: "guest", IsAlive: true }];
     await wrapper.find("form").trigger("submit.prevent");
+    listUserStore.listUsers = [];
     expect(wrapper.emitted().startQuiz).toBeTruthy();
+  });
+
+  it("blocks starting when the host is alone", async () => {
+    listUserStore.listUsers = [{ UserId: "host", IsAlive: true }];
+    const wrapper = mountComponent();
+    await wrapper.setProps({ hostUserId: "host", hostParticipates: true });
+    await wrapper.find("form").trigger("submit.prevent");
+    expect(wrapper.emitted("startQuiz")).toBeUndefined();
+    listUserStore.listUsers = [];
+  });
+
+  it("hides participation for private hosts", async () => {
+    const wrapper = mountComponent();
+    await wrapper.setProps({ allowHostParticipation: false });
+    expect(wrapper.find('input[type="checkbox"]').exists()).toBe(false);
   });
 
   it("handles invitation code copying correctly", async () => {
