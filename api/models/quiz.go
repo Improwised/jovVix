@@ -570,7 +570,12 @@ func (model *QuizModel) ListQuizzesAnalysis(name, order, orderBy, date, userId s
 		InnerJoin(goqu.T(ActiveQuizQuestionsTable).As("qq"), goqu.On(goqu.Ex{"aq.id": goqu.I("qq.active_quiz_id")})).
 		InnerJoin(goqu.T(UserPlayedQuizTable).As("upq"), goqu.On(goqu.Ex{"upq.active_quiz_id": goqu.I("aq.id")})).
 		InnerJoin(goqu.T(UserQuizResponsesTable).As("uqr"), goqu.On(goqu.Ex{"uqr.question_id": goqu.I("qq.question_id"), "uqr.user_played_quiz_id": goqu.I("upq.id")})).
-		Where(goqu.Ex{"aq.admin_id": userId, "aq.activated_to": goqu.Op{"isNot": nil}, "upq.is_host": false}).
+		LeftJoin(goqu.T(QuizzesTable).As("owner"), goqu.On(goqu.Ex{"owner.id": goqu.I("aq.quiz_id")})).
+		// The host sees the session, and so does the quiz creator when someone they shared the quiz with hosted it.
+		Where(
+			goqu.Or(goqu.I("aq.admin_id").Eq(userId), goqu.I("owner.creator_id").Eq(userId)),
+			goqu.Ex{"aq.activated_to": goqu.Op{"isNot": nil}, "upq.is_host": false},
+		).
 		GroupBy(
 			"aq.id",
 			"aq.activated_from",

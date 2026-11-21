@@ -230,7 +230,7 @@ onBeforeUnmount(() => window.removeEventListener("focus", refreshOnFocus));
             v-if="report.is_host || quiz.participant"
             :to="
               report.is_host
-                ? `/admin/reports/${quiz.id}?room=${roomId}`
+                ? `/admin/reports/${quiz.id}?room=${roomId}&title=${encodeURIComponent(quiz.title || '')}`
                 : `/join/${encodeURIComponent(report.username)}/scoreboard?user_played_quiz=${quiz.participant}&view=quiz`
             "
             class="inline-flex h-11 items-center gap-2 rounded-full border-2 border-jv-ink bg-jv-white px-5 font-bold shadow-brutal-sm transition-transform hover:-rotate-1 active:shadow-none"
