@@ -5,6 +5,9 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineNuxtConfig({
   // please refer https://nuxt.com/docs/guide/going-further/runtime-config#environment-variables for setting up environment variables.
   runtimeConfig: {
+    // Server-only: the API as the Nuxt server reaches it, when that differs from the
+    // public URL (compose: http://api:3000/api/v1). See server/plugins/api_server_url.ts.
+    apiServerUrl: process.env.NUXT_API_SERVER_URL || "",
     public: {
       baseUrl: process.env.NUXT_PUBLIC_BASE_URL || "http://127.0.0.1:3001",
       apiUrl: process.env.NUXT_PUBLIC_API_URL || "http://127.0.0.1:3000/api/v1",
