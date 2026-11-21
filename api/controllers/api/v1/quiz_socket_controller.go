@@ -1168,10 +1168,11 @@ func questionAndScoreHandler(c *websocket.Conn, qc *quizSocketController, respon
 	}
 
 	var wg sync.WaitGroup
-	chanNextEvent := make(chan bool)
-	chanSkipEvent := make(chan bool)
-	chanSkipTimer := make(chan bool)
-	chanPauseQuiz := make(chan bool)
+	// Buffered: see offerAdminEvent.
+	chanNextEvent := make(chan bool, 1)
+	chanSkipEvent := make(chan bool, 1)
+	chanSkipTimer := make(chan bool, 1)
+	chanPauseQuiz := make(chan bool, 1)
 	var isQuizEnd bool = false
 	disconnected := make(chan struct{})
 
@@ -1236,31 +1237,7 @@ func listenAllEvents(c *websocket.Conn, qc *quizSocketController, response *Quiz
 			break
 		}
 
-		switch message.Event {
-		case constants.EventSkipAsked:
-			if session.IsSolo {
-				continue
-			}
-			chanSkipEvent <- false
-		case constants.EventForceSkip:
-			if session.IsSolo {
-				continue
-			}
-			chanSkipEvent <- true
-		case constants.EventNextQuestionAsked:
-			chanNextEvent <- true
-		case constants.EventSkipTimer:
-			if session.IsSolo {
-				continue
-			}
-			chanSkipTimer <- true
-		case constants.EventPauseQuiz:
-			if session.IsSolo {
-				continue
-			}
-			isPauseQuiz := message.Data.(bool)
-			chanPauseQuiz <- isPauseQuiz
-		}
+		dispatchAdminEvent(message, session.IsSolo, chanNextEvent, chanSkipEvent, chanSkipTimer, chanPauseQuiz)
 	}
 
 	// handle connection lost during quiz
@@ -1268,6 +1245,50 @@ func listenAllEvents(c *websocket.Conn, qc *quizSocketController, response *Quiz
 		response.Component = constants.Loading
 		response.Data = constants.AdminDisconnected
 		shareEvenWithUser(c, qc, response, constants.AdminDisconnected, session.ID.String(), int(session.InvitationCode.Int32), constants.ToUser, arrangeMu)
+	}
+}
+
+// dispatchAdminEvent hands one host control message to the phase handler waiting for it.
+// Solo sessions have no host pacing.
+func dispatchAdminEvent(message QuizReceiveResponse, isSolo bool, chanNextEvent, chanSkipEvent, chanSkipTimer, chanPauseQuiz chan bool) {
+	switch message.Event {
+	case constants.EventNextQuestionAsked:
+		offerAdminEvent(chanNextEvent, true)
+	case constants.EventSkipAsked, constants.EventForceSkip:
+		if !isSolo {
+			offerAdminEvent(chanSkipEvent, message.Event == constants.EventForceSkip)
+		}
+	case constants.EventSkipTimer:
+		if !isSolo {
+			offerAdminEvent(chanSkipTimer, true)
+		}
+	case constants.EventPauseQuiz:
+		// A non-bool payload used to panic and take the whole API down.
+		if isPause, ok := message.Data.(bool); ok && !isSolo {
+			offerAdminEvent(chanPauseQuiz, isPause)
+		}
+	}
+}
+
+// offerAdminEvent never blocks. One goroutine reads every message from the host's socket, and each
+// channel has a receiver only during one phase: skips while a question runs, skip-timer and pause
+// while the scoreboard shows. A blocking send outside that phase (a second Skip click, a shortcut
+// pressed as the scoreboard ends) stopped the reader, so the host's controls hung until a page
+// refresh (GitHub #39). The one-slot buffer keeps a click that lands while the handler is busy;
+// further clicks are dropped, and each handler drops what was left for an earlier phase.
+func offerAdminEvent(ch chan bool, value bool) {
+	select {
+	case ch <- value:
+	default:
+	}
+}
+
+// drainStaleAdminEvent drops an event a previous phase left in the buffer, so a late Skip from one
+// question doesn't skip the next one.
+func drainStaleAdminEvent(ch chan bool) {
+	select {
+	case <-ch:
+	default:
 	}
 }
 
@@ -1477,6 +1498,8 @@ func publishTerminateToPlayers(qc *quizSocketController, sessionId string) {
 
 func handleSkipTimer(c *websocket.Conn, qc *quizSocketController, wg *sync.WaitGroup, response *QuizSendResponse, session models.ActiveQuiz, chanSkipTimer chan bool, chanPauseQuiz chan bool, scoreboardMaxDuration int, arrangeMu *sync.Mutex, disconnected <-chan struct{}) {
 	defer wg.Done()
+	drainStaleAdminEvent(chanSkipTimer)
+	drainStaleAdminEvent(chanPauseQuiz)
 
 	remainingTime := time.Duration(scoreboardMaxDuration) * time.Second
 	startTime := time.Now()
@@ -1528,6 +1551,7 @@ func handleSkipTimer(c *websocket.Conn, qc *quizSocketController, wg *sync.WaitG
 
 func handleAnswerSubmission(c *websocket.Conn, qc *quizSocketController, session models.ActiveQuiz, questionId uuid.UUID, duration int, wg *sync.WaitGroup, chanSkipEvent chan bool, response *QuizSendResponse, arrangeMu *sync.Mutex, disconnected <-chan struct{}) {
 	defer wg.Done()
+	drainStaleAdminEvent(chanSkipEvent)
 
 	isTimeout := time.NewTicker(time.Duration(duration) * time.Second)
 	defer isTimeout.Stop()
