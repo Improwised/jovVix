@@ -15,7 +15,7 @@ import (
 
 // VerifyReportAccess allows the request only when the authenticated user hosted
 // the quiz session named by the active_quiz_id route param or query string, or
-// created the quiz that session played (a shared quiz hosted by someone else).
+// created its quiz and shared it with the host (see models.ReportVisibleTo).
 // It guards read-only report views (reports, admin scoreboard and analytics),
 // which would otherwise expose every player's answers for any session id.
 func (m *Middleware) VerifyReportAccess(c *fiber.Ctx) error {
@@ -37,7 +37,7 @@ func (m *Middleware) VerifyReportAccess(c *fiber.Ctx) error {
 		LeftJoin(goqu.T(models.QuizzesTable).As("q"), goqu.On(goqu.Ex{"q.id": goqu.I("aq.quiz_id")})).
 		Where(
 			goqu.I("aq.id").Eq(activeQuizId),
-			goqu.Or(goqu.I("aq.admin_id").Eq(userId), goqu.I("q.creator_id").Eq(userId)),
+			models.ReportVisibleTo(userId),
 		).
 		Select(goqu.L("1")).
 		Limit(1).

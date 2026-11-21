@@ -503,7 +503,13 @@ const canDownload = computed(
     !!quizAnalysis.value?.data?.length
 );
 const downloadNote = computed(() => {
-  if (quizAnalysisPending.value || quizUserAnalysispending.value) return "";
+  // The page already shows a load error (for example 403); the button stays disabled.
+  if (
+    quizAnalysisPending.value ||
+    quizUserAnalysispending.value ||
+    quizAnalysisError.value
+  )
+    return "";
   return quizAnalysis.value?.data?.length
     ? ""
     : "No report data to download yet.";

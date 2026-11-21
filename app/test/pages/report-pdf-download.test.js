@@ -8,10 +8,10 @@ const SESSION = "6f1c2a3e-0000-4000-8000-000000000001";
 
 // useFetch answers synchronously with the analysis the API would send, run through the page's transform.
 const vue = await vi.hoisted(() => import("vue"));
-const state = vi.hoisted(() => ({ analysis: null }));
+const state = vi.hoisted(() => ({ analysis: null, error: null }));
 mockNuxtImport("useFetch", () => (_url, opts) => ({
   data: vue.ref(state.analysis ? opts.transform(state.analysis()) : null),
-  error: vue.ref(null),
+  error: vue.ref(state.error),
   pending: vue.ref(false),
 }));
 mockNuxtImport("useRoute", () => () => ({
@@ -93,6 +93,7 @@ const downloadButton = (wrapper) =>
   wrapper.find('button[aria-label="Download PDF Report"]');
 
 beforeEach(() => {
+  state.error = null;
   pdf.build.mockReset();
   pdf.save.mockReset();
   pdf.build.mockResolvedValue({ save: pdf.save });
@@ -160,5 +161,14 @@ describe("Report page: Download PDF", () => {
     expect(wrapper.text()).toContain("No report data to download yet.");
     await downloadButton(wrapper).trigger("click");
     expect(pdf.build).not.toHaveBeenCalled();
+  });
+
+  // A report the user may not read shows only the page's error, not the "no data" note.
+  it("shows no download note when the report fails to load", async () => {
+    state.analysis = null;
+    state.error = { statusCode: 403, data: { code: 403 } };
+    const wrapper = await mountPage();
+    expect(downloadButton(wrapper).attributes("disabled")).toBeDefined();
+    expect(wrapper.text()).not.toContain("No report data to download yet.");
   });
 });
