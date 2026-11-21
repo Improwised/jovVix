@@ -5,6 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/Improwised/jovvix/api/config"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -22,6 +23,29 @@ func TestDeleteKratosIdentityUsesAdminURL(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, http.MethodDelete, gotMethod)
 	assert.Equal(t, "/admin/identities/8a6c1f6e-0000-4000-8000-000000000001", gotPath)
+}
+
+func TestUserServiceDeleteIdentityUsesAdminURLNotPublic(t *testing.T) {
+	var adminHits, publicHits int
+	admin := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		adminHits++
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer admin.Close()
+	public := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		publicHits++
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer public.Close()
+
+	userSvc := &UserService{config: config.AppConfig{Kratos: config.KratosConfig{
+		BaseUrl:  public.URL,
+		AdminUrl: admin.URL + "/admin",
+	}}}
+
+	assert.NoError(t, userSvc.deleteIdentity("some-id"))
+	assert.Equal(t, 1, adminHits)
+	assert.Equal(t, 0, publicHits, "identity deletion must not go through the public Kratos URL")
 }
 
 func TestDeleteKratosIdentityRefusesRedirectAndMissingURL(t *testing.T) {

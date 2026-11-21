@@ -103,7 +103,7 @@ func (userSvc *UserService) DeleteUserDataById(userId, kratosId string) error {
 		return fmt.Errorf(constants.Unauthenticated)
 	}
 
-	if err := deleteKratosIdentity(userSvc.config.Kratos.AdminUrl, kratosId); err != nil {
+	if err := userSvc.deleteIdentity(kratosId); err != nil {
 		userSvc.logger.Error("error while deleting identity from kratos", zap.Error(err))
 		return fmt.Errorf("failed to delete user from kratos for %s", kratosId)
 	}
@@ -111,6 +111,11 @@ func (userSvc *UserService) DeleteUserDataById(userId, kratosId string) error {
 	isOk = true
 
 	return nil
+}
+
+// deleteIdentity deletes the identity through the admin URL, never the public BaseUrl (#361).
+func (userSvc *UserService) deleteIdentity(kratosId string) error {
+	return deleteKratosIdentity(userSvc.config.Kratos.AdminUrl, kratosId)
 }
 
 // deleteKratosIdentity deletes the identity through the Kratos admin API.
