@@ -22,10 +22,19 @@ import (
 	validator "gopkg.in/go-playground/validator.v9"
 )
 
+// accountDeleter and mailSender let tests replace the database and SMTP in DeleteRegisteredUser.
+type accountDeleter interface {
+	DeleteUserDataById(userId, kratosId string) error
+}
+
+type mailSender interface {
+	SendEmail(to, subject, body string) error
+}
+
 type AuthController struct {
 	userModel    *models.UserModel
-	userSvc      *services.UserService
-	emailService *services.EmailService
+	userSvc      accountDeleter
+	emailService mailSender
 	logger       *zap.Logger
 	config       config.AppConfig
 }
