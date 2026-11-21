@@ -218,11 +218,11 @@
             <button
               v-if="quiz.sessions > 1"
               type="button"
-              class="mt-2 inline-flex cursor-pointer items-center gap-1.5 rounded-full border-2 border-jv-ink bg-jv-yellow px-3 py-1 text-[13px] font-bold text-jv-ink shadow-brutal-sm transition-transform hover:-rotate-1"
+              class="mt-2 inline-flex cursor-pointer whitespace-nowrap items-center gap-1.5 rounded-full border-2 border-jv-ink bg-jv-yellow px-3 py-1 text-[13px] font-bold text-jv-ink shadow-brutal-sm transition-transform hover:-rotate-1"
               @click.stop="viewCombinedReport(quiz.quiz_id)"
             >
               <Layers class="size-4" :stroke-width="2.4" />
-              Combined report · {{ quiz.sessions }} sessions
+              Combine {{ quiz.sessions }} sessions
             </button>
           </div>
 
