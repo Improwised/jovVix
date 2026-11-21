@@ -29,6 +29,17 @@ type Question struct {
 	QuestionMedia string `csv:"Question Media"`
 	OptionsMedia  string `csv:"Options Media"`
 	Resource      string `csv:"Resource"`
+	// Row is the record's row in the uploaded file (header is row 1), so blank lines ParseCSV
+	// skips don't shift later rows. 0 when the row did not come from ParseCSV.
+	Row int `csv:"-"`
+}
+
+// rowNumber is the spreadsheet row of the i-th question.
+func (u Question) rowNumber(i int) int {
+	if u.Row > 0 {
+		return u.Row
+	}
+	return i + 2
 }
 
 // CSVField is a column the importer understands. Name is also the header in the sample CSV.
@@ -134,7 +145,7 @@ func ParseCSV(data []byte, mapping map[string]string) (CSVImport, error) {
 		}
 		return ""
 	}
-	for _, record := range records[1:] {
+	for j, record := range records[1:] {
 		if strings.TrimSpace(strings.Join(record, "")) == "" {
 			continue // blank line
 		}
@@ -143,6 +154,7 @@ func ParseCSV(data []byte, mapping map[string]string) (CSVImport, error) {
 			Option1: cell(record, "Option 1"), Option2: cell(record, "Option 2"), Option3: cell(record, "Option 3"),
 			Option4: cell(record, "Option 4"), Option5: cell(record, "Option 5"), CorrectAnswer: cell(record, "Correct Answer"),
 			QuestionMedia: cell(record, "Question Media"), OptionsMedia: cell(record, "Options Media"), Resource: cell(record, "Resource"),
+			Row: j + 2,
 		})
 	}
 	if len(result.Questions) == 0 {
@@ -213,8 +225,7 @@ func ExtractQuestionsFromCSV(questions []Question, questionTimeLimit string) ([]
 	var rowErrors []string
 
 	for i, u := range questions {
-		// Row number as seen by the user in a spreadsheet (header is row 1).
-		rowNo := i + 2
+		rowNo := u.rowNumber(i)
 
 		question, rowIssues := validateCSVRow(u, i+1, duration)
 		if len(rowIssues) > 0 {
@@ -254,7 +265,7 @@ func PreviewCSVRows(questions []Question) []CSVRowResult {
 			issues = []string{}
 		}
 		results = append(results, CSVRowResult{
-			Row: i + 2,
+			Row: u.rowNumber(i),
 			Values: map[string]string{
 				"Question Text": u.Question, "Question Type": u.Type, "Points": u.Points,
 				"Option 1": u.Option1, "Option 2": u.Option2, "Option 3": u.Option3, "Option 4": u.Option4,

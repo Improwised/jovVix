@@ -157,4 +157,41 @@ describe("CsvImportModal", () => {
     expect(wrapper.emitted("imported")).toEqual([[1]]);
     expect(wrapper.emitted("update:modelValue")).toEqual([[false]]);
   });
+
+  // Import uploads the checked file, not the edited cells, so an unchecked edit must block it.
+  it("blocks import after a cell edit until the edits are checked", async () => {
+    const wrapper = mountModal();
+    replies.push({
+      data: {
+        fields: FIELDS,
+        headers: HEADERS,
+        mapping: MAPPED,
+        unmapped_required: [],
+        rows: [],
+      },
+    });
+    const input = wrapper.find('input[type="file"]');
+    Object.defineProperty(input.element, "files", {
+      value: [new File(["Prompt,Kind\n"], "vendor.csv", { type: "text/csv" })],
+    });
+    await input.trigger("change");
+    await settle();
+
+    replies.push({ data: { rows: [row("Q1", [])] } });
+    await button(wrapper, "Preview rows").trigger("click");
+    await settle();
+    const importButton = () => button(wrapper, "Import 1 questions");
+    expect(importButton().attributes("disabled")).toBeUndefined();
+
+    // A valid row edited into another valid row: only the edit blocks the import.
+    await wrapper
+      .find('input[aria-label="Row 2 Question Text"]')
+      .setValue("Q1 edited");
+    expect(importButton().attributes("disabled")).toBeDefined();
+
+    replies.push({ data: { rows: [row("Q1 edited", [])] } });
+    await button(wrapper, "Check edits").trigger("click");
+    await settle();
+    expect(importButton().attributes("disabled")).toBeUndefined();
+  });
 });

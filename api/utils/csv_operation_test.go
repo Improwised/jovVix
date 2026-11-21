@@ -367,7 +367,7 @@ func TestParseCSVMapping(t *testing.T) {
 		})
 		assert.NoError(t, err)
 		assert.Empty(t, parsed.UnmappedRequired)
-		assert.Equal(t, Question{Question: "Q1", Type: "survey", Option1: "A", Option2: "B", CorrectAnswer: "1|2", Resource: "n"}, parsed.Questions[0])
+		assert.Equal(t, Question{Question: "Q1", Type: "survey", Option1: "A", Option2: "B", CorrectAnswer: "1|2", Resource: "n", Row: 2}, parsed.Questions[0])
 	})
 
 	t.Run("rejects a mapping to a missing column or unknown field", func(t *testing.T) {
@@ -408,4 +408,26 @@ func TestParseCSVMapping(t *testing.T) {
 		_, err = ParseCSVFile(tempFile.Name(), nil)
 		assert.ErrorContains(t, err, constants.ErrUnmappedCSVColumns)
 	})
+}
+
+// Blank lines are skipped, but later rows keep their row number in the file (header is row 1).
+func TestCSVRowNumbersSurviveBlankLines(t *testing.T) {
+	data := "Question Text,Question Type,Option 1,Option 2,Correct Answer\n" +
+		"Good,single answer,A,B,1\n" +
+		",,,,\n" +
+		",,,,\n" +
+		"Bad answer,single answer,A,B,9\n"
+	parsed, err := ParseCSV([]byte(data), nil)
+	assert.NoError(t, err)
+
+	preview := PreviewCSVRows(parsed.Questions)
+	assert.Len(t, preview, 2)
+	assert.Equal(t, 2, preview[0].Row)
+	assert.Equal(t, 5, preview[1].Row)
+	assert.NotEmpty(t, preview[1].Errors)
+
+	_, err = ExtractQuestionsFromCSV(parsed.Questions, "30")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "row 5:")
+	assert.NotContains(t, err.Error(), "row 3:")
 }
