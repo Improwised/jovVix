@@ -22,21 +22,55 @@
       </p>
     </div>
 
-    <NuxtLink
-      v-if="
-        typeof $route.query.room === 'string' &&
-        /^[0-9a-f-]{36}$/i.test($route.query.room)
-      "
-      :to="`/room/report/${$route.query.room}?tab=quizzes`"
-      class="inline-flex w-fit items-center gap-2 rounded-full border-2 border-jv-ink bg-jv-white px-5 py-2 font-bold text-jv-ink shadow-brutal-sm transition-transform hover:-rotate-1 active:shadow-none"
-      >← Back to room report</NuxtLink
-    >
-    <NuxtLink
-      v-else
-      to="/admin/reports"
-      class="inline-flex w-fit items-center gap-2 rounded-full border-2 border-jv-ink bg-jv-white px-5 py-2 font-bold text-jv-ink shadow-brutal-sm transition-transform hover:-rotate-1 active:shadow-none"
-      >← Back to reports</NuxtLink
-    >
+    <div class="flex flex-wrap items-start justify-between gap-3">
+      <NuxtLink
+        v-if="
+          typeof $route.query.room === 'string' &&
+          /^[0-9a-f-]{36}$/i.test($route.query.room)
+        "
+        :to="`/room/report/${$route.query.room}?tab=quizzes`"
+        class="inline-flex w-fit items-center gap-2 rounded-full border-2 border-jv-ink bg-jv-white px-5 py-2 font-bold text-jv-ink shadow-brutal-sm transition-transform hover:-rotate-1 active:shadow-none"
+        >← Back to room report</NuxtLink
+      >
+      <NuxtLink
+        v-else
+        to="/admin/reports"
+        class="inline-flex w-fit items-center gap-2 rounded-full border-2 border-jv-ink bg-jv-white px-5 py-2 font-bold text-jv-ink shadow-brutal-sm transition-transform hover:-rotate-1 active:shadow-none"
+        >← Back to reports</NuxtLink
+      >
+      <div class="flex flex-col items-end gap-1">
+        <button
+          type="button"
+          class="inline-flex items-center gap-2 rounded-full border-2 border-jv-ink bg-jv-yellow px-5 py-2 font-bold text-jv-ink shadow-brutal-sm transition-transform hover:-rotate-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-jv-ink active:shadow-none disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:rotate-0"
+          title="Download PDF Report"
+          aria-label="Download PDF Report"
+          :disabled="!canDownload || pdfBusy"
+          :aria-busy="pdfBusy"
+          @click="downloadPdf"
+        >
+          <LoaderCircle
+            v-if="pdfBusy"
+            class="size-5 animate-spin"
+            :stroke-width="2.6"
+            aria-hidden="true"
+          />
+          <Download
+            v-else
+            class="size-5"
+            :stroke-width="2.6"
+            aria-hidden="true"
+          />
+          {{ pdfBusy ? "Preparing PDF…" : "Download PDF" }}
+        </button>
+        <p
+          v-if="downloadNote"
+          class="text-[13px] font-semibold text-jv-muted"
+          role="status"
+        >
+          {{ downloadNote }}
+        </p>
+      </div>
+    </div>
     <!-- Tabs -->
     <PageLayout :current-tab="currentTab" @change-tab="changeTab" />
 
@@ -352,7 +386,14 @@
 
 <script setup>
 import { computed, onMounted, ref } from "vue";
-import { Zap, ListOrdered, Users } from "lucide-vue-next";
+import {
+  Zap,
+  ListOrdered,
+  Users,
+  Download,
+  LoaderCircle,
+} from "lucide-vue-next";
+import { usePush } from "notivue";
 import lodash from "lodash";
 import PageLayout from "~~/components/reports/PageLayout.vue";
 import CodeBlockComponent from "~~/components/CodeBlockComponent.vue";
@@ -447,19 +488,65 @@ const overallMessage = computed(() => {
   return "A tough round.";
 });
 
-const correctCountFor = (quiz) =>
-  quiz.correct_answer.reduce(
-    (sum, idx) => sum + (quiz.selected_answers[idx]?.length || 0),
-    0
-  );
+// correctCountFor and incorrectCountFor come from composables/report_pdf.js.
 
-const incorrectCountFor = (quiz) =>
-  Math.max(
-    (quiz.userParticipants || 0) -
-      (quiz.skippedParticipants || 0) -
-      correctCountFor(quiz),
-    0
-  );
+// PDF download (GitHub #38): the questions and participants this page loaded.
+const push = usePush();
+const pdfBusy = ref(false);
+const reportTitle = computed(() =>
+  typeof route.query.title === "string" ? route.query.title : ""
+);
+const canDownload = computed(
+  () =>
+    !quizAnalysisPending.value &&
+    !quizUserAnalysispending.value &&
+    !!quizAnalysis.value?.data?.length
+);
+const downloadNote = computed(() => {
+  // The page already shows a load error (for example 403); the button stays disabled.
+  if (
+    quizAnalysisPending.value ||
+    quizUserAnalysispending.value ||
+    quizAnalysisError.value
+  )
+    return "";
+  return quizAnalysis.value?.data?.length
+    ? ""
+    : "No report data to download yet.";
+});
+
+const participantRows = () =>
+  rankData.value.map((username) => {
+    const rows = userJson.value[username] || [];
+    const stats = questionsAnalysis(rows);
+    return {
+      name: rows.find((r) => r.firstname)?.firstname || username,
+      rank: stats.rank,
+      score: rows.find((r) => r.rank)?.total_score ?? stats.totalScore,
+      correct: stats.correctAnwers,
+      incorrect: stats.wrongAnwers,
+      skipped: stats.unAttemptedQuestions,
+    };
+  });
+
+const downloadPdf = async () => {
+  if (!canDownload.value || pdfBusy.value) return;
+  pdfBusy.value = true;
+  try {
+    const doc = await buildReportPdf({
+      title: reportTitle.value,
+      summary: `${totalQuestions.value} questions, ${totalPlayers.value} players, ${roomScore.value.toFixed(0)}% answered correctly, ${avgAnswerTime.value.toFixed(2)} s average answer time`,
+      questions: quizAnalysis.value.data,
+      participants: participantRows(),
+    });
+    doc.save(reportPdfFileName(reportTitle.value));
+  } catch (error) {
+    console.error("Failed to build the report PDF", error);
+    push.error("Could not create the PDF. Please try again.");
+  } finally {
+    pdfBusy.value = false;
+  }
+};
 
 // Question pager: scroll behavior + active tracking
 const activeQuestionIndex = ref(1);

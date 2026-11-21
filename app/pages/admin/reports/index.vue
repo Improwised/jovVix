@@ -203,7 +203,7 @@
           :key="index"
           role="button"
           class="grid grid-cols-1 lg:grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr] gap-4 items-center jv-border-rough bg-jv-white px-5 py-4 shadow-brutal-sm hover:translate-y-[-2px] hover:shadow-brutal-md transition-all cursor-pointer"
-          @click="viewReport(quiz.id)"
+          @click="viewReport(quiz.id, quiz.title)"
         >
           <!-- Quiz Name -->
           <div class="min-w-0 pr-4">
@@ -384,8 +384,12 @@ const {
   },
 });
 
-const viewReport = (activeQuizId) => {
-  navigateTo(`/admin/reports/${activeQuizId}`);
+// The title names the downloaded PDF; the report API does not return it.
+const viewReport = (activeQuizId, title) => {
+  navigateTo({
+    path: `/admin/reports/${activeQuizId}`,
+    query: { title: decodeURI(title || "") },
+  });
 };
 
 const sortEventHandler = (columnName) => {

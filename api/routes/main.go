@@ -284,7 +284,7 @@ func setupQuizController(v1 fiber.Router, db *goqu.Database, logger *zap.Logger,
 
 	report := admin.Group("/reports")
 	report.Get("/list", quizController.ListQuizzesAnalysis)
-	report.Get(fmt.Sprintf("/:%s/analysis", constants.ActiveQuizId), middleware.VerifySessionHost, quizController.GetQuizAnalysis)
+	report.Get(fmt.Sprintf("/:%s/analysis", constants.ActiveQuizId), middleware.VerifyReportAccess, quizController.GetQuizAnalysis)
 	return nil
 }
 
@@ -371,7 +371,7 @@ func setUpFinalScoreBoardController(v1 fiber.Router, goqu *goqu.Database, logger
 
 	finalScore := v1.Group("/final_score")
 	finalScore.Get("/user", finalScoreBoardController.GetScore)
-	finalScore.Get("/admin", middlewares.Authenticated, middlewares.VerifySessionHost, finalScoreBoardControllerAdmin.GetScoreForAdmin)
+	finalScore.Get("/admin", middlewares.Authenticated, middlewares.VerifyReportAccess, finalScoreBoardControllerAdmin.GetScoreForAdmin)
 
 	return nil
 }
@@ -389,7 +389,7 @@ func setUpAnalyticsBoardController(v1 fiber.Router, goqu *goqu.Database, logger 
 
 	analyticsBoard := v1.Group("/analytics_board")
 	analyticsBoard.Get("/user", analyticsBoardUserController.GetAnalyticsForUser)
-	analyticsBoard.Get("/admin", middlewares.KratosAuthenticated, middlewares.VerifySessionHost, analyticsBoardAdminController.GetAnalyticsForAdmin)
+	analyticsBoard.Get("/admin", middlewares.KratosAuthenticated, middlewares.VerifyReportAccess, analyticsBoardAdminController.GetAnalyticsForAdmin)
 
 	return nil
 }
