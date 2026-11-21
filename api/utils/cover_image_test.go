@@ -84,3 +84,50 @@ func TestValidateCoverImage(t *testing.T) {
 	oversized := dataURI("image/png", strings.Repeat("A", constants.MaxCoverImageBytes))
 	assert.Equal(t, constants.ErrCoverImageTooLarge, ValidateCoverImage(oversized))
 }
+
+func TestDecodeCoverImageMimeParameters(t *testing.T) {
+	testCases := []struct {
+		name  string
+		input string
+	}{
+		{"spaces around mime", "data: image/png ;base64," + gifPayload},
+		{"extra parameter", "data:image/png;charset=utf-8;base64," + gifPayload},
+		{"uppercase with parameter", "data:IMAGE/PNG;CHARSET=UTF-8;BASE64," + gifPayload},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			mime, raw, err := DecodeCoverImage(tc.input)
+
+			assert.NoError(t, err)
+			assert.Equal(t, "image/png", mime)
+			assert.NotEmpty(t, raw)
+		})
+	}
+}
+
+func TestDecodeCoverImageReturnsExactBytes(t *testing.T) {
+	want, err := base64.StdEncoding.DecodeString(gifPayload)
+	assert.NoError(t, err)
+
+	_, got, err := DecodeCoverImage(dataURI("image/gif", gifPayload))
+
+	assert.NoError(t, err)
+	assert.Equal(t, want, got)
+}
+
+func TestValidateCoverImageSizeBoundary(t *testing.T) {
+	// "data:image/png;foo=barrr;base64," is 32 bytes, so a payload of
+	// MaxCoverImageBytes-32 'A's makes the whole URI exactly MaxCoverImageBytes
+	// long. The limit is `len > MaxCoverImageBytes`, so exactly at the limit
+	// is accepted and one byte over is rejected.
+	prefix := "data:image/png;foo=barrr;base64,"
+	payload := strings.Repeat("A", constants.MaxCoverImageBytes-len(prefix))
+
+	assert.Equal(t, "", ValidateCoverImage(prefix+payload))
+	assert.Equal(t, constants.ErrCoverImageTooLarge, ValidateCoverImage(prefix+payload+"A"))
+}
+
+func TestValidateCoverImageRejectsCorruptBase64(t *testing.T) {
+	assert.Equal(t, constants.ErrInvalidCoverImage, ValidateCoverImage("data:image/png;base64,not!valid!base64"))
+}
