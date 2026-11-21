@@ -141,7 +141,7 @@ func (ctrl *AuthController) GetRegisteredUser(c *fiber.Ctx) error {
 	kratosId := c.Cookies("ory_kratos_session")
 	ctrl.logger.Debug("AuthController.GetRegisteredUser called", zap.Any("ory_kratos_session", kratosId))
 	if kratosId == "" {
-		return utils.JSONError(c, http.StatusUnauthorized, constants.ErrKratosIDEmpty)
+		return utils.JSONError(c, http.StatusUnauthorized, constants.ErrSessionExpired)
 	}
 
 	kratosUser := config.KratosUserDetails{}
@@ -149,8 +149,9 @@ func (ctrl *AuthController) GetRegisteredUser(c *fiber.Ctx) error {
 
 	res, err := kratosClient.R().SetResult(&kratosUser).Get("/whoami")
 	if err != nil || res.StatusCode() != http.StatusOK {
-		ctrl.logger.Debug("unauthenticated registration", zap.Any("response from kratos", res.RawResponse), zap.Error(err), zap.Any("kratos response", res))
-		return utils.JSONError(c, res.StatusCode(), constants.ErrKratosAuth)
+		ctrl.logger.Debug("kratos session check failed", zap.Error(err))
+		status, message := utils.KratosSessionFailure(res, err)
+		return utils.JSONError(c, status, message)
 	}
 
 	ctrl.logger.Debug("AuthController.GetRegisteredUser success", zap.Any("kratosUser", kratosUser))

@@ -383,6 +383,7 @@ const {
     date,
   },
 });
+useSessionExpiredRedirect(quizListError);
 
 const viewReport = (activeQuizId) => {
   navigateTo(`/admin/reports/${activeQuizId}`);
