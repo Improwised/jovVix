@@ -216,7 +216,12 @@ func (ctrl *QuestionController) ImportQuestionsByCsv(c *fiber.Ctx) error {
 		}
 	}()
 
-	questions, err := utils.ValidateCSVFileFormat(filePath)
+	mapping, err := utils.ParseCSVMapping(c.FormValue("mapping"))
+	if err != nil {
+		return utils.JSONFail(c, http.StatusBadRequest, err.Error())
+	}
+
+	questions, err := utils.ParseCSVFile(filePath, mapping)
 	if err != nil {
 		ctrl.logger.Error("file validation failed", zap.Error(err))
 		return utils.JSONFail(c, http.StatusBadRequest, err.Error())
@@ -241,6 +246,48 @@ func (ctrl *QuestionController) ImportQuestionsByCsv(c *fiber.Ctx) error {
 	}
 
 	return utils.JSONSuccess(c, http.StatusAccepted, questionIds)
+}
+
+// PreviewQuestionsCsv parses an uploaded CSV with an optional column mapping and validates every
+// row without saving anything, so the author can map columns and fix rows before importing.
+// swagger:route POST /v1/quizzes/{quiz_id}/questions/upload/preview Question RequestPreviewQuestionsCsv
+//
+//	Responses:
+//	  200: ResponseOkWithMessage
+//	  400: GenericResFailNotFound
+func (ctrl *QuestionController) PreviewQuestionsCsv(c *fiber.Ctx) error {
+	filePath := quizUtilsHelper.GetString(c.Locals(constants.FileName))
+	defer func() {
+		if err := os.Remove(filePath); err != nil {
+			ctrl.logger.Error("error in deleting file", zap.Error(err))
+		}
+	}()
+
+	mapping, err := utils.ParseCSVMapping(c.FormValue("mapping"))
+	if err != nil {
+		return utils.JSONFail(c, http.StatusBadRequest, err.Error())
+	}
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		ctrl.logger.Error("error reading uploaded csv", zap.Error(err))
+		return utils.JSONError(c, http.StatusInternalServerError, constants.ErrProblemInUploadFile)
+	}
+	parsed, err := utils.ParseCSV(data, mapping)
+	if err != nil {
+		return utils.JSONFail(c, http.StatusBadRequest, err.Error())
+	}
+
+	rows := []utils.CSVRowResult{}
+	if len(parsed.UnmappedRequired) == 0 {
+		rows = utils.PreviewCSVRows(parsed.Questions)
+	}
+	return utils.JSONSuccess(c, http.StatusOK, map[string]any{
+		"fields":            utils.CSVFields,
+		"headers":           parsed.Headers,
+		"mapping":           parsed.Mapping,
+		"unmapped_required": parsed.UnmappedRequired,
+		"rows":              rows,
+	})
 }
 
 // GetQuestionById to get question and thier options with answer.

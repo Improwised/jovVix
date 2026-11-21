@@ -343,3 +343,69 @@ func TestExtractQuestionsFromCSV(t *testing.T) {
 		assert.Contains(t, err.Error(), "row 4")
 	})
 }
+
+func TestParseCSVMapping(t *testing.T) {
+	t.Run("auto-matches headers loosely and strips a BOM", func(t *testing.T) {
+		data := "\xef\xbb\xbfquestion_text,QUESTION TYPE,option-1,Option 2,correct answer\nQ1,single answer,A,B,1\n"
+		parsed, err := ParseCSV([]byte(data), nil)
+		assert.NoError(t, err)
+		assert.Empty(t, parsed.UnmappedRequired)
+		assert.Equal(t, "question_text", parsed.Mapping["Question Text"])
+		assert.Equal(t, "Q1", parsed.Questions[0].Question)
+		assert.Equal(t, "1", parsed.Questions[0].CorrectAnswer)
+	})
+
+	t.Run("applies a user mapping and reports unmapped required fields", func(t *testing.T) {
+		data := "Prompt,Kind,First,Second,Right,Notes\nQ1,survey,A,B,1|2,n\n"
+		parsed, err := ParseCSV([]byte(data), nil)
+		assert.NoError(t, err)
+		assert.Equal(t, []string{"Question Text", "Question Type", "Option 1", "Option 2", "Correct Answer"}, parsed.UnmappedRequired)
+
+		parsed, err = ParseCSV([]byte(data), map[string]string{
+			"Question Text": "Prompt", "Question Type": "Kind", "Option 1": "First", "Option 2": "Second",
+			"Correct Answer": "Right", "Resource": "Notes", "Points": "",
+		})
+		assert.NoError(t, err)
+		assert.Empty(t, parsed.UnmappedRequired)
+		assert.Equal(t, Question{Question: "Q1", Type: "survey", Option1: "A", Option2: "B", CorrectAnswer: "1|2", Resource: "n"}, parsed.Questions[0])
+	})
+
+	t.Run("rejects a mapping to a missing column or unknown field", func(t *testing.T) {
+		data := "A,B\n1,2\n"
+		_, err := ParseCSV([]byte(data), map[string]string{"Question Text": "Nope"})
+		assert.ErrorContains(t, err, constants.ErrInvalidCSVMapping)
+		_, err = ParseCSV([]byte(data), map[string]string{"Bogus": "A"})
+		assert.ErrorContains(t, err, constants.ErrInvalidCSVMapping)
+	})
+
+	t.Run("short rows read as blank cells and blank lines are skipped", func(t *testing.T) {
+		data := "Question Text,Question Type,Option 1,Option 2,Correct Answer,Question Media\nQ1,single answer,A,B,1\n,,,,,\n"
+		parsed, err := ParseCSV([]byte(data), nil)
+		assert.NoError(t, err)
+		assert.Len(t, parsed.Questions, 1)
+		assert.Equal(t, "", parsed.Questions[0].QuestionMedia)
+	})
+
+	t.Run("preview validates every row without stopping", func(t *testing.T) {
+		data := "Question Text,Question Type,Option 1,Option 2,Correct Answer,Question Media\n" +
+			"Q1,single answer,A,B,1,\n" +
+			",single answer,A,B,3,video\n"
+		parsed, err := ParseCSV([]byte(data), nil)
+		assert.NoError(t, err)
+		rows := PreviewCSVRows(parsed.Questions)
+		assert.Len(t, rows, 2)
+		assert.Equal(t, 2, rows[0].Row)
+		assert.Empty(t, rows[0].Errors)
+		assert.Equal(t, 3, rows[1].Row)
+		assert.Len(t, rows[1].Errors, 4) // empty text, option 3 missing, so no single answer, bad media
+		assert.Equal(t, "video", rows[1].Values["Question Media"])
+	})
+
+	t.Run("ParseCSVFile refuses unmapped required fields", func(t *testing.T) {
+		tempFile, err := createTempCSV("Prompt,Kind\nQ1,survey\n")
+		assert.NoError(t, err)
+		defer os.Remove(tempFile.Name())
+		_, err = ParseCSVFile(tempFile.Name(), nil)
+		assert.ErrorContains(t, err, constants.ErrUnmappedCSVColumns)
+	})
+}

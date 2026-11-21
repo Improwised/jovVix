@@ -143,6 +143,8 @@ const (
 	ErrInvalidCorrectAnswer     = "correct answer must be a number referencing an existing option"
 	ErrInvalidPoints            = "points must be a whole number within the allowed range"
 	ErrInvalidCSVRows           = "the uploaded CSV has invalid rows, please fix them and try again"
+	ErrInvalidCSVMapping        = "invalid CSV column mapping"
+	ErrUnmappedCSVColumns       = "map these required CSV columns"
 	ErrInvalidQuestionTimeLimit = "question time limit is not configured properly"
 	ErrInvalidQuestionMedia     = "question media must be one of: text, image, code"
 	ErrInvalidOptionsMedia      = "options media must be one of: text, image, code"
