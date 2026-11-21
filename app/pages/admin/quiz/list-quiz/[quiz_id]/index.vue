@@ -488,6 +488,23 @@
                   />
                 </li>
               </ul>
+
+              <div
+                v-if="guessWarnings[question.question_id]?.length"
+                role="note"
+                class="mt-3 flex gap-2 rounded-md border-2 border-jv-yellow bg-jv-yellow-soft px-3 py-2 text-[14px] font-medium text-jv-ink"
+              >
+                <Lightbulb class="mt-0.5 size-4 shrink-0" :stroke-width="2.4" />
+                <ul class="flex flex-col gap-1">
+                  <li
+                    v-for="warning in guessWarnings[question.question_id]"
+                    :key="warning.code"
+                  >
+                    This question might be too easy to guess because
+                    {{ warning.reason }}.
+                  </li>
+                </ul>
+              </div>
             </template>
           </article>
         </template>
@@ -619,6 +636,7 @@ import {
   GripVertical,
   Image as ImageIcon,
   Info,
+  Lightbulb,
   Pencil,
   Plus,
   Share2,
@@ -636,6 +654,7 @@ import constants from "~~/config/constants";
 import GenerateWithAiModal from "@/components/Quiz/GenerateWithAiModal.vue";
 import { readApiError } from "@/composables/apiError";
 import { detectQuizLanguage } from "@/composables/quizLanguage";
+import { guessWarningsFor } from "@/composables/guessable_questions";
 import { useListUserstore } from "~/store/userlist";
 import { useSessionStore } from "~~/store/session";
 import NavigationLink from "~/components/common/NavigationLink.vue";
@@ -727,6 +746,14 @@ const questions = computed(() => quizData.value?.data?.data || []);
 const quizTitle = computed(() => quizData.value?.data?.quiz_title || "Quiz");
 const quizLanguage = computed(() =>
   detectQuizLanguage(questions.value.map((question) => question.question))
+);
+
+// Advice for the creator (GitHub #342): question_id -> patterns that give the answer away.
+const guessWarnings = computed(() =>
+  guessWarningsFor(questions.value, {
+    canEdit: canEditQuiz.value,
+    language: quizLanguage.value,
+  })
 );
 
 const deleteQuizMessage = computed(
