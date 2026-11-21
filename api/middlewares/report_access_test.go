@@ -33,8 +33,9 @@ CREATE TABLE quizzes(id text PRIMARY KEY, creator_id text, is_public boolean);
 CREATE TABLE active_quizzes(id text PRIMARY KEY, quiz_id text, admin_id text);
 CREATE TABLE shared_quizzes(quiz_id text, shared_to text);
 INSERT INTO users VALUES('owner', 'owner@example.com'), ('colleague', 'colleague@example.com'), ('stranger', 'stranger@example.com');
-INSERT INTO quizzes VALUES('quiz-1', 'owner', 1);
-INSERT INTO shared_quizzes VALUES('quiz-1', 'colleague@example.com');
+INSERT INTO quizzes VALUES('quiz-1', 'owner', 1), ('quiz-2', 'owner', 0);
+-- The stranger holds a share of another quiz only: that must not open quiz-1's sessions.
+INSERT INTO shared_quizzes VALUES('quiz-1', 'colleague@example.com'), ('quiz-2', 'stranger@example.com');
 INSERT INTO active_quizzes VALUES('` + sharedSession + `', 'quiz-1', 'colleague'), ('` + publicSession + `', 'quiz-1', 'stranger');`); err != nil {
 		t.Fatal(err)
 	}

@@ -21,7 +21,8 @@ func TestListQuizzesAnalysisIncludesSharedQuizSessions(t *testing.T) {
 	if _, err = db.Exec(`CREATE TABLE users(id text PRIMARY KEY, email text);
 CREATE TABLE shared_quizzes(quiz_id text, shared_to text);
 INSERT INTO users VALUES ('owner', 'owner@example.com'), ('colleague', 'colleague@example.com'), ('stranger', 'stranger@example.com');
-INSERT INTO shared_quizzes VALUES ('00000000-0000-4000-8000-0000000000a1', 'colleague@example.com');
+-- The stranger holds a share of another quiz only: that must not list their session of a1.
+INSERT INTO shared_quizzes VALUES ('00000000-0000-4000-8000-0000000000a1', 'colleague@example.com'), ('00000000-0000-4000-8000-0000000000a3', 'stranger@example.com');
 CREATE TABLE quizzes(id text PRIMARY KEY, creator_id text, title text, description text);
 CREATE TABLE active_quizzes(id text PRIMARY KEY, quiz_id text, admin_id text, activated_from timestamp, activated_to timestamp);
 CREATE TABLE active_quiz_questions(active_quiz_id text, question_id text);
