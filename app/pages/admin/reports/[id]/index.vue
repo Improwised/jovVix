@@ -413,6 +413,7 @@ const {
   credentials: "include",
   headers: headers,
 });
+useSessionExpiredRedirect(quizAnalysisError);
 
 // Derived recap metrics
 const totalQuestions = computed(() => quizAnalysis.value?.data?.length || 0);
