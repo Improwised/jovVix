@@ -1168,11 +1168,10 @@ func questionAndScoreHandler(c *websocket.Conn, qc *quizSocketController, respon
 	}
 
 	var wg sync.WaitGroup
-	// Buffered: see offerAdminEvent.
-	chanNextEvent := make(chan bool, 1)
-	chanSkipEvent := make(chan bool, 1)
-	chanSkipTimer := make(chan bool, 1)
-	chanPauseQuiz := make(chan bool, 1)
+	chanNextEvent := newAdminEventChan()
+	chanSkipEvent := newAdminEventChan()
+	chanSkipTimer := newAdminEventChan()
+	chanPauseQuiz := newAdminEventChan()
 	var isQuizEnd bool = false
 	disconnected := make(chan struct{})
 
@@ -1265,9 +1264,14 @@ func dispatchAdminEvent(message QuizReceiveResponse, isSolo bool, chanNextEvent,
 	case constants.EventPauseQuiz:
 		// A non-bool payload used to panic and take the whole API down.
 		if isPause, ok := message.Data.(bool); ok && !isSolo {
-			offerAdminEvent(chanPauseQuiz, isPause)
+			replaceAdminEvent(chanPauseQuiz, isPause)
 		}
 	}
+}
+
+// newAdminEventChan makes a host control channel. It is buffered: see offerAdminEvent.
+func newAdminEventChan() chan bool {
+	return make(chan bool, 1)
 }
 
 // offerAdminEvent never blocks. One goroutine reads every message from the host's socket, and each
@@ -1281,6 +1285,13 @@ func offerAdminEvent(ch chan bool, value bool) {
 	case ch <- value:
 	default:
 	}
+}
+
+// replaceAdminEvent never blocks and keeps the newest value. Pause and resume set a state, so a quick
+// pause, resume, pause must end paused. Only the socket reader sends, so the slot is free after the drain.
+func replaceAdminEvent(ch chan bool, value bool) {
+	drainStaleAdminEvent(ch)
+	offerAdminEvent(ch, value)
 }
 
 // drainStaleAdminEvent drops an event a previous phase left in the buffer, so a late Skip from one
