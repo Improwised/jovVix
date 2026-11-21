@@ -215,6 +215,15 @@
             <p class="text-[14px] font-semibold text-jv-muted mt-1 truncate">
               {{ quiz.description.String }}
             </p>
+            <button
+              v-if="quiz.sessions > 1"
+              type="button"
+              class="mt-2 inline-flex cursor-pointer whitespace-nowrap items-center gap-1.5 rounded-full border-2 border-jv-ink bg-jv-yellow px-3 py-1 text-[13px] font-bold text-jv-ink shadow-brutal-sm transition-transform hover:-rotate-1"
+              @click.stop="viewCombinedReport(quiz.quiz_id)"
+            >
+              <Layers class="size-4" :stroke-width="2.4" />
+              Combine {{ quiz.sessions }} sessions
+            </button>
           </div>
 
           <!-- Participants -->
@@ -321,6 +330,7 @@ import {
   ChevronUp,
   ChevronDown,
   ChevronsUpDown,
+  Layers,
 } from "lucide-vue-next";
 import Pagination from "~/components/Pagination.vue";
 
@@ -386,6 +396,10 @@ const {
 
 const viewReport = (activeQuizId) => {
   navigateTo(`/admin/reports/${activeQuizId}`);
+};
+
+const viewCombinedReport = (quizId) => {
+  navigateTo(`/admin/reports/combined/${quizId}`);
 };
 
 const sortEventHandler = (columnName) => {

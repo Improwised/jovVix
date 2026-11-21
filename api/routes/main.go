@@ -285,6 +285,7 @@ func setupQuizController(v1 fiber.Router, db *goqu.Database, logger *zap.Logger,
 	report := admin.Group("/reports")
 	report.Get("/list", quizController.ListQuizzesAnalysis)
 	report.Get(fmt.Sprintf("/:%s/analysis", constants.ActiveQuizId), middleware.VerifySessionHost, quizController.GetQuizAnalysis)
+	report.Get(fmt.Sprintf("/quizzes/:%s/combined", constants.QuizId), quizController.GetCombinedReport)
 	return nil
 }
 

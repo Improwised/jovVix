@@ -186,6 +186,12 @@ const playerCount = computed(
                   You
                 </span>
               </p>
+              <p
+                v-if="user.detail"
+                class="mt-0.5 truncate font-body text-[12px] font-bold text-jv-muted sm:text-[13px]"
+              >
+                {{ user.detail }}
+              </p>
             </div>
 
             <span
