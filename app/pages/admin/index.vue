@@ -471,7 +471,7 @@ const deleteAccount = async () => {
       navigateTo("/");
     } catch (error) {
       console.error("Failed to delete the user", error);
-      toast.error("Failed to delete the user.");
+      toast.error(error?.data?.message || "Failed to delete the user.");
     }
   }
 };

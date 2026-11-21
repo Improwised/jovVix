@@ -37,7 +37,8 @@ const (
 
 // Email templetes
 const (
-	QuizEmailSubject = "You have been invited to a quiz"
+	QuizEmailSubject           = "You have been invited to a quiz"
+	AccountDeletedEmailSubject = "Your profile has been deleted"
 )
 
 // Success messages

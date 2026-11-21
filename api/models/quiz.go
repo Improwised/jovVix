@@ -644,11 +644,30 @@ func (model *QuizModel) ListQuizzesAnalysis(name, order, orderBy, date, userId s
 
 // Delete quiz and and their question using `quiz_id`
 func (model *QuizModel) DeleteQuizById(transaction *goqu.TxDatabase, QuizId string) error {
+	// Sessions of this quiz may belong to other hosts (shared quizzes) or be a room's current round.
 	activeQuizSubquery := transaction.From(ActiveQuizzesTable).Select("id").Where(goqu.Ex{"quiz_id": QuizId})
+
+	// Rooms reference their current session and sessions reference their room. Close a room whose
+	// current round is deleted: remove its members and detach its other rounds before deleting it.
+	roomSubquery := transaction.From("quiz_rooms").Select("id").Where(goqu.Ex{"current_session_id": goqu.Op{"in": activeQuizSubquery}})
+	_, err := transaction.Delete("quiz_room_members").Where(goqu.Ex{"room_id": goqu.Op{"in": roomSubquery}}).Executor().Exec()
+	if err != nil {
+		return err
+	}
+
+	_, err = transaction.Update(ActiveQuizzesTable).Set(goqu.Record{"room_id": nil}).Where(goqu.Ex{"room_id": goqu.Op{"in": roomSubquery}}).Executor().Exec()
+	if err != nil {
+		return err
+	}
+
+	_, err = transaction.Delete("quiz_rooms").Where(goqu.Ex{"current_session_id": goqu.Op{"in": activeQuizSubquery}}).Executor().Exec()
+	if err != nil {
+		return err
+	}
 
 	userPlayedQuizSubquery := transaction.From(UserPlayedQuizTable).Select("id").Where(goqu.Ex{"active_quiz_id": goqu.Op{"in": activeQuizSubquery}})
 
-	_, err := transaction.Delete(UserQuizResponsesTable).Where(goqu.Ex{"user_played_quiz_id": goqu.Op{"in": userPlayedQuizSubquery}}).Executor().Exec()
+	_, err = transaction.Delete(UserQuizResponsesTable).Where(goqu.Ex{"user_played_quiz_id": goqu.Op{"in": userPlayedQuizSubquery}}).Executor().Exec()
 	if err != nil {
 		return err
 	}
@@ -700,29 +719,23 @@ func deleteQuizById(transaction *goqu.TxDatabase, quizId string) error {
 	return nil
 }
 
-// Deletes the private quizzes created by a user and their related questions, and
-// preserves any public quizzes by orphaning them (creator_id -> NULL) so another
+// Deletes the private quizzes created by a user, with everything DeleteQuizById removes:
+// sessions (also those other hosts ran from a shared quiz), rooms, shares and questions.
+// It preserves any public quizzes by orphaning them (creator_id -> NULL) so another
 // admin can keep managing them after the creator's account is gone.
-// It deletes from the QuizQuestionsTable, removes related questions, and finally deletes the private quizzes themselves.
 func (model *QuizModel) DeleteCreatedQuizzesByUserId(transaction *goqu.TxDatabase, userId string) error {
 
 	// Only hard-delete private quizzes; public ones are preserved below.
-	privateQuizSubquery := transaction.From(QuizzesTable).Select("id").Where(goqu.Ex{"creator_id": userId, "is_public": false})
-
-	questionIds := []string{}
-	err := transaction.Delete(constants.QuizQuestionsTable).Where(goqu.Ex{"quiz_id": goqu.Op{"in": privateQuizSubquery}}).Returning("question_id").Executor().ScanVals(&questionIds)
+	privateQuizIds := []string{}
+	err := transaction.From(QuizzesTable).Select("id").Where(goqu.Ex{"creator_id": userId, "is_public": false}).ScanVals(&privateQuizIds)
 	if err != nil {
 		return err
 	}
 
-	err = deleteQuestionsByIds(transaction, questionIds)
-	if err != nil {
-		return err
-	}
-
-	_, err = transaction.Delete(QuizzesTable).Where(goqu.Ex{"id": goqu.Op{"in": privateQuizSubquery}}).Executor().Exec()
-	if err != nil {
-		return err
+	for _, quizId := range privateQuizIds {
+		if err = model.DeleteQuizById(transaction, quizId); err != nil {
+			return err
+		}
 	}
 
 	// Preserve public quizzes: detach the departing creator so the FK to users does
