@@ -4,7 +4,8 @@ The quiz detail page (`/admin/quiz/list-quiz/[quiz_id]`) warns a creator when a 
 answer can be picked without knowing the subject (#342). The warning is advice. It does not block
 saving or hosting, and only people who can edit the quiz see it.
 
-The checks are in `app/composables/guessable_questions.js` (`findGuessablePatterns`), with one test
+The checks are in `app/composables/guessable_questions.js` (`findGuessablePatterns`; `guessWarningsFor`
+applies the editors-only and English-only rules), with one test
 per pattern in `app/test/composables/guessable_questions.test.js`. They run in the browser each time
 the page shows the questions, so a saved edit is checked again at once.
 

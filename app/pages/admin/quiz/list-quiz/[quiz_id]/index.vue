@@ -490,9 +490,7 @@
               </ul>
 
               <div
-                v-if="
-                  canEditQuiz && guessWarnings[question.question_id]?.length
-                "
+                v-if="guessWarnings[question.question_id]?.length"
                 role="note"
                 class="mt-3 flex gap-2 rounded-md border-2 border-jv-yellow bg-jv-yellow-soft px-3 py-2 text-[14px] font-medium text-jv-ink"
               >
@@ -656,7 +654,7 @@ import constants from "~~/config/constants";
 import GenerateWithAiModal from "@/components/Quiz/GenerateWithAiModal.vue";
 import { readApiError } from "@/composables/apiError";
 import { detectQuizLanguage } from "@/composables/quizLanguage";
-import { findGuessablePatterns } from "@/composables/guessable_questions";
+import { guessWarningsFor } from "@/composables/guessable_questions";
 import { useListUserstore } from "~/store/userlist";
 import { useSessionStore } from "~~/store/session";
 import NavigationLink from "~/components/common/NavigationLink.vue";
@@ -751,15 +749,12 @@ const quizLanguage = computed(() =>
 );
 
 // Advice for the creator (GitHub #342): question_id -> patterns that give the answer away.
-const guessWarnings = computed(() => {
-  const english = quizLanguage.value === "english";
-  return Object.fromEntries(
-    questions.value.map((question) => [
-      question.question_id,
-      findGuessablePatterns(question, { english }),
-    ])
-  );
-});
+const guessWarnings = computed(() =>
+  guessWarningsFor(questions.value, {
+    canEdit: canEditQuiz.value,
+    language: quizLanguage.value,
+  })
+);
 
 const deleteQuizMessage = computed(
   () =>

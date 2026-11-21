@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { findGuessablePatterns } from "~/composables/guessable_questions";
+import {
+  findGuessablePatterns,
+  guessWarningsFor,
+} from "~/composables/guessable_questions";
 
 // q("stem", ["opt1", "opt2", ...], correctKey) builds a single-answer text question.
 const q = (question, opts, correct, extra = {}) => ({
@@ -138,5 +141,51 @@ describe("findGuessablePatterns", () => {
         })
       )
     ).toEqual([]);
+  });
+});
+
+describe("guessWarningsFor", () => {
+  const catchAll = {
+    ...q(
+      "Which are mammals?",
+      ["The blue whale", "The fruit bat", "All of the above"],
+      3
+    ),
+    question_id: "q1",
+  };
+  const longest = {
+    ...q(
+      "Pick one",
+      ["Cat", "Dog", "A very long and detailed correct answer here"],
+      3
+    ),
+    question_id: "q2",
+  };
+  const ids = (warnings) =>
+    Object.fromEntries(
+      Object.entries(warnings).map(([id, found]) => [
+        id,
+        found.map((p) => p.code),
+      ])
+    );
+
+  it("gives advice only to people who can edit the quiz", () => {
+    expect(
+      guessWarningsFor([catchAll], { canEdit: false, language: "english" })
+    ).toEqual({});
+    expect(
+      ids(guessWarningsFor([catchAll], { canEdit: true, language: "english" }))
+    ).toEqual({ q1: ["catch_all"] });
+  });
+
+  it("runs the English word checks only on an English quiz", () => {
+    expect(
+      ids(
+        guessWarningsFor([catchAll, longest], {
+          canEdit: true,
+          language: "hindi",
+        })
+      )
+    ).toEqual({ q1: [], q2: ["longest"] });
   });
 });

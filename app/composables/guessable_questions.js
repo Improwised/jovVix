@@ -189,3 +189,16 @@ export const findGuessablePatterns = (question, { english = true } = {}) => {
 
   return found;
 };
+
+// The page's rules (GitHub #342): advice is for people who can edit the quiz, and the
+// English word checks run only when the quiz reads as English. Returns question_id -> patterns.
+export const guessWarningsFor = (questions, { canEdit, language }) => {
+  if (!canEdit) return {};
+  const english = language === "english";
+  return Object.fromEntries(
+    (questions || []).map((question) => [
+      question.question_id,
+      findGuessablePatterns(question, { english }),
+    ])
+  );
+};
