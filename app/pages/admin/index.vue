@@ -137,6 +137,7 @@
                   id="first-name"
                   v-model="userData.first_name"
                   type="text"
+                  maxlength="12"
                   class="h-14 w-full border-2 border-jv-ink bg-jv-canvas px-4 text-[17px] font-semibold text-jv-ink outline-none transition-colors placeholder:text-jv-ink/35 focus:bg-jv-white"
                   placeholder="Pending..."
                   required
@@ -154,6 +155,7 @@
                   id="last-name"
                   v-model="userData.last_name"
                   type="text"
+                  maxlength="50"
                   class="h-14 w-full border-2 border-jv-ink bg-jv-canvas px-4 text-[17px] font-semibold text-jv-ink outline-none transition-colors placeholder:text-jv-ink/35 focus:bg-jv-white"
                   placeholder="Pending..."
                   required

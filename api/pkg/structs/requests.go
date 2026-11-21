@@ -15,9 +15,11 @@ type ReqRegisterUser struct {
 	Password  string `json:"password" validate:"required"`
 }
 
+// The limits match api/pkg/kratos/identity.schema.json: the API writes the traits directly, so Kratos
+// does not validate them.
 type ReqUpdateUser struct {
-	FirstName string `json:"first_name" validate:"required"`
-	LastName  string `json:"last_name" validate:"required"`
+	FirstName string `json:"first_name" validate:"required,max=12"`
+	LastName  string `json:"last_name" validate:"required,max=50"`
 }
 
 type ReqLoginUser struct {

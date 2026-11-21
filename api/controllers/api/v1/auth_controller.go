@@ -194,7 +194,8 @@ func (ctrl *AuthController) UpadateRegisteredUser(c *fiber.Ctx) error {
 	kratosStruct.Name.First = userReq.FirstName
 	kratosStruct.Name.Last = userReq.LastName
 
-	kratosjson, err := json.Marshal(kratosStruct)
+	// Only the name: the other traits, such as email, stay as they are.
+	kratosjson, err := json.Marshal(kratosStruct.Name)
 	if err != nil {
 		return utils.JSONFail(c, http.StatusBadRequest, err.Error())
 	}
