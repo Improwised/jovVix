@@ -103,16 +103,37 @@ func (userSvc *UserService) DeleteUserDataById(userId, kratosId string) error {
 		return fmt.Errorf(constants.Unauthenticated)
 	}
 
-	// delete user data from kratos database
-	kratosClient := resty.New().SetBaseURL(userSvc.config.Kratos.BaseUrl+"/admin/identities").SetHeader("accept", "application/json")
-
-	res, err := kratosClient.R().Delete(fmt.Sprintf("/%s", kratosId))
-	if err != nil || res.StatusCode() != http.StatusNoContent {
-		userSvc.logger.Error("unauthenticated registration", zap.Any("response from kratos", res.RawResponse), zap.Error(err), zap.Any("kratos response", res))
+	if err := deleteKratosIdentity(userSvc.config.Kratos.AdminUrl, kratosId); err != nil {
+		userSvc.logger.Error("error while deleting identity from kratos", zap.Error(err))
 		return fmt.Errorf("failed to delete user from kratos for %s", kratosId)
 	}
 
 	isOk = true
 
+	return nil
+}
+
+// deleteKratosIdentity deletes the identity through the Kratos admin API.
+// adminUrl is SERVE_ADMIN_BASE_URL and includes the /admin prefix, as in api/cli/delete-orphaned.go.
+// Redirects are not followed: the admin API has no authentication, so a misconfigured URL must fail
+// instead of being sent somewhere else.
+func deleteKratosIdentity(adminUrl, kratosId string) error {
+	if strings.TrimSpace(adminUrl) == "" {
+		return fmt.Errorf("SERVE_ADMIN_BASE_URL is not set")
+	}
+
+	res, err := resty.New().
+		SetBaseURL(strings.TrimRight(adminUrl, "/")+"/identities").
+		SetHeader("accept", "application/json").
+		SetRedirectPolicy(resty.NoRedirectPolicy()).
+		R().
+		SetPathParam("id", kratosId).
+		Delete("/{id}")
+	if err != nil {
+		return err
+	}
+	if res.StatusCode() != http.StatusNoContent {
+		return fmt.Errorf("kratos admin API returned %d", res.StatusCode())
+	}
 	return nil
 }
