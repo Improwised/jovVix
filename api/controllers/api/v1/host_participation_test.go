@@ -39,6 +39,8 @@ func TestHostParticipationPostgres(t *testing.T) {
 	}
 	_, err = db.Exec(`CREATE TABLE active_quizzes (id uuid PRIMARY KEY, admin_id text NOT NULL, is_active boolean NOT NULL, current_question uuid, activated_to timestamptz, is_question_active boolean);
  CREATE TABLE active_quiz_questions (active_quiz_id uuid,question_id uuid);
+ CREATE TABLE questions(id uuid PRIMARY KEY,options json,type int);
+ INSERT INTO questions VALUES ('00000000-0000-0000-0000-000000000011','{"1":"Correct","2":"Wrong","3":"Wrong again","4":"Also wrong"}',1);
  CREATE TABLE users (id text, first_name text, last_name text, username text, img_key text);
  INSERT INTO users VALUES ('host','Host','One','host','avatar'), ('player','Host','Two','player','avatar');
  CREATE TABLE user_played_quizzes (id uuid PRIMARY KEY,user_id text,active_quiz_id uuid,is_host boolean, player_name text);
