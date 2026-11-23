@@ -1283,19 +1283,21 @@ func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.Wa
 
 	var questionStartTime time.Time
 
-	// start counter if not any question running
+	// Start new questions, counting down only for the first solo question.
 	if !lastQuestionTimeStamp.Valid {
-		response.Component = constants.Question
-		response.Action = constants.ActionCounter
-		response.Data = map[string]int{"counter": constants.Counter, "count": constants.Count}
-		shareEvenWithUser(c, qc, response, constants.EventStartCount5, session.ID.String(), int(session.InvitationCode.Int32), constants.ToAll, arrangeMu)
-		select {
-		case <-time.After(time.Duration(constants.Counter) * time.Second):
-		case <-disconnected:
-			return
+		if !session.IsSolo || question.OrderNumber == 1 {
+			response.Component = constants.Question
+			response.Action = constants.ActionCounter
+			response.Data = map[string]int{"counter": constants.Counter, "count": constants.Count}
+			shareEvenWithUser(c, qc, response, constants.EventStartCount5, session.ID.String(), int(session.InvitationCode.Int32), constants.ToAll, arrangeMu)
+			select {
+			case <-time.After(time.Duration(constants.Counter) * time.Second):
+			case <-disconnected:
+				return
+			}
 		}
 
-		// Set the question start time to NOW (after counter finishes)
+		// Start the question timer after any countdown finishes.
 		questionStartTime = time.Now()
 
 		// update question status to activate
@@ -1310,6 +1312,7 @@ func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.Wa
 	}
 
 	// question sent
+	response.Component = constants.Question
 	response.Action = constants.ActionSendQuestion
 	responseData := map[string]any{
 		"id":             question.ID,
