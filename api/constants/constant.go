@@ -67,6 +67,7 @@ const (
 	ErrKratosAuth                  = "error while fetching user from kratos"
 	ErrKratosDataInsertion         = "error while inserting user data came from kratos"
 	ErrKratosIDEmpty               = "error no session_id found in kratos cookie"
+	ErrSessionExpired              = "Your session has expired. Please sign in again."
 	ErrKratosCookieTime            = "error while parsing the expiration time of the cookie"
 	ErrRegisterQuiz                = "error while creating quiz"
 	ErrCreatingDemoQuiz            = "error while creating demo quiz"

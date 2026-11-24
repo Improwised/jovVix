@@ -63,4 +63,5 @@ const {
     credentials: "include",
   }
 );
+useSessionExpiredRedirect(questionError);
 </script>
