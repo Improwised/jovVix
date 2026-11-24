@@ -9,7 +9,7 @@ import {
 const questions = [
   {
     question: "Capital of France?",
-    question_type: "single answer",
+    type: 1,
     options: { 1: "Paris", 2: "Lyon" },
     correct_answer: [1],
     selected_answers: { 1: ["ann", "bob"], 2: ["cy"] },
@@ -19,7 +19,8 @@ const questions = [
   },
   {
     question: "Favourite colour?",
-    question_type: "survey",
+    // The analysis API sends the type as a number: 1 single answer, 2 survey.
+    type: 2,
     options: { 1: "Red", 2: "Blue" },
     correct_answer: [1, 2],
     selected_answers: { 2: ["ann"] },
@@ -48,8 +49,16 @@ describe("report PDF", () => {
       1,
       "2.50 s",
     ]);
-    // A survey has no correct option to mark.
-    expect(q.body[1][2]).toBe("A. Red: 0\nB. Blue: 1");
+    // A survey shows its votes and skips, ungraded.
+    expect(q.body[1]).toEqual([
+      2,
+      "Favourite colour?",
+      "A. Red: 0\nB. Blue: 1",
+      "-",
+      "-",
+      0,
+      "1.00 s",
+    ]);
     expect(p.body).toEqual([
       [1, "Ann", 950, 1, 0, 0],
       [2, "Bob", 700, 1, 0, 0],
@@ -83,5 +92,34 @@ describe("report PDF", () => {
     ]) {
       expect(pdf).toContain(text);
     }
+  });
+
+  it("draws text outside Latin-1 as browser-rendered images", async () => {
+    // 1x1 PNG; the real renderer draws the text on a canvas.
+    const png =
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
+    const drawn = [];
+    const textRenderer = {
+      width: (text, fontSize) => text.length * fontSize * 0.5,
+      image: (text) => {
+        drawn.push(text);
+        return png;
+      },
+    };
+    const doc = await buildReportPdf({
+      title: "ગુજરાતી ક્વિઝ",
+      summary: "1 questions, 1 players",
+      questions: [{ ...questions[0], question: "રાજધાની કઈ છે?" }],
+      participants: [{ ...participants[0], name: "કિરણ" }],
+      textRenderer,
+    });
+    const pdf = doc.output();
+    expect(drawn).toEqual(
+      expect.arrayContaining(["ગુજરાતી ક્વિઝ", "રાજધાની કઈ છે?", "કિરણ"])
+    );
+    expect(drawn).not.toContain("Ann");
+    expect(pdf).toContain("/Subtype /Image");
+    // Latin text stays real, searchable PDF text.
+    expect(pdf).toContain("A. Paris \\(correct\\): 2");
   });
 });
