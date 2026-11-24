@@ -489,9 +489,39 @@ func applyPlayerOptionOrderForScore(message map[string]any, qc *quizSocketContro
 	correctKeys := parseAnswerKeysFromPayload(data["answers"])
 	shuffledOptions, translatedCorrect, _, err := qc.userQuizResponseModel.ApplyOptionOrder(userPlayedQuizId, questionID, options, correctKeys, nil)
 	if err != nil {
-		return nil
+		return err
 	}
 
+	// Host charts count stored canonical answers; align those with visible labels too.
+	if responses, ok := data["userResponses"].([]any); ok {
+		for _, raw := range responses {
+			entry, ok := raw.(map[string]any)
+			if !ok {
+				continue
+			}
+			answer, ok := entry["answers"].(map[string]any)
+			if !ok || answer["Valid"] != true {
+				continue
+			}
+			encoded, ok := answer["String"].(string)
+			if !ok || encoded == "" {
+				continue
+			}
+			var keys []int
+			if err := json.Unmarshal([]byte(encoded), &keys); err != nil {
+				return err
+			}
+			_, _, selected, err := qc.userQuizResponseModel.ApplyOptionOrder(userPlayedQuizId, questionID, options, nil, keys)
+			if err != nil {
+				return err
+			}
+			encodedKeys, err := json.Marshal(selected)
+			if err != nil {
+				return err
+			}
+			answer["String"] = string(encodedKeys)
+		}
+	}
 	data["options"] = mapStringToAny(shuffledOptions)
 	data["answers"] = intsToAny(translatedCorrect)
 	return nil
@@ -1127,18 +1157,52 @@ func shareEvenWithUser(c *websocket.Conn, qc *quizSocketController, response *Qu
 	}
 
 	if sentToWhom == constants.ToAdmin || sentToWhom == constants.ToAll {
-		// send event to admin
+		// Personalize a separate payload: Redis broadcasts must stay canonical.
+		hostResponse, hostErr := responseForHost(qc, response, event, sessionId)
+		if hostErr != nil {
+			qc.logger.Error("unable to prepare host options", zap.Error(hostErr))
+			return
+		}
 
 		err := func() error {
 			arrangeMu.Lock()
 			defer arrangeMu.Unlock()
-			return utils.JSONSuccessWs(c, event, response)
+			return utils.JSONSuccessWs(c, event, hostResponse)
 		}()
 
 		if err != nil {
 			qc.logger.Error(fmt.Sprintf("socket error sending event: %s event, %s action %v code", constants.EventSendQuestion, response.Action, invitationCode), zap.Error(err))
 		}
 	}
+}
+
+// responseForHost uses the same persisted order as answer submission, including
+// solo games and reconnects. Spectator hosts retain the canonical view.
+func responseForHost(qc *quizSocketController, response *QuizSendResponse, event, sessionID string) (any, error) {
+	if event != constants.EventSendQuestion && event != constants.EventShowScore {
+		return response, nil
+	}
+	var participant uuid.UUID
+	found, err := qc.db.From(goqu.T("user_played_quizzes").As("p")).
+		Join(goqu.T("active_quizzes").As("a"), goqu.On(goqu.I("a.id").Eq(goqu.I("p.active_quiz_id")))).
+		Select(goqu.I("p.id")).Where(goqu.Ex{"a.id": sessionID, "p.is_host": false}, goqu.I("p.user_id").Eq(goqu.I("a.admin_id"))).ScanVal(&participant)
+	if err != nil || !found {
+		return response, err
+	}
+	encoded, err := json.Marshal(map[string]any{"response": response})
+	if err != nil {
+		return nil, err
+	}
+	var message map[string]any
+	if err = json.Unmarshal(encoded, &message); err != nil {
+		return nil, err
+	}
+	if event == constants.EventSendQuestion {
+		err = applyPlayerOptionOrder(message, qc, participant)
+	} else {
+		err = applyPlayerOptionOrderForScore(message, qc, participant)
+	}
+	return message["response"], err
 }
 
 func questionAndScoreHandler(c *websocket.Conn, qc *quizSocketController, response *QuizSendResponse, session models.ActiveQuiz, isConnected *bool, arrangeMu *sync.Mutex) {
