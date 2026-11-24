@@ -33,6 +33,10 @@ selfservice:
     - http://127.0.0.1:5000
 
   methods:
+    # Users can't change their email themselves; support changes it (GitHub #65). The profile method
+    # would let any session change traits.email through Kratos. Names are edited through the API.
+    profile:
+      enabled: false
     password:
       enabled: true
     oidc:
