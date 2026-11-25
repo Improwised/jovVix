@@ -30,7 +30,7 @@
 {{ end -}}
 
 {{- if .MergeCommits -}}
-### Merged features
+### Pull Requests
 {{ range .MergeCommits -}}
 - {{ .Header }}
 {{ end }}
