@@ -163,6 +163,33 @@ describe("Combined report page", () => {
     expect(wrapper.find('button[type="submit"]').element.disabled).toBe(true);
   });
 
+  it("selects and clears every session with buttons that stay visible", async () => {
+    const button = (label) =>
+      wrapper.findAll('button[type="button"]').find((b) => b.text() === label);
+    const boxes = () =>
+      wrapper.findAll('input[type="checkbox"]').map((b) => b.element.checked);
+    const submit = () => wrapper.find('button[type="submit"]').element;
+
+    await button("Select all").trigger("click");
+    expect(boxes()).toEqual([true, true, true]);
+    expect(submit().disabled).toBe(false);
+    // Both buttons stay on the page when every session is ticked.
+    expect(button("Clear all").exists()).toBe(true);
+
+    await button("Clear all").trigger("click");
+    expect(boxes()).toEqual([false, false, false]);
+    expect(submit().disabled).toBe(true);
+    expect(button("Select all").exists()).toBe(true);
+  });
+
+  it("scrolls a long session list inside its own box", () => {
+    const list = wrapper.find('[data-testid="session-list"]');
+    expect(list.classes()).toEqual(
+      expect.arrayContaining(["max-h-72", "overflow-y-auto"])
+    );
+    expect(list.findAll('input[type="checkbox"]')).toHaveLength(3);
+  });
+
   it("shows the API's reason when the report fails", async () => {
     fetchHolder.state.data.value = null;
     fetchHolder.state.error.value = {

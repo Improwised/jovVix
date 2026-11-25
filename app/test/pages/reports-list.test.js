@@ -51,6 +51,25 @@ describe("Reports list combined report button", () => {
     expect(buttons.map((b) => b.text())).toEqual(["Combine 2 sessions"]);
   });
 
+  it("explains the combine button in a tooltip on hover and focus", () => {
+    const button = wrapper
+      .findAll("button")
+      .find((b) => b.text().includes("Combine"));
+    const tip = wrapper.find(`#${button.attributes("aria-describedby")}`);
+    expect(tip.attributes("role")).toBe("tooltip");
+    expect(tip.text()).toBe(
+      "Combine results from multiple sessions of this quiz into one leaderboard."
+    );
+    // Hidden until the button's wrapper is hovered or holds keyboard focus.
+    expect(tip.classes()).toEqual(
+      expect.arrayContaining([
+        "invisible",
+        "group-hover:visible",
+        "group-focus-within:visible",
+      ])
+    );
+  });
+
   it("opens the combined report, not the session report", async () => {
     const button = wrapper
       .findAll("button")
