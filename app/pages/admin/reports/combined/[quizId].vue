@@ -48,6 +48,13 @@ watch(
   { immediate: true }
 );
 
+const selectAll = () => {
+  checked.value = report.value.sessions.map((s) => s.id);
+};
+const clearAll = () => {
+  checked.value = [];
+};
+
 const generate = () => {
   navigateTo({
     path: route.path,
@@ -158,7 +165,28 @@ const when = (time) => format(new Date(time), "dd-MMM-yyyy HH:mm");
           <p class="mt-2 text-[14px] font-semibold text-jv-muted">
             Choose at least two sessions, then generate the report.
           </p>
-          <div class="mt-4 flex flex-col gap-2">
+          <div class="mt-4 flex flex-wrap gap-2">
+            <button
+              type="button"
+              class="cursor-pointer rounded-full border-2 border-jv-ink bg-jv-white px-4 py-1 text-[14px] font-bold text-jv-ink shadow-brutal-sm transition-transform hover:-rotate-1"
+              @click="selectAll"
+            >
+              Select all
+            </button>
+            <button
+              type="button"
+              class="cursor-pointer rounded-full border-2 border-jv-ink bg-jv-white px-4 py-1 text-[14px] font-bold text-jv-ink shadow-brutal-sm transition-transform hover:-rotate-1"
+              @click="clearAll"
+            >
+              Clear all
+            </button>
+          </div>
+          <!-- A quiz can have dozens of sessions: the list scrolls in its own box,
+               so the leaderboard below stays one page scroll away. -->
+          <div
+            data-testid="session-list"
+            class="mt-3 flex max-h-72 flex-col gap-2 overflow-y-auto pr-1"
+          >
             <label
               v-for="(session, index) in report.sessions"
               :key="session.id"
