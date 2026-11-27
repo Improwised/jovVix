@@ -65,17 +65,18 @@ func TestCombinedReportPostgres(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	exec(`CREATE TABLE users(id bpchar(20) PRIMARY KEY,first_name text,username text,img_key text);
- CREATE TABLE quizzes(id uuid PRIMARY KEY,title text,description text);
+	exec(`CREATE TABLE users(id bpchar(20) PRIMARY KEY,first_name text,username text,img_key text,email text);
+ CREATE TABLE quizzes(id uuid PRIMARY KEY,title text,description text,creator_id bpchar(20));
+ CREATE TABLE shared_quizzes(quiz_id uuid,shared_to text);
  CREATE TABLE active_quizzes(id uuid PRIMARY KEY,admin_id bpchar(20),quiz_id uuid,activated_from timestamp,activated_to timestamp);
  CREATE TABLE active_quiz_questions(active_quiz_id uuid,question_id uuid);
  CREATE TABLE user_played_quizzes(id uuid PRIMARY KEY,user_id bpchar(20),active_quiz_id uuid,is_host bool,player_name text);
  CREATE TABLE user_quiz_responses(id uuid PRIMARY KEY,user_played_quiz_id uuid,question_id uuid,calculated_score int,response_time int);
- INSERT INTO users VALUES('host','Host','host',''),('other','Other','other',''),('a','Asha','asha',''),('b','Bilal','bilal',''),
+ INSERT INTO users(id,first_name,username,img_key) VALUES('host','Host','host',''),('other','Other','other',''),('a','Asha','asha',''),('b','Bilal','bilal',''),
  ('c','Chen','chen',''),('d','Dana','dana',''),('e','Eve','eve',''),('f','Fay','fay','');`)
 
 	quiz, otherQuiz := uuid.NewString(), uuid.NewString()
-	exec(`INSERT INTO quizzes VALUES($1,'Space quiz','Batch test'),($2,'Other quiz','')`, quiz, otherQuiz)
+	exec(`INSERT INTO quizzes(id,title,description,creator_id) VALUES($1,'Space quiz','Batch test','host'),($2,'Other quiz','','host')`, quiz, otherQuiz)
 	session := func(host, quizID, from string, ended bool) string {
 		id := uuid.NewString()
 		var to any
