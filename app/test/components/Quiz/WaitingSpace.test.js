@@ -184,6 +184,41 @@ describe("WaitingSpace test", () => {
     listUserStore.listUsers = [];
   });
 
+  describe("hint for a host who is alone", () => {
+    const hint = "Scan the QR code with your phone to join as a player.";
+
+    afterEach(() => {
+      listUserStore.listUsers = [];
+    });
+
+    it("shows the hint while no player has joined", () => {
+      listUserStore.listUsers = [];
+      const wrapper = mountComponent();
+      expect(wrapper.text()).toContain(hint);
+    });
+
+    it("hides the hint once another player joins", async () => {
+      listUserStore.listUsers = [];
+      const wrapper = mountComponent();
+      listUserStore.listUsers = [{ UserId: "guest", IsAlive: true }];
+      await wrapper.vm.$nextTick();
+      expect(wrapper.text()).not.toContain(hint);
+    });
+
+    it("keeps the hint when only the participating host is listed", async () => {
+      listUserStore.listUsers = [{ UserId: "host", IsAlive: true }];
+      const wrapper = mountComponent();
+      await wrapper.setProps({ hostUserId: "host", hostParticipates: true });
+      expect(wrapper.text()).toContain(hint);
+    });
+
+    it("never shows the hint to a player", async () => {
+      const wrapper = mountComponent();
+      await wrapper.setProps({ isAdmin: false });
+      expect(wrapper.text()).not.toContain(hint);
+    });
+  });
+
   it("hides participation for private hosts", async () => {
     const wrapper = mountComponent();
     await wrapper.setProps({ allowHostParticipation: false });
