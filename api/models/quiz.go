@@ -9,10 +9,26 @@ import (
 
 	"github.com/Improwised/jovvix/api/constants"
 	"github.com/doug-martin/goqu/v9"
+	"github.com/doug-martin/goqu/v9/exp"
 	"github.com/google/uuid"
 )
 
 const QuizzesTable = "quizzes"
+
+// ReportVisibleTo matches the sessions whose report userId may read, for a query that names
+// active_quizzes "aq" and quizzes "q": sessions they hosted, and sessions of a quiz they created
+// that someone they shared it with hosted (GitHub #38). Anyone can host a public quiz, so
+// creating the quiz is not enough on its own. Revoking the share hides those sessions again.
+func ReportVisibleTo(userId string) exp.Expression {
+	hostHasShare := goqu.From(goqu.T(SharedQuizzesTable).As("sq")).
+		InnerJoin(goqu.T(UserTable).As("su"), goqu.On(goqu.Ex{"su.email": goqu.I("sq.shared_to")})).
+		Where(goqu.Ex{"sq.quiz_id": goqu.I("aq.quiz_id"), "su.id": goqu.I("aq.admin_id")}).
+		Select(goqu.L("1"))
+	return goqu.Or(
+		goqu.I("aq.admin_id").Eq(userId),
+		goqu.And(goqu.I("q.creator_id").Eq(userId), goqu.L("EXISTS ?", hostHasShare)),
+	)
+}
 
 // QuizModel implements quiz related database operations
 type QuizModel struct {
@@ -570,7 +586,11 @@ func (model *QuizModel) ListQuizzesAnalysis(name, order, orderBy, date, userId s
 		InnerJoin(goqu.T(ActiveQuizQuestionsTable).As("qq"), goqu.On(goqu.Ex{"aq.id": goqu.I("qq.active_quiz_id")})).
 		InnerJoin(goqu.T(UserPlayedQuizTable).As("upq"), goqu.On(goqu.Ex{"upq.active_quiz_id": goqu.I("aq.id")})).
 		InnerJoin(goqu.T(UserQuizResponsesTable).As("uqr"), goqu.On(goqu.Ex{"uqr.question_id": goqu.I("qq.question_id"), "uqr.user_played_quiz_id": goqu.I("upq.id")})).
-		Where(goqu.Ex{"aq.admin_id": userId, "aq.activated_to": goqu.Op{"isNot": nil}, "upq.is_host": false}).
+		LeftJoin(goqu.T(QuizzesTable).As("q"), goqu.On(goqu.Ex{"q.id": goqu.I("aq.quiz_id")})).
+		Where(
+			ReportVisibleTo(userId),
+			goqu.Ex{"aq.activated_to": goqu.Op{"isNot": nil}, "upq.is_host": false},
+		).
 		GroupBy(
 			"aq.id",
 			"aq.activated_from",
