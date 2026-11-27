@@ -215,6 +215,23 @@
   }
 }
 
+/* Keep phone action sizing consistent, even when a page sets desktop sizes. */
+@media (width < 40rem) {
+  :where(
+    button:not([data-slot="participant-card"]),
+    input:is([type="button"], [type="submit"], [type="reset"]),
+    [role="button"]:is(.inline-flex, .inline-grid),
+    a:is(.inline-flex, .inline-grid):is(
+      [class*="shadow-brutal"],
+      [class*="border-jv-ink"],
+      [class*="bg-jv-"],
+      [data-slot="button"]
+    )
+  ):not([class^="size-"], [class*=" size-"]) {
+    @apply min-h-9 h-auto gap-1.5 px-3 py-1 text-sm leading-5;
+  }
+}
+
 @utility small-text {
   @apply text-[16px] leading-[24px] tracking-normal font-normal;
 }

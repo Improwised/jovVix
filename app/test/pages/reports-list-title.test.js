@@ -41,10 +41,8 @@ describe("Reports list", () => {
     await flushPromises();
     nav.mockClear();
 
-    const row = wrapper
-      .findAll('div[role="button"]')
-      .find((d) => d.text().includes("Maps and Rivers"));
-    await row.trigger("click");
+    const link = wrapper.find('a[href^="/admin/reports/"]');
+    await link.trigger("click");
 
     expect(nav).toHaveBeenCalledWith({
       path: "/admin/reports/6f1c2a3e-0000-4000-8000-000000000001",

@@ -232,7 +232,7 @@
               </div>
 
               <div
-                class="flex shrink-0 flex-wrap items-start gap-4 text-right sm:gap-5"
+                class="grid w-full grid-cols-3 items-start gap-2 text-center sm:flex sm:w-auto sm:shrink-0 sm:flex-wrap sm:gap-5 sm:text-right"
               >
                 <div>
                   <div

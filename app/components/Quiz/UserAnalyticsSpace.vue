@@ -130,33 +130,34 @@ onBeforeUnmount(() => {
   <!-- Participant card -->
   <button
     type="button"
-    class="w-full text-left jv-border-rough bg-jv-white p-5 sm:p-6 shadow-brutal-sm transition-transform hover:translate-y-[-2px] hover:shadow-brutal cursor-pointer"
+    data-slot="participant-card"
+    class="w-full text-left jv-border-rough bg-jv-white px-3 py-2.5 sm:p-6 shadow-brutal-sm transition-transform hover:translate-y-[-2px] hover:shadow-brutal cursor-pointer"
     @click="isOpen = true"
   >
     <!-- Top row: avatar + name | stats -->
     <div
-      class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+      class="flex flex-col gap-2 sm:gap-4 sm:flex-row sm:items-center sm:justify-between"
     >
-      <div class="flex items-center gap-4 min-w-0">
+      <div class="flex items-center gap-2 min-w-0 sm:gap-4">
         <NuxtImg
           :src="avatar"
           :alt="props.data[0].firstname"
           width="56"
           height="56"
-          class="size-14 shrink-0 rounded-full border-[3px] border-jv-ink bg-jv-slate object-cover shadow-brutal-sm"
+          class="size-9 sm:size-14 shrink-0 rounded-full border-[3px] border-jv-ink bg-jv-slate object-cover shadow-brutal-sm"
         />
         <div class="min-w-0">
           <div
-            class="font-headings text-[22px] leading-tight text-jv-ink sm:text-[24px] truncate"
+            class="font-headings text-[18px] leading-tight text-jv-ink sm:text-[24px] truncate"
           >
             {{ props.data[0].firstname }}
           </div>
         </div>
       </div>
 
-      <div class="flex items-end gap-6 sm:gap-8">
+      <div class="grid grid-cols-3 items-end gap-2 sm:flex sm:gap-8">
         <div class="text-center">
-          <div class="text-[22px] font-black text-jv-ink sm:text-[24px]">
+          <div class="text-[16px] font-black text-jv-ink sm:text-[24px]">
             {{ analysis?.rank }}
           </div>
           <div
@@ -166,7 +167,7 @@ onBeforeUnmount(() => {
           </div>
         </div>
         <div class="text-center">
-          <div class="text-[22px] font-black text-jv-ink sm:text-[24px]">
+          <div class="text-[16px] font-black text-jv-ink sm:text-[24px]">
             {{ analysis?.accuracy }}%
           </div>
           <div
@@ -176,7 +177,7 @@ onBeforeUnmount(() => {
           </div>
         </div>
         <div class="text-center">
-          <div class="text-[22px] font-black text-jv-ink sm:text-[24px]">
+          <div class="text-[16px] font-black text-jv-ink sm:text-[24px]">
             {{ analysis?.totalScore }}
           </div>
           <div
@@ -190,7 +191,7 @@ onBeforeUnmount(() => {
 
     <!-- Multi-segment progress bar -->
     <div
-      class="mt-5 flex h-2.5 w-full overflow-hidden rounded-full bg-jv-slate"
+      class="mt-2.5 sm:mt-5 flex h-1.5 sm:h-2.5 w-full overflow-hidden rounded-full bg-jv-slate"
     >
       <div
         class="h-full bg-jv-accent-green"
@@ -208,7 +209,7 @@ onBeforeUnmount(() => {
 
     <!-- Bottom counts row -->
     <div
-      class="mt-4 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[14px] font-bold text-jv-ink"
+      class="mt-2 sm:mt-4 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[14px] font-bold text-jv-ink"
     >
       <span class="inline-flex items-center gap-1.5">
         <CheckCircle2 class="size-4 text-jv-accent-green" :stroke-width="2.6" />
