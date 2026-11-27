@@ -56,6 +56,8 @@ type QuizAnalysis struct {
 
 type QuizzesAnalysis struct {
 	ID             uuid.UUID      `json:"id" db:"id"`
+	QuizID         uuid.UUID      `json:"quiz_id" db:"quiz_id"`
+	Sessions       int            `json:"sessions" db:"sessions"`
 	Title          string         `json:"title" db:"title"`
 	Description    sql.NullString `json:"description,omitempty" db:"description"`
 	ActivatedTo    sql.NullTime   `json:"activated_to,omitempty" db:"activated_to"`
@@ -582,6 +584,14 @@ func (model *QuizModel) ListQuizzesAnalysis(name, order, orderBy, date, userId s
 
 	var quizzesAnalysis []QuizzesAnalysis
 
+	// Match the combined report's selectable sessions, including only sessions
+	// hosted by the current user with at least one player response.
+	combinedSessions := model.db.From(goqu.T(ActiveQuizzesTable).As("combined_aq")).
+		InnerJoin(goqu.T(UserPlayedQuizTable).As("combined_upq"), goqu.On(goqu.Ex{"combined_upq.active_quiz_id": goqu.I("combined_aq.id"), "combined_upq.is_host": false})).
+		InnerJoin(goqu.T(UserQuizResponsesTable).As("combined_uqr"), goqu.On(goqu.Ex{"combined_uqr.user_played_quiz_id": goqu.I("combined_upq.id")})).
+		Where(goqu.Ex{"combined_aq.quiz_id": goqu.I("aq.quiz_id"), "combined_aq.admin_id": userId, "combined_aq.activated_to": goqu.Op{"isNot": nil}}).
+		Select(goqu.COUNT(goqu.DISTINCT(goqu.I("combined_aq.id"))))
+
 	quizzesAnalysisInfo := model.db.From(goqu.T(ActiveQuizzesTable).As("aq")).
 		InnerJoin(goqu.T(ActiveQuizQuestionsTable).As("qq"), goqu.On(goqu.Ex{"aq.id": goqu.I("qq.active_quiz_id")})).
 		InnerJoin(goqu.T(UserPlayedQuizTable).As("upq"), goqu.On(goqu.Ex{"upq.active_quiz_id": goqu.I("aq.id")})).
@@ -603,6 +613,7 @@ func (model *QuizModel) ListQuizzesAnalysis(name, order, orderBy, date, userId s
 			"aq.activated_to",
 			goqu.COUNT(goqu.DISTINCT("qq.question_id")).As("questions"),
 			goqu.COUNT(goqu.DISTINCT("uqr.user_played_quiz_id")).As("participants"),
+			combinedSessions.As("sessions"),
 			goqu.SUM(goqu.Case().
 				When(goqu.I("uqr.calculated_score").Gt(0), 1).
 				When(goqu.I("uqr.calculated_score").Lte(0), 0)).
@@ -616,6 +627,8 @@ func (model *QuizModel) ListQuizzesAnalysis(name, order, orderBy, date, userId s
 			"qi.participants",
 			"qi.correct_answers",
 			"qi.id",
+			"qi.quiz_id",
+			"qi.sessions",
 			"qi.activated_from",
 			"qi.activated_to",
 			"q.title",

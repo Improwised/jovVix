@@ -74,4 +74,30 @@ INSERT INTO user_quiz_responses VALUES ('p1', 'q1', 1), ('p2', 'q1', 0), ('p3', 
 	if len(colleague) != 2 || colleague["00000000-0000-4000-8000-000000000001"] {
 		t.Fatalf("colleague sees %v, want only the two sessions they hosted", colleague)
 	}
+
+	// Another host's visible session must not make the combined-report button
+	// claim that the owner has multiple selectable sessions.
+	rows, _, err := model.ListQuizzesAnalysis("", "", "", "", "owner", 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, row := range rows {
+		if row.Sessions != 1 {
+			t.Fatalf("owner sees %d selectable sessions, want 1", row.Sessions)
+		}
+	}
+	if _, err = db.Exec(`INSERT INTO active_quizzes VALUES ('00000000-0000-4000-8000-000000000005', '00000000-0000-4000-8000-0000000000a1', 'owner', '2026-11-20 14:00:00', '2026-11-20 14:30:00');
+INSERT INTO user_played_quizzes VALUES ('p5', '00000000-0000-4000-8000-000000000005', 0);
+INSERT INTO user_quiz_responses VALUES ('p5', 'q1', 1);`); err != nil {
+		t.Fatal(err)
+	}
+	rows, _, err = model.ListQuizzesAnalysis("", "", "", "", "owner", 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, row := range rows {
+		if row.Sessions != 2 {
+			t.Fatalf("owner sees %d selectable sessions, want 2", row.Sessions)
+		}
+	}
 }

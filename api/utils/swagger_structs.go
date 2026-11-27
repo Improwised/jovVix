@@ -190,6 +190,26 @@ type RsponseListQuizzesAnalysis struct {
 	} `json:"body"`
 }
 
+// swagger:parameters RequestGetCombinedReport
+type RequestGetCombinedReport struct {
+	// in:path
+	// required: true
+	QuizId string `json:"quiz_id"`
+
+	// in:query
+	// description: Comma-separated ids of the sessions to combine. Empty selects every ended session.
+	Sessions string `json:"sessions"`
+}
+
+// swagger:response ResponseGetCombinedReport
+type ResponseGetCombinedReport struct {
+	// in:body
+	Body struct {
+		Status string                `json:"status"`
+		Data   models.CombinedReport `json:"data"`
+	} `json:"body"`
+}
+
 // swagger:parameters RequestQuizCreated
 type RequestQuizCreated struct {
 	// in:path

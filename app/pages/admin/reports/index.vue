@@ -215,6 +215,25 @@
             <p class="text-[14px] font-semibold text-jv-muted mt-1 truncate">
               {{ quiz.description.String }}
             </p>
+            <span v-if="quiz.sessions > 1" class="group relative inline-flex">
+              <button
+                type="button"
+                :aria-describedby="`combine-tip-${quiz.id}`"
+                class="mt-2 inline-flex cursor-pointer whitespace-nowrap items-center gap-1.5 rounded-full border-2 border-jv-ink bg-jv-yellow px-3 py-1 text-[13px] font-bold text-jv-ink shadow-brutal-sm transition-transform hover:-rotate-1"
+                @click.stop="viewCombinedReport(quiz.quiz_id)"
+              >
+                <Layers class="size-4" :stroke-width="2.4" />
+                Combine {{ quiz.sessions }} sessions
+              </button>
+              <span
+                :id="`combine-tip-${quiz.id}`"
+                role="tooltip"
+                class="pointer-events-none invisible absolute left-0 top-full z-20 mt-2 w-64 rounded-[6px] border-2 border-jv-ink bg-jv-ink px-3 py-2 text-[13px] font-semibold leading-snug text-white opacity-0 shadow-brutal-sm transition-opacity group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100"
+              >
+                Combine results from multiple sessions of this quiz into one
+                leaderboard.
+              </span>
+            </span>
           </div>
 
           <!-- Participants -->
@@ -321,6 +340,7 @@ import {
   ChevronUp,
   ChevronDown,
   ChevronsUpDown,
+  Layers,
 } from "lucide-vue-next";
 import Pagination from "~/components/Pagination.vue";
 
@@ -391,6 +411,10 @@ const viewReport = (activeQuizId, title) => {
     path: `/admin/reports/${activeQuizId}`,
     query: { title: decodeURI(title || "") },
   });
+};
+
+const viewCombinedReport = (quizId) => {
+  navigateTo(`/admin/reports/combined/${quizId}`);
 };
 
 const sortEventHandler = (columnName) => {
