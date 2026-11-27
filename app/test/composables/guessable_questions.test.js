@@ -28,6 +28,10 @@ describe("findGuessablePatterns", () => {
   it("does not check a question with more than one correct answer", () => {
     // The editor, CSV import and AI generation all allow one correct answer.
     expect(codes(q("Pick one", ["x", "y", "z"], [1, 2, 3]))).toEqual([]);
+    // Two correct answers and a much longer wrong option: no length note.
+    expect(
+      codes(q("Pick", ["CO2", "NO", "Pure oxygen from the air"], [1, 2]))
+    ).toEqual([]);
   });
 
   it("flags two wrong options with the same text", () => {
@@ -66,6 +70,19 @@ describe("findGuessablePatterns", () => {
         )
       )
     ).toEqual(["shortest"]);
+  });
+
+  it("does not flag a short answer below the shortest thresholds", () => {
+    // Gap under 10 characters.
+    expect(codes(q("Pick", ["7", "11", "13"], 1))).toEqual([]);
+    // Measured against the shortest wrong option (gap 5), not the longest (21).
+    expect(
+      codes(q("Pick", ["CO2", "Hydrogen", "Pure oxygen from the air"], 1))
+    ).toEqual([]);
+    // Gap of 10, but the answer is more than two thirds as long.
+    expect(
+      codes(q("Pick", ["a".repeat(25), "b".repeat(35), "c".repeat(36)], 1))
+    ).toEqual([]);
   });
 
   it("does not flag length when the gap is small", () => {
