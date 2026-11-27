@@ -22,16 +22,6 @@ const HEDGES = new Set([
   "frequently",
   "normally",
 ]);
-const ABSOLUTES = new Set([
-  "always",
-  "never",
-  "all",
-  "none",
-  "only",
-  "every",
-  "must",
-  "completely",
-]);
 const STOPWORDS = new Set([
   "what",
   "which",
@@ -85,8 +75,6 @@ const contentWords = (text) =>
       .map(stem)
   );
 const hasAny = (text, set) => words(text).some((w) => set.has(w));
-// shortcut: spelling, not sound ("an hour", "a university" misjudge); fine for a warning.
-const startsWithVowel = (text) => /^[aeiou]/.test(normalize(text));
 
 const parseAnswers = (value) => {
   if (Array.isArray(value)) return value.map(Number);
@@ -112,23 +100,21 @@ export const findGuessablePatterns = (question, { english = true } = {}) => {
   const found = [];
   const add = (code, reason) => found.push({ code, reason });
 
-  if (options.length > 1 && wrong.length === 0) {
-    add("all_correct", "every option is marked correct");
-    return found;
-  }
+  // The editor, CSV import and AI generation all allow exactly one correct answer.
   if (correct.length !== 1 || wrong.length === 0) return found;
 
-  const seen = new Map();
-  for (const o of wrong) {
-    const n = normalize(o.text);
-    if (seen.has(n)) {
-      add(
-        "duplicate",
-        "two wrong options have the same text, so players can rule both out"
-      );
-      break;
-    }
-    seen.set(n, o.key);
+  const answerText = normalize(correct[0].text);
+  const wrongTexts = wrong.map((o) => normalize(o.text));
+  if (wrongTexts.includes(answerText)) {
+    add(
+      "duplicate",
+      "the correct answer and a wrong option have the same text"
+    );
+  } else if (new Set(wrongTexts).size < wrongTexts.length) {
+    add(
+      "duplicate",
+      "two wrong options have the same text, so players can rule both out"
+    );
   }
 
   // Images and code are compared as text only for duplicates.
@@ -141,6 +127,16 @@ export const findGuessablePatterns = (question, { english = true } = {}) => {
     answer.length - longestWrong >= 10
   ) {
     add("longest", "the correct answer is much longer than the other options");
+  }
+  const shortestWrong = Math.min(...wrong.map((o) => o.text.length));
+  if (
+    answer.length * 1.5 <= shortestWrong &&
+    shortestWrong - answer.length >= 10
+  ) {
+    add(
+      "shortest",
+      "the correct answer is much shorter than the other options"
+    );
   }
 
   if (!english) return found;
@@ -159,31 +155,11 @@ export const findGuessablePatterns = (question, { english = true } = {}) => {
         'only the correct answer is qualified with a word like "usually" or "often"'
       );
     }
-    if (
-      !hasAny(answer, ABSOLUTES) &&
-      wrong.every((o) => hasAny(o.text, ABSOLUTES))
-    ) {
-      add(
-        "absolutes",
-        'every wrong option says "always", "never" or similar, and the correct one does not'
-      );
-    }
     const stemWords = contentWords(question.question);
     const echoes = (text) =>
       [...contentWords(text)].some((w) => stemWords.has(w));
     if (echoes(answer) && !wrong.some((o) => echoes(o.text))) {
       add("echo", "only the correct answer repeats a word from the question");
-    }
-  }
-
-  const article = words(question.question).at(-1);
-  if (article === "a" || article === "an") {
-    const fits = (text) => startsWithVowel(text) === (article === "an");
-    if (fits(answer) && !wrong.some((o) => fits(o.text))) {
-      add(
-        "article",
-        `the question ends with "${article}", which only the correct answer fits`
-      );
     }
   }
 
