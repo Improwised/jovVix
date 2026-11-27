@@ -221,10 +221,11 @@ func UpdateKratosIdentifiers(transaction *goqu.TxDatabase, oldEmail, newEmail st
 	return err
 }
 
-func UpdateKratosIdentityTraits(transaction *goqu.TxDatabase, kratosId string, data []byte) error {
+// UpdateKratosIdentityTraits replaces traits.name and keeps every other trait, such as email.
+func UpdateKratosIdentityTraits(transaction *goqu.TxDatabase, kratosId string, name []byte) error {
 
 	record := goqu.Record{
-		"traits": data,
+		"traits": goqu.L("jsonb_set(traits::jsonb, '{name}', ?::jsonb)", string(name)),
 	}
 
 	_, err := transaction.Update(KratosIdentityTable).Set(record).Where(goqu.Ex{

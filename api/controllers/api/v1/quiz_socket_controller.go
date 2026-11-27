@@ -489,9 +489,39 @@ func applyPlayerOptionOrderForScore(message map[string]any, qc *quizSocketContro
 	correctKeys := parseAnswerKeysFromPayload(data["answers"])
 	shuffledOptions, translatedCorrect, _, err := qc.userQuizResponseModel.ApplyOptionOrder(userPlayedQuizId, questionID, options, correctKeys, nil)
 	if err != nil {
-		return nil
+		return err
 	}
 
+	// Host charts count stored canonical answers; align those with visible labels too.
+	if responses, ok := data["userResponses"].([]any); ok {
+		for _, raw := range responses {
+			entry, ok := raw.(map[string]any)
+			if !ok {
+				continue
+			}
+			answer, ok := entry["answers"].(map[string]any)
+			if !ok || answer["Valid"] != true {
+				continue
+			}
+			encoded, ok := answer["String"].(string)
+			if !ok || encoded == "" {
+				continue
+			}
+			var keys []int
+			if err := json.Unmarshal([]byte(encoded), &keys); err != nil {
+				return err
+			}
+			_, _, selected, err := qc.userQuizResponseModel.ApplyOptionOrder(userPlayedQuizId, questionID, options, nil, keys)
+			if err != nil {
+				return err
+			}
+			encodedKeys, err := json.Marshal(selected)
+			if err != nil {
+				return err
+			}
+			answer["String"] = string(encodedKeys)
+		}
+	}
 	data["options"] = mapStringToAny(shuffledOptions)
 	data["answers"] = intsToAny(translatedCorrect)
 	return nil
@@ -1127,18 +1157,52 @@ func shareEvenWithUser(c *websocket.Conn, qc *quizSocketController, response *Qu
 	}
 
 	if sentToWhom == constants.ToAdmin || sentToWhom == constants.ToAll {
-		// send event to admin
+		// Personalize a separate payload: Redis broadcasts must stay canonical.
+		hostResponse, hostErr := responseForHost(qc, response, event, sessionId)
+		if hostErr != nil {
+			qc.logger.Error("unable to prepare host options", zap.Error(hostErr))
+			return
+		}
 
 		err := func() error {
 			arrangeMu.Lock()
 			defer arrangeMu.Unlock()
-			return utils.JSONSuccessWs(c, event, response)
+			return utils.JSONSuccessWs(c, event, hostResponse)
 		}()
 
 		if err != nil {
 			qc.logger.Error(fmt.Sprintf("socket error sending event: %s event, %s action %v code", constants.EventSendQuestion, response.Action, invitationCode), zap.Error(err))
 		}
 	}
+}
+
+// responseForHost uses the same persisted order as answer submission, including
+// solo games and reconnects. Spectator hosts retain the canonical view.
+func responseForHost(qc *quizSocketController, response *QuizSendResponse, event, sessionID string) (any, error) {
+	if event != constants.EventSendQuestion && event != constants.EventShowScore {
+		return response, nil
+	}
+	var participant uuid.UUID
+	found, err := qc.db.From(goqu.T("user_played_quizzes").As("p")).
+		Join(goqu.T("active_quizzes").As("a"), goqu.On(goqu.I("a.id").Eq(goqu.I("p.active_quiz_id")))).
+		Select(goqu.I("p.id")).Where(goqu.Ex{"a.id": sessionID, "p.is_host": false}, goqu.I("p.user_id").Eq(goqu.I("a.admin_id"))).ScanVal(&participant)
+	if err != nil || !found {
+		return response, err
+	}
+	encoded, err := json.Marshal(map[string]any{"response": response})
+	if err != nil {
+		return nil, err
+	}
+	var message map[string]any
+	if err = json.Unmarshal(encoded, &message); err != nil {
+		return nil, err
+	}
+	if event == constants.EventSendQuestion {
+		err = applyPlayerOptionOrder(message, qc, participant)
+	} else {
+		err = applyPlayerOptionOrderForScore(message, qc, participant)
+	}
+	return message["response"], err
 }
 
 func questionAndScoreHandler(c *websocket.Conn, qc *quizSocketController, response *QuizSendResponse, session models.ActiveQuiz, isConnected *bool, arrangeMu *sync.Mutex) {
@@ -1168,10 +1232,10 @@ func questionAndScoreHandler(c *websocket.Conn, qc *quizSocketController, respon
 	}
 
 	var wg sync.WaitGroup
-	chanNextEvent := make(chan bool)
-	chanSkipEvent := make(chan bool)
-	chanSkipTimer := make(chan bool)
-	chanPauseQuiz := make(chan bool)
+	chanNextEvent := newAdminEventChan()
+	chanSkipEvent := newAdminEventChan()
+	chanSkipTimer := newAdminEventChan()
+	chanPauseQuiz := newAdminEventChan()
 	var isQuizEnd bool = false
 	disconnected := make(chan struct{})
 
@@ -1236,31 +1300,7 @@ func listenAllEvents(c *websocket.Conn, qc *quizSocketController, response *Quiz
 			break
 		}
 
-		switch message.Event {
-		case constants.EventSkipAsked:
-			if session.IsSolo {
-				continue
-			}
-			chanSkipEvent <- false
-		case constants.EventForceSkip:
-			if session.IsSolo {
-				continue
-			}
-			chanSkipEvent <- true
-		case constants.EventNextQuestionAsked:
-			chanNextEvent <- true
-		case constants.EventSkipTimer:
-			if session.IsSolo {
-				continue
-			}
-			chanSkipTimer <- true
-		case constants.EventPauseQuiz:
-			if session.IsSolo {
-				continue
-			}
-			isPauseQuiz := message.Data.(bool)
-			chanPauseQuiz <- isPauseQuiz
-		}
+		dispatchAdminEvent(message, session.IsSolo, chanNextEvent, chanSkipEvent, chanSkipTimer, chanPauseQuiz)
 	}
 
 	// handle connection lost during quiz
@@ -1268,6 +1308,62 @@ func listenAllEvents(c *websocket.Conn, qc *quizSocketController, response *Quiz
 		response.Component = constants.Loading
 		response.Data = constants.AdminDisconnected
 		shareEvenWithUser(c, qc, response, constants.AdminDisconnected, session.ID.String(), int(session.InvitationCode.Int32), constants.ToUser, arrangeMu)
+	}
+}
+
+// dispatchAdminEvent hands one host control message to the phase handler waiting for it.
+// Solo sessions have no host pacing.
+func dispatchAdminEvent(message QuizReceiveResponse, isSolo bool, chanNextEvent, chanSkipEvent, chanSkipTimer, chanPauseQuiz chan bool) {
+	switch message.Event {
+	case constants.EventNextQuestionAsked:
+		offerAdminEvent(chanNextEvent, true)
+	case constants.EventSkipAsked, constants.EventForceSkip:
+		if !isSolo {
+			offerAdminEvent(chanSkipEvent, message.Event == constants.EventForceSkip)
+		}
+	case constants.EventSkipTimer:
+		if !isSolo {
+			offerAdminEvent(chanSkipTimer, true)
+		}
+	case constants.EventPauseQuiz:
+		// A non-bool payload used to panic and take the whole API down.
+		if isPause, ok := message.Data.(bool); ok && !isSolo {
+			replaceAdminEvent(chanPauseQuiz, isPause)
+		}
+	}
+}
+
+// newAdminEventChan makes a host control channel. It is buffered: see offerAdminEvent.
+func newAdminEventChan() chan bool {
+	return make(chan bool, 1)
+}
+
+// offerAdminEvent never blocks. One goroutine reads every message from the host's socket, and each
+// channel has a receiver only during one phase: skips while a question runs, skip-timer and pause
+// while the scoreboard shows. A blocking send outside that phase (a second Skip click, a shortcut
+// pressed as the scoreboard ends) stopped the reader, so the host's controls hung until a page
+// refresh (GitHub #39). The one-slot buffer keeps a click that lands while the handler is busy;
+// further clicks are dropped, and each handler drops what was left for an earlier phase.
+func offerAdminEvent(ch chan bool, value bool) {
+	select {
+	case ch <- value:
+	default:
+	}
+}
+
+// replaceAdminEvent never blocks and keeps the newest value. Pause and resume set a state, so a quick
+// pause, resume, pause must end paused. Only the socket reader sends, so the slot is free after the drain.
+func replaceAdminEvent(ch chan bool, value bool) {
+	drainStaleAdminEvent(ch)
+	offerAdminEvent(ch, value)
+}
+
+// drainStaleAdminEvent drops an event a previous phase left in the buffer, so a late Skip from one
+// question doesn't skip the next one.
+func drainStaleAdminEvent(ch chan bool) {
+	select {
+	case <-ch:
+	default:
 	}
 }
 
@@ -1283,19 +1379,21 @@ func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.Wa
 
 	var questionStartTime time.Time
 
-	// start counter if not any question running
+	// Start new questions, counting down only for the first solo question.
 	if !lastQuestionTimeStamp.Valid {
-		response.Component = constants.Question
-		response.Action = constants.ActionCounter
-		response.Data = map[string]int{"counter": constants.Counter, "count": constants.Count}
-		shareEvenWithUser(c, qc, response, constants.EventStartCount5, session.ID.String(), int(session.InvitationCode.Int32), constants.ToAll, arrangeMu)
-		select {
-		case <-time.After(time.Duration(constants.Counter) * time.Second):
-		case <-disconnected:
-			return
+		if !session.IsSolo || question.OrderNumber == 1 {
+			response.Component = constants.Question
+			response.Action = constants.ActionCounter
+			response.Data = map[string]int{"counter": constants.Counter, "count": constants.Count}
+			shareEvenWithUser(c, qc, response, constants.EventStartCount5, session.ID.String(), int(session.InvitationCode.Int32), constants.ToAll, arrangeMu)
+			select {
+			case <-time.After(time.Duration(constants.Counter) * time.Second):
+			case <-disconnected:
+				return
+			}
 		}
 
-		// Set the question start time to NOW (after counter finishes)
+		// Start the question timer after any countdown finishes.
 		questionStartTime = time.Now()
 
 		// update question status to activate
@@ -1310,6 +1408,7 @@ func sendSingleQuestion(c *websocket.Conn, qc *quizSocketController, wg *sync.Wa
 	}
 
 	// question sent
+	response.Component = constants.Question
 	response.Action = constants.ActionSendQuestion
 	responseData := map[string]any{
 		"id":             question.ID,
@@ -1477,6 +1576,8 @@ func publishTerminateToPlayers(qc *quizSocketController, sessionId string) {
 
 func handleSkipTimer(c *websocket.Conn, qc *quizSocketController, wg *sync.WaitGroup, response *QuizSendResponse, session models.ActiveQuiz, chanSkipTimer chan bool, chanPauseQuiz chan bool, scoreboardMaxDuration int, arrangeMu *sync.Mutex, disconnected <-chan struct{}) {
 	defer wg.Done()
+	drainStaleAdminEvent(chanSkipTimer)
+	drainStaleAdminEvent(chanPauseQuiz)
 
 	remainingTime := time.Duration(scoreboardMaxDuration) * time.Second
 	startTime := time.Now()
@@ -1528,6 +1629,7 @@ func handleSkipTimer(c *websocket.Conn, qc *quizSocketController, wg *sync.WaitG
 
 func handleAnswerSubmission(c *websocket.Conn, qc *quizSocketController, session models.ActiveQuiz, questionId uuid.UUID, duration int, wg *sync.WaitGroup, chanSkipEvent chan bool, response *QuizSendResponse, arrangeMu *sync.Mutex, disconnected <-chan struct{}) {
 	defer wg.Done()
+	drainStaleAdminEvent(chanSkipEvent)
 
 	isTimeout := time.NewTicker(time.Duration(duration) * time.Second)
 	defer isTimeout.Stop()

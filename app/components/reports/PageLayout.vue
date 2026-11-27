@@ -1,9 +1,11 @@
 <template>
   <div class="border-b-2 border-jv-ink/15">
-    <div class="flex items-center gap-8">
+    <div
+      class="grid grid-cols-2 items-stretch sm:flex sm:items-center sm:gap-8"
+    >
       <button
         type="button"
-        class="relative -mb-[2px] pb-3 text-[18px] sm:text-[20px] font-bold transition-colors"
+        class="relative -mb-[2px] text-center pb-3 text-[18px] sm:text-[20px] font-bold transition-colors"
         :class="
           props.currentTab === props.firstValue
             ? 'text-jv-ink'
@@ -20,7 +22,7 @@
       </button>
       <button
         type="button"
-        class="relative -mb-[2px] pb-3 text-[18px] sm:text-[20px] font-bold transition-colors"
+        class="relative -mb-[2px] text-center pb-3 text-[18px] sm:text-[20px] font-bold transition-colors"
         :class="
           props.currentTab === props.secondValue
             ? 'text-jv-ink'

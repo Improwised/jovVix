@@ -61,6 +61,39 @@ func TestGetBool(t *testing.T) {
 	})
 }
 
+func TestDerefOrEmpty(t *testing.T) {
+	quiz := "quiz"
+	empty := ""
+
+	testCases := []struct {
+		name     string
+		input    *string
+		expected string
+	}{
+		{
+			name:     "nil pointer returns empty string",
+			input:    nil,
+			expected: "",
+		},
+		{
+			name:     "non-nil pointer returns pointed-to value",
+			input:    &quiz,
+			expected: "quiz",
+		},
+		{
+			name:     "pointer to empty string returns empty string",
+			input:    &empty,
+			expected: "",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expected, DerefOrEmpty(tc.input))
+		})
+	}
+}
+
 func TestConvertType(t *testing.T) {
 	t.Run("returns converted value when assertion succeeds", func(t *testing.T) {
 		value, ok := ConvertType[string]("quiz")

@@ -31,3 +31,19 @@ func GenerateQuizShareEmail(quizLink, sharedBy string, permissions string) strin
 		</body>
 		</html>`, sharedBy, permissionsText, quizLink, quizLink, quizLink, sharedBy)
 }
+
+// GenerateAccountDeletedEmail generates the HTML content for the account deletion confirmation email
+func GenerateAccountDeletedEmail() string {
+	return `
+		<!DOCTYPE html>
+		<html>
+		<body style="font-family: Arial, sans-serif; color: #333;">
+			<div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 8px;">
+				<h2>Hello,</h2>
+				<p>Your profile has been deleted successfully.</p>
+				<p>Your account, your private quizzes and your quiz history have been removed. You can register again with this email address at any time.</p>
+				<p style="font-size: 12px; color: #888; margin-top: 20px;">If you did not request this, please contact the administrator of this jovvix instance.</p>
+			</div>
+		</body>
+		</html>`
+}
