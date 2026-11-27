@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import {
   User,
   Mail,
@@ -12,7 +12,7 @@ import {
 import { usePush } from "notivue";
 import { useUsersStore } from "~~/store/users";
 import { useUserPasswordRules } from "@/composables/user_password_rules";
-import { markNewSignup } from "@/composables/first_quiz_welcome";
+import { markNewSignup, takeNewSignup } from "@/composables/first_quiz_welcome";
 import NavigationLink from "@/components/common/NavigationLink.vue";
 
 definePageMeta({
@@ -69,6 +69,10 @@ const signInLink = computed(() =>
     ? `/account/login?returnTo=${encodeURIComponent(returnTo.value)}`
     : "/account/login"
 );
+
+// Kratos sends a refused sign-up back to this page, so clear the flag that
+// onSubmit set. A sign-up that succeeds leaves for another page.
+onMounted(takeNewSignup);
 
 console.log(); // required so async IIFE below doesn't trigger Nuxt 5xx
 function onSubmit(event) {

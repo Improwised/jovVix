@@ -1,5 +1,6 @@
 // One-time "start your first quiz" hint after sign-up. The register form
-// sets the flag before it posts to Kratos; the home page takes it once.
+// sets the flag before it posts to Kratos and clears it when Kratos sends a
+// refused sign-up back to the form; the home page takes it once.
 // sessionStorage keeps it to this tab and survives the Kratos redirects.
 const KEY = "jv-new-signup";
 
