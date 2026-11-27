@@ -43,4 +43,12 @@ describe("register page: new sign-up flag", () => {
     expect(submit).not.toHaveBeenCalled();
     expect(takeNewSignup()).toBe(false);
   });
+
+  it("clears a flag left by a sign-up that Kratos refused", async () => {
+    // Kratos sends a refused sign-up back to this page. A flag left set would
+    // greet the next sign-in in this tab as a new host.
+    sessionStorage.setItem("jv-new-signup", "1");
+    await mountPage();
+    expect(takeNewSignup()).toBe(false);
+  });
 });
