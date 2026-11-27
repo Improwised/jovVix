@@ -25,16 +25,23 @@ describe("findGuessablePatterns", () => {
     ).toEqual([]);
   });
 
-  it("flags every option marked correct", () => {
-    expect(codes(q("Pick one", ["x", "y", "z"], [1, 2, 3]))).toEqual([
-      "all_correct",
-    ]);
+  it("does not check a question with more than one correct answer", () => {
+    // The editor, CSV import and AI generation all allow one correct answer.
+    expect(codes(q("Pick one", ["x", "y", "z"], [1, 2, 3]))).toEqual([]);
   });
 
   it("flags two wrong options with the same text", () => {
     expect(
       codes(q("Capital of France?", ["Paris", "Rome", "rome!", "Oslo"], 1))
     ).toEqual(["duplicate"]);
+  });
+
+  it("flags a correct answer with the same text as a wrong option", () => {
+    const found = findGuessablePatterns(
+      q("Capital of France?", ["Paris", "Rome", "paris.", "Oslo"], 1)
+    );
+    expect(found.map((p) => p.code)).toEqual(["duplicate"]);
+    expect(found[0].reason).toMatch(/correct answer/);
   });
 
   it("flags a correct answer much longer than the rest", () => {
@@ -47,6 +54,18 @@ describe("findGuessablePatterns", () => {
         )
       )
     ).toEqual(["longest"]);
+  });
+
+  it("flags a correct answer much shorter than the rest", () => {
+    expect(
+      codes(
+        q(
+          "Which gas do plants take in?",
+          ["Pure oxygen from the air", "CO2", "Nitrogen from the soil"],
+          2
+        )
+      )
+    ).toEqual(["shortest"]);
   });
 
   it("does not flag length when the gap is small", () => {
@@ -77,12 +96,12 @@ describe("findGuessablePatterns", () => {
     ).toEqual(["hedge"]);
   });
 
-  it("flags absolute words on every wrong option", () => {
+  it("does not judge absolute words", () => {
     expect(
       codes(
         q("Sleep at night?", ["Always bad", "Never useful", "Helps memory"], 3)
       )
-    ).toEqual(["absolutes"]);
+    ).toEqual([]);
   });
 
   it("flags a correct answer that alone repeats a question word", () => {
@@ -97,13 +116,10 @@ describe("findGuessablePatterns", () => {
     ).toEqual(["echo"]);
   });
 
-  it("flags an article only the correct answer fits", () => {
+  it("does not judge a trailing article", () => {
     expect(
       codes(q("A tomato is an", ["vegetable", "fruit", "berry", "apple"], 4))
-    ).toEqual(["article"]);
-    expect(codes(q("Python is a", ["language", "snake", "game"], 1))).toEqual(
-      []
-    );
+    ).toEqual([]);
   });
 
   it("skips survey questions", () => {
