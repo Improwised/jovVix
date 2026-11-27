@@ -394,9 +394,17 @@ import {
   LoaderCircle,
 } from "lucide-vue-next";
 import { usePush } from "notivue";
-import lodash from "lodash";
 import PageLayout from "~~/components/reports/PageLayout.vue";
 import CodeBlockComponent from "~~/components/CodeBlockComponent.vue";
+
+// Plain helper instead of lodash: lodash was never a declared dependency.
+const groupBy = (items, key) =>
+  (items || []).reduce((acc, item) => {
+    const k = item[key];
+    if (!Object.prototype.hasOwnProperty.call(acc, k)) acc[k] = [];
+    acc[k].push(item);
+    return acc;
+  }, {});
 
 definePageMeta({
   layout: "empty",
@@ -635,7 +643,7 @@ const getAnalysisJson = async () => {
     if (response.ok && ranksResponse.ok) {
       analysisJson.value = result.data;
 
-      userJson.value = lodash.groupBy(analysisJson.value, "username");
+      userJson.value = groupBy(analysisJson.value, "username");
 
       ranks.value?.data.forEach((data) => {
         rankData.value.push(data.username);
@@ -655,7 +663,7 @@ const getAnalysisJson = async () => {
         }
       });
 
-      questionJson.value = lodash.groupBy(analysisJson.value, "question");
+      questionJson.value = groupBy(analysisJson.value, "question");
 
       for (const key in userJson.value) {
         userJson.value[key].forEach((question) => {
@@ -692,7 +700,7 @@ const selectedQuestion = ref(null);
 const selectedQuestionIndex = ref(0);
 
 const rowsByQuestion = computed(() =>
-  lodash.groupBy(analysisJson.value || [], "question")
+  groupBy(analysisJson.value || [], "question")
 );
 
 const selectedQuestionRows = computed(() => {

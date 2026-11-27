@@ -172,3 +172,45 @@ describe("Report page: Download PDF", () => {
     expect(wrapper.text()).not.toContain("No report data to download yet.");
   });
 });
+
+describe("Report page: grouping usernames that shadow Object.prototype", () => {
+  it("groups and renders when a username is 'constructor'", async () => {
+    const rows = [
+      { ...analytics[0], username: "constructor" },
+      { ...analytics[1], username: "constructor" },
+    ];
+    const constructorRanks = [
+      {
+        username: "constructor",
+        rank: 1,
+        score: 900,
+        response_time: 1,
+        img_key: "",
+      },
+      {
+        username: "constructor",
+        rank: 2,
+        score: 0,
+        response_time: 2,
+        img_key: "",
+      },
+    ];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url) => ({
+        ok: true,
+        json: async () => ({
+          data: String(url).includes("final_score") ? constructorRanks : rows,
+        }),
+      }))
+    );
+    const wrapper = await mountPage();
+    await flushPromises();
+    // On the participants tab, a colliding key must group into an array and
+    // render cards — not trip the catch, which sets the error note.
+    const reportPage = wrapper.findComponent(ReportPage);
+    await reportPage.vm.changeTab("participants");
+    await flushPromises();
+    expect(wrapper.text()).not.toContain("Error while fetching data");
+  });
+});
