@@ -25,7 +25,9 @@
         >
           <Plus class="size-[18px]" />
         </NavigationLink>
+        <!-- AI needs a provider key: offer it to signed-in hosts only. -->
         <NavigationLink
+          v-if="isLoggedInAdmin"
           url="/admin/quiz/list-quiz?generate=1"
           url-name="Generate with AI"
           class="bg-jv-mint px-3 text-[13px] md:px-4 md:text-[15px]"
@@ -430,11 +432,6 @@ const mobileNavItems = computed(() => {
     { label: "Home", url: "/", icon: Home, active: true },
     { label: "Enter Code", url: "/join" },
     { label: "Create Quiz", url: "/admin/quiz/list-quiz?create=1", icon: Plus },
-    {
-      label: "Generate with AI",
-      url: "/admin/quiz/list-quiz?generate=1",
-      icon: Sparkles,
-    },
     { label: "Sign In", url: "/account/login" },
     { label: "Sign Up", url: "/account/register" },
   ];

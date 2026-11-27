@@ -1,6 +1,7 @@
 <template>
   <main class="flex flex-col gap-6 sm:gap-8 px-4 sm:px-6 md:px-8 py-4 md:py-5">
     <LandingTopActions />
+    <FirstQuizWelcome />
     <HeroSection />
     <JoinLiveQuiz />
     <PublicQuizSection />
@@ -8,6 +9,7 @@
 </template>
 
 <script setup>
+import FirstQuizWelcome from "@/components/landing/FirstQuizWelcome.vue";
 import HeroSection from "@/components/landing/HeroSection.vue";
 import JoinLiveQuiz from "@/components/Quiz/JoinLiveQuiz.vue";
 import LandingTopActions from "@/components/landing/LandingTopActions.vue";
