@@ -1,0 +1,224 @@
+import { describe, it, expect } from "vitest";
+import {
+  findGuessablePatterns,
+  guessWarningsFor,
+} from "~/composables/guessable_questions";
+
+// q("stem", ["opt1", "opt2", ...], correctKey) builds a single-answer text question.
+const q = (question, opts, correct, extra = {}) => ({
+  question,
+  question_type_id: 1,
+  options_media: "text",
+  options: Object.fromEntries(opts.map((text, i) => [String(i + 1), text])),
+  correct_answer: JSON.stringify([].concat(correct)),
+  ...extra,
+});
+const codes = (question, opts) =>
+  findGuessablePatterns(question, opts).map((p) => p.code);
+
+describe("findGuessablePatterns", () => {
+  it("passes a well-built question", () => {
+    expect(
+      codes(
+        q("Which planet is largest?", ["Jupiter", "Saturn", "Mars", "Venus"], 1)
+      )
+    ).toEqual([]);
+  });
+
+  it("does not check a question with more than one correct answer", () => {
+    // The editor, CSV import and AI generation all allow one correct answer.
+    expect(codes(q("Pick one", ["x", "y", "z"], [1, 2, 3]))).toEqual([]);
+    // Two correct answers and a much longer wrong option: no length note.
+    expect(
+      codes(q("Pick", ["CO2", "NO", "Pure oxygen from the air"], [1, 2]))
+    ).toEqual([]);
+  });
+
+  it("flags two wrong options with the same text", () => {
+    expect(
+      codes(q("Capital of France?", ["Paris", "Rome", "rome!", "Oslo"], 1))
+    ).toEqual(["duplicate"]);
+  });
+
+  it("flags a correct answer with the same text as a wrong option", () => {
+    const found = findGuessablePatterns(
+      q("Capital of France?", ["Paris", "Rome", "paris.", "Oslo"], 1)
+    );
+    expect(found.map((p) => p.code)).toEqual(["duplicate"]);
+    expect(found[0].reason).toMatch(/correct answer/);
+  });
+
+  it("flags a correct answer much longer than the rest", () => {
+    expect(
+      codes(
+        q(
+          "What does a firewall do?",
+          ["Cools", "Filters network traffic by rules", "Prints", "Stores"],
+          2
+        )
+      )
+    ).toEqual(["longest"]);
+  });
+
+  it("flags a correct answer much shorter than the rest", () => {
+    expect(
+      codes(
+        q(
+          "Which gas do plants take in?",
+          ["Pure oxygen from the air", "CO2", "Nitrogen from the soil"],
+          2
+        )
+      )
+    ).toEqual(["shortest"]);
+  });
+
+  it("does not flag a short answer below the shortest thresholds", () => {
+    // Gap under 10 characters.
+    expect(codes(q("Pick", ["7", "11", "13"], 1))).toEqual([]);
+    // Measured against the shortest wrong option (gap 5), not the longest (21).
+    expect(
+      codes(q("Pick", ["CO2", "Hydrogen", "Pure oxygen from the air"], 1))
+    ).toEqual([]);
+    // Gap of 10, but the answer is more than two thirds as long.
+    expect(
+      codes(q("Pick", ["a".repeat(25), "b".repeat(35), "c".repeat(36)], 1))
+    ).toEqual([]);
+  });
+
+  it("does not flag length when the gap is small", () => {
+    expect(codes(q("Pick", ["abcdef", "abc", "ab"], 1))).toEqual([]);
+  });
+
+  it("flags 'All of the above' as the correct answer", () => {
+    expect(
+      codes(
+        q(
+          "Which are fruits?",
+          ["Apple trees", "Pear trees", "Plum trees", "All of the above"],
+          4
+        )
+      )
+    ).toEqual(["catch_all"]);
+  });
+
+  it("flags a hedge word only on the correct answer", () => {
+    expect(
+      codes(
+        q(
+          "Antibiotics treat?",
+          ["Viral colds", "Usually bacteria", "Broken bones"],
+          2
+        )
+      )
+    ).toEqual(["hedge"]);
+  });
+
+  it("does not judge absolute words", () => {
+    expect(
+      codes(
+        q("Sleep at night?", ["Always bad", "Never useful", "Helps memory"], 3)
+      )
+    ).toEqual([]);
+  });
+
+  it("flags a correct answer that alone repeats a question word", () => {
+    expect(
+      codes(
+        q(
+          "Which organ pumps blood?",
+          ["Liver filter", "Blood pump", "Lung tissue"],
+          2
+        )
+      )
+    ).toEqual(["echo"]);
+  });
+
+  it("does not judge a trailing article", () => {
+    expect(
+      codes(q("A tomato is an", ["vegetable", "fruit", "berry", "apple"], 4))
+    ).toEqual([]);
+  });
+
+  it("skips survey questions", () => {
+    expect(
+      codes(q("Favourite?", ["x", "x"], [], { question_type_id: 2 }))
+    ).toEqual([]);
+  });
+
+  it("runs only language-independent checks for other languages", () => {
+    const question = q(
+      "Elige",
+      ["Rojo", "Azul", "Todas las anteriores y además mucho más"],
+      3
+    );
+    expect(codes(question, { english: false })).toEqual(["longest"]);
+  });
+
+  it("checks image options only for duplicates", () => {
+    const question = q(
+      "Which logo?",
+      ["a.png", "b.png", "b.png", "a-much-longer-file-name.png"],
+      4,
+      {
+        options_media: "image",
+      }
+    );
+    expect(codes(question)).toEqual(["duplicate"]);
+  });
+
+  it("ignores blank option slots and accepts an answers array", () => {
+    expect(
+      codes(
+        q("Which planet is largest?", ["Jupiter", "Saturn", "", ""], 1, {
+          correct_answer: [1],
+        })
+      )
+    ).toEqual([]);
+  });
+});
+
+describe("guessWarningsFor", () => {
+  const catchAll = {
+    ...q(
+      "Which are mammals?",
+      ["The blue whale", "The fruit bat", "All of the above"],
+      3
+    ),
+    question_id: "q1",
+  };
+  const longest = {
+    ...q(
+      "Pick one",
+      ["Cat", "Dog", "A very long and detailed correct answer here"],
+      3
+    ),
+    question_id: "q2",
+  };
+  const ids = (warnings) =>
+    Object.fromEntries(
+      Object.entries(warnings).map(([id, found]) => [
+        id,
+        found.map((p) => p.code),
+      ])
+    );
+
+  it("gives advice only to people who can edit the quiz", () => {
+    expect(
+      guessWarningsFor([catchAll], { canEdit: false, language: "english" })
+    ).toEqual({});
+    expect(
+      ids(guessWarningsFor([catchAll], { canEdit: true, language: "english" }))
+    ).toEqual({ q1: ["catch_all"] });
+  });
+
+  it("runs the English word checks only on an English quiz", () => {
+    expect(
+      ids(
+        guessWarningsFor([catchAll, longest], {
+          canEdit: true,
+          language: "hindi",
+        })
+      )
+    ).toEqual({ q1: [], q2: ["longest"] });
+  });
+});
