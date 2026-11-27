@@ -1,6 +1,23 @@
 <template>
   <div class="min-h-screen bg-jv-canvas px-4 py-6 sm:px-6 sm:py-10">
     <div class="mx-auto max-w-5xl">
+      <header class="mb-6">
+        <h1
+          class="font-headings text-[38px] leading-none text-jv-ink sm:text-[52px]"
+        >
+          Edit question
+        </h1>
+        <p
+          class="mt-4 max-w-2xl text-[15px] font-semibold text-jv-muted sm:text-[16px]"
+        >
+          Update the question and its answer options.
+        </p>
+      </header>
+      <NuxtLink
+        :to="`/admin/quiz/list-quiz/${quizId}`"
+        class="mb-6 inline-flex w-fit items-center gap-2 rounded-full border-2 border-jv-ink bg-jv-white px-5 py-2 font-bold text-jv-ink shadow-brutal-sm transition-transform hover:-rotate-1 active:shadow-none"
+        >← Back to quiz</NuxtLink
+      >
       <div
         v-if="questionPending"
         class="jv-border-rough flex items-center justify-center gap-3 border-2 border-jv-ink bg-jv-white p-8 font-body text-jv-muted shadow-brutal-sm"

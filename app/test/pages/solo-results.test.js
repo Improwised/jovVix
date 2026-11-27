@@ -187,7 +187,7 @@ describe("Solo results page", () => {
       },
     };
     await flushPromises();
-    const hero = wrapper.find("header");
+    const hero = wrapper.find('[data-testid="solo-results-hero"]');
     expect(hero.text()).toContain("Score");
     expect(hero.text()).toContain("2nd Place");
     // This attempt scored 50 (not the best 120).

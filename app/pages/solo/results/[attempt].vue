@@ -73,6 +73,23 @@ const leaderboardRows = computed(() => {
       class="min-h-screen bg-jv-canvas px-3 py-6 text-jv-ink sm:px-6 sm:py-8 md:px-10"
     >
       <div class="mx-auto flex w-full max-w-[1180px] flex-col gap-6 sm:gap-8">
+        <header>
+          <h1
+            class="font-headings text-[38px] leading-none text-jv-ink sm:text-[52px]"
+          >
+            Solo results
+          </h1>
+          <p
+            class="mt-4 max-w-2xl text-[15px] font-semibold text-jv-muted sm:text-[16px]"
+          >
+            Review your score and see how you rank.
+          </p>
+        </header>
+        <NuxtLink
+          to="/#public-quiz"
+          class="inline-flex w-fit items-center gap-2 rounded-full border-2 border-jv-ink bg-jv-white px-5 py-2 font-bold text-jv-ink shadow-brutal-sm transition-transform hover:-rotate-1 active:shadow-none"
+          >← Back to public quizzes</NuxtLink
+        >
         <div
           v-if="pending"
           class="flex min-h-[40vh] items-center justify-center"
@@ -106,6 +123,7 @@ const leaderboardRows = computed(() => {
 
         <template v-else-if="results">
           <header
+            data-testid="solo-results-hero"
             class="relative -rotate-[0.4deg] jv-border-rough bg-jv-white p-5 shadow-brutal sm:p-7"
           >
             <span
@@ -150,11 +168,11 @@ const leaderboardRows = computed(() => {
             </div>
 
             <div class="mt-1 min-w-0">
-              <h1
+              <h2
                 class="font-headings text-[28px] leading-tight text-jv-ink sm:text-[40px]"
               >
                 Great game!
-              </h1>
+              </h2>
               <p
                 class="mt-2 font-body text-[14px] font-bold text-jv-muted sm:text-[16px]"
               >

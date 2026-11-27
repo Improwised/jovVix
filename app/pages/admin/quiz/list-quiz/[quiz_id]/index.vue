@@ -43,21 +43,34 @@
             {{ quizDescription || "No description added yet." }}
           </p>
         </div>
-        <div class="flex gap-2 md:min-w-[220px] md:justify-end">
-          <QuizModeAction
+      </header>
+
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <NuxtLink
+          to="/admin/quiz/list-quiz"
+          class="inline-flex w-fit items-center gap-2 rounded-full border-2 border-jv-ink bg-jv-white px-5 py-2 font-bold text-jv-ink shadow-brutal-sm transition-transform hover:-rotate-1 active:shadow-none"
+          >← Back to quiz library</NuxtLink
+        >
+        <div class="ml-auto flex flex-wrap items-center gap-2">
+          <button
             v-if="isPublicQuiz"
-            label="Play solo"
+            type="button"
+            class="inline-flex w-fit items-center gap-2 rounded-full border-2 border-jv-ink bg-jv-coral px-5 py-2 font-bold text-white shadow-brutal-sm transition-transform hover:-rotate-1 active:shadow-none disabled:cursor-wait disabled:opacity-50"
             :disabled="startingQuiz"
             @click="handleStartQuiz(true)"
-          />
-          <QuizModeAction
-            label="Host Live"
-            secondary
+          >
+            Play solo
+          </button>
+          <button
+            type="button"
+            class="inline-flex w-fit items-center gap-2 rounded-full border-2 border-jv-ink bg-jv-coral px-5 py-2 font-bold text-white shadow-brutal-sm transition-transform hover:-rotate-1 active:shadow-none disabled:cursor-wait disabled:opacity-50"
             :disabled="startingQuiz"
             @click="handleStartQuiz(false)"
-          />
+          >
+            Host Live
+          </button>
         </div>
-      </header>
+      </div>
 
       <div
         class="flex flex-col gap-4 jv-border-rough bg-jv-white p-3 shadow-brutal-sm sm:p-4 lg:flex-row lg:items-center lg:justify-between"
