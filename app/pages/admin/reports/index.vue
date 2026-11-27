@@ -346,7 +346,7 @@
 <script setup>
 import { computed, ref, watch } from "vue";
 import { format, formatISO } from "date-fns";
-import debounce from "lodash/debounce";
+import { useDebounceFn } from "@vueuse/core";
 import {
   Search,
   Calendar,
@@ -446,7 +446,7 @@ const sortEventHandler = (columnName) => {
   });
 };
 
-const debouncedNavigateTo = debounce((query) => {
+const debouncedNavigateTo = useDebounceFn((query) => {
   navigateTo({
     path: route.path,
     query: query,
