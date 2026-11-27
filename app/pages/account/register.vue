@@ -12,6 +12,7 @@ import {
 import { usePush } from "notivue";
 import { useUsersStore } from "~~/store/users";
 import { useUserPasswordRules } from "@/composables/user_password_rules";
+import { markNewSignup } from "@/composables/first_quiz_welcome";
 import NavigationLink from "@/components/common/NavigationLink.vue";
 
 definePageMeta({
@@ -75,6 +76,7 @@ function onSubmit(event) {
   if (passwordErrors.value.length > 0 || firstnameLengthError.value) {
     return;
   }
+  markNewSignup();
   event.target.submit();
 }
 

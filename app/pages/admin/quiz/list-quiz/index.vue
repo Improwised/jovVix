@@ -168,6 +168,12 @@ const quizError = computed(
   () => ownError.value || sharedByMeError.value || sharedWithMeError.value
 );
 
+const hasAnyQuiz = computed(() =>
+  [ownQuizList, sharedByMeList, sharedWithMeList].some(
+    (list) => list.value?.data?.length > 0
+  )
+);
+
 const refresh = () =>
   Promise.all([refreshOwn(), refreshSharedByMe(), refreshSharedWithMe()]);
 
@@ -481,7 +487,9 @@ const handleCreateQuiz = async () => {
         ></div>
       </div>
       <div class="flex w-full flex-col gap-3 sm:w-fit sm:flex-row md:mt-1">
+        <!-- A host with no quizzes is new; AI needs a provider key first. -->
         <NavigationLink
+          v-if="hasAnyQuiz"
           url-name="Generate with AI"
           class="w-full bg-jv-yellow py-2 font-[500] sm:w-fit"
           @click="setGenerateAiOpen(true)"
@@ -607,12 +615,10 @@ const handleCreateQuiz = async () => {
             @click="createQuizOpen = true"
           />
           <NavigationLink
-            url-name="Generate with AI"
+            url="/#public-quiz"
+            url-name="Host a ready-made quiz"
             class="bg-jv-yellow font-[500] py-2"
-            @click="setGenerateAiOpen(true)"
-          >
-            <Sparkles class="size-[18px]" :stroke-width="2.4" />
-          </NavigationLink>
+          />
         </div>
       </div>
     </section>

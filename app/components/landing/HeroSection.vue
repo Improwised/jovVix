@@ -12,15 +12,29 @@
       </div>
 
       <h1 class="main-heading text-jv-ink">
-        <span class="block">Open-Source Quizzing</span>
+        <span class="block">Run a Quiz Night</span>
         <span class="block"
-          >Built for
+          >for Your
           <span
             class="inline-block jv-highlight mt-2 sm:mt-3 px-3 sm:px-5 md:px-6 py-1 sm:py-2 rounded-[4px]"
-            >Live Quiz Experiences</span
+            >Meetup, Party or Family</span
           >
         </span>
       </h1>
+
+      <p class="mt-2 text-[16px] sm:text-[18px] text-jv-muted max-w-[560px]">
+        Everyone plays on their phone. Pick a ready-made quiz and host it now,
+        no account needed.
+      </p>
+
+      <!-- Plain anchor: native hash scroll also moves the lg scroll container. -->
+      <a
+        href="#public-quiz"
+        class="mt-2 inline-flex items-center justify-center gap-2 font-headings text-center jv-border-uneven shadow-brutal transition-transform hover:rotate-[2deg] active:shadow-none bg-jv-coral text-white px-6 md:px-7 py-2.5 md:py-3 text-base md:text-lg"
+      >
+        <Play class="size-5" :stroke-width="2.5" />
+        Host a quiz now
+      </a>
 
       <!-- Mobile/sm carousel (under md) -->
       <Carousel
@@ -90,7 +104,7 @@
 
 <script setup>
 import HeroActionCard from "@/components/landing/HeroActionCard.vue";
-import { Users } from "lucide-vue-next";
+import { Play, Users } from "lucide-vue-next";
 import {
   Carousel,
   CarouselContent,
