@@ -742,6 +742,7 @@ useSeoMeta({
     <QuizScoreSpace
       v-else-if="currentComponent == 'Score'"
       :data="data"
+      :solo="isSolo"
       :is-admin="!isSolo"
       :selected-answer="selectedAnswer"
       :user-name="hostUsername"

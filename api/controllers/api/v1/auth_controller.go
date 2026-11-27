@@ -11,6 +11,7 @@ import (
 	quizUtilsHelper "github.com/Improwised/jovvix/api/helpers/utils"
 	"github.com/Improwised/jovvix/api/models"
 	"github.com/Improwised/jovvix/api/pkg/structs"
+	"github.com/Improwised/jovvix/api/pkg/templates"
 	"github.com/Improwised/jovvix/api/services"
 	"github.com/Improwised/jovvix/api/utils"
 	goqu "github.com/doug-martin/goqu/v9"
@@ -21,11 +22,21 @@ import (
 	validator "gopkg.in/go-playground/validator.v9"
 )
 
+// accountDeleter and mailSender let tests replace the database and SMTP in DeleteRegisteredUser.
+type accountDeleter interface {
+	DeleteUserDataById(userId, kratosId string) error
+}
+
+type mailSender interface {
+	SendEmail(to, subject, body string) error
+}
+
 type AuthController struct {
-	userModel *models.UserModel
-	userSvc   *services.UserService
-	logger    *zap.Logger
-	config    config.AppConfig
+	userModel    *models.UserModel
+	userSvc      accountDeleter
+	emailService mailSender
+	logger       *zap.Logger
+	config       config.AppConfig
 }
 
 func NewAuthController(goqu *goqu.Database, logger *zap.Logger, config config.AppConfig) (*AuthController, error) {
@@ -40,10 +51,11 @@ func NewAuthController(goqu *goqu.Database, logger *zap.Logger, config config.Ap
 	}
 
 	return &AuthController{
-		userModel: &userModel,
-		userSvc:   userSvc,
-		logger:    logger,
-		config:    config,
+		userModel:    &userModel,
+		userSvc:      userSvc,
+		emailService: services.NewEmailService(logger, &config.SMTP),
+		logger:       logger,
+		config:       config,
 	}, nil
 }
 
@@ -141,7 +153,7 @@ func (ctrl *AuthController) GetRegisteredUser(c *fiber.Ctx) error {
 	kratosId := c.Cookies("ory_kratos_session")
 	ctrl.logger.Debug("AuthController.GetRegisteredUser called", zap.Any("ory_kratos_session", kratosId))
 	if kratosId == "" {
-		return utils.JSONError(c, http.StatusUnauthorized, constants.ErrKratosIDEmpty)
+		return utils.JSONError(c, http.StatusUnauthorized, constants.ErrSessionExpired)
 	}
 
 	kratosUser := config.KratosUserDetails{}
@@ -149,8 +161,9 @@ func (ctrl *AuthController) GetRegisteredUser(c *fiber.Ctx) error {
 
 	res, err := kratosClient.R().SetResult(&kratosUser).Get("/whoami")
 	if err != nil || res.StatusCode() != http.StatusOK {
-		ctrl.logger.Debug("unauthenticated registration", zap.Any("response from kratos", res.RawResponse), zap.Error(err), zap.Any("kratos response", res))
-		return utils.JSONError(c, res.StatusCode(), constants.ErrKratosAuth)
+		ctrl.logger.Debug("kratos session check failed", zap.Error(err))
+		status, message := utils.KratosSessionFailure(res, err)
+		return utils.JSONError(c, status, message)
 	}
 
 	ctrl.logger.Debug("AuthController.GetRegisteredUser success", zap.Any("kratosUser", kratosUser))
@@ -194,7 +207,8 @@ func (ctrl *AuthController) UpadateRegisteredUser(c *fiber.Ctx) error {
 	kratosStruct.Name.First = userReq.FirstName
 	kratosStruct.Name.Last = userReq.LastName
 
-	kratosjson, err := json.Marshal(kratosStruct)
+	// Only the name: the other traits, such as email, stay as they are.
+	kratosjson, err := json.Marshal(kratosStruct.Name)
 	if err != nil {
 		return utils.JSONFail(c, http.StatusBadRequest, err.Error())
 	}
@@ -241,12 +255,25 @@ func (ctrl *AuthController) DeleteRegisteredUser(c *fiber.Ctx) error {
 		return utils.JSONError(c, http.StatusUnauthorized, constants.ErrUnauthenticated)
 	}
 
+	// Read the address before the row is gone.
+	user, _ := quizUtilsHelper.ConvertType[models.User](c.Locals(constants.ContextUser))
+
 	err := ctrl.userSvc.DeleteUserDataById(userId, kratosId)
 	if err != nil {
 		ctrl.logger.Error(constants.ErrDeleteUser, zap.Error(err))
 		return utils.JSONError(c, http.StatusInternalServerError, constants.ErrDeleteUser)
 	}
 	ctrl.logger.Debug("AuthController.DeleteRegisteredUser success", zap.Any("userID", userId), zap.Any("kratosID", kratosId))
+
+	// The account is already gone, so a mail failure is logged and does not fail the request.
+	// Sent in the background: an unreachable SMTP server must not hold the response.
+	if user.Email != "" {
+		go func(to string) {
+			if err := ctrl.emailService.SendEmail(to, constants.AccountDeletedEmailSubject, templates.GenerateAccountDeletedEmail()); err != nil {
+				ctrl.logger.Error("error while sending account deletion email", zap.String("userID", userId), zap.Error(err))
+			}
+		}(user.Email)
+	}
 
 	return utils.JSONSuccess(c, http.StatusOK, "user deleted succesfully!")
 }

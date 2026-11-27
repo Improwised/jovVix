@@ -73,7 +73,7 @@ func (m *Middleware) Authenticated(c *fiber.Ctx) error {
 func (m *Middleware) KratosAuthenticated(c *fiber.Ctx) error {
 	kratosId := c.Cookies("ory_kratos_session")
 	if kratosId == "" {
-		return utils.JSONError(c, http.StatusUnauthorized, constants.ErrKratosIDEmpty)
+		return utils.JSONError(c, http.StatusUnauthorized, constants.ErrSessionExpired)
 	}
 
 	kratosUser := config.KratosUserDetails{}
@@ -81,8 +81,9 @@ func (m *Middleware) KratosAuthenticated(c *fiber.Ctx) error {
 
 	res, err := kratosClient.R().SetResult(&kratosUser).Get("/whoami")
 	if err != nil || res.StatusCode() != http.StatusOK {
-		m.Logger.Debug("unauthenticated registration", zap.Any("response from kratos", res.RawResponse))
-		return utils.JSONError(c, res.StatusCode(), constants.ErrKratosAuth)
+		m.Logger.Debug("kratos session check failed", zap.Error(err))
+		status, message := utils.KratosSessionFailure(res, err)
+		return utils.JSONError(c, status, message)
 	}
 
 	m.Logger.Debug("userModel.GetUserByKratosID called", zap.Any("kratosID", kratosUser.Identity.ID))

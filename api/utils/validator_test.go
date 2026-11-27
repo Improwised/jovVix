@@ -1,12 +1,35 @@
 package utils
 
 import (
-	"testing"
 	"errors"
+	"strings"
+	"testing"
 
+	"github.com/Improwised/jovvix/api/constants"
 	"github.com/stretchr/testify/assert"
 	validator "gopkg.in/go-playground/validator.v9"
 )
+
+func TestValidateQuizTitle(t *testing.T) {
+	tests := []struct {
+		name  string
+		title string
+		want  string
+	}{
+		{"empty title", "", constants.QuizTitleRequired},
+		{"whitespace only", " \t ", constants.QuizTitleRequired},
+		{"50 ASCII characters", strings.Repeat("a", 50), ""},
+		{"51 ASCII characters", strings.Repeat("a", 51), constants.ErrQuizTitleTooLong},
+		{"50 accented characters", strings.Repeat("é", 50), ""},
+		{"51 accented characters", strings.Repeat("é", 51), constants.ErrQuizTitleTooLong},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, ValidateQuizTitle(tt.title))
+		})
+	}
+}
 
 func TestValidateEmail(t *testing.T) {
 	email := "xyz@improwised.com"

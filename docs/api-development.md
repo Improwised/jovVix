@@ -231,6 +231,21 @@ go test -v ./...           # Verbose
 go test -cover ./...       # With coverage
 ```
 
+#### Windows test setup
+
+The SQLite-backed tests use `go-sqlite3`, which requires CGO and a C compiler. If you see `go-sqlite3 requires cgo to work`, make sure a MinGW-w64 compatible compiler is on your `PATH` and enable CGO. For example, download and extract the Windows x64 archive from [LLVM-MinGW releases](https://github.com/mstorsjo/llvm-mingw/releases) and add its `bin` directory to the current PowerShell session's `PATH`.
+
+With the LLVM-MinGW compiler on `PATH`, run these commands from `api/` in PowerShell:
+
+```powershell
+$env:CC = "x86_64-w64-mingw32-clang"
+$env:CGO_ENABLED = "1"
+go env CGO_ENABLED CC
+go test ./...
+```
+
+`go env` should report `1` and the selected compiler name. The environment settings apply to the current PowerShell session. PostgreSQL integration tests still skip if their database URLs are not configured.
+
 ### Writing Tests
 
 ```go
