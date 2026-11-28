@@ -403,7 +403,12 @@ func (ctrl *QuizController) CreateQuizByCsv(c *fiber.Ctx) error {
 		}
 	}()
 
-	questions, err := utils.ValidateCSVFileFormat(filePath)
+	mapping, err := utils.ParseCSVMapping(c.FormValue("mapping"))
+	if err != nil {
+		return utils.JSONFail(c, http.StatusBadRequest, err.Error())
+	}
+
+	questions, err := utils.ParseCSVFile(filePath, mapping)
 	if err != nil {
 		ctrl.logger.Error("file validation failed", zap.Error(err))
 		return utils.JSONFail(c, http.StatusBadRequest, err.Error())

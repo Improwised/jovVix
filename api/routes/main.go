@@ -323,6 +323,7 @@ func setupQuestionController(v1 fiber.Router, db *goqu.Database, logger *zap.Log
 	questionRouter.Get("/", questionController.ListQuestionsWithAnswerByQuizId)
 	questionRouter.Post("/", middleware.VerifyQuizEditAccess, questionController.CreateQuestion)
 	questionRouter.Post("/upload", middleware.VerifyQuizEditAccess, middleware.ValidateCsv, questionController.ImportQuestionsByCsv)
+	questionRouter.Post("/upload/preview", middleware.VerifyQuizEditAccess, middleware.ValidateCsv, questionController.PreviewQuestionsCsv)
 	questionRouter.Get(fmt.Sprintf("/:%s", constants.QuestionId), middleware.VerifyQuizEditAccess, questionController.GetQuestionById)
 	questionRouter.Put(fmt.Sprintf("/:%s", constants.QuestionId), middleware.VerifyQuizEditAccess, questionController.UpdateQuestionById)
 	questionRouter.Delete(fmt.Sprintf("/:%s", constants.QuestionId), middleware.VerifyQuizEditAccess, questionController.DeleteQuestionById)
