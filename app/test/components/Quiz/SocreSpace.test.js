@@ -74,6 +74,12 @@ describe("ScoreSpace test", () => {
     expect(wrapper.find("h3").exists()).toBe(true);
   });
 
+  it("names the page Leaderboard for the room", () => {
+    expect(wrapper.find("h2").text()).toBe("Leaderboard");
+    expect(wrapper.text()).not.toContain("Score Page");
+    expect(wrapper.text()).not.toContain("Rank board");
+  });
+
   it("renders the correct answer and selected incorrect answer", async () => {
     expect(wrapper.text()).toContain("Red");
     expect(wrapper.text()).toContain("Blue");
