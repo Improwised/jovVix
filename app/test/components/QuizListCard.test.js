@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll } from "vitest";
-import { mount, RouterLinkStub } from "@vue/test-utils";
+import { mountSuspended } from "@nuxt/test-utils/runtime";
 import QuizListCard from "~/components/QuizListCard.vue";
 import UtilsStartQuiz from "~/components/utils/StartQuiz.vue";
 
@@ -14,22 +14,14 @@ const props = {
   isPlayedQuiz: false,
 };
 
-const mountComponent = () => {
-  return mount(QuizListCard, {
-    props,
-    global: {
-      stubs: {
-        NuxtLink: RouterLinkStub,
-      },
-    },
-  });
-};
+const mountComponent = () => mountSuspended(QuizListCard, { props });
 
 // @nuxt/test-utils starts the Nuxt app in a beforeAll hook, so mount
-// there rather than at import time.
+// there rather than at import time. Nuxt 4.7 renders NuxtLink inline, so
+// links are asserted on their href rather than through RouterLinkStub.
 let wrapper;
-beforeAll(() => {
-  wrapper = mountComponent();
+beforeAll(async () => {
+  wrapper = await mountComponent();
 });
 
 describe("QuizListCard test", () => {
@@ -50,18 +42,16 @@ describe("QuizListCard test", () => {
     props.isPlayedQuiz = true;
     await wrapper.setProps(props);
     await wrapper.vm.$nextTick();
-    const viewQuizLink = wrapper.findComponent(RouterLinkStub);
+    const viewQuizLink = wrapper.find('a[href="/admin/played_quiz/quiz1"]');
     expect(viewQuizLink.exists()).toBe(true);
-    expect(viewQuizLink.props().to).toBe("/admin/played_quiz/quiz1");
   });
 
   it("renders the correct `NuxtLink` for unplayed quizzes when `isPlayedQuiz` is false", async () => {
     props.isPlayedQuiz = false;
     await wrapper.setProps(props);
     await wrapper.vm.$nextTick();
-    const viewQuizLink = wrapper.findComponent(RouterLinkStub);
+    const viewQuizLink = wrapper.find('a[href="/admin/quiz/list-quiz/quiz1"]');
     expect(viewQuizLink.exists()).toBe(true);
-    expect(viewQuizLink.props().to).toBe("/admin/quiz/list-quiz/quiz1");
   });
 
   it("displays the correct creation time", () => {

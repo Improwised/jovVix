@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/Improwised/jovvix/api/constants"
@@ -135,16 +136,8 @@ func (qc *quizSocketController) HostParticipation(c *fiber.Ctx) error {
 			if err != nil {
 				return utils.JSONFail(c, 500, "Unable to add host as player")
 			}
-			var ids []uuid.UUID
-			err = tx.From("active_quiz_questions").Select("question_id").Where(goqu.Ex{"active_quiz_id": sessionID}).ScanVals(&ids)
-			if err != nil {
-				return utils.JSONFail(c, 500, "Unable to prepare questions")
-			}
-			for _, id := range ids {
-				_, err = tx.Insert("user_quiz_responses").Rows(goqu.Record{"id": uuid.New(), "question_id": id, "user_played_quiz_id": participant, "option_order": nil}).Executor().Exec()
-				if err != nil {
-					return utils.JSONFail(c, 500, "Unable to prepare answers")
-				}
+			if err = models.CopyRoomResponses(tx, participant, sessionID); err != nil {
+				return utils.JSONFail(c, 500, "Unable to prepare answers")
 			}
 			found = true
 		} else if !*body.Enabled && found {
@@ -172,6 +165,25 @@ func (qc *quizSocketController) HostParticipation(c *fiber.Ctx) error {
 		}
 		if raw.Valid {
 			_ = json.Unmarshal([]byte(raw.String), &answer)
+			var orderRaw sql.NullString
+			_, err = tx.From("user_quiz_responses").Select("option_order").Where(goqu.Ex{"user_played_quiz_id": participant, "question_id": session.Current.String}).ScanVal(&orderRaw)
+			if err != nil {
+				return utils.JSONFail(c, 500, "Unable to load option order")
+			}
+			if orderRaw.Valid {
+				var order map[string]int
+				if json.Unmarshal([]byte(orderRaw.String), &order) != nil {
+					return utils.JSONFail(c, 500, "Invalid option order")
+				}
+				for i, original := range answer {
+					for displayed, key := range order {
+						if key == original {
+							answer[i], _ = strconv.Atoi(displayed)
+							break
+						}
+					}
+				}
+			}
 		}
 	}
 	var submitted []struct {

@@ -9,10 +9,26 @@ import (
 
 	"github.com/Improwised/jovvix/api/constants"
 	"github.com/doug-martin/goqu/v9"
+	"github.com/doug-martin/goqu/v9/exp"
 	"github.com/google/uuid"
 )
 
 const QuizzesTable = "quizzes"
+
+// ReportVisibleTo matches the sessions whose report userId may read, for a query that names
+// active_quizzes "aq" and quizzes "q": sessions they hosted, and sessions of a quiz they created
+// that someone they shared it with hosted (GitHub #38). Anyone can host a public quiz, so
+// creating the quiz is not enough on its own. Revoking the share hides those sessions again.
+func ReportVisibleTo(userId string) exp.Expression {
+	hostHasShare := goqu.From(goqu.T(SharedQuizzesTable).As("sq")).
+		InnerJoin(goqu.T(UserTable).As("su"), goqu.On(goqu.Ex{"su.email": goqu.I("sq.shared_to")})).
+		Where(goqu.Ex{"sq.quiz_id": goqu.I("aq.quiz_id"), "su.id": goqu.I("aq.admin_id")}).
+		Select(goqu.L("1"))
+	return goqu.Or(
+		goqu.I("aq.admin_id").Eq(userId),
+		goqu.And(goqu.I("q.creator_id").Eq(userId), goqu.L("EXISTS ?", hostHasShare)),
+	)
+}
 
 // QuizModel implements quiz related database operations
 type QuizModel struct {
@@ -40,6 +56,8 @@ type QuizAnalysis struct {
 
 type QuizzesAnalysis struct {
 	ID             uuid.UUID      `json:"id" db:"id"`
+	QuizID         uuid.UUID      `json:"quiz_id" db:"quiz_id"`
+	Sessions       int            `json:"sessions" db:"sessions"`
 	Title          string         `json:"title" db:"title"`
 	Description    sql.NullString `json:"description,omitempty" db:"description"`
 	ActivatedTo    sql.NullTime   `json:"activated_to,omitempty" db:"activated_to"`
@@ -566,11 +584,23 @@ func (model *QuizModel) ListQuizzesAnalysis(name, order, orderBy, date, userId s
 
 	var quizzesAnalysis []QuizzesAnalysis
 
+	// Match the combined report's selectable sessions, including only sessions
+	// hosted by the current user with at least one player response.
+	combinedSessions := model.db.From(goqu.T(ActiveQuizzesTable).As("combined_aq")).
+		InnerJoin(goqu.T(UserPlayedQuizTable).As("combined_upq"), goqu.On(goqu.Ex{"combined_upq.active_quiz_id": goqu.I("combined_aq.id"), "combined_upq.is_host": false})).
+		InnerJoin(goqu.T(UserQuizResponsesTable).As("combined_uqr"), goqu.On(goqu.Ex{"combined_uqr.user_played_quiz_id": goqu.I("combined_upq.id")})).
+		Where(goqu.Ex{"combined_aq.quiz_id": goqu.I("aq.quiz_id"), "combined_aq.admin_id": userId, "combined_aq.activated_to": goqu.Op{"isNot": nil}}).
+		Select(goqu.COUNT(goqu.DISTINCT(goqu.I("combined_aq.id"))))
+
 	quizzesAnalysisInfo := model.db.From(goqu.T(ActiveQuizzesTable).As("aq")).
 		InnerJoin(goqu.T(ActiveQuizQuestionsTable).As("qq"), goqu.On(goqu.Ex{"aq.id": goqu.I("qq.active_quiz_id")})).
 		InnerJoin(goqu.T(UserPlayedQuizTable).As("upq"), goqu.On(goqu.Ex{"upq.active_quiz_id": goqu.I("aq.id")})).
 		InnerJoin(goqu.T(UserQuizResponsesTable).As("uqr"), goqu.On(goqu.Ex{"uqr.question_id": goqu.I("qq.question_id"), "uqr.user_played_quiz_id": goqu.I("upq.id")})).
-		Where(goqu.Ex{"aq.admin_id": userId, "aq.activated_to": goqu.Op{"isNot": nil}, "upq.is_host": false}).
+		LeftJoin(goqu.T(QuizzesTable).As("q"), goqu.On(goqu.Ex{"q.id": goqu.I("aq.quiz_id")})).
+		Where(
+			ReportVisibleTo(userId),
+			goqu.Ex{"aq.activated_to": goqu.Op{"isNot": nil}, "upq.is_host": false},
+		).
 		GroupBy(
 			"aq.id",
 			"aq.activated_from",
@@ -583,6 +613,7 @@ func (model *QuizModel) ListQuizzesAnalysis(name, order, orderBy, date, userId s
 			"aq.activated_to",
 			goqu.COUNT(goqu.DISTINCT("qq.question_id")).As("questions"),
 			goqu.COUNT(goqu.DISTINCT("uqr.user_played_quiz_id")).As("participants"),
+			combinedSessions.As("sessions"),
 			goqu.SUM(goqu.Case().
 				When(goqu.I("uqr.calculated_score").Gt(0), 1).
 				When(goqu.I("uqr.calculated_score").Lte(0), 0)).
@@ -596,6 +627,8 @@ func (model *QuizModel) ListQuizzesAnalysis(name, order, orderBy, date, userId s
 			"qi.participants",
 			"qi.correct_answers",
 			"qi.id",
+			"qi.quiz_id",
+			"qi.sessions",
 			"qi.activated_from",
 			"qi.activated_to",
 			"q.title",
@@ -644,11 +677,30 @@ func (model *QuizModel) ListQuizzesAnalysis(name, order, orderBy, date, userId s
 
 // Delete quiz and and their question using `quiz_id`
 func (model *QuizModel) DeleteQuizById(transaction *goqu.TxDatabase, QuizId string) error {
+	// Sessions of this quiz may belong to other hosts (shared quizzes) or be a room's current round.
 	activeQuizSubquery := transaction.From(ActiveQuizzesTable).Select("id").Where(goqu.Ex{"quiz_id": QuizId})
+
+	// Rooms reference their current session and sessions reference their room. Close a room whose
+	// current round is deleted: remove its members and detach its other rounds before deleting it.
+	roomSubquery := transaction.From("quiz_rooms").Select("id").Where(goqu.Ex{"current_session_id": goqu.Op{"in": activeQuizSubquery}})
+	_, err := transaction.Delete("quiz_room_members").Where(goqu.Ex{"room_id": goqu.Op{"in": roomSubquery}}).Executor().Exec()
+	if err != nil {
+		return err
+	}
+
+	_, err = transaction.Update(ActiveQuizzesTable).Set(goqu.Record{"room_id": nil}).Where(goqu.Ex{"room_id": goqu.Op{"in": roomSubquery}}).Executor().Exec()
+	if err != nil {
+		return err
+	}
+
+	_, err = transaction.Delete("quiz_rooms").Where(goqu.Ex{"current_session_id": goqu.Op{"in": activeQuizSubquery}}).Executor().Exec()
+	if err != nil {
+		return err
+	}
 
 	userPlayedQuizSubquery := transaction.From(UserPlayedQuizTable).Select("id").Where(goqu.Ex{"active_quiz_id": goqu.Op{"in": activeQuizSubquery}})
 
-	_, err := transaction.Delete(UserQuizResponsesTable).Where(goqu.Ex{"user_played_quiz_id": goqu.Op{"in": userPlayedQuizSubquery}}).Executor().Exec()
+	_, err = transaction.Delete(UserQuizResponsesTable).Where(goqu.Ex{"user_played_quiz_id": goqu.Op{"in": userPlayedQuizSubquery}}).Executor().Exec()
 	if err != nil {
 		return err
 	}
@@ -700,29 +752,23 @@ func deleteQuizById(transaction *goqu.TxDatabase, quizId string) error {
 	return nil
 }
 
-// Deletes the private quizzes created by a user and their related questions, and
-// preserves any public quizzes by orphaning them (creator_id -> NULL) so another
+// Deletes the private quizzes created by a user, with everything DeleteQuizById removes:
+// sessions (also those other hosts ran from a shared quiz), rooms, shares and questions.
+// It preserves any public quizzes by orphaning them (creator_id -> NULL) so another
 // admin can keep managing them after the creator's account is gone.
-// It deletes from the QuizQuestionsTable, removes related questions, and finally deletes the private quizzes themselves.
 func (model *QuizModel) DeleteCreatedQuizzesByUserId(transaction *goqu.TxDatabase, userId string) error {
 
 	// Only hard-delete private quizzes; public ones are preserved below.
-	privateQuizSubquery := transaction.From(QuizzesTable).Select("id").Where(goqu.Ex{"creator_id": userId, "is_public": false})
-
-	questionIds := []string{}
-	err := transaction.Delete(constants.QuizQuestionsTable).Where(goqu.Ex{"quiz_id": goqu.Op{"in": privateQuizSubquery}}).Returning("question_id").Executor().ScanVals(&questionIds)
+	privateQuizIds := []string{}
+	err := transaction.From(QuizzesTable).Select("id").Where(goqu.Ex{"creator_id": userId, "is_public": false}).ScanVals(&privateQuizIds)
 	if err != nil {
 		return err
 	}
 
-	err = deleteQuestionsByIds(transaction, questionIds)
-	if err != nil {
-		return err
-	}
-
-	_, err = transaction.Delete(QuizzesTable).Where(goqu.Ex{"id": goqu.Op{"in": privateQuizSubquery}}).Executor().Exec()
-	if err != nil {
-		return err
+	for _, quizId := range privateQuizIds {
+		if err = model.DeleteQuizById(transaction, quizId); err != nil {
+			return err
+		}
 	}
 
 	// Preserve public quizzes: detach the departing creator so the FK to users does

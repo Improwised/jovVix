@@ -1,4 +1,3 @@
-version: "3.8"
 services:
   db:
     image: postgres:15.2-alpine
@@ -14,7 +13,7 @@ services:
       - ./pkg/kratos/kratos-pg-init-script:/docker-entrypoint-initdb.d
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U app"]
+      test: ["CMD-SHELL", "pg_isready -U jovvix"]
       interval: 10s
       timeout: 5s
       retries: 5

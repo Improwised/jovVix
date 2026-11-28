@@ -13,6 +13,7 @@ import {
   LogOut,
   Maximize2,
   Smile,
+  Smartphone,
   UserRound,
   Users,
   Volume2,
@@ -448,6 +449,17 @@ watch(
                       : "Waiting for another player to join"
                   }}
                   <span class="hidden md:inline">· press Enter to start</span>
+                </span>
+              </p>
+              <!-- Another tab in this browser joins as the host, so point to a phone. -->
+              <p
+                v-if="!otherPlayerCount"
+                class="mx-auto mt-2 flex max-w-[390px] items-center justify-center gap-2 text-center font-body text-[13px] font-bold leading-[1.4] text-jv-ink sm:text-[14px]"
+              >
+                <Smartphone class="size-4 shrink-0" :stroke-width="2.3" />
+                <span>
+                  Trying it alone? Scan the QR code with your phone to join as a
+                  player.
                 </span>
               </p>
             </div>

@@ -32,6 +32,10 @@ const props = defineProps({
     type: Boolean,
     required: false,
   },
+  solo: {
+    type: Boolean,
+    default: false,
+  },
   userName: {
     required: false,
     type: String,
@@ -160,6 +164,7 @@ onUnmounted(() => {
               Score Page
             </h2>
             <p
+              v-if="!solo"
               class="mt-2 font-body text-[12px] font-bold text-jv-muted sm:text-[14px]"
             >
               Rank board
@@ -357,7 +362,7 @@ onUnmounted(() => {
 
         <!-- Rankings list -->
         <div
-          v-if="!isAdmin || analysisTab === 'ranking'"
+          v-if="!solo && (!isAdmin || analysisTab === 'ranking')"
           class="mt-5 flex flex-col gap-3 sm:mt-6 sm:gap-3.5"
         >
           <div

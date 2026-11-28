@@ -72,7 +72,7 @@ const quizErrorMessage = computed(() => {
           <p class="font-body text-sm italic text-jv-muted sm:text-base">
             Tell your friends to share a quiz.
           </p>
-          <NavigationButton title="Go Back" navigate-to="/admin/quiz" />
+          <NavigationButton title="Back to quizzes" navigate-to="/admin/quiz" />
         </div>
 
         <div v-else class="flex flex-col gap-4">

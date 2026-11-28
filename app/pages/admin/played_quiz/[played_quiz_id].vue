@@ -46,6 +46,23 @@ watch(
   <ClientOnly>
     <div class="min-h-screen bg-jv-canvas px-4 py-6 sm:px-6 sm:py-10">
       <div class="mx-auto max-w-6xl">
+        <header class="mb-6">
+          <h1
+            class="font-headings text-[38px] leading-none text-jv-ink sm:text-[52px]"
+          >
+            Quiz results
+          </h1>
+          <p
+            class="mt-4 max-w-2xl text-[15px] font-semibold text-jv-muted sm:text-[16px]"
+          >
+            Review your results and question-by-question analysis.
+          </p>
+        </header>
+        <NuxtLink
+          to="/admin"
+          class="mb-6 inline-flex w-fit items-center gap-2 rounded-full border-2 border-jv-ink bg-jv-white px-5 py-2 font-bold text-jv-ink shadow-brutal-sm transition-transform hover:-rotate-1 active:shadow-none"
+          >← Back to dashboard</NuxtLink
+        >
         <div
           v-if="quizError"
           role="alert"
