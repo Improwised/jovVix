@@ -35,12 +35,15 @@ func GenerateRandomInt(min, max int) int {
 func GenerateNewStringHavingSuffixName(mainString string, randomStringLen int, maxLength int) string {
 	random_str := "_" + GenerateRandomString(randomStringLen-1)
 
-	truncate_at := len(mainString)
+	// Count characters, not bytes: the limit is a VARCHAR length, and a byte
+	// cut can split a non-Latin character (#402).
+	main := []rune(mainString)
+	truncate_at := len(main)
 	if truncate_at+len(random_str) > maxLength {
 		truncate_at = maxLength - len(random_str)
 	}
 
-	return mainString[:truncate_at] + random_str
+	return string(main[:truncate_at]) + random_str
 }
 
 func GenerateID() int64 {

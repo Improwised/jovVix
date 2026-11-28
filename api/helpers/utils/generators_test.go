@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"unicode/utf8"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -49,6 +50,14 @@ func TestGenerateNewStringHavingSuffixName(t *testing.T) {
 		result := GenerateNewStringHavingSuffixName(main, 5, 10)
 
 		assert.LessOrEqual(t, len(result), 10)
+	})
+
+	t.Run("cuts non-Latin names on a character boundary", func(t *testing.T) {
+		result := GenerateNewStringHavingSuffixName("राजेश कुमार", 5, 12)
+
+		assert.True(t, utf8.ValidString(result))
+		assert.Equal(t, 12, utf8.RuneCountInString(result))
+		assert.True(t, strings.HasPrefix(result, "राजेश क"))
 	})
 }
 
