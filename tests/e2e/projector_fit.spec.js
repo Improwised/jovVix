@@ -87,6 +87,16 @@ test('lobby and score page fit a projector without scrolling', async ({ browser 
   await expect(codeText).toHaveText(/\d{6}/, { timeout: 30000 });
   const code = (await codeText.innerText()).replace(/\D/g, '');
 
+  // (a) Lobby while the host is alone, as the room first sees it: the whole
+  // QR code and Start Quiz are on the first screen.
+  const qr = host.locator('.qr-card');
+  const start = host.locator('button[type="submit"]', { hasText: 'Start Quiz' });
+  for (const size of PROJECTORS) {
+    await atTop(host, size);
+    await fitsViewport(host, qr);
+    await fitsViewport(host, start);
+  }
+
   // Players join from phones.
   const players = [];
   for (const name of PLAYERS) {
@@ -103,9 +113,7 @@ test('lobby and score page fit a projector without scrolling', async ({ browser 
     await expect(host.getByText(name, { exact: true })).toBeVisible({ timeout: 30000 });
   }
 
-  // (a) Lobby: the whole QR code and Start Quiz are on the first screen.
-  const qr = host.locator('.qr-card');
-  const start = host.locator('button[type="submit"]', { hasText: 'Start Quiz' });
+  // (a) Lobby with players: the QR code and Start Quiz still fit.
   for (const size of PROJECTORS) {
     await atTop(host, size);
     await fitsViewport(host, qr);
