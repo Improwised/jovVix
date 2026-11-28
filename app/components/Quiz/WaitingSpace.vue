@@ -278,7 +278,7 @@ watch(
     <section
       class="relative mx-auto flex w-full max-w-[1220px] flex-1 flex-col"
     >
-      <header class="relative mb-7 text-center sm:mb-9">
+      <header class="relative mb-7 text-center sm:mb-9 xl:mb-6">
         <div
           class="mb-3 flex items-center justify-between gap-2 sm:mb-2 sm:grid sm:grid-cols-[1fr_auto_1fr]"
         >
@@ -319,10 +319,10 @@ watch(
       </header>
 
       <div
-        class="grid flex-1 gap-6 md:gap-7 xl:grid-cols-[minmax(0,1fr)_minmax(340px,0.95fr)] xl:items-stretch"
+        class="grid flex-1 gap-6 md:gap-7 xl:grid-cols-[minmax(0,1fr)_minmax(320px,0.45fr)] xl:items-stretch"
       >
         <form
-          class="relative flex min-h-0 rotate-0 sm:rotate-[-0.4deg] flex-col overflow-hidden bg-jv-white shadow-brutal-sm jv-border-rough sm:shadow-brutal-lg xl:min-h-[640px]"
+          class="relative flex min-h-0 rotate-0 sm:rotate-[-0.4deg] flex-col overflow-hidden bg-jv-white shadow-brutal-sm jv-border-rough sm:shadow-brutal-lg xl:grid xl:grid-cols-[minmax(0,1fr)_auto] xl:grid-rows-[auto_auto_1fr]"
           @submit="start_quiz"
         >
           <span
@@ -330,9 +330,11 @@ watch(
             aria-hidden="true"
           ></span>
 
-          <div class="bg-jv-yellow px-4 pb-7 pt-6 sm:px-8 sm:pb-9 md:px-10">
+          <div
+            class="bg-jv-yellow px-4 pb-7 pt-6 sm:px-8 sm:pb-9 md:px-10 xl:col-start-1 xl:row-start-1 xl:px-8"
+          >
             <h2
-              class="join-page-title font-headings text-[30px] leading-tight text-jv-ink min-[420px]:text-[34px] sm:text-[42px] lg:text-[48px]"
+              class="join-page-title font-headings text-[30px] leading-tight text-jv-ink min-[420px]:text-[34px] sm:text-[42px] lg:text-[48px] xl:text-[40px]"
             >
               Ready, Steady, Go!
             </h2>
@@ -366,9 +368,13 @@ watch(
             </div>
           </div>
 
-          <div class="flex flex-1 flex-col px-4 py-5 sm:px-8 sm:py-6 md:px-10">
+          <!-- On wide screens these children join the form grid, so the QR code sits
+               beside the join link and code and Start stays on the first screen. -->
+          <div
+            class="flex flex-1 flex-col px-4 py-5 sm:px-8 sm:py-6 md:px-10 xl:contents"
+          >
             <div
-              class="-mt-11 flex flex-col gap-3 jv-border-rough bg-jv-white p-3 shadow-brutal-sm sm:-mt-14 sm:flex-row sm:items-center sm:justify-between sm:p-4 sm:shadow-brutal"
+              class="-mt-11 flex flex-col gap-3 jv-border-rough bg-jv-white p-3 shadow-brutal-sm sm:-mt-14 sm:flex-row sm:items-center sm:justify-between sm:p-4 sm:shadow-brutal xl:col-start-1 xl:row-start-2 xl:mx-8"
             >
               <div class="flex min-w-0 items-center gap-3 sm:gap-4">
                 <span
@@ -403,34 +409,40 @@ watch(
             </div>
 
             <div
-              class="my-5 flex items-center justify-center gap-3 text-center font-body text-[11px] font-black uppercase tracking-[0.08em] text-jv-muted min-[420px]:text-[12px] sm:my-6 sm:gap-4 sm:text-[13px]"
+              class="xl:col-start-2 xl:row-span-3 xl:row-start-1 xl:flex xl:flex-col xl:items-center xl:border-l-[3px] xl:border-dashed xl:border-jv-ink/20 xl:px-8 xl:py-6"
             >
-              <span
-                class="h-px min-w-8 flex-1 border-t-2 border-dashed border-jv-ink/40 sm:max-w-24"
-              ></span>
-              <span class="shrink-0">Or scan QR code</span>
-              <span
-                class="h-px min-w-8 flex-1 border-t-2 border-dashed border-jv-ink/40 sm:max-w-24"
-              ></span>
-            </div>
-
-            <div class="flex flex-col items-center gap-3">
               <div
-                class="qr-card relative grid size-[176px] place-items-center bg-jv-white p-3 shadow-brutal-sm jv-border-rough min-[420px]:size-[196px] sm:size-[220px] sm:p-4 md:size-[240px]"
+                class="my-5 flex items-center justify-center gap-3 text-center font-body text-[11px] font-black uppercase tracking-[0.08em] text-jv-muted min-[420px]:text-[12px] sm:my-6 sm:gap-4 sm:text-[13px]"
               >
-                <QrCode :scan-u-r-l="joinUrl" :quiz-code="code" :size="200" />
+                <span
+                  class="h-px min-w-8 flex-1 border-t-2 border-dashed border-jv-ink/40 sm:max-w-24"
+                ></span>
+                <span class="shrink-0">Or scan QR code</span>
+                <span
+                  class="h-px min-w-8 flex-1 border-t-2 border-dashed border-jv-ink/40 sm:max-w-24"
+                ></span>
               </div>
-              <button
-                type="button"
-                class="inline-flex h-11 rotate-[-0.6deg] items-center justify-center gap-2 rounded-[999px] border-[3px] border-jv-ink bg-jv-mint px-5 font-body text-[14px] font-black text-jv-ink shadow-brutal-sm transition-transform hover:rotate-[1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none sm:h-12 sm:text-[15px]"
-                @click="openQrFullscreen"
-              >
-                <Maximize2 class="size-4" :stroke-width="2.4" />
-                <span>Enlarge QR for easy scan</span>
-              </button>
+
+              <div class="flex flex-col items-center gap-3">
+                <div
+                  class="qr-card relative grid size-[176px] place-items-center bg-jv-white p-3 shadow-brutal-sm jv-border-rough min-[420px]:size-[196px] sm:size-[220px] sm:p-4 md:size-[240px]"
+                >
+                  <QrCode :scan-u-r-l="joinUrl" :quiz-code="code" :size="200" />
+                </div>
+                <button
+                  type="button"
+                  class="inline-flex h-11 rotate-[-0.6deg] items-center justify-center gap-2 rounded-[999px] border-[3px] border-jv-ink bg-jv-mint px-5 font-body text-[14px] font-black text-jv-ink shadow-brutal-sm transition-transform hover:rotate-[1deg] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none sm:h-12 sm:text-[15px]"
+                  @click="openQrFullscreen"
+                >
+                  <Maximize2 class="size-4" :stroke-width="2.4" />
+                  <span>Enlarge QR for easy scan</span>
+                </button>
+              </div>
             </div>
 
-            <div class="mt-auto pt-5 sm:pt-6">
+            <div
+              class="mt-auto pt-5 sm:pt-6 xl:col-start-1 xl:row-start-3 xl:mx-8 xl:mb-6 xl:mt-0"
+            >
               <button
                 type="submit"
                 :disabled="participationPending || !otherPlayerCount"
@@ -466,7 +478,7 @@ watch(
 
             <label
               v-if="allowHostParticipation"
-              class="mt-5 flex cursor-pointer items-center gap-3 rounded-xl border-2 border-jv-ink bg-jv-white px-4 py-3 font-body font-bold text-jv-ink shadow-brutal-sm transition-transform hover:-translate-y-0.5 has-[:disabled]:cursor-wait has-[:disabled]:opacity-60"
+              class="mt-5 flex cursor-pointer xl:col-start-1 xl:mx-8 xl:mb-6 items-center gap-3 rounded-xl border-2 border-jv-ink bg-jv-white px-4 py-3 font-body font-bold text-jv-ink shadow-brutal-sm transition-transform hover:-translate-y-0.5 has-[:disabled]:cursor-wait has-[:disabled]:opacity-60"
             >
               <input
                 class="peer sr-only"
@@ -487,7 +499,11 @@ watch(
               </span>
               <span>I want to play too</span>
             </label>
-            <div v-if="hostNameError" role="alert" class="mt-3 text-sm">
+            <div
+              v-if="hostNameError"
+              role="alert"
+              class="mt-3 text-sm xl:col-start-1 xl:mx-8 xl:mb-6"
+            >
               <p class="font-bold text-jv-coral">{{ hostNameError }}</p>
               <label for="host-player-name" class="mt-2 block font-bold"
                 >Your quiz name</label
@@ -541,7 +557,7 @@ watch(
         </form>
 
         <aside
-          class="relative flex min-h-0 rotate-0 sm:rotate-[0.4deg] flex-col bg-jv-white px-4 py-6 shadow-brutal-sm jv-border-rough sm:px-8 sm:py-8 sm:shadow-brutal-lg md:px-10 xl:min-h-[640px]"
+          class="relative flex min-h-0 rotate-0 sm:rotate-[0.4deg] flex-col bg-jv-white px-4 py-6 shadow-brutal-sm jv-border-rough sm:px-8 sm:py-8 sm:shadow-brutal-lg md:px-10 xl:px-8"
         >
           <span
             class="absolute left-1/2 top-[-10px] h-4 w-12 -translate-x-1/2 rotate-[1deg] bg-jv-salmon"
@@ -553,12 +569,12 @@ watch(
           >
             <div class="flex min-w-0 items-center gap-3 sm:gap-4">
               <span
-                class="grid size-10 shrink-0 rotate-0 sm:rotate-[-3deg] place-items-center jv-border-rough bg-jv-mint sm:size-12"
+                class="grid size-10 shrink-0 rotate-0 sm:rotate-[-3deg] place-items-center jv-border-rough bg-jv-mint sm:size-12 xl:hidden"
               >
                 <Users class="size-5 sm:size-6" :stroke-width="2.4" />
               </span>
               <h2
-                class="min-w-0 break-words font-headings text-[28px] leading-tight text-jv-ink min-[420px]:text-[32px] sm:text-[42px] xl:text-[48px]"
+                class="min-w-0 break-words font-headings text-[28px] leading-tight text-jv-ink min-[420px]:text-[32px] sm:text-[42px] xl:text-[36px]"
               >
                 Participants
               </h2>
