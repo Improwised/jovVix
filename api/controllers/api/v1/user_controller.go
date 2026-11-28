@@ -4,7 +4,9 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
+	"net/url"
 	"time"
+	"unicode/utf8"
 
 	"github.com/Improwised/jovvix/api/config"
 	"github.com/Improwised/jovvix/api/constants"
@@ -17,6 +19,9 @@ import (
 	"github.com/lib/pq"
 	"go.uber.org/zap"
 )
+
+// maxGuestUsernameLength matches the users.username column, VARCHAR(12).
+const maxGuestUsernameLength = 12
 
 // UserController for user controllers
 type UserController struct {
@@ -119,11 +124,19 @@ func (ctrl *UserController) GetUserMeta(c *fiber.Ctx) error {
 //	     400: GenericResFailNotFound
 //		  500: GenericResError
 func (ctrl *UserController) CreateGuestUser(c *fiber.Ctx) error {
-	username := c.Params(constants.Username)
+	// Fiber leaves path params URL-encoded, and the join page encodes the name (#402).
+	username, err := url.PathUnescape(c.Params(constants.Username))
+	if err != nil {
+		return utils.JSONError(c, http.StatusBadRequest, "please provide a valid username")
+	}
 
 	avatarName := c.Query("avatar_name")
 	if username == "" || avatarName == "" {
 		return utils.JSONError(c, http.StatusBadRequest, "please provide username and avatar name")
+	}
+	// users.username is VARCHAR(12), counted in characters.
+	if utf8.RuneCountInString(username) > maxGuestUsernameLength {
+		return utils.JSONError(c, http.StatusBadRequest, fmt.Sprintf("username must be at most %d characters", maxGuestUsernameLength))
 	}
 
 	userObj := models.User{
@@ -153,7 +166,7 @@ func (ctrl *UserController) CreateGuestUser(c *fiber.Ctx) error {
 				if retrying > 30 {
 					break
 				} else {
-					user.Username = quizUtilsHelper.GenerateNewStringHavingSuffixName(user.Username, 5, 12)
+					user.Username = quizUtilsHelper.GenerateNewStringHavingSuffixName(user.Username, 5, maxGuestUsernameLength)
 					user, err = ctrl.userModel.InsertUser(user)
 					if err != nil {
 						retrying++
