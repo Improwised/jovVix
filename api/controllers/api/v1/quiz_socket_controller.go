@@ -139,15 +139,18 @@ func (qc *quizSocketController) Join(c *websocket.Conn) {
 	}
 
 	isUserConnected := make(chan bool, 1)
+	readerDone := make(chan struct{})
 
 	defer func() {
 		c.Close()
+		// The middleware releases the conn once Join returns; a reader still running would use it (#404).
+		<-readerDone
 		qc.logger.Info("connection closed by user")
 	}()
 
 	// check user web socket connection is close or not
 	go func() {
-
+		defer close(readerDone)
 		for {
 			_, p, err := c.ReadMessage()
 
